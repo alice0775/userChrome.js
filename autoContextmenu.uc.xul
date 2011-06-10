@@ -1,0 +1,336 @@
+<?xml version="1.0"?>
+
+<overlay id="autoContextmenu"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           autoContextmenu
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    Auto context menu on selection
+// @include        main
+// @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a3pre
+// @author         Alice0775
+// @version        2010/03/10 09:00 Mouse Gesture Redox があると動かないのを修正
+// @version        2009/07/21 00:00 mousedownタイミング修正
+// ==/UserScript==
+// @version        2007/10/05 00:00 リンク上やbody上など長押し(msec)でcontext menu表示
+// @version        2007/09/25 00:00
+// @Note
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+    var autoContextmenu = {
+      xpPref: Components.classes['@mozilla.org/preferences-service;1'].
+                    getService(Components.interfaces.nsIPrefBranch2),
+      prefstr: "userChrome.autoContextmenu",
+      kTIMER : 800, //リンク上やbody上など長押し(msec)でcontext menu表示
+      kTOLERANCE:10,
+      contextOpen:false,
+      timer: null,
+      cursorTimer: null,
+      prev: null,
+      prevcursor: null,
+
+      init: function() {
+        var menu = document.getElementById("autoContextmenu");
+        if (!menu){
+          setTimeout(function(){autoContextmenu.init();}, 200);
+          return;
+        } else {
+          this.setMenuCkeck();
+          this.addPrefListener(this.PrefListener); // 登録処理
+          window.addEventListener("unload", this, false);
+        }
+      },
+
+      uninit: function(){
+        gBrowser.mPanelContainer.removeEventListener("mousedown", this, true);
+        gBrowser.mPanelContainer.removeEventListener("mouseup", this, true);
+        gBrowser.mPanelContainer.removeEventListener("click", this, true);
+        this.removePrefListener(this.PrefListener); // 解除処理
+        window.removeEventListener("unload", this, false);
+      },
+
+      isEnable: function(){
+        if(!document.getElementById("autoContextmenu")
+           || document.getElementById("autoContextmenu").getAttribute('checked') != "true")
+          return  false
+        return true;
+      },
+
+      handleEvent: function(event){
+        switch (event.type) {
+          case "mousedown":
+            //window.userChrome_js.debug("mousedown " + event.button);
+            this.resetCursor();
+
+            if (event.button != 0) {
+              return;
+            }
+            this.timer = new Date().getTime();
+            var isClickable = this.isParentClickableNode(event.target);
+            var elem = isClickable || event.target;
+            if (isClickable)
+              this.cursorTimer = setTimeout(function(self, elem) {
+                self.prev =  elem;
+                self.prevcursor = self.prev.style.getPropertyValue("cursor");
+                self.prev.style.setProperty("cursor", "help", "important");
+                self.cursorTimer2 = setTimeout(function(self) {
+                  self.resetCursor();
+                },3000, self);
+              }, this.kTIMER, this, elem);
+            this.lastX = event.screenX;
+            this.lastY = event.screenY;
+            //this.exec(event);
+            break;
+          case "mouseup":
+            //window.userChrome_js.debug("mouseup " + event.button);
+            this.resetCursor();
+
+            if (event.button != 0) {
+              return;
+            }
+
+            this.exec(event);
+            break;
+          case "click":
+            //window.userChrome_js.debug("click " + event.button);
+            this.resetCursor();
+
+            if (event.button != 0) {
+              return;
+            }
+            if (this.contextOpen == true) {
+              event.stopPropagation();
+              event.preventDefault();
+            }
+            break;
+          case "unload":
+            this.uninit();
+        }
+      },
+
+      resetCursor: function() {
+        if (this.cursorTimer) {
+          clearTimeout(this.cursorTimer);
+        }
+        if (this.cursorTimer2) {
+          clearTimeout(this.cursorTimer2);
+        }
+        if (this.prev) {
+          //if (this.prevcursor)
+          //  this.prev.style.setProperty("cursor", this.prevcursor, null);
+          //else
+            this.prev.style.removeProperty("cursor");
+          this.prev = null;
+        }
+      },
+
+      setMenuCkeck:  function(){
+        try{
+          var check = this.xpPref.getBoolPref(this.prefstr);
+        } catch(e){
+          var check = true;
+        }
+        var menu = document.getElementById("autoContextmenu");
+        menu.setAttribute('checked', check);
+        if (check) {
+          gBrowser.mPanelContainer.addEventListener("mousedown", this, true);
+          gBrowser.mPanelContainer.addEventListener("mouseup", this, true);
+          gBrowser.mPanelContainer.addEventListener("click", this, true);
+        } else {
+          gBrowser.mPanelContainer.removeEventListener("mousedown", this, true);
+          gBrowser.mPanelContainer.removeEventListener("mouseup", this, true);
+          gBrowser.mPanelContainer.removeEventListener("click", this, true);
+        }
+      },
+
+      toggle: function(){
+        try{
+          var check = this.xpPref.getBoolPref(this.prefstr);
+        } catch(e){
+          var check = true;
+        }
+        this.xpPref.setBoolPref(this.prefstr, !check);
+      },
+
+      exec: function(event) {
+        this.contextOpen = false;
+
+        if (event.button != 0)
+          return;
+
+        if (event.type === "mousedown")
+          return;
+
+        var selection = document.commandDispatcher.focusedWindow.getSelection();
+        var flg = (new Date().getTime() - this.timer > this.kTIMER);
+        if ( Math.abs(this.lastX - event.screenX) + Math.abs(this.lastY - event.screenY) > this.kTOLERANCE)
+          var flg = false
+        if (!flg && selection.toString() == "")
+          return;
+
+        /*
+        if (event.type == "mousedown")
+          if ((selection.rangeCount > 0) && !selection.getRangeAt(0).collapsed)
+            if (event.target.tagName != "menuitem")
+              selection.removeAllRanges();
+        */
+        var link = this.isParentClickableNode(event.target);
+        var within = link ? this.isSelectedIn(link) : false;
+        var context = false;
+        if (!link && selection.isCollapsed && flg)
+          context = true;
+        else if (link && !within && flg)
+          context = true;
+        else if(link && within || flg)
+          context = true;
+        else if (!link && !selection.isCollapsed || flg)
+          context = true;
+        if (context) {
+          //window.userChrome_js.debug("contextmenu");
+          if ('mgGestureState' in window) {
+            document.popupNode = event.target;
+            //document.getElementById("contentAreaContextMenu").
+            //         openPopup(null, "after_pointer", event.clientX, event.clientY, true, true);
+            document.getElementById("contentAreaContextMenu").
+                     showPopup( event.target, event.screenX, event.screenY, 'context');
+            this.contextOpen = true;
+          } else {
+            // Mouse Gesture Redox があると動かない
+            var mouseEvent = document.createEvent("MouseEvents");
+            mouseEvent.initMouseEvent("contextmenu", true, true, window, 1,
+                                      event.screenX, event.screenY, event.clientX, event.clientY,
+                                      false, false, false, false, 2, null);
+            this.contextOpen = true;
+            event.target.dispatchEvent(mouseEvent);
+          }
+        }
+      },
+      //現在のウインドウを得る
+      get focusedWindow(){
+        var win = document.commandDispatcher.focusedWindow;
+        if (!win || win == window)
+          win = window.content;
+        return win;
+      },
+
+      //選択範囲の親要素を得る
+      getSelectedNodes: function(){
+        var targetWindow = this.focusedWindow;
+        var selection = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+        try{
+          var selRange = selection.getRangeAt(0);
+        }catch(e){
+          var selRange = selection;
+        }
+        if(!selRange)return null;;
+        var sNode = selRange.startContainer;
+        var eNode = selRange.endContainer;
+        return [this.oyaNode(sNode),this.oyaNode(eNode)]
+      },
+
+    //選択範囲の要素が所属するa要素を得る, a要素でないならnull
+      oyaNode: function(aNode){
+        var pNode = aNode;
+        while(pNode && !(pNode instanceof HTMLAnchorElement || pNode instanceof HTMLAreaElement) ){
+          pNode = pNode.parentNode;
+        }
+        return pNode;
+      },
+
+      //選択テキストがリンク要素か
+      isSelectedIn: function(aNode){
+        aNode = this.oyaNode(aNode);
+        if(!aNode) return true;
+        var selNodes = this.getSelectedNodes();
+        if(!selNodes) return false;
+        if(aNode == selNodes[0] && aNode == selNodes[1]) return true;
+        return false;
+      },
+      isParentClickableNode : function(aNode) {
+        if (!aNode) return null;
+        var d = aNode.ownerDocument;
+        try {
+          var xpathResult = d.evaluate(
+              'ancestor-or-self::*[((local-name() = "a" or local-name() = "A") and @href) or local-name() = "button" or local-name() = "BUTTON" or ((local-name() = "input" or local-name() = "INPUT") and (@type = "SUBMIT" or @type = "submit" or @type = "BUTTON" or @type = "button" or @type = "IMAGE" or @type = "image"))]',
+              aNode,
+              this.NSResolver,
+              XPathResult.FIRST_ORDERED_NODE_TYPE,
+              null
+            );
+        }
+        catch(e) {
+          return null;
+        }
+        return xpathResult.singleNodeValue;
+      },
+
+      NSResolver : {
+        lookupNamespaceURI : function(aPrefix) {
+          switch (aPrefix) {
+            case 'xul':
+              return 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
+            case 'html':
+            case 'xhtml':
+              return 'http://www.w3.org/1999/xhtml';
+            case 'xlink':
+              return 'http://www.w3.org/1999/xlink';
+            default:
+              return '';
+          }
+        }
+      },
+    //Thanks Piro.
+      // 監視を開始する
+      addPrefListener: function(aObserver) {
+        try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].
+                    getService(Components.interfaces.nsIPrefBranch2);
+          pbi.addObserver(aObserver.domain, aObserver, false);
+        } catch(e) {}
+      },
+
+      // 監視を終了する
+      removePrefListener: function(aObserver) {
+        try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].
+                    getService(Components.interfaces.nsIPrefBranch2);
+          pbi.removeObserver(aObserver.domain, aObserver);
+        } catch(e) {}
+      },
+
+      PrefListener:{
+        domain  : "userChrome.autoContextmenu",
+            //'userChrome.XXX'という名前の設定が変更された場合全てで処理を行う
+
+        observe : function(aSubject, aTopic, aPrefstring) {
+          if (aTopic == 'nsPref:changed') {
+            // 設定が変更された時の処理
+            autoContextmenu.setMenuCkeck();
+          }
+        }
+      }
+    }
+
+    autoContextmenu.init();
+  ]]></script>
+  <commandset id="mainCommandSet">
+    <comand id="cmd_autoContext_toggle"
+            oncommand="autoContextmenu.toggle();"/>
+  </commandset>
+
+  <keyset id="mainKeyset">
+      <key id="key_autoContext_toggle" key="a" command="cmd_autoContext_toggle" modifiers="accel,alt"/>
+  </keyset>
+<!-- toolbarbuttonの時は autoCheck  .checked, menuitem時は autocheck setAttribute('checked',  )になる 変なの-->
+  <menupopup id="menu_ToolsPopup">
+    <menuitem id="autoContextmenu"
+              label="自動コンテキストメニュー表示"
+              type="checkbox"
+              checked="false"
+              key="key_autoContext_toggle"
+              command="cmd_autoContext_toggle"
+              autocheck="false"
+              insertbefore="menu_preferences"/>
+  </menupopup>
+</overlay>

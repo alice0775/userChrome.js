@@ -1,0 +1,806 @@
+<?xml version="1.0"?>
+
+<overlay id="ieviewModokiOverlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name          ieviewModoki
+// @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description   ieviewModoki
+// @include       main
+// @compatibility Firefox 2.0 3.0 3.1
+// @author        Alice0775
+// @version       2010/03/24 23:00 ウインドウ残らないように
+// ==/UserScript==
+// @version       2011/01/29 00:00 Bug 623435 - Rip out deprecated |RegExp.compile| builtin method
+// @version       2009/12/01 21:00 パラメータのファイルパスにスペースがある場合""で括ればいいように
+// @version       2009/06/04 17:00 video element
+// @version       2009/04/06 17:00 linuxでも
+// @version       2009/03/27 00:00 nsIProcess変更
+// @version       2008/11/16 22:00 例外
+// @version       2008/07/22 03:00 選択テキストを○○へ送るが機能していないのを修正(Bug 416534 – Clean up cross-site XHR security checks  のチェックインによる)
+// @version       2008/03/10 20:00 (リンクの場合は直接開くように)タイミングが合わずダブル場合があるのを修正, 負荷の軽減のためあらかじめ正規表現を作成するようにした
+// @version       2008/03/09 07:00 セキュリティチェック, リンクの場合は直接開くように
+// @version       2008/03/08 02:10 正規表現にした
+// @version       2007/12/08 02:10 ウインドウが閉じられるのを修正
+// @version       2007/12/08 02:10 タブが一つだけだった場合, ウインドウが閉じられるのを修正
+// @version       2007/12/08 00:00 新規ウインドウだった場合の処理, 新規タブ前面, 新規タブ背面だった場合の処理を追加
+// @version       2007/11/29 00:00 コンテキストメニューリンク上のときはページ...は非表示
+// @version       2007/11/28 16:00 コンテキストメニュー完全フラット化の設定を追加 要再起動
+// @note          about:configの設定(ツールメニューから設定あり)
+// @note           userChrome.ieview.name0～9   (アプリの識別名称: [空白]は削除となる)
+// @note           userChrome.ieview.param0～9  (アプリに渡す引数: URLは%%URL%%, 選択文字列は%%SEL%% で記述)
+// @note           userChrome.ieview.path0～9   (アプリのパス: WINdowsの場合\は \\とする)
+// @note           userChrome.ieview.force.always0～9 (userChrome.ieview.force.site0～9に一致時自動に起動:[true], 自動を無効:false)
+// @note           userChrome.ieview.force.site0～9   (URl(部分一致)をスペースで区切る)
+// @note          about:configの設定(ツールメニューから設定なし)
+// @note           userChrome.ieview.contextmenu_nest コンテキストメニューのサブメニュー化: する:true, しない:[false]
+// @note          about:config 要再起動
+// @note           userChrome.ieview.contextmenu_flat コンテキストメニュー完全フラット化: する:true, しない:[false]
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+var ieviewModoki={
+  defaultpath: "C:\\Program Files\\Internet Explorer\\iexplore.exe",  // パスの\は\\とする
+  defaultparam: "%%URL%%%%SEL%%",
+  CONTEXTMENUFLAT: false, //コンテキストメニュー完全フラット化 する:true, しない:[false]
+
+  mApplication: [],
+  mRegExp: [],
+
+  debug: function(aMsg){
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    Cc["@mozilla.org/consoleservice;1"]
+      .getService(Ci.nsIConsoleService)
+      .logStringMessage(aMsg);
+  },
+  error: function(aMsg,err){
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    const CONSOLE_SERVICE    = Cc['@mozilla.org/consoleservice;1'].getService(Ci.nsIConsoleService);
+    var error = Cc['@mozilla.org/scripterror;1'].createInstance(Ci.nsIScriptError);
+    if(typeof(err) == 'object') error.init(aMsg + '\n' + err.name + ' : ' + err.message,err.fileName || null,null,err.lineNumber,null,2,err.name);
+    else error.init(aMsg + '\n' + err + '\n',null,null,null,null,2,null);
+    CONSOLE_SERVICE.logMessage(error);
+  },
+  //初期化
+  initPref: function(){
+    this.mApplication=[];
+    this.mRegExp=[];
+    //登録アプリ
+    for (var i=0;i<20;i++){
+      var name = this.getPref("userChrome.ieview.name"+i,'str',"");
+      this.mApplication[i] = (name == null)? '' : name;
+    }
+    for(var iApp=0;iApp<ieviewModoki.mApplication.length;iApp++){
+      var include=[],exclude=[];
+      var list = this.getPref('userChrome.ieview.force.site'+iApp, 'str', '').split(' ');
+      for(var i=0, len=list.length;i<len; i++){
+        if(list[i] === '') continue;
+        if (/^!/.test(list[i]))
+          exclude.push(list[i].replace(/^!/,'').replace(/\.\*$/,'')+'.*');
+        else
+          include.push(list[i].replace(/\.\*$/,'')+'.*');
+      }
+      var excl = exclude.length > 0 ? "(?!" + exclude.join("$|") + "$)" : "";
+      var reg = new RegExp("^" + excl + "(" + (include.join("|")) + ")$", "i");
+      this.mRegExp[iApp] = reg;
+    }
+  },
+  init: function(){
+    this.initPref();
+    //コンテンツエリアコンテキストメニュー
+    this.CONTEXTMENUFLAT =  this.getPref('userChrome.ieview.contextmenu_flat', 'bool', this.CONTEXTMENUFLAT);
+    if(this.CONTEXTMENUFLAT){
+      document.getElementById('contentAreaContextMenu').addEventListener('popupshowing',
+      ieviewModoki.onContextMenupopup, false);
+    }else{
+      var menu  = document.createElement("menu");
+      menu.setAttribute("id","ieviewModokiContext");
+      menu.setAttribute("label","IE VIEW Modoki");
+      menu.setAttribute("accesskey","E");
+      var menupopup  = document.createElement("menupopup");
+      menupopup.setAttribute("id","ieviewModokiContextMenu");
+      menupopup.setAttribute("onpopupshowing","event.stopPropagation();ieviewModoki.onContextMenupopup();");
+      menu.appendChild(menupopup);
+      document.getElementById('contentAreaContextMenu').appendChild(menu);
+    }
+
+    //ツールメニュー
+    var menu  = document.createElement("menu");
+    menu.setAttribute("id","ieviewModokiTool");
+    menu.setAttribute("label","IE VIEW Modokiの設定");
+    menu.setAttribute("accesskey","E");
+    if (document.getElementById("menu_preferences").parentNode == document.getElementById('menu_ToolsPopup')) {
+      document.getElementById('menu_ToolsPopup')
+      .insertBefore(menu, document.getElementById("menu_preferences"));
+    } else {
+      document.getElementById('menu_ToolsPopup')
+      .appendChild(menu);
+
+    }
+
+    var menupopup  = document.createElement("menupopup");
+    menupopup.setAttribute("id","ieviewModokiToolMenu");
+    menupopup.setAttribute("onpopupshowing","event.stopPropagation();ieviewModoki.onToolMenupopup();");
+    menu.appendChild(menupopup);
+
+    var menuitem  = document.createElement("menuitem");
+    menuitem.setAttribute("label","IE VIEW Modokiで用いるアプリケーションの新規追加");
+    menuitem.setAttribute("accesskey","a");
+    menuitem.setAttribute("oncommand","ieviewModoki.modAppPath()");
+    menupopup.appendChild(menuitem);
+
+    //既に開いている場合
+    //現在のブラウザ
+    var browser = ieviewModoki.activeBrowser();
+    //ブラウザのタブが1
+    if(browser.browsers.length<2){
+      //ドキュメントのURI
+      var targethref=browser.currentURI.spec;
+      //自動実行か?
+      for(var iApp=0;iApp<ieviewModoki.mApplication.length;iApp++){
+        if(!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
+        if(!this.mRegExp[iApp]) continue;;
+        if(this.mRegExp[iApp].test(targethref)) {
+          //起動
+          this.launch(targethref, iApp);
+          if( browser.sessionHistory.count == 1 ){
+            browser.addTab("about_blank");
+            browser.removeTab(browser.mTabs[0]);
+            setTimeout(function(){window.close();},0);
+          }else{
+            //blankにしておく
+            browser.contentDocument.location.replace("about:blank");
+          }
+        }
+      }
+    }
+    this.addPrefListener(ieviewModoki.PrefListener); // 登録処理
+    document.getElementById("appcontent").addEventListener("keydown", function(aEvent){ieviewModoki.keydown(aEvent);}, true);
+    document.getElementById("appcontent").addEventListener("click", function(aEvent){ieviewModoki.click(aEvent);}, true);
+    window.addEventListener("DOMContentLoaded", function(aEvent){ieviewModoki.always(aEvent);}, false);
+  },
+  uninit: function(aEvent){
+    this.removePrefListener(ieviewModoki.PrefListener); // 解除処理
+    document.getElementById("appcontent").removeEventListener("keydown", function(aEvent){ieviewModoki.keydown(aEvent);}, true);
+    document.getElementById("appcontent").removeEventListener("click", function(aEvent){ieviewModoki.click(aEvent);}, true);
+    window.removeEventListener("DOMContentLoaded", function(aEvent){ieviewModoki.always(aEvent);}, false);
+  },
+  keydown: function(aEvent){
+    if( aEvent.keyCode != 13 || aEvent.altKey || aEvent.shiftKey || aEvent.ctrlKey) return;
+    this.getHref(aEvent);
+  },
+  click: function(aEvent){
+    if( aEvent.button != 0 || aEvent.altKey || aEvent.shiftKey || aEvent.ctrlKey) return;
+    this.getHref(aEvent);
+  },
+  getHref: function(aEvent){
+    const ioService = Components.classes['@mozilla.org/network/io-service;1']
+                      .getService(Components.interfaces.nsIIOService);
+    var target = aEvent.originalTarget;
+    while(target){
+      if (target instanceof HTMLAnchorElement ||
+             target instanceof HTMLImageElement ||
+             target instanceof HTMLAreaElement ||
+             target instanceof HTMLLinkElement) {
+         break;
+      }
+      if (/^(video|audio)$/i.test(target.localName))
+        break;
+      target = target.parentNode;
+    }
+    var targethref = null;
+    if ( target && target.hasAttribute("href") ) {
+       targethref = target.getAttribute("href");
+    } else if ( target && target.hasAttribute("src") ) {
+       targethref = target.getAttribute("src");
+    }
+    if ( !targethref ) return;
+    //自分自身でのみ開くもの
+    if (/^\s*chrome:/.test(targethref) || /^\s*javascript:/.test(targethref)) return;
+    //相対URL
+    var win = target.ownerDocument.defaultView;
+    try{
+      var baseURI = ioService.newURI(win.document.documentURI, null, null);
+      targethref = ioService.newURI(targethref, null, baseURI).spec;
+      //自動実行か?
+      for(var iApp=0;iApp<ieviewModoki.mApplication.length;iApp++){
+        if(!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
+        if(!this.mRegExp[iApp]) continue;;
+        if(this.mRegExp[iApp].test(targethref)) {
+          //起動
+          aEvent.stopPropagation();
+          aEvent.preventDefault();
+          this.launch(targethref, iApp);
+          return false;
+        }
+      }
+    }catch(e){
+      ieviewModoki.error("Error",e);
+    }
+  },
+
+  //登録アプリの修正
+  modAppPath: function(iApp){
+    if(!iApp && iApp != 0){
+      //New
+      var iApp=20;
+      for(var i=0;i<20;i++){
+        var name = this.mApplication[i];
+        if(name == ""){
+          iApp = i;
+          break;
+        }
+      }
+      if(iApp==20){
+        alert("アプリケーションの登録は最大20個まで")
+        return;
+      }
+
+      var text =  '';
+      var text = window.prompt('アプリケーションの識別名称を入力', text);
+      if(!text) return;
+      if(text == '') return;
+   }else{
+      //Modify
+      var text =  this.getPref('userChrome.ieview.name'+iApp, 'str', '');
+      var text = window.prompt('アプリケーションの識別名称を入力(空白でアプリケーション登録削除)', text);
+      if(text != '' && !text) return;
+    }
+
+    this.setPref('userChrome.ieview.name'+iApp, 'str', text)
+    this.mApplication[iApp] = text;
+
+    //アプリパス
+    var nsIFilePicker = Components.interfaces.nsIFilePicker;
+    var fp = Components.classes["@mozilla.org/filepicker;1"]
+            .createInstance(nsIFilePicker);
+    fp.init(window, "Select a File", nsIFilePicker.modeOpen);
+
+    var appfile = Components.classes['@mozilla.org/file/local;1']
+                    .createInstance(Components.interfaces.nsILocalFile);
+    appfile.initWithPath(this.defaultpath);
+    //アプリ名称空白なら削除してリターン
+    if(text == '') {
+       this.setPref('userChrome.ieview.path'+iApp, 'complex', appfile);
+       this.setPref('userChrome.ieview.param'+iApp, 'str', this.defaultparam)
+       this.setPref('userChrome.ieview.force.site'+iApp, 'str', '')
+      return;
+    }
+    appfile = this.getPref('userChrome.ieview.path'+iApp, 'complex', appfile);
+    fp.displayDirectory = appfile;
+    fp.appendFilters(Components.interfaces.nsIFilePicker.filterApps);
+    var res = fp.show();
+    if (res == nsIFilePicker.returnOK){
+      var thefile = fp.file.path;
+      // --- do something with the file here ---
+      this.setPref('userChrome.ieview.path'+iApp, 'complex', fp.file);
+    }else{
+      return;
+    }
+    //引数
+    var text =  this.getPref('userChrome.ieview.param'+iApp, 'str', this.defaultparam);
+    text = window.prompt('コマンドラインオプション(パスは\\とし必要に応じ"で括る。URLは%%URL%%, 選択文字列は%%SEL%% とする)', text);
+    if(text) this.setPref('userChrome.ieview.param'+iApp, 'str', text)
+  },
+
+
+  //urlチェック, 登録アプリ実行
+  always: function(aEvent){
+    if (!(aEvent.originalTarget instanceof HTMLDocument)) return;
+    if (!aEvent.originalTarget.defaultView) return;
+    if (aEvent.originalTarget.defaultView.frameElement) return;
+    //現在のブラウザ
+    var browser = ieviewModoki.activeBrowser();
+
+    //ドキュメントをロードしたブラウザ, ブラウザインデックス
+    var targetBrowser = null;
+    var targetBrowserIndex = browser.getBrowserIndexForDocument(aEvent.originalTarget);
+    if (targetBrowserIndex == -1)
+      return;
+    targetBrowser = browser.getBrowserAtIndex(targetBrowserIndex);
+
+
+    //ドキュメントのURI
+    var targethref = targetBrowser.currentURI.spec;
+
+    //自動実行か?
+    for(var iApp=0;iApp<ieviewModoki.mApplication.length;iApp++) {
+      if(!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
+      if(!this.mRegExp[iApp]) continue;;
+      if(this.mRegExp[iApp].test(targethref)) {
+        this.launch(targethref, iApp);
+        //ブラウザのタブが1
+        if(browser.browsers.length<2
+            && targetBrowser.sessionHistory.count == 1 ) {
+          browser.addTab("about_blank");
+          browser.removeTab(browser.mTabs[0]);
+          setTimeout(function(){window.close();},0);
+        } else {
+          //タブの履歴がないならタブ削除
+          if( targetBrowser.sessionHistory.count == 1 ){
+            if (browser.mTabbedMode)
+              browser.removeTab(browser.mTabs[targetBrowserIndex]);
+          }else{
+            //blankにしておく
+            aEvent.originalTarget.location.replace("about:blank");
+          }
+        }
+        //起動
+        return;
+      }
+    }
+  },
+  //登録アプリ実行
+  launch: function (href,iApp){
+
+    var sel = '';
+    if(href == ''){
+      sel = this._getselection();
+    }
+    var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+          createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+    //キャラクタコード変換
+    var platform = window.navigator.platform.toLowerCase();
+    if(platform.indexOf('win')>-1){
+      UI.charset = "Shift_JIS";
+      sel = UI.ConvertFromUnicode(sel);
+    }else{
+      UI.charset = "UTF-8";
+      sel = UI.ConvertFromUnicode(sel);
+    }
+    //登録アプリパス
+    var appfile = Components.classes['@mozilla.org/file/local;1']
+                    .createInstance(Components.interfaces.nsILocalFile);
+    appfile.initWithPath(this.defaultpath);
+    var appfile = this.getPref('userChrome.ieview.path'+iApp, 'complex', appfile);
+    if (!appfile.exists()){
+      alert("Executable does not exist.");
+      return;
+    }
+    //引数
+    var args = new Array();
+    var params = this.paramParser(this.getPref('userChrome.ieview.param'+iApp,'str', this.defaultparam));
+    //var params = this.getPref('userChrome.ieview.param'+iApp,'str', this.defaultparam).split(' ');
+    for(var i=0,len=params.length;i<len;i++){
+      if(params[i]){
+        var text = params[i].replace(/%%URL%%/i,href).replace(/%%SEL%%/i,sel);
+        text = text.replace(/^(ttp|tp|h..p)/i,'http');
+        args.push(text);
+      }
+    }
+    //実行
+    var process = Components.classes['@mozilla.org/process/util;1']
+                  .createInstance(Components.interfaces.nsIProcess);
+    process.init(appfile);
+    process.run(false, args, args.length, {});
+  },
+
+  paramParser: function(str) {
+    var esc = "";
+    var quote = "";
+    var params = [""];
+    var j = 0;
+    for (i = 0; i < str.length; i++) {
+      var s1 = str.substr(i, 1);
+      if (!esc && s1 == "\\") {
+        esc = s1;
+        continue;
+      } else if (esc) {
+        params[j] += esc + s1;
+        esc = "";
+        continue;
+      } else if (!quote  && s1 == "\"") {
+        quote = s1;
+        //params[j] += quote;
+        continue;
+      } else if (quote  && s1 == "\"") {
+        quote = "";
+        //params[j] += s1;
+        continue;
+      } else if (!quote && s1 == " ") {
+        if (params[j] != "") {
+          j++;
+          params[j] = "";
+        }
+      } else {
+        params[j] += s1;
+      }
+    }
+    if (esc)
+      params[j] += esc;
+    return params;
+  },
+
+  //登録アプリ有効/無効
+  convert2RegExp: function( pattern ) {
+    var s = new String(pattern);
+    var res = new String('');
+
+    for (var k = 0 ; k < s.length ; k++) {
+      switch(s[k]) {
+        case '*' :
+          res += '.*';
+          break;
+        case '.' :
+        case '?' :
+        case '^' :
+        case '$' :
+        case '+' :
+        case '{' :
+        case '[' :
+        case '|' :
+        case '(' :
+        case ')' :
+        case ']' :
+          res += '\\' + s[k];
+          break;
+        case '\\' :
+          res += '\\\\';
+          break;
+        case ' ' :
+          // Remove spaces from URLs.
+          break;
+        default :
+          res += s[k];
+          break;
+      }
+    }
+
+    // fortunately, we don't need .tld in chrome :)
+    return new RegExp(res, 'i');
+  },
+  enable:function(iApp){
+    var flag = this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)
+    this.setPref('userChrome.ieview.force.always'+iApp, 'bool', !flag)
+  },
+  //登録アプリ リスト表示
+  modSite:function(iApp){
+    var text0, objArray=[], selected = {}, result, text1, text;
+    var promptService = Cc["@mozilla.org/embedcomp/prompt-service;1"]
+                        .getService(Ci.nsIPromptService);
+
+    while(true){
+      text0 =  this.getPref('userChrome.ieview.force.site'+iApp, 'str', '').replace(/^ +| +$/g,'');
+      objArray = text0.split(' ');
+      objArray.sort(function(a,b) {
+        a=a.toLowerCase();
+        b=b.toLowerCase();
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      })
+      text0 = ' ' + text0 + ' ';
+      objArray = ['サイトを追加'].concat(objArray);
+      selected = {};
+      result = promptService.select(null, '常に'+ieviewModoki.mApplication[iApp]+'で閲覧するサイト',
+                                        '追加:"サイトを追加"を選択, 修正/削除:サイトを選択, 終了:キャンセル',
+                                        objArray.length, objArray, selected);
+      if (!result) return;
+      if(selected.value == 0){//追加
+        this.addSite('',iApp);
+      }else{
+        text = objArray[selected.value];
+        text1 = window.prompt('常に'+ieviewModoki.mApplication[iApp]+'で閲覧するサイト(正規表現)/ ブランクで削除', text);
+        if(text1 ==''){//削除
+          this.setPref('userChrome.ieview.force.site'+iApp, 'str', text0.replace(' '+text+' ', ' ').replace(/^ +| +$/g,''));
+        }else if(text1){//修正
+          text1 = text1.replace(/^ +| +$/g,'');
+          this.setPref('userChrome.ieview.force.site'+iApp, 'str', text0.replace(' '+text+' ', ' '+text1+' ').replace(/^ +| +$/g,''));
+        }
+      }
+    }
+  },
+  //常に開くサイト登録
+  addSite:function(href,iApp){
+    var text = window.prompt('常に'+ieviewModoki.mApplication[iApp]+'で閲覧するサイト(正規表現)',href);
+    if(!text) return;
+    if(text == '') return;
+    text = text.replace(/^ +| +$/g,'');
+    text = this.getPref('userChrome.ieview.force.site'+iApp, 'str', '').replace(/^ +| +$/g,'') + ' ' + text;
+    this.setPref('userChrome.ieview.force.site'+iApp, 'str', text)
+  },
+  //ツールメニュー表示
+  onToolMenupopup: function(){
+    var menupopup0 = document.getElementById("ieviewModokiToolMenu");
+    while(menupopup0.childNodes.length>1){
+      menupopup0.removeChild(menupopup0.lastChild);
+    }
+    var firstItem = true;
+    for(var i=0;i<ieviewModoki.mApplication.length;i++){
+      if(ieviewModoki.mApplication[i]=="") continue;
+
+      if(firstItem){
+        var menuseparator = document.createElement("menuseparator");
+        menupopup0.appendChild(menuseparator);
+        firstItem = false;
+      }
+
+      var menu  = document.createElement("menu");
+      menu.setAttribute("label",ieviewModoki.mApplication[i]);
+      menu.setAttribute("accesskey",i);
+
+      var menupopup  = document.createElement("menupopup");
+      menupopup.setAttribute("onpopupshowing","event.stopPropagation();");
+      menu.appendChild(menupopup);
+
+      if( ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) ){
+        var menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("label","このページを"+ieviewModoki.mApplication[i]+"で閲覧");
+        menuitem.setAttribute("accesskey","1");
+        menuitem.setAttribute("oncommand","ieviewModoki.launch(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menupopup.appendChild(menuitem);
+
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_pagealways"+i);
+        menuitem.setAttribute("label","このページを常に"+ieviewModoki.mApplication[i]+"で閲覧");
+        menuitem.setAttribute("accesskey","2");
+        menuitem.setAttribute("oncommand","ieviewModoki.addSite(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menupopup.appendChild(menuitem);
+      }
+
+      if(ieviewModoki._getselection()!="" && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%SEL%%/) ){
+        if( ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) ){
+          var menuseparator = document.createElement("menuseparator");
+          menupopup.appendChild(menuseparator);
+        }
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_sel"+i);
+        menuitem.setAttribute("label","この選択テキスト"+ieviewModoki.mApplication[i]+"に送る");
+        menuitem.setAttribute("accesskey","s");
+        menuitem.setAttribute("oncommand","ieviewModoki.launch('',"+i+")");
+        menupopup.appendChild(menuitem);
+      }
+
+      if( ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) ){
+        var menuseparator = document.createElement("menuseparator");
+        menupopup.appendChild(menuseparator);
+
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_enable"+i);
+        menuitem.setAttribute("label","常に"+ieviewModoki.mApplication[i]+"で閲覧するサイトの有効/無効");
+        menuitem.setAttribute("accesskey","y");
+        menuitem.setAttribute("oncommand","ieviewModoki.enable("+i+")");
+        menuitem.setAttribute("type","checkbox");
+        var flag = ieviewModoki.getPref('userChrome.ieview.force.always'+i,'bool', true)
+        menuitem.setAttribute('checked', flag);
+        menupopup.appendChild(menuitem);
+
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("label","常に"+ieviewModoki.mApplication[i]+"で閲覧するサイトの登録");
+        menuitem.setAttribute("accesskey","s");
+        menuitem.setAttribute("oncommand","ieviewModoki.modSite("+i+")");
+        menupopup.appendChild(menuitem);
+      }
+
+      menuitem = document.createElement("menuitem");
+      menuitem.setAttribute("label",ieviewModoki.mApplication[i]+"で用いるアプリケーションの修正/削除");
+      menuitem.setAttribute("accesskey","m");
+      menuitem.setAttribute("oncommand","ieviewModoki.modAppPath("+i+")");
+      menupopup.appendChild(menuitem);
+
+      menupopup0.appendChild(menu);
+    }
+  },
+  //コンテントエリアコンテキストメニュー表示
+  onContextMenupopup: function(){
+    var flg1 = ieviewModoki.getPref('userChrome.ieview.contextmenu_nest', 'bool', false);
+    if (ieviewModoki.CONTEXTMENUFLAT) {
+      var contextmenu = document.getElementById('contentAreaContextMenu');
+      for(var i=contextmenu.childNodes.length-1;i>-1;i--){
+        if(contextmenu.childNodes[i].hasAttribute('id')
+           && /^ieviewModoki.+/.test(contextmenu.childNodes[i].getAttribute('id'))
+           && !/ieviewModokiContextMenu/.test(contextmenu.childNodes[i].getAttribute('id')) ){
+          contextmenu.removeChild(contextmenu.childNodes[i]);
+        }
+      }
+      menupopup0 = contextmenu;
+    }else{
+      var menupopup0 = document.getElementById("ieviewModokiContextMenu");
+      while(menupopup0.lastChild){
+        menupopup0.removeChild(menupopup0.lastChild);
+      }
+    }
+    var firstItem = true;
+    for(var i=0;i<ieviewModoki.mApplication.length;i++){
+      if(ieviewModoki.mApplication[i]=="") continue;
+      ieviewModoki.debug("Application"+ieviewModoki.mApplication[i]);
+
+      var menupopup = menupopup0;
+
+      var iflg =false;
+      if(/* ieviewModoki._getselection()==""
+        && */ !gContextMenu.onLink
+        && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) )
+        iflg = true;
+      if(/* ieviewModoki._getselection()==""
+        && */ gContextMenu.onLink
+        && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) )
+        iflg = true;
+      if((gContextMenu.onVideo || gContextMenu.onAudio)
+        && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) )
+        iflg = true;
+      if(ieviewModoki._getselection()!=""
+        && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%SEL%%/) )
+        iflg = true;
+      if( !iflg ) continue;
+
+      if( !firstItem || ieviewModoki.CONTEXTMENUFLAT){
+        var menuseparator = document.createElement("menuseparator");
+        menuseparator.setAttribute("id","ieviewModoki_sepa"+i);
+        menupopup.appendChild(menuseparator);
+      }
+
+      if(flg1 && !ieviewModoki.CONTEXTMENUFLAT){
+        var menu  = document.createElement("menu");
+        menu.setAttribute("label",ieviewModoki.mApplication[i]);
+        menu.setAttribute("accesskey",i);
+
+        var menupopup  = document.createElement("menupopup");
+        menupopup.setAttribute("onpopupshowing","event.stopPropagation();");
+        menu.appendChild(menupopup);
+        menupopup0.appendChild(menu);
+      }
+
+      if(/* ieviewModoki._getselection()==""
+         && */ !gContextMenu.onLink
+         && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) ){
+        var menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_page"+i);
+        menuitem.setAttribute("label","このページを"+ieviewModoki.mApplication[i]+"で閲覧");
+        menuitem.setAttribute("accesskey","1");
+        menuitem.setAttribute("oncommand","ieviewModoki.launch(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menupopup.appendChild(menuitem);
+
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_pagealways"+i);
+        menuitem.setAttribute("label","このページを常に"+ieviewModoki.mApplication[i]+"で閲覧");
+        menuitem.setAttribute("accesskey","2");
+        menuitem.setAttribute("oncommand","ieviewModoki.addSite(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menupopup.appendChild(menuitem);
+      }
+      if(/* ieviewModoki._getselection()==""
+        && */ (gContextMenu.onLink || gContextMenu.onVideo || gContextMenu.onAudio)
+        && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%URL%%/) ){
+        var url;
+        if (gContextMenu.onVideo || gContextMenu.onAudio) {
+          url = gContextMenu.mediaURL;
+        } else {
+          url = gContextMenu.getLinkURL();
+        }
+        var menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_link"+i);
+        menuitem.setAttribute("label","このリンクを"+ieviewModoki.mApplication[i]+"で閲覧");
+        menuitem.setAttribute("accesskey","1");
+        menuitem.setAttribute("oncommand","ieviewModoki.launch('"+url+"',"+i+")");
+        menupopup.appendChild(menuitem);
+
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_linkalways"+i);
+        menuitem.setAttribute("label","このリンクを常に"+ieviewModoki.mApplication[i]+"で閲覧");
+        menuitem.setAttribute("accesskey","2");
+        menuitem.setAttribute("oncommand","ieviewModoki.addSite('"+url+"',"+i+")");
+        menupopup.appendChild(menuitem);
+      }
+      if(ieviewModoki._getselection()!=""
+        && ieviewModoki.getPref('userChrome.ieview.param'+i, 'str', '').match(/%%SEL%%/) ){
+        var menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id","ieviewModoki_sel"+i);
+        menuitem.setAttribute("label","この選択テキストを"+ieviewModoki.mApplication[i]+"に送る");
+        menuitem.setAttribute("accesskey","s");
+        menuitem.setAttribute("oncommand","ieviewModoki.launch('',"+i+")");
+        menupopup.appendChild(menuitem);
+      }
+
+      firstItem = false;
+    }
+  },
+  //ブラウザを得る
+  activeBrowser: function() {
+    return ('SplitBrowser' in window ? SplitBrowser.activeBrowser : null )
+            ||  gBrowser;
+  },
+  //ウインドウを得る
+  _getFocusedWindow: function(){
+    var focusedWindow = document.commandDispatcher.focusedWindow;
+    if (!focusedWindow || focusedWindow == window)
+      return window._content;
+    else
+      return focusedWindow;
+  },
+  //選択文字列を得る
+  _getselection: function() {
+    var targetWindow = this._getFocusedWindow();
+    var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+    // for textfields
+    if (sel && !sel.toString()) {
+      var node = document.commandDispatcher.focusedElement;
+      if (node &&
+          (node.type == "text" || node.type == "textarea") &&
+          'selectionStart' in node &&
+          node.selectionStart != node.selectionEnd) {
+        var offsetStart = Math.min(node.selectionStart, node.selectionEnd);
+        var offsetEnd   = Math.max(node.selectionStart, node.selectionEnd);
+        return node.value.substr(offsetStart, offsetEnd-offsetStart);
+      }
+    }
+    return sel ?
+      sel.toString() : "";
+  },
+  //prefを読み込み
+  getPref: function(aPrefString, aPrefType, aDefault){
+    var xpPref = Components.classes['@mozilla.org/preferences-service;1']
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case 'complex':
+          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+        case 'str':
+          return xpPref.getCharPref(aPrefString).toString(); break;
+        case 'int':
+          return xpPref.getIntPref(aPrefString); break;
+        case 'bool':
+        default:
+          return xpPref.getBoolPref(aPrefString); break;
+      }
+    }catch(e){
+    }
+    return aDefault;
+  },
+  //prefを書き込み
+  setPref: function(aPrefString, aPrefType, aValue){
+    var xpPref = Components.classes['@mozilla.org/preferences-service;1']
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case 'complex':
+          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+        case 'str':
+          return xpPref.setCharPref(aPrefString, aValue); break;
+        case 'int':
+          aValue = parseInt(aValue);
+          return xpPref.setIntPref(aPrefString, aValue);  break;
+        case 'bool':
+        default:
+          return xpPref.setBoolPref(aPrefString, aValue); break;
+      }
+    }catch(e){
+    }
+    return null;
+  },
+//Thanks Piro.
+  // 監視を開始する
+  addPrefListener: function(aObserver) {
+      try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+          pbi.addObserver(aObserver.domain, aObserver, false);
+      } catch(e) {}
+  },
+
+  // 監視を終了する
+  removePrefListener: function(aObserver) {
+      try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+          pbi.removeObserver(aObserver.domain, aObserver);
+      } catch(e) {}
+  },
+
+  PrefListener:{
+      domain  : 'userChrome.ieview',
+          //'userChrome.ieview.XXX'という名前の設定が変更された場合全てで処理を行う
+
+      observe : function(aSubject, aTopic, aPrefstring) {
+          if (aTopic == 'nsPref:changed') {
+              // 設定が変更された時の処理
+              ieviewModoki.initPref();
+          }
+      }
+  }
+}
+//実行
+ieviewModoki.init();
+window.addEventListener("unload", function(){ ieviewModoki.uninit(); }, false);
+
+  ]]></script>
+</overlay>

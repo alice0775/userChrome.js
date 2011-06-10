@@ -1,0 +1,90 @@
+<?xml version="1.0"?>
+<!--
+// ==UserScript==
+// @name           bookmarksHistoryPanelXMigemo.uc.xul
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    IE様にブックマーク/閲覧履歴をpanel要素でポップアップでXMigemo
+// @include        main
+// @compatibility  Firefox 3.0, 35, 3.6a1pre
+// @author         Alice0775, original author:Piro.
+// @Note
+// @version        2010/09/11 16:00 bookmarksHistoryPanelがある時は何もしない
+// @version        2009/08/01 23:00 XMigemo 11.16
+// @version        2009/01/05 01:00 XMigemo
+// ==/UserScript==
+ -->
+<overlay id="bookmarksPanelXMigemo"
+      xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+  <script src="chrome://xulmigemo/content/places/places.js" type="application/x-javascript; e4x=1"/>
+-->
+  <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+    var ucjsXMigemoBookmarksPanelOverlay = {
+      load: function searchHistory() {
+        window.removeEventListener('load', this, false);
+        if (typeof bookmarksHistoryPanel != 'undefined')
+          return;
+        var tree = document.getElementById('bookmarks-view');
+        if (!tree || !('applyFilter' in tree)) return;
+
+        eval('tree.applyFilter = '+
+          tree.applyFilter.toSource().replace(
+            'this.load([query], options);',
+              "if (XMigemoService.getPref('xulmigemo.places.bookmarksPanel') && XMigemoPlaces.isValidInput(query.searchTerms)) XMigemoPlaces.startProgressiveLoad(query, options, this,  XMigemoPlaces.bookmarksInRangeSQL); else $&"
+          )
+        );
+      },
+
+      handleEvent : function(aEvent) {
+        switch (event.type) {
+              case "load":
+                this.load();
+                break;
+         }
+       }
+    };
+    if ("XMigemoService" in window)
+      ucjsXMigemoBookmarksPanelOverlay.load();
+    //window.addEventListener('load', ucjsXMigemoBookmarksPanelOverlay, false);
+
+
+
+    var ucjsXMigemoHistoryPanelOverlay = {
+
+      load: function searchHistory() {
+        window.removeEventListener('load', this, false);
+        if (typeof bookmarksHistoryPanel != 'undefined')
+          return;
+        var tree = document.getElementById('historyTree');
+        if (!tree || !('applyFilter' in tree)) return;
+
+        eval('window.bookmarksHistoryPanelUtil.searchHistory = '+
+          window.bookmarksHistoryPanelUtil.searchHistory.toSource().replace(
+            'this.gHistoryTree.load([query], options);',
+              "if (XMigemoService.getPref('xulmigemo.places.historyPanel') && XMigemoPlaces.isValidInput(query.searchTerms)) XMigemoPlaces.startProgressiveLoad(query, options, this.gHistoryTree, XMigemoPlaces.historyInRangeSQL); else $&"
+          )
+        );
+
+        eval('tree.applyFilter = '+
+          tree.applyFilter.toSource().replace(
+            'this.load([query], options);',
+              "if (XMigemoService.getPref('xulmigemo.places.historyPanel') && XMigemoPlaces.isValidInput(query.searchTerms)) XMigemoPlaces.startProgressiveLoad(query, options, this, XMigemoPlaces.historyInRangeSQL); else $&"
+          )
+        );
+      },
+
+      handleEvent : function(aEvent) {
+        switch (event.type) {
+              case "load":
+                this.load();
+                break;
+         }
+       }
+    };
+    if ("XMigemoService" in window)
+      ucjsXMigemoHistoryPanelOverlay.load();
+    // window.addEventListener('load', ucjsXMigemoHistoryPanelOverlay, false);
+  ]]></script>
+</overlay>

@@ -1,0 +1,261 @@
+<?xml version="1.0"?>
+<!--
+// ==UserScript==
+// @name           multiHomePopup.uc.xul
+// @namespace      http://addons.mozilla.org/addon/12903
+// @description    multiHomePopup
+// @include        main
+// @compatibility  Firefox 4.0b5pre
+// @author         Romain Labolle (ravomavain)
+// @modifier       Alice0775
+// @version        2010/08/25 4.0b5preにおいてアイコンイメージが表示されなくなった
+// @version        2009/12/27
+// ==/UserScript==
+ -->
+<!-- ***** BEGIN LICENSE BLOCK *****
+   - Version: MPL 1.1/GPL 2.0/LGPL 2.1
+   -
+   - The contents of this file are subject to the Mozilla Public License Version
+   - 1.1 (the "License"); you may not use this file except in compliance with
+   - the License. You may obtain a copy of the License at
+   - http://www.mozilla.org/MPL/
+   -
+   - Software distributed under the License is distributed on an "AS IS" basis,
+   - WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
+   - for the specific language governing rights and limitations under the
+   - License.
+   -
+   -
+   - The Initial Developer of the Original Code is Jaap Haitsma.
+   - Portions created by the Initial Developer are Copyright (C) 2004
+   - by the Initial Developer. All Rights Reserved.
+
+   - Contributor(s): Ravomavain <ravomavain@gmail.com>
+   -
+   - Alternatively, the contents of this file may be used under the terms of
+   - either the GNU General Public License Version 2 or later (the "GPL"), or
+   - the GNU Lesser General Public License Version 2.1 or later (the "LGPL"),
+   - in which case the provisions of the GPL or the LGPL are applicable instead
+   - of those above. If you wish to allow use of your version of this file only
+   - under the terms of either the GPL or the LGPL, and not to allow others to
+   - use your version of this file under the terms of the MPL, indicate your
+   - decision by deleting the provisions above and replace them with the notice
+   - and other provisions required by the LGPL or the GPL. If you do not delete
+   - the provisions above, a recipient may use your version of this file under
+   - the terms of any one of the MPL, the GPL or the LGPL.
+   -
+   - ***** END LICENSE BLOCK ***** -->
+<overlay id="multihomeOverlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+var multiHomePopup = {
+
+  kBROWSER_STARTUP_HOMEPAGE: "browser.startup.homepage",
+
+  init: function(){
+    var homebutton = document.getElementById("home-button");
+    if (!homebutton)
+      return;
+    homebutton.setAttribute("type", "menu-button");
+    homebutton.setAttribute("style", 'list-style-image: url("chrome://browser/skin/Toolbar.png");'); //4.0b5pre
+    var click = homebutton.getAttribute("onclick");
+    homebutton.setAttribute("onclick",
+                            "if (event.originalTarget.getAttribute('anonid')=='button') {" + click + "}");
+  },
+
+  prevhomes: "",
+  firstrun: true,
+
+  onButMultihomePopup: function(event) {
+    var menupopup = document.getElementById("multihome_popup");
+    if (this.firstrun) {
+      this.firstrun = false;
+      menupopup.addEventListener("DOMMenuItemActive", multiHomePopup.onDOMMenuItemActive, false);
+      menupopup.addEventListener("DOMMenuItemInactive", multiHomePopup.onDOMMenuItemInactive, false);
+    }
+
+    var homes = gHomeButton.getHomePage();
+    var home = homes.split("|");
+
+    var url = gBrowser.currentURI.spec;
+    var isExist = false;
+    for (var i = 0; i < home.length; i++) {
+      if (home[i] == url)
+        isExist = true;
+    }
+    document.getElementById("add_multihome_mneuitem").setAttribute("disabled", isExist);
+    document.getElementById("set_multihome_mneuitem").setAttribute("disabled", isExist && home.length == 1);
+    document.getElementById("remove_multihome_mneuitem").setAttribute("disabled", !isExist);
+
+    if (homes != this.prevhomes) {
+      this.prevhomes = homes
+      var menuseparator = document.getElementById("edit_multihome_mneuseparator");
+
+      while(menupopup.firstChild) {
+        if (menupopup.firstChild == menuseparator)
+          break;
+        menupopup.removeChild( menupopup.firstChild );
+      }
+
+      for (var i = home.length - 1; i > -1; i--) {
+        try {
+          var uri = PlacesUIUtils.createFixedURI(home[i]);
+          var itemId = PlacesUtils.getMostRecentBookmarkForURI(uri);
+          var title = this._getItemStaticTitle(itemId, uri);
+        } catch(e) {}
+        if (!title)
+          title = home[i];
+
+        var menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("id", "multihome_mneuitem"+i);
+        menuitem.setAttribute("class", "menuitem-iconic");
+        menuitem.setAttribute("label", title);
+        menuitem.setAttribute("tooltiptext", (title == home[i]) ? title : title + "\n" + home[i]);
+        menuitem.setAttribute("url", home[i]);
+        menuitem.setAttribute("statustext", home[i]);
+        menuitem.setAttribute("onclick", "multiHomePopup.BrowserGoMultiHome(event, \"" + home[i] + "\")");
+        menuitem.setAttribute("image", multiHomePopup.getFavicon(home[i]));
+        menupopup.insertBefore(menuitem, menupopup.firstChild);
+      }
+    }
+  },
+
+  _getItemStaticTitle: function EIO__getItemStaticTitle(aItemId, aUri) {
+    if (aItemId == -1)
+      return PlacesUtils.history.getPageTitle(aUri);
+
+    const annos = PlacesUtils.annotations;
+    if (annos.itemHasAnnotation(aItemId, STATIC_TITLE_ANNO))
+      return annos.getItemAnnotation(aItemId, STATIC_TITLE_ANNO);
+
+    return PlacesUtils.bookmarks.getItemTitle(aItemId);
+  },
+
+  onDOMMenuItemActive: function(aEvent) {
+    XULBrowserWindow.setOverLink(aEvent.target.getAttribute("statustext"));
+  },
+
+  onDOMMenuItemInactive: function() {
+    XULBrowserWindow.setOverLink("");
+  },
+
+  setThisPageToHome: function() {
+    var url = gBrowser.currentURI.spec;
+    gPrefService.setCharPref(this.kBROWSER_STARTUP_HOMEPAGE, url);
+  },
+
+  addThisPageToHome: function() {
+    var url = gBrowser.currentURI.spec;
+    var home = gHomeButton.getHomePage().split("|");
+    if (home.indexOf(url) < 0) {
+      home.push(url);
+    }
+    gPrefService.setCharPref(this.kBROWSER_STARTUP_HOMEPAGE, home.join("|"));
+  },
+
+  removeThisPageFromHome: function() {
+    var url = gBrowser.currentURI.spec;
+    this.removeUrlFromHome(url);
+  },
+
+  removeThisFromHome: function(){
+    var menuitem = document.popupNode;
+    if (!menuitem)
+      return;
+    var url = menuitem.getAttribute("url");;
+    this.removeUrlFromHome(url);
+  },
+
+  removeUrlFromHome: function(aURL){
+    var home = gHomeButton.getHomePage().split("|");
+    for (var i = 0; i < home.length; i++) {
+      if (home[i] == aURL)
+        home.splice(i,1);
+    }
+    gPrefService.setCharPref(this.kBROWSER_STARTUP_HOMEPAGE, home.join("|"));
+  },
+
+  onButMultihome: function(event) {
+    if(event.target == document.getElementById("home-button") &&
+       !event.target.getAttribute("open")) {
+      this.BrowserGoMultiHome(event, gHomeButton.getHomePage());
+    }
+  },
+
+  BrowserGoMultiHome: function(aEvent, homePage) {
+    if (aEvent && "button" in aEvent && aEvent.button == 2) // right-click: do nothing
+      return;
+
+    var where = whereToOpenLink(aEvent, false, true);
+    var urls;
+
+    switch (where) {
+    case "current":
+      loadOneOrMoreURIs(homePage);
+      break;
+    case "tabshifted":
+    case "tab":
+      urls = homePage.split("|");
+      var loadInBackground = getBoolPref("browser.tabs.loadBookmarksInBackground", false);
+      gBrowser.loadTabs(urls, loadInBackground);
+      break;
+    case "window":
+      window.openDialog("chrome://browser/content/", "_blank", "chrome,all,dialog=no", homePage);
+      break;
+    }
+  },
+
+  getFavicon: function(URL) {
+    var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"].getService(Components.interfaces.nsIFaviconService);
+    var IOService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
+    var URI = IOService.newURI(URL, null, null);
+    return faviconService.getFaviconImageForPage(URI).spec;
+  }
+}
+
+multiHomePopup.init();
+
+  ]]></script>
+<popupset id="mainPopupSet">
+  <menupopup id="multihome_contextpopup">
+    <menuitem id="multihome_contextdelete"
+              label="Remove This from Home"
+              oncommand="multiHomePopup.removeThisFromHome();"
+              onclick="if(event.button != 0) event.preventDefault();"/>
+<!--
+    <menuitem id="multihome_contextedit"
+              label="Edit Home"
+              oncommand="openPreferences('paneMain', {});"/>
+-->
+  </menupopup>
+</popupset>
+<toolbarbutton id="home-button">
+  <menupopup id="multihome_popup"
+             context="multihome_contextpopup"
+             onpopupshowing="if(event.originalTarget == this) multiHomePopup.onButMultihomePopup(event);">
+    <menuseparator id="edit_multihome_mneuseparator"/>
+    <menu id="edit_multihome_mneu"
+          label="Edit Home"
+          context=""
+          tooltiptext="Edit Home">
+      <menupopup id="edir_multihome_popup">
+        <menuitem id="add_multihome_mneuitem"
+                  label="Add This Page to Home"
+                  tooltiptext="Add This Page to Home"
+                  oncommand="multiHomePopup.addThisPageToHome();"/>
+        <menuitem id="set_multihome_mneuitem"
+                  label="Set This Page to Home only"
+                  tooltiptext="Set This Page to Home"
+                  oncommand="multiHomePopup.setThisPageToHome();"/>
+        <menuitem id="remove_multihome_mneuitem"
+                  label="Remove This Page from Home"
+                  tooltiptext="Remove This Page from Home"
+                  oncommand="multiHomePopup.removeThisPageFromHome();"/>
+        <menuitem id="edit_multihome_mneuitem"
+                  label="Edit Home"
+                  tooltiptext="Edit Home"
+                  oncommand="openPreferences('paneMain', {});"/>
+      </menupopup>
+    </menu>
+  </menupopup>
+</toolbarbutton>
+</overlay>

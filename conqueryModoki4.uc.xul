@@ -1,0 +1,828 @@
+<overlay id="conqueryModoki"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           conqueryModoki4.uc.xul
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    コンテキストメニューにQuery To...とサブメニューに検索エンジンリストを追加, 階層化した場合は串刺し検索
+// @description    選択したエンジンで検索, その後エンジンを元に戻す
+// @include        main
+// @compatibility  Firefox 3.0 3.5, 3.6
+// @author         Alice0775
+// @version        2011/03/11 10:30 Bug641090
+// @version        2010/10/11 21:30 Site
+// @version        2009/04/14 21:30 グローバル汚染修正, typo 修正
+// @version        2009/04/14 12:30 検索バーが無くても動くように
+// @version        2009/04/14 12:10 enableKeywordsSearchInSearchBar.uc.js連携できず修正
+// @version        2009/04/14 12:00 showInContext=trueの時使い分けできず修正
+// @version        2009/04/14 clearSearchBox.uc.js, SearchClipboard.uc.jsを統合 (従いそれらのスクリプトは不要)
+// ==/UserScript==
+// @Note           userChrome.conqueryModoki.showInContext をtrueでコンテキストメニュー直下に検索エンジンを表示
+// @Note           ただし, userChrome.conqueryModoki.promptNotSelected が falseなら 選択文字列がない場合は隠す
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+  var conqueryModoki = {
+    // -- config -- //大文字小文字留意すること
+    //button + key :               //L M R = 左中右ボタン, S C A = shift,ctrl,altキー(SCAの順で指定)
+    // 'Current', 'Tab', 'Shift'   //Current=現在のタブ, Tab =前面タブ, Shift=背面タブ
+    // 'Prompt', 'Clipboard'       //Prompt=検索語句の入力窓表示, Clipboard=クリップボードの語句で検索
+    // 'Clear'                     //Clear=検索実行後検索バーをクリア
+    //  検索バーの検索エンジンプルダウン上の検索エンジンでの動作 (左クリック変更不可)
+    funcSearchbar     : {
+                         'M'  : 'Tab', //'Tab Clipboard',
+                         'R'  : 'Current',
+                         'RS' : 'Shift',
+                         'RSC': 'Tab Prompt',
+                         'RC' : 'Tab Clipboard',
+                        },
+    //  コンテキストメニューの検索エンジンポップアップメニュー上の検索エンジンでの動作
+    funcContext       : {
+                         'L'  : 'Tab',
+                         'LS' : 'Tab Prompt',
+                         'M'  : 'Tab Clipboard',
+                         'R'  : 'Tab',
+                         'RS' : 'Shift',
+                         'RSC': 'Tab Prompt',
+                         'RC' : 'Tab Clipboard',
+                        },
+    //button + key :
+    // 'Kushizashi'             //串刺し検索(変更不可)
+    // 'Prompt', 'Clipboard'
+    // 'Clear'
+    //  検索バーの検索エンジンプルダウン上の親メニューでの動作
+    funcSearchbarMenu : {
+                         'M' : 'Kushizashi Clipboard',
+                         'R' : 'Kushizashi',
+                         'RS': 'Kushizashi Prompt',
+                        },
+    //  コンテキストメニューの検索エンジンポップアップメニュー上の親メニューでの動作
+    funcContextMenu   : {
+                         'M' : 'Kushizashi Clipboard',
+                         'R' : 'Kushizashi',
+                         'RS': 'Kushizashi Prompt',
+                        },
+    //button + key :
+    // 'Current', 'Tab', 'Shift'
+    // 'Prompt', 'Clipboard'
+    // 'Clear', 'Context'
+    // 検索バーの検索エンジンボタン上で クリック したときの動作 (左クリック変更不可)
+    funcButton        : {
+                         'M' : 'Tab Clipboard',
+                         'R' : 'Clear',
+                         'RS': 'Context',  //Context=コンテキストメニュ表示 変更不可
+                        },
+    //button + key :
+    //'And', 'Not', 'Or', 'Site' //And/Not/Or=選択語句を+- で連結, Site=site:カレントホストを付加
+    // Revert', 'Clear',
+    // 検索バーの検索エンジンボタン上で 左ダブルクリック したときの動作
+    funcButtonDblClick: {
+                         'L'  : 'Revert',  //Revert=デフォルトエンジンに戻す 変更不可
+                         'LS' : 'And',
+                         'LSC': 'Site',
+                         'LA' : 'Not',
+                         'LC' : 'Or',
+                        },
+    // -- config --
+
+    _currentEngine:null,
+
+    searchBar: function(){
+      var searchBar = null;
+      try{
+        searchBar = BrowserSearch.getSearchBar();
+      }catch(e){
+        searchBar = BrowserSearch.searchBar;  //fx3
+      }
+      return searchBar;
+    },
+
+    getDefaultEngine: function() {
+      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
+      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
+      return searchService.defaultEngine;
+    },
+
+    getEngineByIndex: function(iEngine) {
+      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
+      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
+      if (typeof iEngine == 'undefined'|| iEngine == null) {
+        var aEngine = searchService.defaultEngine;
+      }else{
+        var engines = searchService.getVisibleEngines({ });
+        var aEngine = engines[iEngine];
+      }
+      return aEngine;
+    },
+
+    uiEvent: function uiEvent(aEvent) {
+      var b = "L";
+      var k = 0;
+      if (aEvent.button){
+        b = aEvent.button == 0 ? "L" : aEvent.button == 1 ? "M" : "R";
+      }
+      k = (aEvent.shiftKey ? "S" : "") +
+          (aEvent.ctrlKey  ? "C" : "") +
+          (aEvent.altKey   ? "A" : "");
+      return b + k;
+    },
+
+    searchWord : function conqueryModokisearchWord(aEvent, iEngine) {
+      var ui = this.uiEvent(aEvent);
+      if (!ui)
+        return;
+
+      var aEngine = this.getEngineByIndex(iEngine);
+
+      //選択文字列
+      var word = this._getselection();
+      //searchbar?
+      var aMenu = aEvent.originalTarget;
+      var pNode = aMenu.parentNode;
+      while (pNode) {
+        if (pNode.id == 'searchbar') {
+          word = pNode.value;
+          var searchbarMenu = true;
+          break;
+        }
+        pNode = pNode.parentNode;
+      }
+
+      if (typeof searchbarMenu == 'undefined' || !searchbarMenu) {
+        var func = this.funcContext[ui];
+      } else {
+        var func = this.funcSearchbar[ui];
+      }
+      if (!func)
+        return;
+
+      //Clopbord文字列
+      if (/Clipboard/i.test(func)) {
+        word = readFromClipboard();
+        if (!word)
+          return;
+      }
+      //選択文字列の無いとき/Prompt
+      if (!word || /Prompt/i.test(func)) {
+        word = window.prompt('検索エンジン: ' + aEngine.name ,word);
+        if (!word)
+          return;
+      }
+      word = word.substring(0,1024);
+
+      var searchBar = this.searchBar();
+      if (searchBar)
+        searchBar.value = word;
+
+      //新規タブに開くかどうか
+      var backGround = /Shift/i.test(func);
+      var useNewTab = (/Tab/i.test(func) || backGround) && !/Current/i.test(func);
+
+      //engine, searchText, useNewTab, backGround, useNewWin
+      this.loadSearch(aEngine, word, useNewTab, backGround, false)  //検索実行
+
+      //検索ボックスを消す?
+      if (/Clear/i.test(func))
+        this.clearSearchBar();
+    },
+
+    clearSearchBar: function() {
+      //検索ボックスを消す?
+      var searchBar = this.searchBar();
+      if (searchBar) {
+        searchBar.value = '' //検索ボックスをクリア;
+        this._dispatchEvent();
+      }
+    },
+
+    //Web検索
+    loadSearch: function loadSearch(aEngine, searchText, useNewTab, backGround, useNewWin) {
+      if (!aEngine)
+        aEngine = this.getDefaultEngine();
+      var submission = aEngine.getSubmission(searchText, null); // HTML response
+      if (!submission)
+        return;
+      if (useNewWin) {
+        openNewWindowWith(submission.uri.spec, null, submission.postData, false)
+      }else if (useNewTab) {
+        if (this.getVer() >= 4) //fx4
+          openLinkIn(submission.uri.spec,
+                     backGround ? "tabshifted": "tab",
+                     { postData: submission.postData,
+                       relatedToCurrent: true });
+        else
+          gBrowser.loadOneTab(submission.uri.spec, null, null, submission.postData, backGround, false);
+      }else
+        gBrowser.loadURI(submission.uri.spec, null, submission.postData, false);
+    },
+
+
+    kusizasi: function conqueryModokikusizasi(aEvent) {
+      this.hideAllPopup();
+
+      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
+      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
+      aEvent.preventDefault();
+      aEvent.stopPropagation();
+
+      //選択文字列
+      var word = this._getselection();
+      //searchbar?
+      var aMenu = aEvent.originalTarget;
+      var pNode = aMenu.parentNode;
+      while (pNode) {
+        if (pNode.id == 'searchbar') {
+          word = pNode.value;
+          var searchbarMenu = true;
+          break;
+        }
+        pNode = pNode.parentNode;
+      }
+
+      var ui = this.uiEvent(aEvent);
+      if (!ui)
+        return;
+      if (typeof searchbarMenu == 'undefined' || !searchbarMenu)
+        var func = this.funcContextMenu[ui];
+      else
+        var func = this.funcSearchbarMenu[ui];
+      if (!func)
+        return;
+
+      //Clopbord文字列
+      if (/Clipboard/i.test(func)) {
+        word = readFromClipboard();
+        if (!word)
+          return;
+      }
+      //選択文字列の無いとき/Prompt
+      if (!word || /Prompt/i.test(func)) {
+        word = window.prompt('串刺し検索: ' + aMenu.getAttribute('label') ,word);
+        if (!word)
+          return;
+      }
+      word = word.substring(0,1024);
+
+      var result = document.evaluate("*/*[@class = 'menuitem-iconic searchbar-engine-menuitem']",aMenu,null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
+
+      var searchBar = this.searchBar();
+      if (searchBar)
+        searchBar.value = word;
+
+      var anewTab = true;
+      for (var i = 0; i < result.snapshotLength; i++) {
+        try {
+          var aEngine = this.getEngineByIndex(result.snapshotItem(i).getAttribute('index'));
+          setTimeout(function(self, aEngine, sword, anewTab, aEvent){
+            self.loadSearch(aEngine, word, anewTab, false, false)  //検索実行
+          },100, this, aEngine, word, anewTab, aEvent);
+        } catch(e) {}
+      }
+
+      //検索ボックスを消す?
+      if (/Clear/i.test(func))
+        this.clearSearchBar();
+    },
+
+    _dispatchEvent: function(){
+      var searchBar = this.searchBar();
+      if (searchBar) {
+        var evt = document.createEvent("UIEvents");
+        evt.initUIEvent("input", true, false, window, 0);
+        searchBar.dispatchEvent(evt);
+      }
+    },
+
+    activeBrowser: function() {
+      return ('SplitBrowser' in window ? SplitBrowser.activeBrowser : null )
+              ||  gBrowser;
+    },
+
+    _getFocusedWindow: function(){ //現在のウインドウを得る
+        var focusedWindow = document.commandDispatcher.focusedWindow;
+        if (!focusedWindow || focusedWindow == window)
+            return window._content;
+        else
+            return focusedWindow;
+    },
+
+    _getselection: function() {  //選択されている文字列を得る
+        var targetWindow = this._getFocusedWindow();
+        var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+        // for textfields
+        if (sel && !sel.toString()) {
+          var node = document.commandDispatcher.focusedElement;
+          if (node &&
+              ((typeof node.mozIsTextField == 'function' &&  node.mozIsTextField(true)) ||
+               node.type == "search" ||
+               node.type == "text" || node.type == "textarea") &&
+              'selectionStart' in node &&
+              node.selectionStart != node.selectionEnd) {
+              var offsetStart = Math.min(node.selectionStart, node.selectionEnd);
+              var offsetEnd   = Math.max(node.selectionStart, node.selectionEnd);
+              return node.value.substr(offsetStart, offsetEnd-offsetStart);
+          }
+        }
+        return sel ? sel.toString().replace(/\s/g,' ').replace(/^[\ ]+|[\ ]+$/g,'').replace(/[\ ]+/g,' ') : "";
+    },
+
+    hideAllPopup: function(){
+      var searchBar = this.searchBar();
+      if (searchBar)
+        if (document.getAnonymousElementByAttribute(searchBar, "anonid", "searchbar-popup"))
+          document.getAnonymousElementByAttribute(searchBar, "anonid", "searchbar-popup").hidePopup();
+      if (document.getElementById("cq-hotmenu"))
+        document.getElementById("cq-hotmenu").hidePopup();
+      if (document.getElementById("contentAreaContextMenu"))
+        document.getElementById("contentAreaContextMenu").hidePopup();
+    },
+
+    onpopupshowing: function(){
+      var menu= document.getElementById('context-conqueryModoki');
+      var selected = this._getselection();
+      this.state = false;
+
+      if (this.getPref("userChrome.conqueryModoki.showInContext","bool", false)) {
+        //コンテキストメニューに直接表示する
+        menu.setAttribute('hidden', true);
+        if (!!selected ||
+            this.getPref("userChrome.conqueryModoki.promptNotSelected","bool",  false) ) {
+          //コンテキストメニュー直下のを表示
+          var child = menu.parentNode.childNodes;
+          for (var i =0, len = child.length; i < len; i++) {
+            if (child[i].hasAttribute('Conquery')) {
+              child[i].removeAttribute('hidden');
+            }
+          }
+        }
+        return;
+      }
+
+      //コンテキストメニューにQuery to...を表示するかどうか
+      if (!this.getPref("userChrome.conqueryModoki.showInContext","bool",false)) {
+        if (!!selected ||
+            this.getPref("userChrome.conqueryModoki.promptNotSelected","bool",false) ) {
+          menu.setAttribute('hidden',false);
+        }else{
+          menu.setAttribute('hidden',true);
+        }
+      }
+    },
+
+    onpopuphidden: function(){
+      var child = document.getElementById('context-conqueryModoki')
+                  .parentNode.childNodes;
+      for (var i = child.length - 1; i > -1; i--){
+        if (child[i].hasAttribute('Conquery'))
+          child[i].setAttribute('hidden',true);
+      }
+    },
+
+    //コンテキスト用メニュー作成
+    makePopupMenu: function(menupopup2){
+      //ポップアップメニュー構築
+      //既にあるなら消す
+      while(menupopup2.firstChild){
+        menupopup2.removeChild(menupopup2.firstChild);
+      }
+      this.makemenu(menupopup2);
+
+    },
+
+    dupPopupMenu: function(){
+      //コンテキストメニュー直下にメニュー構築
+      //コンテキストメニュー用のを複製して利用する
+      var menu= document.getElementById('context-conqueryModoki');
+      //既にあるなら消す
+      for (var i = menu.parentNode.childNodes.length - 1; i > -1; i--) {
+        if(menu.parentNode.childNodes[i].hasAttribute('Conquery'))
+          menu.parentNode.removeChild(menu.parentNode.childNodes[i]);
+      }
+      //複製
+      var menuepopup = document.getElementById("context-conqueryModoki-popup");
+      var refItem = menu.nextSibling;
+      for (var aMenu, i = 0, len = menuepopup.childNodes.length; i < len; i++) {
+        aMenu = menu.parentNode.insertBefore(menuepopup.childNodes[i].cloneNode(true),refItem);
+        aMenu.setAttribute('hidden',true);
+        aMenu.setAttribute('Conquery',true);
+      }
+
+    },
+
+    makemenu: function(popup, forSearchBar){
+      // popupにメニューを構築, forSearchBar: trueの時検索バー用, falseの時, コンテキスト用
+      const kXULNS =
+           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
+      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
+
+      var engines = searchService.getVisibleEngines({ });
+      var refNode=[];
+      var nest = 0;
+      refNode[nest] = popup
+      for (var i =  0; i <engines.length; i++) {
+        if (engines[i].name.match(/^{/) && !engines[i].name.match(/}/)) {
+          //エンジン名に "{"がある時 サブフォルダの開始
+          var menu = document.createElementNS(kXULNS,"menu");
+          menu.setAttribute("label", engines[i].name.replace(/^{/,''));
+          menu.setAttribute("class", "menuitem-iconic");
+          if (engines[i].iconURI)
+            menu.setAttribute("src", engines[i].iconURI.spec);
+          menu.setAttribute("hidden", false);
+          menu.setAttribute("onclick", "event.stopPropagation();if(event.button == 2 || event.button == 1){ conqueryModoki.hideAllPopup();conqueryModoki.kusizasi(event);}");
+
+          try { //Fx3
+
+            if (forSearchBar)
+              menu.setAttribute("tooltiptext", conqueryModoki.tooltipSM);
+            else
+              menu.setAttribute("tooltiptext", conqueryModoki.tooltipCM);
+          } catch(e) {}
+          var menupopup = document.createElementNS(kXULNS,"menupopup");
+          menupopup.setAttribute("menugenerated","true");
+          menupopup.setAttribute('onpopupshowing',"event.stopPropagation();"); //Fx3
+          menu.appendChild(menupopup);
+          refNode[nest].appendChild(menu);
+          nest = nest+1;
+          refNode[nest]=menupopup
+        } else if (engines[i].name.match(/}/) && !engines[i].name.match(/{/)) {
+          //エンジン名に "}"がある時 サブフォルダの終了
+          nest = nest-1;
+          if (nest<0) nest = 0;
+        } else if (engines[i].name.match(/^-{2,}|^―{2,}/)) {
+          //エンジン名に "――がある時 セパセータ
+          var menusepa = document.createElementNS(kXULNS,"menuseparator");
+          refNode[nest].appendChild(menusepa);
+        } else {
+          var menuitem = document.createElementNS(kXULNS,"menuitem");
+          menuitem.setAttribute("label", engines[i].name);
+
+
+          if (forSearchBar) {
+            try { //Fx3
+              menuitem.setAttribute("tooltiptext", conqueryModoki.tooltipS);
+            } catch(e) {}
+            menuitem.setAttribute("id", engines[i].name);
+            menuitem.setAttribute("onclick","if(event.button==1||event.button==2){event.stopPropagation();event.preventDefault();conqueryModoki.hideAllPopup();conqueryModoki.searchWord(event, "+i+");}");
+          } else {
+            try { //Fx3
+              menuitem.setAttribute("tooltiptext", conqueryModoki.tooltipC);
+            } catch(e) {}
+            menuitem.setAttribute('oncommand',"conqueryModoki.searchWord(event, "+i+");");
+            menuitem.setAttribute('onclick','if(event.button==1||event.button==2){event.stopPropagation();event.preventDefault();conqueryModoki.hideAllPopup();var fn = new Function("event", this.getAttribute("oncommand"));fn.call(this, event);}');
+          }
+
+          menuitem.setAttribute("class", "menuitem-iconic searchbar-engine-menuitem");
+          // Since this menu is rebuilt by the observer method whenever a new
+          // engine is selected, the "selected" attribute does not need to be
+          // explicitly cleared anywhere.
+          if (engines[i] == searchService.currentEngine)
+            menuitem.setAttribute("selected", "true");
+          if (engines[i].iconURI)
+            menuitem.setAttribute("src", engines[i].iconURI.spec);
+          menuitem.engine = engines[i];
+          menuitem.setAttribute("index", i);
+          refNode[nest].appendChild(menuitem);
+        }
+      }
+      var searchBar = conqueryModoki.searchBar();
+      if (searchBar)
+        searchBar._needToBuildPopup = false;
+    },
+
+    getPref: function(aPrefString, aPrefType, aDefault){
+      var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefBranch2);
+      try{
+        switch (aPrefType){
+          case "str":
+            return xpPref.getCharPref(aPrefString).toString(); break;
+          case "int":
+            return xpPref.getIntPref(aPrefString); break;
+          case "bool":
+          default:
+            return xpPref.getBoolPref(aPrefString); break;
+        }
+      }catch(e){
+      }
+      return aDefault;
+    },
+
+    getVer: function(){
+      const Cc = Components.classes;
+      const Ci = Components.interfaces;
+      var info = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
+      // このコードを実行しているアプリケーションの名前を取得する
+      var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
+      return ver;
+    },
+
+    debug: function(aMsg){
+      const Cc = Components.classes;
+      const Ci = Components.interfaces;
+      Cc["@mozilla.org/consoleservice;1"]
+        .getService(Ci.nsIConsoleService)
+        .logStringMessage(aMsg);
+    },
+
+    handleEvent: function(aEvent){
+      switch (aEvent.type){
+        case "DOMAttrModified":
+          if (aEvent.attrName == "disabled" && !aEvent.newValue){
+            this.init2();
+          }
+          break;
+        case "click":
+          this.onButtonClick(aEvent);
+          break;
+        case "dblclick":
+          this.onButtonDblClick(aEvent);
+          break;
+        case "popupshowing":
+          if (aEvent.originalTarget != document.getElementById('contentAreaContextMenu'))
+            return;
+          this.onpopupshowing();
+          break;
+        case "popuphidden":
+          if (aEvent.originalTarget != document.getElementById('contentAreaContextMenu'))
+            return;
+          this.onpopuphidden();
+          break;
+      }
+    },
+    tooltipS: '',
+    tooltipC: '',
+    tooltipSM: '',
+    tooltipCM: '',
+    tooltipSB: '',
+
+    init : function(aEvent){
+      for (var a in this.funcSearchbar)
+        this.tooltipS += a + ' : ' + this.funcSearchbar[a] + '\n';
+      for (var a in this.funcContext)
+        this.tooltipC += a + ' : ' + this.funcContext[a] + '\n';
+      for (var a in this.funcSearchbarMenu)
+        this.tooltipSM  += a + ' : ' + this.funcSearchbarMenu[a] + '\n';
+      for (var a in this.funcContextMenu)
+        this.tooltipCM  += a + ' : ' + this.funcContextMenu[a] + '\n';
+
+      for (var a in this.funcButton)
+        this.tooltipSB  += a + ' : ' + this.funcButton[a] + '\n';
+      this.tooltipSB  += '---double click---\n';
+      for (var a in this.funcButtonDblClick)
+        this.tooltipSB  += a + ' : ' + this.funcButtonDblClick[a] + '\n';
+
+      //コンテキストメニューポップアップ時のイベント登録
+      document.getElementById('contentAreaContextMenu').addEventListener('popupshowing', this, false);
+      document.getElementById('contentAreaContextMenu').addEventListener('popuphidden', this, false);
+
+      //検索バーの検索エンジンボタン用
+      document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", this, false);
+      this.init2();
+    },
+
+    init2 : function(){
+      //検索バー再構築
+      var os =
+           Components.classes["@mozilla.org/observer-service;1"]
+                     .getService(Components.interfaces.nsIObserverService);
+
+      var searchbar = this.searchBar();
+      if (searchbar) {
+        try {
+          //Observer登録解除
+          os.removeObserver(searchbar, "browser-search-engine-modified", false);
+        } catch(e) {}
+        //search.xmlの置き換え
+        searchbar.rebuildPopup=function(){
+          var popup = searchbar._popup;
+
+          // Clear the popup, down to the first separator
+          var popup_org = []; //元のメニューをバックアップ
+          var len= popup.childNodes.length;
+          for (var i = len - 1; i > -1; i--) {
+            if (popup.childNodes[i] && popup.childNodes[i].localName != "menuseparator") continue;
+            var ref = i; // 検索バーの管理の直前のセパレータ位置
+            for (var j = ref; j < len; j++) {
+              popup_org[j-ref] = popup.childNodes[j].cloneNode(true);
+            }
+            while (popup.firstChild) { //メニューを全部消す
+              popup.removeChild(popup.firstChild);
+            }
+            break;
+          }
+          conqueryModoki.makemenu(popup, true); //検索バー用ポップアップメニュー作成
+          //メニューに検索バーの管理と直前のセパレータを追加
+          for (var i = 0; i < popup_org.length; i++) {
+            popup.appendChild(popup_org[i]);
+          }
+          if (conqueryModoki.getVer() > 2) { //trunc Gecko/2007070706 Minefield/3.0a7pre でこれがいる
+            document.getAnonymousElementByAttribute(searchbar, "anonid", "open-engine-manager")
+                    .setAttribute("oncommand","document.getElementById('searchbar').openManager(event);");
+          }
+          //second search -0.4.2008052301
+          searchbar._engines = searchbar.searchService.getVisibleEngines({ });
+
+          var count = 0;
+          var timer = setInterval(function(){
+            if(++count > 100 || (function(){
+              try{
+                //コンテキストメニュー用ポップアップメニュー作成
+                conqueryModoki.makePopupMenu(document.getElementById("context-conqueryModoki-popup"));
+                conqueryModoki.dupPopupMenu();
+                return true;
+              }catch(e){
+                return false
+              }
+            })())
+              clearInterval(timer);
+          },500);
+        }
+
+        try { //search.xmlの書き替え
+          var old_rebuildPopupDynamic = searchbar.rebuildPopupDynamic;
+          var func = searchbar.rebuildPopupDynamic.toSource();
+          if (/insertLocation\.nextSibling/.test(func)) {
+            func = func.replace(/popup\.firstChild/,'popup.lastChild');
+            func = func.replace(/insertLocation\.nextSibling/g,'insertLocation.previousSibling');
+            eval('searchbar.rebuildPopupDynamic = ' +  func);
+          }
+        } catch(e) {}
+
+        //Observer登録し直し
+        os.addObserver(searchbar, "browser-search-engine-modified", false);
+        //初回起動時, 検索バー用, コンテキストメニュー用ポップアップメニューを作成し直す
+        searchbar.rebuildPopup();
+      } else {
+        //検索バーのない時 コンテキストメニュー用ポップアップメニューのみを作成する
+        var count = 0;
+        var timer = setInterval(function(){
+          if(++count > 100 || (function(){
+            try{
+              //コンテキストメニュー用ポップアップメニュー作成
+              conqueryModoki.makePopupMenu(document.getElementById("context-conqueryModoki-popup"));
+              conqueryModoki.dupPopupMenu();
+              return true;
+            }catch(e){
+              return false
+            }
+          })())
+            clearInterval(timer);
+        },500);
+      }
+
+      //検索バーの検索エンジンボタン用
+      if (this.searchBar()){
+        var button = document.getAnonymousElementByAttribute(this.searchBar(),
+                                                             "anonid", "searchbar-engine-button");
+        button.setAttribute('tooltiptext', this.tooltipSB);
+        button.addEventListener("click", this, false);
+        button.addEventListener("dblclick", this, false);
+      }
+    },
+
+    onButtonDblClick: function(aEvent){
+      var searchBar = this.searchBar();
+      if (!searchBar)
+        return;
+
+      var ui = this.uiEvent(aEvent);
+      if (!ui)
+        return;
+      var func = this.funcButtonDblClick[ui];
+      if (!func)
+        return;
+      if (aEvent.button != 0 ) return true;
+      aEvent.preventDefault();
+      aEvent.stopPropagation();
+      searchBar._popup.hidePopup();
+
+      if (/Clear/i.test(func)) {
+        //検索ボックスを消す?
+        this.clearSearchBar();
+      }
+      if (/Revert/i.test(func)) {
+        //検索エンジンをデフォルトに
+        this.engineRevert(aEvent);
+      }
+
+      if (/Site/i.test(func))
+        searchBar.value = searchBar.value + " site:" + makeURI(content.document.documentURI,null).host;
+        
+      var str = this._getselection();
+      if ( !str && !/Site/i.test(func))
+        return;
+
+      if (/And/i.test(func)) {
+        searchBar.value = searchBar.value + " +" + str;
+      } else if (/Not/i.test(func)) {
+        searchBar.value = searchBar.value + " -" + str;
+      } else if (/Or/i.test(func)) {
+        searchBar.value = searchBar.value + "  " + str;
+      }
+      var evt = document.createEvent("Events");
+      evt.initEvent("oninput", true, true);
+      searchBar.dispatchEvent(evt);
+      searchBar.focus();
+      return false;
+    },
+
+    onButtonClick: function(aEvent) {
+      var searchBar = this.searchBar();
+      if (!searchBar)
+        return;
+
+      var ui = this.uiEvent(aEvent);
+      if (!ui)
+        return;
+      var func = this.funcButton[ui];
+      if (!func)
+        return;
+
+      if (/Context/i.test(func))
+        return true;
+      if (aEvent.button == 2) {
+        aEvent.preventDefault();
+        aEvent.stopPropagation();
+      }
+      if (/Clear/i.test(func)) {
+       this.clearSearchBar();
+       return true;
+      }
+
+      var aEngine = searchBar.currentEngine;
+
+      //選択文字列
+      var word = this._getselection();
+
+      //Clopbord文字列
+      if (/Clipboard/i.test(func)) {
+        word = readFromClipboard();
+        if (!word)
+          return;
+      }
+      //選択文字列の無いとき/Prompt
+      if (!word || /Prompt/i.test(func)) {
+        word = window.prompt('検索エンジン: ' + aEngine.name ,word);
+        if (!word)
+          return;
+      }
+      word = word.substring(0,1024);
+      searchBar.value = word;
+
+      //新規タブに開くかどうか
+      var backGround = /Shift/i.test(func);
+      var useNewTab = (/Tab/i.test(func) || backGround) && !/Current/i.test(func);
+
+      //engine, searchText, useNewTab, backGround, useNewWin
+      this.loadSearch(aEngine, word, useNewTab, backGround, false)  //検索実行
+
+      //検索ボックスを消す?
+      if (/Clear/i.test(func))
+        this.clearSearchBar();
+      return false;
+    },
+
+    engineRevert: function(aEvent){
+      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
+      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
+      searchService.currentEngine = searchService.defaultEngine;
+      return false;
+    }
+  };
+conqueryModoki.init();
+
+  //ConQueryのエミュレート for Drag de Go用
+  function cqrPageSelection(){}
+  function cqrShowHotmenu(aflg, x, y){
+    const kXULNS =
+           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    var hotmenu = document.getElementById("cq-hotmenu");
+    if(!hotmenu){
+      hotmenu = document.createElementNS(kXULNS,"menupopup");
+      hotmenu.id = "cq-hotmenu";
+      conqueryModoki.activeBrowser().appendChild(hotmenu);
+    }
+    //ポップアップメニュー構築
+    conqueryModoki.makePopupMenu(hotmenu);
+    document.popupNode = null; //THANKS http://www.xuldev.org/blog/?p=109
+    //Drag de Goメニュー表示
+    hotmenu.showPopup(conqueryModoki.activeBrowser(), x, y, "context","bottomleft","topleft");
+  }
+
+  ]]></script>
+  <popup id="contentAreaContextMenu">
+    <menu id="context-conqueryModoki"
+          label="Query to…"
+          tooltiptext="DoubleClick: Do Search."
+          accesskey="q"
+          insertbefore="context-searchselect"
+          ondblclick="conqueryModoki.hideAllPopup();conqueryModoki.searchWord(event, null);"
+          onclick="if(event.button == 2 || event.button == 1) {conqueryModoki.kusizasi(event);}"
+     >
+      <menupopup id="context-conqueryModoki-popup"
+          onpopupshown="setTimeout(function(){conqueryModoki.state=true;},0);"
+          />
+    </menu>
+  </popup>
+</overlay>

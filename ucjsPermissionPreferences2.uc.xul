@@ -1,0 +1,403 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+.exception-button * label{margin:0px !important;}
+" type="text/css"?>
+
+
+<overlay id="ucjsPermissionPermission" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           ucjsPermissionPreferences2.uc.xul
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    add UI for hostperm.1 to Preferences
+// @include        main
+// @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a1pre
+// @author         Alice0775
+// @version        LastMod 2010/08/26 エラー回避
+// @version        LastMod 2010/08/26 Minefield 4.0b5pre  Bug 546857 (kill-remote-xul) Drop support for XUL on web sites (remote XUL)
+// @version        LastMod 2009/08/25 Minefield 3.7a1pre  Bug 506985 -  remove java-specific preferences from Firefox UI, hidden prefs
+// @version        2008/03/12 13:30 Gecko/2008031112 Minefield/3.0b5pre 以降用に
+// ==/UserScript==
+// @version        2009/06/26
+// @version        2008/01/19 10:30 cookieのデフォルトの状態が機能していなかった
+// @version        2007/10/07 22:30
+// @note           userCogrome.css: #BrowserPreferences {min-height: 40.5em !important;}
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+WindowHook.register("chrome://browser/content/preferences/preferences.xul",
+  function(aWindow){
+    //DOMにボタン類を追加
+    if (aWindow.document.getElementById("privacyPreferences")) modCookie();
+    if (aWindow.document.getElementById("enableJavaRow")) // < Fx3.6
+      addButton();
+    else if (aWindow.document.getElementById("enableJavaScriptRow")) // >= Fx3.6
+      addButton();
+    //コンテントぺインに切り替わったらaddButonを実行するように
+    aWindow.document.getElementById("panePrivacy").addEventListener("paneload", modCookie, false);
+    function modCookie(){
+      var func = aWindow.gPrivacyPane.writeAcceptCookies.toString();
+      if( !/acceptThirdParty/.test(func) ){//Fx2
+        func = func.replace('document',"aWindow.document");
+      } else { //Fx3 after Fixed bug#419596
+        func = func.replace(/document/g,"aWindow.document");
+      }
+      func = func.replace('return',
+          "setTimeout(function(){"
+         +"var cookieBehavior = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch2).getIntPref('network.cookie.cookieBehavior');"
+         +"var radiogroup = aWindow.document.getElementById('cookieRadio');"
+         +"if(radiogroup){"
+         +"  if(cookieBehavior == 0)radiogroup.selectedIndex = 0;"
+         +"  else if(cookieBehavior == 1)radiogroup.selectedIndex = 2;"
+         +"  else if(cookieBehavior == 2)radiogroup.selectedIndex = 1;"
+         +"}},100);"
+         +"$&");
+       //alert(func);
+      eval("aWindow.gPrivacyPane.writeAcceptCookies = " + func);
+      if(/acceptThirdParty/.test(func) ){//Fx3
+        var func = aWindow.gPrivacyPane.writeAcceptThirdPartyCookies.toString();
+       // func = func.replace(/document/g,"aWindow.document");
+        func = func.replace('return',
+            "setTimeout(function(){"
+           +"var cookieBehavior = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch2).getIntPref('network.cookie.cookieBehavior');"
+           +"var radiogroup = aWindow.document.getElementById('cookieRadio');"
+           +"if(radiogroup){"
+           +"  if(cookieBehavior == 0)radiogroup.selectedIndex = 0;"
+           +"  else if(cookieBehavior == 1)radiogroup.selectedIndex = 2;"
+           +"  else if(cookieBehavior == 2)radiogroup.selectedIndex = 1;"
+           +"}},100);"
+           +"$&");
+         //alert(func);
+        eval("aWindow.gPrivacyPane.writeAcceptThirdPartyCookies = " + func);
+      }
+      //例外サイト編集ダイアログ表示
+      aWindow.gPrivacyPane.showCookieExceptions = function ()
+      {
+        //ローケール対応jaとそれ以外
+        var locale = Components.classes["@mozilla.org/preferences-service;1"]
+                     .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale");
+        var bundlePreferences = aWindow.document.getElementById("bundlePreferences");
+        var params = { blockVisible   : true,
+                       noforeignVisible:true,
+                       sessionVisible : true,
+                       allowVisible   : true,
+                       prefilledHost  : "",
+                       permissionType : "cookie",
+                       windowTitle    : bundlePreferences.getString("cookiepermissionstitle"),
+                       introText      : locale.indexOf("ja") == -1
+          ? "You can specify which web sites are always, never allowed to use cookies.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, Allow for Session, or Allow."
+          : "Cookie の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[現在のセッションのみ]、[許可] のいずれかをクリックしてください。"
+                      };
+        aWindow.document.documentElement.openWindow("Browser:Permissions",
+                                            "chrome://browser/content/preferences/permissions.xul",
+                                            "", params);
+      }
+    }
+
+
+    //コンテントぺインに切り替わったらaddButonを実行するように
+    aWindow.document.getElementById("paneContent").addEventListener("paneload", addButton, false);
+
+    function addButton(){
+      var locale = Components.classes["@mozilla.org/preferences-service;1"]
+                   .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale")
+      //_exceptionsParams用のパラメータ
+      aWindow.gContentPane._exceptionsParams = {
+        cookie:     { blockVisible:true,  noforeignVisible:true, sessionVisible:true,  allowVisible:true, prefilledHost:"", permissionType:"cookie"},
+        document:   { blockVisible:true, noforeignVisible:false,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"document"},
+        image:      { blockVisible:true , noforeignVisible:false,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"image"},
+        object:     { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"object"},
+        other:      { blockVisible:false, noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"other"},
+        popup:      { blockVisible:false, noforeignVisible:false,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"popup"},
+        refresh:    { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"refresh"},
+        script:     { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"script"},
+        stylesheet: { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"stylesheet"},
+        subdocument:{ blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"subdocument"},
+        allowXULXBL:{ blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"allowXULXBL"}
+      }
+      //フィルタのLocale Strings
+      aWindow.gContentPane._exceptionsParamsText = Components.classes["@mozilla.org/preferences-service;1"]
+                   .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale").indexOf("ja") == -1
+      ?{
+        cookie:     { permissionstitle:"Cookies", permissionstext:"You can specify which web sites are always, never allowed to use cookies.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, Allow for Session, or Allow.",permissionskey:"c"},
+        document:   { permissionstitle:"document filter", permissionstext:"You can specify which web sites are always, never allowed to load document.  Type the exact address of the site you want to manage and then click Block or Allow.",permissionskey:"d"},
+        image:      { permissionstitle:"Exceptions - Images", permissionstext:"You can specify which web sites are allowed to load images. Type the exact address of the site you want to manage and then click Block or Allow.",permissionskey:"i"},
+        object:     { permissionstitle:"object filter", permissionstext:"You can specify which web sites are always, never allowed to load object.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"o"},
+        other:      { permissionstitle:"other filter", permissionstext:"You can specify which web sites are always, never allowed to use XBL bindings.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"t"},
+        popup:      { permissionstitle:"Allowed Sites - Popups", permissionstext:"You can specify which web sites are allowed to open popup windows. Type the exact address of the site you want to allow and then click Allow.",permissionskey:"p"},
+        refresh:    { permissionstitle:"meta refresh tag filter", permissionstext:"You can specify which web sites are always, never allowed to use meta refresh tag.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"r"},
+        script:     { permissionstitle:"External Script filter", permissionstext:"You can specify which web sites are always, never allowed to use External Script.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"j"},
+        stylesheet: { permissionstitle:"External CSS filter", permissionstext:"You can specify which web sites are always, never allowed to use External CSS.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"s"},
+        subdocument:{ permissionstitle:"Frame filter", permissionstext:"You can specify which web sites are always, never allowed to use frame.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"f"},
+        allowXULXBL:{ permissionstitle:"XULXBL filter", permissionstext:"You can specify which web sites are always, never allowed to use XULXBL.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"x"}
+      }
+      :{
+        cookie:     { permissionstitle:"Cookie フィルタ", permissionstext:"Cookie の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[現在のセッションのみ]、[許可] のいずれかをクリックしてください。",permissionskey:"c"},
+        document:   { permissionstitle:"document フィルタ", permissionstext:"document の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]または[許可] をクリックしてください。",permissionskey:"d"},
+        image:      { permissionstitle:"例外サイト - 画像の読み込み", permissionstext:"画像の読み込みを許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]または[許可] をクリックしてください。",permissionskey:"i"},
+        object:     { permissionstitle:"object フィルタ", permissionstext:"object の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"o"},
+        other:      { permissionstitle:"other フィルタ", permissionstext:"XBL bindings の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"t"},
+        popup:      { permissionstitle:"許可サイト - ポップアップ", permissionstext:"ポップアップウィンドウを開くことを許可するサイトを指定できます。許可するサイトの正確なアドレスを入力して [許可] をクリックしてください。",permissionskey:"p"},
+        refresh:    { permissionstitle:"meta refresh tag フィルタ", permissionstext:"meta refresh tag の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"r"},
+        script:     { permissionstitle:"外部スクリプト フィルタ", permissionstext:"外部スクリプト の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"j"},
+        stylesheet: { permissionstitle:"外部CSS フィルタ", permissionstext:"外部CSS の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"s"},
+        subdocument:{ permissionstitle:"フレーム フィルタ", permissionstext:"フレーム の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"f"},
+        allowXULXBL:{ permissionstitle:"XULXBL フィルタ", permissionstext:"XULXBL の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"x"}
+      }
+
+      //prefから読み取り/書き込み
+      aWindow.gContentPane.getPref = function(aPrefString, aPrefType, aDefault){
+        var xpPref = Components.classes['@mozilla.org/preferences-service;1']
+                      .getService(Components.interfaces.nsIPrefBranch2);
+        try{
+          switch (aPrefType){
+            case 'complex':
+              return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+            case 'str':
+              return xpPref.getCharPref(aPrefString).toString(); break;
+            case 'int':
+              return xpPref.getIntPref(aPrefString); break;
+            case 'bool':
+            default:
+              return xpPref.getBoolPref(aPrefString); break;
+          }
+        }catch(e){
+        }
+        return aDefault;
+      },
+
+      aWindow.gContentPane.setPref = function(aPrefString, aPrefType, aValue){
+        var xpPref = Components.classes['@mozilla.org/preferences-service;1']
+                      .getService(Components.interfaces.nsIPrefBranch2);
+        try{
+          switch (aPrefType){
+            case 'complex':
+              return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+            case 'str':
+              return xpPref.setCharPref(aPrefString, aValue); break;
+            case 'int':
+              aValue = parseInt(aValue);
+              return xpPref.setIntPref(aPrefString, aValue);  break;
+            case 'bool':
+            default:
+              return xpPref.setBoolPref(aPrefString, aValue); break;
+          }
+        }catch(e){
+        }
+        return null;
+      }
+
+      //ラジオボタンの処理
+      aWindow.gContentPane._toggle = function(radiogroup, type){
+        var val = radiogroup.selectedIndex;
+        aWindow.gContentPane.setPref('permissions.default.'+type,'int',val+1);
+        if(type == 'cookie'){
+          switch(val){
+            case 1: val = 2; break;
+            case 2: val = 1; break;
+          }
+          aWindow.gContentPane.setPref('network.cookie.cookieBehavior','int',val);
+        }
+      }
+
+      //例外サイト編集ダイアログ表示
+      aWindow.gContentPane._showExceptions = function(type){
+        var params = aWindow.gContentPane._exceptionsParams[type];
+        params.windowTitle = aWindow.gContentPane._exceptionsParamsText[type].permissionstitle;
+        params.introText = aWindow.gContentPane._exceptionsParamsText[type].permissionstext;
+        //alert(params.windowTitle+'\n'+params.introText);
+        aWindow.document.documentElement.openWindow("Browser:Permissions",
+                                            "chrome://browser/content/preferences/permissions.xul",
+                                            "", params);
+      }
+      //フィルタのグループボックス作成
+      var miscGroup =  aWindow.document.getElementById("miscGroup");
+      var groupbox = aWindow.document.createElement("groupbox");
+      groupbox.setAttribute("style","margin-top:0px !important;");
+      var caption =  aWindow.document.createElement("caption");
+      caption.setAttribute("label",locale.indexOf("ja") == -1 ? "filter": "フィルタ");
+      caption.setAttribute("style","margin-top:0px !important;margin-bottom:0px !important;");
+      groupbox.appendChild(caption);
+      miscGroup.appendChild(groupbox);
+
+      //説明ラベル作成
+      var box = aWindow.document.createElement("hbox");
+      groupbox.appendChild(box);
+      var label = aWindow.document.createElement("label");
+      label.setAttribute("value", locale.indexOf("ja") == -1 ? "Default:(Allow)(Not allow)(Not allow for foreign domain)":"既定値 : ラジオボタン(許可)(拒否)(他ドメイン拒否)");
+      label.setAttribute("style","margin-top:0px !important;");
+
+      groupbox.appendChild(label);
+
+      //配置用hbox作成
+      var hbox =[],arrtype=[];
+      arrtype[0] = ['script','object'];
+      arrtype[1] = ['stylesheet']; //,'refresh'];
+      arrtype[2] = ['subdocument','cookie'];
+      arrtype[3] = ['document', 'allowXULXBL'];
+      for(var j=0;j<4;j++){
+        hbox[j] = aWindow.document.createElement("hbox");
+        groupbox.appendChild(hbox[j]);
+      }
+      //フィルタの数だけラジオボタンやボタンを配置
+      var radiogroup,box,radio,label,button,spacer;
+      for(var j=0;j<4;j++){
+        for(var i=0,len=arrtype[j].length;i<len;i++){
+          //ラジオボタンの作成
+          box = aWindow.document.createElement("hbox");
+          radiogroup = aWindow.document.createElement("radiogroup");
+          radiogroup.setAttribute("oncommand","gContentPane._toggle(this,'"+arrtype[j][i]+"');");
+          radiogroup.setAttribute("style","width:11.2em");
+          radiogroup.appendChild(box);
+
+          radio= aWindow.document.createElement("radio");
+          radio.setAttribute("style","padding-right:0px;margin-left:0px;margin-right:-3px;");
+          radio.setAttribute("label", "");
+          box.appendChild(radio);
+
+          radio= aWindow.document.createElement("radio");
+          radio.setAttribute("style","padding-left:0px;padding-right:0px;margin-left:-3px;margin-right:-3px;");
+          radio.setAttribute("label", "");
+          box.appendChild(radio);
+
+          radio= aWindow.document.createElement("radio");
+          radio.setAttribute("style","padding-left:0px;padding-right:0px;margin-left:-3px;margin-right:-3px;");
+          radio.setAttribute("label", "");
+          box.appendChild(radio);
+          if(arrtype[j][i] == 'document') radio.setAttribute("disabled", "true");
+
+          hbox[j].appendChild(radiogroup);
+          if(arrtype[j][i] == "cookie"){
+            radiogroup.setAttribute("id", "cookieRadio");
+            var val = aWindow.gContentPane.getPref('network.cookie.cookieBehavior','int',1);
+            switch(val){
+              case 0: val = 0; break;
+              case 1: val = 2; break;
+              case 2: val = 1; break;
+            }
+            radiogroup.selectedIndex = val;
+          }else{
+            if (arrtype[j][i] == "allowXULXBL") {
+              box.childNodes[0].setAttribute("style", "visibility:collapse;");
+              box.childNodes[1].setAttribute("style", "visibility:collapse;");
+              box.childNodes[2].setAttribute("style", "visibility:collapse;");
+            } else {
+              radiogroup.selectedIndex = aWindow.gContentPane.getPref('permissions.default.'+arrtype[j][i],'int',1) - 1;
+            }
+          }
+          label = aWindow.document.createElement("label");
+          label.setAttribute("value", aWindow.gContentPane._exceptionsParamsText[arrtype[j][i]].permissionstitle.replace(locale.indexOf("ja") == -1 ? ' filter': ' フィルタ',''));
+          label.setAttribute("style","padding:3px 0px 0px 0px;margin-left:0px;margin-right:0px;");
+          box.appendChild(label);
+
+          //例外サイトボタンの作成
+          button = aWindow.document.createElement("button");
+          button.setAttribute("label", locale.indexOf("ja") == -1 ? "Exceptions":"例外サイト");
+          button.setAttribute("accesskey", aWindow.gContentPane._exceptionsParamsText[arrtype[j][i]].permissionskey);
+          button.setAttribute("oncommand","gContentPane._showExceptions('"+arrtype[j][i]+"');");
+          button.setAttribute("class","exception-button");
+          button.setAttribute("style","width:8em;margin:0px !important;");
+          //button.setAttribute('flex','1');
+          hbox[j].appendChild(button);
+          if(i != len-1){
+            spacer = aWindow.document.createElement("spacer");
+            spacer.setAttribute('flex','1');
+            hbox[j].appendChild(spacer);
+          }
+        }
+      }
+    }
+  }
+);
+WindowHook.register("chrome://browser/content/preferences/permissions.xul",
+  function(aWindow){
+
+    function addButton(){
+      var locale = Components.classes["@mozilla.org/preferences-service;1"]
+                   .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale");
+      var button= aWindow.document.createElement("button");
+      button.setAttribute("id", "btnForerign");
+      button.setAttribute("disabled", "true");
+      button.setAttribute("label", locale.indexOf("ja") == -1 ? "Not allow for foreign domain":"他ドメイン拒否");
+      button.setAttribute("accesskey", "F");
+      button.setAttribute("oncommand", "gPermissionManager.addPermission(3);");
+      var refItem = aWindow.document.getElementById("btnSession");
+      refItem.parentNode.insertBefore(button,refItem);
+    }
+    addButton();
+
+
+    aWindow.gPermissionManager._getCapabilityString = function (aCapability)
+    {
+      var locale = Components.classes["@mozilla.org/preferences-service;1"]
+                   .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale");
+      var stringKey = null;
+      switch (aCapability) {
+      case Components.interfaces.nsIPermissionManager.ALLOW_ACTION:
+        stringKey = "can";
+        break;
+      case Components.interfaces.nsIPermissionManager.DENY_ACTION:
+        stringKey = "cannot";
+        break;
+      case 3:
+        stringKey = "noforeign";
+        return locale.indexOf("ja") == -1 ? "Not allow for foreign domain":"他ドメイン拒否";
+        break;
+      case Components.interfaces.nsICookiePermission.ACCESS_SESSION:
+        stringKey = "canSession";
+        break;
+      }
+      return this._bundle.getString(stringKey);
+    }
+    aWindow.gPermissionManager.onHostInput = function (aSiteField)
+    {
+      aWindow.document.getElementById("btnForerign").disabled = !aSiteField.value;
+      aWindow.document.getElementById("btnSession").disabled = !aSiteField.value;
+      aWindow.document.getElementById("btnBlock").disabled = !aSiteField.value;
+      aWindow.document.getElementById("btnAllow").disabled = !aSiteField.value;
+    }
+
+    aWindow.gPermissionManager.init = function (aParams)
+    {
+      if (this._type) {
+        // reusing an open dialog, clear the old observer
+        this.uninit();
+      }
+      this._type = aParams.permissionType;
+
+      var permissionsText = aWindow.document.getElementById("permissionsText");
+      while (permissionsText.hasChildNodes())
+        permissionsText.removeChild(permissionsText.firstChild);
+      permissionsText.appendChild(aWindow.document.createTextNode(aParams.introText));
+
+      aWindow.document.title = aParams.windowTitle;
+
+      aWindow.document.getElementById("btnForerign").hidden = !aParams.noforeignVisible;
+      aWindow.document.getElementById("btnBlock").hidden    = !aParams.blockVisible;
+      aWindow.document.getElementById("btnSession").hidden  = !aParams.sessionVisible;
+      aWindow.document.getElementById("btnAllow").hidden    = !aParams.allowVisible;
+
+      var urlField = aWindow.document.getElementById("url");
+      urlField.value = aParams.prefilledHost;
+
+      this.onHostInput(urlField);
+
+      var os = Components.classes["@mozilla.org/observer-service;1"]
+                         .getService(Components.interfaces.nsIObserverService);
+      os.addObserver(this, "perm-changed", false);
+
+      if (this._type == "install") {
+        var enumerator = this._pm.enumerator;
+        if (!enumerator.hasMoreElements())
+          this._updatePermissions();
+      }
+
+      this._loadPermissions();
+
+      urlField.focus();
+    }
+
+  }
+);
+  ]]></script>
+</overlay>

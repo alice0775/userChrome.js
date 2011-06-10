@@ -1,0 +1,262 @@
+<?xml version="1.0"?>
+<!--
+// ==UserScript==
+// @name           quickProxyModoki.uc.xul
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    quickProxy
+// @include        main
+// @compatibility  Firefox 3.0 3.5 3.6 3.7a1pre  WinXP
+// @author         Alice0775
+// @version        2010/02/05 00:00 ウインドウが閉じてしまわないように
+// @version        2009/09/02 13:00 quickproxy.typeをセットしないで使おうとする方のため直前のproxy.typeをquickproxy.typeにするようにした。
+// @note           左クリック:オンオフ. 中クリック:起動時の設定 quickproxy.autooff, 右クリック:プロキシの設定
+// @note           about:configのquickproxy.typeに値を予めセットしておく1(指定)または2(PAC)
+// @note      一発プロキシcontextProxySwitch.uc.xulを使うとより便利かも
+// ==/UserScript==
+// @version        2008/11/03 13:00 最初のウインドウのみ起動時の設定を使用する
+// @version        2007/09/04 13:00
+ -->
+<?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+.quickproxy-status-on {
+  list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACPElEQVQ4ja2ST0tUYRTGf+e99zaa4ejYxj+NGkktMhmYXUgQZF9AWkit/AJ9hPoGfQFXimSEy1CxhUhhZA2mLgykJtKixdiA/65z33NaXB00alXP7n0553ee83DgHyW/fxRuFR8Uhoqjbb25AX/esgLILtXKp52V0vzyWGlhefyvgHsPRybyg5eHk8xRRpyACGKGKpgaURzGX159fv7syeT9k57gdHPX7fyINmjoIkcQBrjQQSi4Y5g5DZvz2f58e3ff+tLqNEB4Yjs/2DuskRcXOoq5Iv2N18+sthVvM/NtBjOV/M2e4UKpOFtaWB53AIWh4qhvSDISCBI5xKWbvTiaYWJvkneH7+nMdDCQu4EEQi1KMoWh4iiAA2jryQ3gBHGCCwRx6VQXOlzGsWmbAJxzGRABgVx360Ad4C9YFix9BaRFgIQCTrgS9QFwZHE9dm2ybD0DDDDBFFDADIC7eieFOtiIP7K2u5bWnlII4Hap+lZtMRUsMUytnkElqWCJooeKecPMwAy3J9X6CpXyzop6wCuaeMyndIsVf+jxsUdrinoDn8Ir5Z8rdUBpbnksisNYE0NrhnkFwMeKHno0VizRuruodi4uzb0dqx/S9/L2h67OS9ea89l+M5Otg21K1RL7tX3MGySW2lfDWWBfF8tTL6dmH525xPWl1el8e3dfa0fbVS9JiJI2q6aZmhHVonhrsTz1x1M+gRz8OCjnmi/mmhqbWiQiIxYQ7rpqdaP65vXTxcfzx5P/m34BtsAc/VYVCE4AAAAASUVORK5CYII=');
+}
+.quickproxy-status-off {
+  list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAACOklEQVQ4jaWTTUsbURSGn3tnYpqFiYqSFIr5WJoOVQjiSrIRupAW+g8siLv+Chely+76B0RXpeii4MalpAkIA6EFSTIuhBbbaaYmaZ2Ze7pITLXgyrO77+F54b7nHLhnqf+FUqlUqSyvrD9xlqr5YsExAl6n7bruyVG9dnzQarXqdxqsrT3devb8xat8obiglQKlEAEwiDF0vE5z/8P7t4eHH99dM9ZN+OXm1ptsNvfIsmws20ZrjaUVSlmgIJ2Znis/Lq8G3cBvtU4bY4NSqVTZ2Nh8fQ3PzEwzOztDOj1JOjNJJjNJKvWAXq+HbSeS2dzD0pfPzZrv++caoLK8sp4vFhcsbWFZFlprAIKgx8X3Lpe9PslkkqnpKZTWzM/nFyrLK+sAGsBxlqoohVIabdkoNYzGsm1sO8HVn2j41hZKaUDhOItVABugWCg4ClBKoVCMeLTSaG2YmEgCICKoUfL5QsEZG1zPQhBEBBkFm0olSJEAYDD4Tbcb3OqPv9But10RwRiDMRFiZJRBn4uLgK/ffuD73SEsAghep+OODVz35GgIx8RxjDEGgDAMieKQOAr/6TLsue7J0digXjs+8LxO08TmlkEUx0ThFVEUjfQYI8KZ5zXrteOD8R74vn8ehVFcLpdXE4mJ5GAwoPvzF1F4hRGDiQ0ygvv9y2Bvd2e70fi0f2sTW63TRhAEfjaXK2XSmTmDQYxgjCBiEODM85p7uzvbN1f5zmNynMVqvlBwEPC8zp3HdO/6Cw8FJ1r72Dd0AAAAAElFTkSuQmCC');
+}
+" type="text/css"?>
+
+<overlay id="quickproxyOverlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+    var quickProxy = {
+      //-- config --
+      // 以下はFirefox3以上の場合に有効
+      // [true]:オプションをタブで開く, false:ダイアログで開く
+      optionInTab: true,
+      // falseの時ダイアログを開く遅延 巧く開かないときは遅延を大きくする
+      optionDelay: 800,
+      //-- config --
+      _init: function(){
+        quickProxy.addPrefListener(quickProxy.buttonPrefListener); // 登録処理
+        window.addEventListener('unload',function(){
+            quickProxy.removePrefListener(quickProxy.buttonPrefListener);
+          }
+        ,false);
+
+        var count = 0, timer = setInterval(function(){if(++count > 50 || (function(){
+            var icon = document.getElementById("quickproxy-status");
+            if (!icon)
+              return false;
+
+            var qp_autooff = quickProxy.getPref('quickproxy.autooff', 'bool', true);
+            var Is_Proxy_On = quickProxy.getPref("network.proxy.type", 'int', 0);
+
+            if (qp_autooff == true && quickProxy.getNumberOfWindow() == 1){
+              Is_Proxy_On = 0
+            }
+            quickProxy.setPref("network.proxy.type", 'int', Is_Proxy_On);
+
+            quickProxy._updateUI();
+            return true;
+        })()) clearInterval(timer);},1000);
+      },
+
+      getNumberOfWindow: function(){
+        var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                       .getService(Components.interfaces.nsIWindowMediator);
+        var enumerator = mediator.getEnumerator("navigator:browser");
+        var num = 0;
+        while(enumerator.hasMoreElements()) {
+          var win = enumerator.getNext();
+          num++;
+        }
+        return num;
+      },
+
+      _switch: function() {
+        var Is_Proxy_On = this.getPref("network.proxy.type", 'int', 0);
+        var Proxy_Type = this.getPref("quickproxy.type", 'int', 1);
+        if (Is_Proxy_On == 0){
+          Is_Proxy_On = Proxy_Type;
+        }else{
+          Is_Proxy_On = 0;
+        }
+        this.setPref("network.proxy.type", 'int', Is_Proxy_On);
+        this._updateUI();
+      },
+
+      _click: function(e){
+        if (e.button == 0){
+          this._switch();
+        }
+        if (e.button == 2) {
+          var aURL = "chrome://browser/content/preferences/connection.xul";
+          if (parseInt(Components.classes["@mozilla.org/xre/app-info;1"]
+              .getService(Components.interfaces.nsIXULAppInfo)
+              .version.substr(0,3) * 10,10) / 10 < 3) {
+            //Fx2
+            var aName ="";
+            var aFeatures = 'modal,centerscreen,resizable=no';
+            var aParams = null;
+            openDialog(aURL, aName, aFeatures, aParams);
+          } else {
+            if (this.optionInTab) {
+              //Fx3 タブバージョン (タブが一つの時, 閉じるとFxも閉じてしまう)
+              if (gBrowser.currentURI.spec == "about:blank")
+                 gBrowser.loadOneTab(aURL);
+               else
+                 gBrowser.selectedTab = gBrowser.addTab(aURL);
+              var Proxy_Type = this.getPref("network.proxy.type", 'int', 0);
+              if(Proxy_Type > 0) this.setPref("quickproxy.type", 'int', Proxy_Type);
+              this._updateUI();
+              e.preventDefault();
+
+              setTimeout(function(self){
+                if (gBrowser.mTabs.length == 1)
+                  gBrowser.addTab();
+              }, 200 , this);
+
+              return;
+            } else {
+              //Fx3 ダイアログバージョン
+              var prefBack = this.getPref("browser.preferences.instantApply", "bool", false);
+              this.setPref("browser.preferences.instantApply", "bool", true);
+              var w = openPreferences("paneAdvanced", {"advancedTab":"networkTab"});
+              setTimeout(function(self, w, prefBack){
+                self.optionOnload(w, prefBack);
+              }, self.optionDelay, this, w, prefBack);
+
+              var Proxy_Type = this.getPref("network.proxy.type", 'int', 0);
+              if(Proxy_Type > 0) this.setPref("quickproxy.type", 'int', Proxy_Type);
+              this._updateUI();
+              e.preventDefault();
+              return;
+            }
+          }
+        }
+        if (e.button == 1) {
+          var qp_autooff = this.getPref('quickproxy.autooff', 'bool', true);
+          var prompts = Components.classes["@mozilla.org/embedcomp/prompt-service;1"]
+                          .getService(Components.interfaces.nsIPromptService);
+          var check = {value: qp_autooff};
+          prompts.alertCheck(window, 'Window title', '',
+                             "起動時は常にプロキシはオフ", check);
+          this.setPref('quickproxy.autooff', 'bool', check.value);
+        }
+        e.preventDefault();
+      },
+
+      optionOnload: function(w, prefBack){alert(2)
+        this.setPref("browser.preferences.instantApply", "bool", prefBack);
+        w.gAdvancedPane.showConnections();
+      },
+
+      _updateUI: function() {
+        var Is_Proxy_On = this.getPref("network.proxy.type", 'int', 0);
+        var icon = document.getElementById("quickproxy-status");
+        var text1 = "";
+        switch (Is_Proxy_On) {
+          case 0:
+          case 3:
+            icon.setAttribute("class", "quickproxy-status-off");
+            icon.setAttribute("tooltiptext", "Switch Proxy On/●Off");
+            return;
+          case 1:
+            var ip = this.getPref("network.proxy.http", "str", "");
+            var port = this.getPref("network.proxy.http_port", "int", 0);
+            text1 = "\n" + ip + ":" + port;
+            break;
+          case 2:
+            text1 = "\nAutomatic proxy configuration";
+            break;
+          case 4:
+            text1 = "\nAuto-detect proxy settings for this network";
+            break;
+          case 5:
+            text1 = "\nUse system proxy settings";
+            break;
+        }
+        icon.setAttribute("class", "quickproxy-status-on");
+        icon.setAttribute("tooltiptext", "Switch Proxy ●On/Off" + text1);
+      },
+
+      getPref: function(aPrefString, aPrefType, aDefault){
+        var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
+                     .getService(Components.interfaces.nsIPrefBranch);
+        try{
+          switch (aPrefType){
+            case "str":
+              return xpPref.getCharPref(aPrefString).toString(); break;
+            case "int":
+              return xpPref.getIntPref(aPrefString); break;
+            case "bool":
+            default:
+              return xpPref.getBoolPref(aPrefString); break;
+          }
+        }catch(e){
+        }
+        return aDefault;
+      },
+
+      setPref: function(aPrefString, aPrefType, aValue){
+        var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
+                     .getService(Components.interfaces.nsIPrefBranch);
+        try{
+          switch (aPrefType){
+            case "str":
+              return xpPref.setCharPref(aPrefString, aValue); break;
+            case "int":
+              aValue = parseInt(aValue);
+              return xpPref.setIntPref(aPrefString, aValue);  break;
+            case "bool":
+            default:
+              return xpPref.setBoolPref(aPrefString, aValue); break;
+          }
+        }catch(e){
+        }
+        return null;
+      },
+      // 監視を開始する
+      addPrefListener: function(aObserver) {
+        try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+          pbi.addObserver(aObserver.domain, aObserver, false);
+        } catch(e) {}
+      },
+
+      // 監視を終了する
+      removePrefListener: function(aObserver) {
+        try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+          pbi.removeObserver(aObserver.domain, aObserver);
+        } catch(e) {}
+      },
+
+      buttonPrefListener:{
+        domain  : 'network.proxy.type',
+          //"grabScroll.XXX"という名前の設定が変更された場合全てで処理を行う
+
+        observe : function(aSubject, aTopic, aPrefstring) {
+          if (aTopic == 'nsPref:changed') {
+            // 設定が変更された時の処理
+            var type = quickProxy.getPref(aPrefstring, 'int', 0);
+            if (type != 0)
+              quickProxy.setPref("quickproxy.type", 'int', type);
+            quickProxy._updateUI();
+          }
+        }
+      }
+
+    }
+    quickProxy._init();
+  ]]></script>
+  <statusbar id="status-bar" class="chromeclass-status">
+    <statusbarpanel id="quickproxy" insertafter="livemark-button">
+      <image
+        id="quickproxy-status"
+        label="QuickProxy"
+        class="quickproxy-status-off"
+        onclick="quickProxy._click(event);" />
+    </statusbarpanel>
+  </statusbar>
+</overlay>

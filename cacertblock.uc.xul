@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+// ==UserScript==
+// @name           cacertblock.uc.xul
+// @namespace      https://addons.mozilla.org/en-US/firefox/addon/83152
+// @description    cacertblock
+// @include        *
+// @compatibility  Firefox 3.6
+// @author         Timothy Guan-tin Chien
+// @version        0.1
+// ==/UserScript==
+ -->
+<overlay id="cacertblock-overlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+    var cacertblock = {
+      // SHA-1 fingerprints of certs reported owned by CNNIC
+      sha1 : [
+        '69:BD:8C:F4:9C:D3:00:FB:59:2E:17:93:CA:55:6A:F3:EC:AA:35:FB', // ValiCert Class 3 Policy Validation Authority
+        '3C:BB:5D:E0:FC:D6:39:7C:05:88:E5:66:97:BD:46:2A:BD:F9:5C:76', // RSA Security 1024 V3
+        '8B:AF:4C:9B:1D:F0:2A:92:F7:DA:12:8E:B9:1B:AC:F4:98:60:4B:6F', // CNNIC Root
+        '99:A6:9B:E6:1A:FE:88:6B:4D:2B:82:00:7C:B8:54:FC:31:7E:15:39', // Entrust Secure Server CA (37:4A:D2:43)
+        '68:56:BB:1A:6C:4F:76:DA:CA:36:21:87:CC:2C:CD:48:4E:DD:C2:5D', // CNNIC SSL (under Entrust.net)
+        'AA:CA:FB:20:21:98:0A:D5:7E:55:32:1E:DC:90:41:A2:F1:B3:16:54' // Unknown, from centalert by chihchun
+      ],
+      onLoad: function() {
+
+        const Cc = Components.classes;
+        const Ci = Components.interfaces;
+
+        var caTreeView = Cc["@mozilla.org/security/nsCertTree;1"].createInstance(Ci.nsICertTree);
+        var aConsoleService = Cc["@mozilla.org/consoleservice;1"].getService(Ci.nsIConsoleService);
+
+        //ref: http://mxr.mozilla.org/mozilla-central/source/security/manager/pki/resources/content/certManager.js
+        caTreeView.loadCerts(Ci.nsIX509Cert.CA_CERT);
+
+        // Go through entire db, looking for CNNIC certs and delete them.
+        // Note that deleteEntryObject() would not actually delete the built-in ones,
+        // but run it would effectly disable it's usage.
+
+        for (var i=1; i<caTreeView.rowCount; i++) {
+          if (caTreeView.isContainer(i)) continue;
+          var cert = caTreeView.getCert(i);
+
+          for (var j in this.sha1) {
+            if (cert.sha1Fingerprint === this.sha1[j]) {
+              aConsoleService.logStringMessage("CA Untrustworthy: Found cert '" + cert.commonName + "' and attempt to delete or disabled it.\nThis message may show up next time for built-in CA certs since they cannot be deleted but only disabled.");
+              caTreeView.deleteEntryObject(i);
+            }
+          }
+        }
+      }
+    };
+    //window.addEventListener("load", function (e) { cacertblock.onLoad(e) }, false);
+    cacertblock.onLoad();
+  ]]></script>
+</overlay>

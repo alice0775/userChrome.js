@@ -1,0 +1,338 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           linkInNewTabForSpecifiedPage
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    特定のサイトのリンクは新規タブで開く
+// @include        main
+// @compatibility  Firefox 2.0 3.0
+// @author         Alice0775
+// @version        2008/09/20 19:30 javascriptは現在のタブ
+// @Note           リンク上の左クリックを中クリックに置き換えている
+// ==/UserScript==
+// @version        2008/03/22 01:00 例外処理
+// @version        2007/10/11 22:30
+ -->
+  <script language="JavaScript"><![CDATA[
+var linkInNewTabForSpecifiedPage = {
+  prefstr:'userChrome.linkInNewTabForSpecifiedPage.url',
+  prefbool:'userChrome.linkInNewTabForSpecifiedPage.enable',
+  include:[],
+  exclude:[],
+  exec:false,
+
+  init: function(){
+    // 初期化中に
+    this._window = gBrowser.mPanelContainer;
+    this._window.addEventListener("click", this, true);
+    var that = this;
+    //window.addEventListener("focus", that.tabSelected, false);
+    //gBrowser.tabContainer.addEventListener("TabSelect", that.tabSelected, false);
+    linkInNewTabForSpecifiedPage.addPrefListener(that.PrefListener); // 登録処理
+    gBrowser.addProgressListener(that);
+    this.initPrefs();
+  },
+
+  uninit: function(){
+    // 必要なくなれば
+    this._window.removeEventListener("click", this, true);
+    var that = this;
+    //window.removeEventListener("focus", that.tabSelected, false);
+    //gBrowser.tabContainer.removeEventListener("TabSelect", that.tabSelected, false);
+    linkInNewTabForSpecifiedPage.removePrefListener(that.PrefListener); // 解除処理
+    gBrowser.removeProgressListener(that);
+  },
+
+  onStatusChange: function(){},
+  onProgressChange: function(){},
+  onLocationChange: function(aWebProgress, aRequest, aLocation){
+    linkInNewTabForSpecifiedPage.tabSelected();
+  },
+  onStateChange: function(){},
+  onSecurityChange: function(){},
+
+
+  initPrefs:function(){
+    this.include = [];
+    this.exclude = [];
+    var Urls = this.getPref(this.prefstr,"str",'').split(' ');
+    for(var i=0,len=Urls.length;i<len;i++){
+      if(Urls[i]){
+        if(Urls[i].match(/^!/)){
+          this.exclude.push(this.convert2RegExp(Urls[i]));
+        this.debug(this.convert2RegExp(Urls[i]));
+        }else{
+          this.include.push(this.convert2RegExp(Urls[i]));
+        this.debug(this.convert2RegExp(Urls[i]));
+        }
+      }
+    }
+  },
+
+  modPrefs: function(){
+    var text0, objArray=[], selected = {}, result, text1, text;
+    var promptService = Cc["@mozilla.org/embedcomp/prompt-service;1"]
+                        .getService(Ci.nsIPromptService);
+
+    while(true){
+      text0 =  this.getPref(this.prefstr, 'str', '').replace(/^ +| +$/g,'');
+      objArray = text0.split(' ');
+      //objArray.sort();
+      objArray.sort(function(a,b) {
+        a=a.toLowerCase();
+        b=b.toLowerCase();
+        if (a < b) return -1;
+        if (a > b) return 1;
+        return 0;
+      })
+      text0 = ' ' + text0 + ' ';
+      objArray = ['サイトを追加'].concat(objArray);
+      selected = {};
+      result = promptService.select(null, '常にリンクは新規タブで閲覧するサイト',
+                                        '追加:"サイトを追加"を選択, 修正/削除:サイトを選択, 終了:キャンセル',
+                                        objArray.length, objArray, selected);
+      if (!result) return;
+      if(selected.value == 0){//追加
+        this.addSite(window.content.document.location.href);
+      }else{
+        text = objArray[selected.value];
+        text1 = window.prompt('常にリンクは新規タブで閲覧するサイト(完全一致*,!)/ ブランクで削除', text);
+        if(text1 ==''){//削除
+          this.setPref(this.prefstr, 'str', text0.replace(' '+text+' ', ' ').replace(/^ +| +$/g,''));
+        }else if(text1){//修正
+          text1 = text1.replace(/^ +| +$/g,'');
+          this.setPref(this.prefstr, 'str', text0.replace(' '+text+' ', ' '+text1+' ').replace(/^ +| +$/g,''));
+        }
+      }
+    }
+  },
+
+  addSite:function(href){
+    var text = window.prompt('常にリンクは新規タブで閲覧するサイト(完全一致*,!)',href);
+    this.debug(text);
+    if(!text) return;
+    if(text == '') return;
+    text = text.replace(/^ +| +$/g,'');
+    text = this.getPref(this.prefstr, 'str', '').replace(/^ +| +$/g,'') + ' ' + text;
+    this.setPref(this.prefstr, 'str', text)
+  },
+
+  toggle: function(){
+    var flg = this.getPref(this.prefbool, 'bool', true);
+    this.setPref(this.prefbool, 'bool', !flg);
+  },
+
+  tabSelected: function(event){
+    var that = linkInNewTabForSpecifiedPage;
+    //var browser = gBrowser.selectedTab;
+    // browser は新たに選択されたタブです
+    try{
+      var doc = gBrowser.selectedBrowser.contentDocument;
+      var url = doc.location.href;
+      for(var i=0,len=that.exclude.length;i<len;i++){
+        if( that.exclude[i].test(url)){
+          that.exec = false;
+          return;
+        }
+      }
+      for(var i=0,len=that.include.length;i<len;i++){
+        if( that.include[i].test(url)){
+          that.exec = that.getPref(that.prefbool, 'bool', true);
+          return;
+        }
+      }
+    }catch(e){}
+    that.exec = false;
+  },
+
+  handleEvent: function(event){
+    var target = event.originalTarget;
+    switch (event.type) {
+      case "click":
+        if (this.exec && event.button == 0 && this.isLink(target) ) {
+
+      this.debug("click");
+          event.preventDefault();
+          event.stopPropagation();
+          var elem = event.originalTarget;
+          var MouseEvents = document.createEvent("MouseEvents");
+          /*initMouseEvent(type, canBubble, cancelable, view,
+                         detail, screenX, screenY, clientX, clientY,
+                         ctrlKey, altKey, shiftKey, metaKey,
+                         button, relatedTarget);
+          */
+          MouseEvents.initMouseEvent("click", true, true, this._getFocusedWindow(),
+                         event.detail, event.screenX, event.screenY, event.clientX, event.clientY,
+                         event.ctrlKey, event.altKey, event.shiftKey, event.metaKey,
+                         1, event.relatedTarget);
+          target.dispatchEvent(MouseEvents);
+        }
+        break;
+    }
+  },
+
+  _getFocusedWindow: function(){ //現在のウインドウを得る
+      var focusedWindow = document.commandDispatcher.focusedWindow;
+      if (!focusedWindow || focusedWindow == window)
+          return window._content;
+      else
+          return focusedWindow;
+  },
+
+  isLink: function(node) {
+    while (node) {
+      if((node instanceof HTMLAnchorElement || node instanceof HTMLAreaElement)
+          && node.hasAttribute("href") ) {
+        if (/^\s*javascript:/.test(node.getAttribute("href")))
+          return false;
+        return node;
+      }
+      node = node.parentNode;
+    }
+    return false;
+  },
+
+  debug: function(aMsg){
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    Cc["@mozilla.org/consoleservice;1"]
+      .getService(Ci.nsIConsoleService)
+      .logStringMessage(aMsg);
+  },
+
+  onToolMenupopup: function(){
+    var flg = linkInNewTabForSpecifiedPage.getPref(linkInNewTabForSpecifiedPage.prefbool, 'bool', true);
+    var menuitem = document.getElementById("linkInNewTabForSpecifiedPageCheckbox");
+    menuitem.setAttribute('checked', flg);
+  },
+
+  // Converts a pattern in this programs simple notation to a regular expression.
+  // thanks AdBlock! http://www.mozdev.org/source/browse/adblock/adblock/
+  convert2RegExp: function( pattern ) {
+    var s = new String(pattern);
+    if(s.match(/^!/)){
+      s = s.substr(1);
+    }
+    var res = new String("^");
+
+    for (var k = 0 ; k < s.length ; k++) {
+      switch(s[k]) {
+        case '*' :
+          res += ".*";
+          break;
+        case '.' :
+        case '?' :
+        case '^' :
+        case '$' :
+        case '+' :
+        case '{' :
+        case '[' :
+        case '|' :
+        case '(' :
+        case ')' :
+        case ']' :
+          res += "\\" + s[k];
+          break;
+        case '\\' :
+          res += "\\\\";
+          break;
+        case ' ' :
+          // Remove spaces from URLs.
+          break;
+        default :
+          res += s[k];
+          break;
+      }
+    }
+
+    // fortunately, we don't need .tld in chrome :)
+    return new RegExp(res + '$', "i");
+  },
+
+  getPref: function(aPrefString, aPrefType, aDefault){
+    var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case "str":
+          return xpPref.getCharPref(aPrefString).toString(); break;
+        case "int":
+          return xpPref.getIntPref(aPrefString); break;
+        case "bool":
+        default:
+          return xpPref.getBoolPref(aPrefString); break;
+      }
+    }catch(e){}
+    return aDefault;
+  },
+
+  setPref: function(aPrefString, aPrefType, aValue){
+    var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case "str":
+          return xpPref.setCharPref(aPrefString, aValue); break;
+        case "int":
+          aValue = parseInt(aValue);
+          return xpPref.setIntPref(aPrefString, aValue);  break;
+        case "bool":
+        default:
+          return xpPref.setBoolPref(aPrefString, aValue); break;
+      }
+    }catch(e){}
+    return null;
+  },
+
+  // 監視を開始する
+  addPrefListener: function(aObserver) {
+    try {
+      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+      pbi.addObserver(aObserver.domain, aObserver, false);
+    } catch(e) {}
+  },
+
+  // 監視を終了する
+  removePrefListener: function(aObserver) {
+    try {
+      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+      pbi.removeObserver(aObserver.domain, aObserver);
+    } catch(e) {}
+  },
+
+  PrefListener:{
+    domain  : 'userChrome.linkInNewTabForSpecifiedPage',
+      //"XX"という名前の設定が変更された場合全てで処理を行う
+
+    observe : function(aSubject, aTopic, aPrefstring) {
+      if (aTopic == 'nsPref:changed') {
+        // 設定が変更された時の処理
+        linkInNewTabForSpecifiedPage.initPrefs();
+      }
+    }
+  }
+
+};
+
+// エントリポイント
+linkInNewTabForSpecifiedPage.init();
+window.addEventListener("unload", function(){ linkInNewTabForSpecifiedPage.uninit(); }, false);
+  ]]></script>
+  <menupopup id="menu_ToolsPopup">
+    <menu id="linkInNewTabForSpecifiedPageToolMenu"
+           label="linkInNewTabForSpecifiedPageの設定" accesskey="l"
+          insertbefore="menu_preferences">
+      <menupopup onpopupshowing="event.stopPropagation();linkInNewTabForSpecifiedPage.onToolMenupopup();">
+        <menuitem label="常にリンクは新規タブで有効/無効"
+                  id="linkInNewTabForSpecifiedPageCheckbox"
+                  accesskey="a"
+                  type="checkbox"
+                  oncommand="linkInNewTabForSpecifiedPage.toggle()"/>
+        <menuitem label="常にリンクは新規タブで閲覧するサイトの登録"
+                  accesskey="s"
+                  oncommand="linkInNewTabForSpecifiedPage.modPrefs()"/>
+      </menupopup>
+    </menu>
+  </menupopup>
+</overlay>

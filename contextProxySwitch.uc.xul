@@ -1,0 +1,257 @@
+<?xml version="1.0"?>
+
+<overlay id="context_ProxySwitch"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           contextProxySwitch
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    一発プロキシ設定
+// @include        main
+// @compatibility  Firefox 2.0 3.0 3.1
+// @author         Alice0775
+// @Note           quickProxyModoki3.0.uc.xulも合わせてどうぞ
+// @version        2009/09/06 00:00 httpsも設定するかどうか USE_PROXY_SSL
+// ==/UserScript==
+// @version        2009/03/16 00:00 初期化時チェック
+// @version        2008/12/04 00:00 Cleanup
+// @version        2008/11/03 00:00 PACファイル使用中の表示
+// @version        2007/06/17 00:00 http://www.cybersyndrome.net/ のproxyを選択して一括登録
+// @version        2007/06/15
+ --> 
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+  var ucjsProxy ={
+    // --- config ---
+    USE_PROXY_SSL:false, //httpsも設定 true:する, [false]しない
+    // --- config ---
+
+    _Prefs: Components.classes["@mozilla.org/preferences-service;1"].
+              getService(Components.interfaces.nsIPrefBranch),
+    _exp:/([a-z0-9_\-]+(\.[a-z0-9_\-]+)+):(\d+)/i,
+
+    _Switch: function _Switch() {
+      var first = true;
+      var text = this._getselection();
+      var texts = text.split("\n");
+      for (var i = 0; i < texts.length; i++){
+        var xx = texts[i].match(this._exp);
+        var proxyhttp = RegExp.$1;
+        var proxyhttp_port = parseInt(RegExp.$3, 10);
+        if( !xx || text =='' || proxyhttp_port <= 0 || proxyhttp_port > 65535 || proxyhttp == '') {
+          //串じゃない
+          this.deselectProxy();
+        } else {
+          //たぶん串なので串をセットする
+          this.addProxy(proxyhttp + ":" + proxyhttp_port);
+          if (first){
+            this.selectProxy(proxyhttp + ":" + proxyhttp_port);
+            first = false;
+          }
+        }
+      }
+    },
+
+    addProxy: function(proxy){
+      try{
+        var proxys = this._Prefs.getCharPref("userChrome_js.network.proxys");
+      }catch(e){
+        var proxys = "";
+      }
+      proxys = proxys.replace(proxy, "");
+      proxys = (proxys + "," + proxy).replace(/,,/, ',').replace(/^,/, '').replace(/,$/, '');
+      this._Prefs.setCharPref("userChrome_js.network.proxys", proxys);
+    },
+
+    delProxy: function(proxy){
+      try{
+        var proxys = this._Prefs.getCharPref("userChrome_js.network.proxys");
+        proxys = proxys.replace(proxy, "").replace(/,,/, ',').replace(/^,/, '').replace(/,$/, '');
+        this._Prefs.setCharPref("userChrome_js.network.proxys", proxys);
+      }catch(e){}
+    },
+
+    deselectProxy: function(){
+      this._Prefs.setIntPref("network.proxy.type", 0);
+      document.getElementById('nonProxy').setAttribute('checked', true);
+    },
+
+    PACProxy: function(){
+      this._Prefs.setIntPref("network.proxy.type", 2);
+      document.getElementById('PACProxy').setAttribute('checked', true);
+    },
+
+    allDelete: function(){
+      this._Prefs.setIntPref("network.proxy.type", 0);
+      this._Prefs.setCharPref("userChrome_js.network.proxys", '');
+    },
+
+    selectProxy: function(proxy){
+      var xx = proxy.match(this._exp); 
+      var proxyhttp = RegExp.$1;
+      var proxyhttp_port = parseInt(RegExp.$3, 10);
+      this._Prefs.setCharPref("network.proxy.http", proxyhttp);
+      this._Prefs.setIntPref("network.proxy.http_port", proxyhttp_port);
+      this._Prefs.setCharPref("network.proxy.ftp", proxyhttp);
+      this._Prefs.setIntPref("network.proxy.ftp_port", proxyhttp_port);
+      if (this.USE_PROXY_SSL) {
+        this._Prefs.setCharPref("network.proxy.ssl", proxyhttp);
+        this._Prefs.setIntPref("network.proxy.ssl_port", proxyhttp_port);
+      }
+      this._Prefs.setIntPref("network.proxy.type", 1);
+    },
+
+    _getFocusedWindow: function(){
+        var focusedWindow = document.commandDispatcher.focusedWindow;
+        if (!focusedWindow || focusedWindow == window)
+            return window._content;
+        else
+            return focusedWindow;
+    },
+
+    _getselection: function() {
+        var targetWindow = this._getFocusedWindow();
+        var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+        // for textfields
+        if (sel && !sel.toString()) {
+          var node = document.commandDispatcher.focusedElement;
+          if (node &&
+              (node.type == "text" || node.type == "textarea") &&
+              'selectionStart' in node &&
+              node.selectionStart != node.selectionEnd) {
+              var offsetStart = Math.min(node.selectionStart, node.selectionEnd);
+              var offsetEnd   = Math.max(node.selectionStart, node.selectionEnd);
+              return node.value.substr(offsetStart, offsetEnd-offsetStart);
+          }
+        }
+        return sel ? sel.toString() : "";
+    },
+
+    addMenuItem: function(proxy){
+      var menuitem = document.createElement('menuitem');
+      var menupopup = document.getElementById('contextProxySwitchMenupopup');
+      menupopup.appendChild(menuitem);
+      menuitem.setAttribute('label', proxy);
+      menuitem.setAttribute('type', 'radio');
+      menuitem.setAttribute('checked', false);
+      menuitem.setAttribute('name', 'contextPproxy');
+      menuitem.setAttribute('tooltiptext', 'プロキシに設定, 中クリックで削除');
+      menuitem.setAttribute('oncommand', 'ucjsProxy.selectProxy(this.getAttribute("label"));');
+      menuitem.setAttribute('onclick', 'if(event.button==1){ucjsProxy.deleteMenuItem(event);}');
+      return menuitem;
+    },
+
+    deleteMenuItem: function(event){
+      var target = event.target;
+      if (target.getAttribute('checked') == 'true'){
+        this.deselectProxy();
+      }
+      this.delProxy(target.getAttribute('label'));
+      target.parentNode.removeChild(target)
+    },
+
+
+    popupOnshowing: function(menupopup){
+      for (var j = 0; j < menupopup.childNodes.length; j++){
+        if (menupopup.childNodes[j].getAttribute('id') == 'contextProxySwitchMenuSeparator'){
+          break;
+        }
+      }
+      for (var i = menupopup.childNodes.length - 1; i > j; i--){
+        menupopup.removeChild(menupopup.lastChild);
+      }
+      try {
+        var proxys = this._Prefs.getCharPref("userChrome_js.network.proxys").split(",");
+      } catch(e) {
+        var proxys = [];
+      }
+      var enable = this._Prefs.getIntPref("network.proxy.type");
+      var proxyhttp = this._Prefs.getCharPref("network.proxy.http");
+      var proxyhttp_port = this._Prefs.getIntPref("network.proxy.http_port");
+
+      if (this._getselection() == '')
+        document.getElementById('contextProxySwitchSelect').setAttribute('disabled', true);
+      else
+        document.getElementById('contextProxySwitchSelect').removeAttribute('disabled');
+        
+      var menuitem;
+      var flg = false;
+      for (var i=0; i<proxys.length; i++){
+        if (!proxys[i])
+          continue;
+        menuitem = this.addMenuItem(proxys[i]);     
+        if(enable == 1 && proxys[i] == (proxyhttp + ":" + proxyhttp_port)) {
+          flg = true;
+          menuitem.setAttribute('checked', true);
+        }
+      }
+      if (!flg && enable == 1) {
+        this.addProxy(proxyhttp + ":" + proxyhttp_port);
+        /*
+        enable = 0;
+        this._Prefs.setIntPref("network.proxy.type", enable);
+        */
+      }
+      document.getElementById('nonProxy').setAttribute('checked', (enable == 0));
+      document.getElementById('PacProxy').setAttribute('checked', (enable == 2));
+    },
+    
+    init: function(){
+      try {
+        var proxys = this._Prefs.getCharPref("userChrome_js.network.proxys").split(",");
+      } catch(e) {
+        var proxys = [];
+      }
+      var enable = this._Prefs.getIntPref("network.proxy.type");
+      var proxyhttp = this._Prefs.getCharPref("network.proxy.http");
+      var proxyhttp_port = this._Prefs.getIntPref("network.proxy.http_port");
+
+      var flg = false;
+      for (var i=0; i<proxys.length; i++){
+        if (!proxys[i])
+          continue;
+        if(enable == 1 && proxys[i] == (proxyhttp + ":" + proxyhttp_port)) {
+          flg = true;
+        }
+      }
+      if (!flg && enable == 1) {
+        this.addProxy(proxyhttp + ":" + proxyhttp_port);
+        /*
+        enable = 0;
+        this._Prefs.setIntPref("network.proxy.type", enable);
+        */
+      }
+    }
+  }
+  
+  ucjsProxy.init();
+  
+  ]]></script>
+
+  // This is for the right click menu.
+  <popup id="contentAreaContextMenu">
+    <menu label="一発プロキシ設定">
+      <menupopup id="contextProxySwitchMenupopup"
+                 onpopupshowing="ucjsProxy.popupOnshowing(this);">
+        <menuitem id="contextProxySwitchSelect"
+                  label="選択文字列をプロキシに設定"
+                  oncommand="ucjsProxy._Switch();"/>
+        <menuitem label="全部削除"
+                  oncommand="ucjsProxy.allDelete();"/>
+        <menuseparator/>
+        <menuitem id="nonProxy"
+                  type="radio"
+                  name="contextPproxy"
+                  checked="true"
+                  label="プロキシなし"
+                  oncommand="ucjsProxy.deselectProxy();"/>
+        <menuitem id="PacProxy"
+                  type="radio"
+                  name="contextPproxy"
+                  checked="true"
+                  label="PACファイル使用"
+                  oncommand="ucjsProxy.PACProxy();"/>
+        <menuseparator id="contextProxySwitchMenuSeparator"/>
+      </menupopup>
+    </menu>
+  </popup>
+</overlay>

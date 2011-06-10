@@ -1,0 +1,1042 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+%23GrabScroll-status {
+  padding-left:0px !important;
+  padding-right:0px !important;
+}
+%23GrabScroll-image {
+  list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlklEQVQ4jaWTuw0EIQxEd8UFBFeEczoYCYkm6IeiSU+zySIZjs9+JrKQ52GDvW1jGQA84905953k/gsASVJBlvoAKAajAeq8yu/eqE0l1uciYqcl6+QeYNpSm9wCvPe/nDNDCKxMABhjNG0VI1VVFFNKia8Ad/QK0HvE/Q5k+AuP+n8CWY72DHJpL0aAy0slIlYv0Gp8D2h34zRWWYjjAAAAAElFTkSuQmCC');
+}
+%23GrabScroll-image[status='true']{
+  opacity:1.0;
+}
+%23GrabScroll-image[status='false'] {
+  opacity:0.5;
+}
+" type="text/css"?>
+
+<overlay id="GrabScroll"
+     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           GrabScroll4
+// @namespace      http://pc11.2ch.net/test/read.cgi/software/1168635399/
+// @description    This script allow scroll with drag screen. If you want to do select text, press alt Key
+// @include        main
+// @include        chrome://global/content/viewSource.xul
+// @include        chrome://global/content/viewPartialSource.xul
+// @compatibility  Firefox 2.0 3.0 3.5 3.6a2pre 3.7a1pre WinXP
+// @author         Original DragImage.uc.js
+// @Modifier       Alice0775
+// @Note           文字列を選択したいときは,左click後にTIMER以内に選択開始する,またはaltKeyを押しながら選択
+// @Note           altキーを押しながらドラッグで文字列を選択
+// @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
+// @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2010/10/28 22:00 image documentの時自動リサイズされてしまうのを修正。
+// @version        2010/08/14 12:00 クリックしたときの処理を変更
+// @version        2010/03/19 23:00 Bug 442228 - Implement CSS property to control element resizability
+// @version        2010/02/25 17:00
+// @version        2010/01/16 18:00 viewSource
+// ==/UserScript==
+// @version        2009/08/22 18:00 要素のドラッグなど, カーソル形状がresize|move|all-scroll|crosshairの時は何もしないようにした。
+// @version        2009/08/19 00:30 背の高いdivの場合, カーソル形状変更しない
+// @version        2009/06/14 00:30 xmlに対応させた
+// @version        2009/06/03 06:00 videoタグのビデオコントロール付きはドラッグしない
+// @version        2009/05/21 12:00 typo
+// @version        2009/05/21 00:00 tableのborder-widthを考慮してみた
+// @version        2009/05/09 00:00 長いページでは閾値を少し長めにするため 閾値を調整
+// @version        2009/05/05 00:00 文字の選択をしやすくするためにmousemove時の判定順番を変更, frame間等のdocumentの相違による制限を取りやめ
+// @version        2009/04/30 19:00 2009/03/22 19:00のregressionでエラーが出る場合があった
+// @version        2009/04/07 13:00 タイマー解除のタイミングを変更
+// @version        2009/04/06 17:00 linuxでも
+// @version        2009/03/28 12:00 長尺ページの時, document.body.style.cursorが 異様に遅い(cssのbug?)ので ターゲットがhtml/bodyだった時は cursorはいじらないようにした
+// @version        2009/03/22 19:00 ResizeTa等でstyle.cursor = *-resizeの時は何もしない様にした
+// @version        2009/02/19 19:00 メニュー修正
+// @version        2009/02/18 14:00 "mouse moveがこの値以下の場合スタートしない"閾値を指定するようにした
+// @version        2009/02/13 23:00 Flash等があるページで認識が甘かったので, mouseupの処理を修正してみた
+// @version        2009/01/19 23:00 動かなくなっていた, 中ボタン,右ボタンを復活してみた。
+// @version        2009/01/14 18:00 閾値すぎたらカーソル形状を元に戻すようにした
+// @version        2009/01/11 00:00 キャプチャフェーズのフラグが違っていた
+// @version        2009/01/10 00:00 getScrollViewのバグ
+// @version        2009/01/05 14:00 Fixed bug: Can not scroll at the case that mouse pointer on document root.
+// @version        2008/12/31 08:00 エラー出ていたので
+// @version        2008/12/26 07:00 Bug 466856 -  Crash [@ nsTypedSelection::CopyRangeToAnchorFocus] with triple-clicking changing display style on body 対策// @version        2008/12/26 07:00 開始の判定を改良 慣性スクロールはもひとつなのでデフォoff
+// @version        2008/08/21 14:00 コンテンツの外でmouseupしたときstop
+// @version        2008/08/14 21:00 zoom
+// @version        2008/08/06 01:00 DIV要素等にも対応
+// @version        2008/08/21 00:00 ドラッグ中にマウスが画面外になった場合, なんかリンク上の処理が変になっていた
+// @version        2008/08/19 18:00 適当にブレーキががかるように
+// @version        2008/07/26 17:00 マウス慣性を使うかどうか
+// @version        2008/03/26 16:00
+ -->
+ <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+var GrabScroll = {
+  MOUSEBUTTON       :0,    //0 LeftButton, 1 MiddleButton, 2 RightButton
+  MOVERATE          :-1,   // [+-]rate, マイナスの時ドラッグに画面が追従する方向,プラスはその逆
+  TIMER             :500,  //この値以上マウス長押した場合はGrabScrollを開始しない,
+                           //連続ドラッグの時は, 閾値は自動的にこの値の1/10となる
+  INERTIA           :false,//慣性を有効とするかどうか
+  INERTIATHRESHOLD  :80,   //自動スクロールの閾値
+  INERTIARATE       :50,   //自動スクロールの速度
+  NOTCLICABLELINK   :true, //クリックできるリンク上はGrabScrollを開始しない
+  NOTIMAGE          :false,//イメージはGrabScrollを開始しない
+  TOLERANCE         :3,    //mouse moveがこの値以下の場合スタートしない
+  TOLERANCE_WHEN_NO_H_SCROLL : 5, //横スクロールできないときに値以上横に動かした, GrabScrollをキャンセル
+  CANCEL_WHEN_SELECTION: true,  //選択範囲があるときは, GrabScrollをキャンセル
+  // about:config grabScroll.disable.urlに GrabScrollを無視するURLをスペース区切りで列挙できる。
+  //   例 http://www.google.com/sky* http://books.google.co.jp/books?id=*
+
+  CURSOR: "-moz-grab",// cursor style
+
+  mStatus: 0,   //0:アイドル, 1:mousedown中, 2:mousemove中, 3:スクロール後mouseup
+  mLastX: 0,
+  mLastY: 0,
+  mCursor: null,
+  mCursorElement: null,
+  _target: null,  //マウスが指したエレメント
+  _target2: null, //マウスが指したエレメント
+  _isImage:false,
+  _timer:0,      //閾値を判断するためのmouseup時の時刻保存
+  _ctimer:0,
+  _mtimer: false,
+  cScroll:false,
+  cSpeedX:0,
+  cSpeedY:0,
+  _doc:null,
+  _MOVERATEpZoom:1,
+  IGNOREURL:[],
+  _window: null,
+
+  initGrabScroll: function() {
+    if (GrabScroll.activeBrowser().mPanelContainer) {
+      this._window = GrabScroll.activeBrowser().mPanelContainer;
+    } else {
+      this._window = document.getElementById('content');
+    }
+    this._window.addEventListener("mousedown", this, true);
+    this._window.addEventListener("click", this, true);
+    this._window.addEventListener("mouseup", this, true);
+    GrabScroll.addPrefListener(GrabScroll.buttonPrefListener); // 登録処理
+    setTimeout(function(){GrabScroll.initPrefs();},0);
+  },
+
+  initPrefs:  function() {
+    this.MOUSEBUTTON      = this.getPref("grabScroll.button","int",this.MOUSEBUTTON);
+    this.MOVERATE         = this.getPref("grabScroll.moverate","int",this.MOVERATE);
+    this.TIMER            = this.getPref("grabScroll.timer","int",this.TIMER);
+    this.INERTIA          = this.getPref("grabScroll.enableinertia","bool",this.INERTIA);
+    this.INERTIATHRESHOLD = this.getPref("grabScroll.inertiathreshold","int",this.INERTIATHRESHOLD);
+    this.INERTIARATE      = this.getPref("grabScroll.inertiarate","int",this.INERTIARATE);
+    this.NOTCLICABLELINK  = this.getPref("grabScroll.clickable","bool",this.NOTCLICABLELINK);
+    this.IGNOREURL = this.getPref("grabScroll.disable.url", "str", "").split(' ');
+    this.IGNOREURL.push("http://maps.google.*/*");
+    this.IGNOREURL.push("http://maps.yahoo.co.jp/pl*");
+    this.IGNOREURL.push("http://map.yahoo.co.jp/pl*");
+    this.IGNOREURL.push("http://map.goo.ne.jp/*");
+    this.IGNOREURL.push("http://www.mapion.co.jp/c/f*");
+    this.IGNOREURL.push("http://books.google.co.jp/books?id=*");
+    for(var aURL in this.IGNOREURL) {
+      if(this.IGNOREURL[aURL]==='')continue;
+      this.IGNOREURL[aURL] = this.convert2RegExp(this.IGNOREURL[aURL]);
+    }
+    var count = 0;
+    var timer = setInterval(function(self, enable){
+      if(++count > 100 || self.setIcon(enable))
+        clearInterval(timer);
+    },100, this, this.getPref("grabScroll.enable", "bool", true));
+  },
+
+  uninitGrabScroll: function() {
+    //document.documentElement.removeEventListener('SubBrowserFocusMoved', this.initGrabScroll(), false);
+    this._window.removeEventListener("mousedown", this, true);
+    this._window.removeEventListener("click", this, true);
+    this._window.removeEventListener("mouseup", this, true);
+    GrabScroll.removePrefListener(GrabScroll.buttonPrefListener); // 登録処理
+    this.mStatus==0;
+    this._window.removeEventListener("mousemove", this, true);
+  },
+
+  activeBrowser: function() {
+    return ('SplitBrowser' in window ? SplitBrowser.activeBrowser : null )
+            ||  gBrowser;
+  },
+
+  handleEvent: function(event) {
+    event = new XPCNativeWrapper(event);
+    switch(event.type) {
+      case "mousedown":
+        if (this.cScroll){
+          clearTimeout(this.cScroll);
+          this.cSpeedX = this.cSpeedY = 0;
+        }
+        if (this.getPref("grabScroll.enable", "bool", true) &&
+            !event.shiftKey && !event.ctrlKey && !event.altKey) {
+          this.grabStart(event);
+        } else if(!this.getPref("grabScroll.enable", "bool", true) &&
+                  event.shiftKey && !event.ctrlKey && !event.altKey) {
+          this.grabStart(event);
+        }
+        break;
+      case "mousemove":
+        this.mousemove(event); break;
+      case "click":
+        this.click(event); break;
+      case "mouseup":
+        this.mouseup(event); break;
+    }
+  },
+
+  grabStart: function(event) {
+    if (this.mStatus == 3)
+      this.mStatus = 0;
+
+    // マウスダウンが連続して発火した場合はGrabScrollを開始しない
+    if (this.MOUSEBUTTON == 0) {
+      if (Math.abs(this.mLastX - event.screenX) < 5 &&
+          Math.abs(this.mLastY - event.screenY) < 5 )
+        return
+    }
+
+    var doc = event.originalTarget.ownerDocument;
+    if (!doc)
+        return;
+    if (doc.contentType == 'application/vnd.mozilla.xul+xml')
+      return;
+
+    this._doc = doc;
+
+    if (event.button == this.MOUSEBUTTON && this.mStatus == 0) {
+      //選択範囲があるときはGrabScrollを開始しない
+      if (this.CANCEL_WHEN_SELECTION && this.MOUSEBUTTON == 0 && doc.defaultView.getSelection() != "")
+        return;
+
+      //開始ターゲット保存
+      this._target = event.originalTarget;
+
+      //マウスカーソル用のターゲット
+      if (/^(html|body)$/.test(this._target.localName.toLowerCase()) || this._target.clientHeight > 30000)
+        this._target2 = null;
+      else if (/div/.test(this._target.localName.toLowerCase()) && this._target.clientHeight > 1000)
+        this._target2 = null;
+      else
+        this._target2 = this._target;
+
+      //無視URLのときはGrabScrollを開始しない
+      for (aURL in this.IGNOREURL) {
+        if (this.IGNOREURL[aURL] === '')continue;
+        try {
+          if (doc.documentURI.match(this.IGNOREURL[aURL]))
+            return;
+        } catch(ex) {
+          dump(this.IGNOREURL[aURL]+'\n'+ex);
+        }
+      }
+
+      //エディット可能要素はGrabScrollを開始しない
+      if (this.isParentEditableNode(this._target))
+        return;
+      //ドラッガブル要素はGrabScrollを開始しない
+      if (this.isParentDraggableNode(this._target))
+        return;
+      //無死すべき要素はGrabScrollを開始しない
+      if (this.isIgnore(this._target))
+        return;
+      //ビデオコントロールはGrabScrollを開始しない
+      if (this.isVideoControl(event.target))
+        return;
+      //クリックできるリンク上はGrabScrollを開始しない
+      if (this.isParentClickableNode(this._target)){
+        if (this.NOTCLICABLELINK)
+          return;
+        //リンクのDragStart阻止
+        if (!('linkDragSelection' in window))
+          event.preventDefault();
+      }
+
+      //イメージ
+      this._isImage = this.isImage(event);
+      if (this._isImage) {
+        //イメージはGrabScrollを開始しない
+        if (this.NOTIMAGE)
+          return;
+        //イメージのDragStart阻止
+        event.preventDefault();
+      }
+
+      //Compativility with ResizeTa
+      var target = this._target;
+      while (target){
+        if ("getAttribute" in target && target.getAttribute("draggable") == "true")
+          return;
+        try {
+          var style = this._doc.defaultView.getComputedStyle(target, null);
+          //window.userChrome_js.debug(style.getPropertyValue("cursor"));
+          if (/resize|move|all-scroll|crosshair/.test(style.getPropertyValue("cursor")))
+            return;
+          else if (/resize|move|all-scroll|crosshair/.test(style.getPropertyValue("auto")))
+            break;
+        } catch(e) {}
+        target = target.parentNode;
+      }
+
+      //中クリックや右クリックの時, オートスクロールやマウスジェスチャをキャンセル
+      if (this.MOUSEBUTTON > 0) {
+        event.preventDefault();
+        event.stopPropagation();
+      }
+
+      this._timer = new Date().getTime();
+      this.mLastX = event.screenX;
+      this.mLastY = event.screenY;
+      this.mStatus = 1;
+      //ズームを考慮した移動量
+      this._MOVERATEpZoom =  this.MOVERATE / (ZoomManager.useFullZoom ? ZoomManager.zoom : 1);
+
+      [this.NS, this.EW, this.NSEW] = this.getScrollView(event);
+
+      this._window.addEventListener("mousemove", this, true);
+
+      //マウス グラブ形状
+      this.setCursor(this._target2, this.CURSOR);
+      //マウス タイマーで戻す
+      this.resetCursorWithTimer(this._target2);
+    }
+  },
+
+  //長いページでは閾値を少し長めにするため 閾値を調整
+  adjustedTimer: function(){
+    var magTimer = this.TIMER;
+/*
+    var height = 0;
+    if (this._doc.contentType != 'application/xml') { //orz
+    if (this._doc.body)
+      height = Math.max(this._doc.body.offsetHeight, this._doc.body.scrollHeight);
+      height = Math.max(height, this._doc.body.clientHeight);
+    }
+    magTimer *= Math.min(1, Math.max(Math.sqrt(Math.sqrt(height / 10000)),1));
+*/
+    return magTimer;
+  },
+
+  grabFinish:  function() {
+    //マウス 形状戻す
+    this.resetCursorTimer();
+    this.resetCursor();
+
+    this._window.removeEventListener("mousemove", this, true);
+    var selCon = this.getSelconForDoc(this._doc);
+    if (selCon)
+      selCon.setDisplaySelection(selCon.SELECTION_ON);
+  },
+
+  mousemove: function(event) {
+    //window.userChrome_js.debug("mousemove " + this.mStatus);
+    if (this.mStatus == 2 || this.mStatus == 1 ) {
+      var x = event.screenX;
+      var y = event.screenY;
+      var doc = event.originalTarget.ownerDocument;
+      //スクロール中にドキュメントが開始時点と異なっている(マウスジェスチャー等によって変わった可能性がある), GrabScrollをキャンセル
+
+/*
+      if (this._doc != doc) {
+        this.cSpeedX = this.cSpeedY = 0;
+        this.grabFinish();
+        this.mStatus = 0;
+        return;
+      }
+*/
+      if (this.mStatus == 1) {
+        //ドラッグスタートがthis.TIMERより遅いとき, GrabScrollをキャンセル
+        //長いページでは閾値を少し長めに
+        if (!this._isImage &&
+            (new Date().getTime() - this._timer) > this.adjustedTimer()) {
+          this.grabFinish();
+          this.mStatus = 0;
+          return;
+        }
+        //横スクロールできないときに横に動かした, GrabScrollをキャンセル
+        if (Math.abs(x-this.mLastX) < this.TOLERANCE_WHEN_NO_H_SCROLL)
+          var movingh = Math.abs(x-this.mLastX) > Math.abs(y-this.mLastY) * 50;
+          if (!this._isImage && this.MOUSEBUTTON == 0  && this.isText(event)  && movingh && !this.EW) {
+            this.grabFinish();
+            this.mStatus = 0;
+            return;
+          }
+
+        //マウス移動量が小さいときは何もしない
+        if(Math.abs(x - this.mLastX) + Math.abs(y - this.mLastY) < this.TOLERANCE)
+          return;
+
+        if (this.MOUSEBUTTON == 0) {
+          //選択範囲あれば解除 (次のバグ回避のため removeAllRanges の直後に何かの style を変更しないこと)
+          // Bug 466856 -  Crash [@ nsTypedSelection::CopyRangeToAnchorFocus] with
+          // triple-clicking changing display style on body
+          var selCon = this.getSelconForDoc(this._doc);
+          if (selCon) {
+            var selection = selCon.getSelection(selCon.SELECTION_NORMAL);
+            selection.removeAllRanges();
+            selCon.setDisplaySelection(selCon.SELECTION_OFF);
+          }
+        } else {
+          if ("ucjsMouseGestures" in window){
+            ucjsMouseGestures._isMouseDownR = false;
+          }
+        }
+
+      //  this.mLastX += (x - this.mLastX) ? -this.MOVERATE: this.MOVERATE;
+      //  this.mLastY += (y - this.mLastY) ? -this.MOVERATE: this.MOVERATE;
+        this.mLastX = x - (x - this.mLastX) / 10;
+        this.mLastY = y - (y - this.mLastY) / 10;
+        this.mStatus = 2;
+      }
+
+      //マウス タイマー解除
+      if (this._ctimer)
+        this.resetCursorTimer();
+
+      if (this._mtimer)
+        return;
+
+      this.cSpeedX = this._MOVERATEpZoom * (x - this.mLastX);
+      this.cSpeedY = this._MOVERATEpZoom * (y - this.mLastY);
+
+      this.scroll(event);
+      this.mLastX = x;
+      this.mLastY = y;
+    }
+  },
+
+  getSelconForDoc: function getSelconForDoc(doc){
+    if (!doc)
+        return null;
+    var aFrame = doc.defaultView;
+    if (!aFrame)
+     return null;
+    var docShell = this.getDocShellForFrame(aFrame);
+    var selCon = docShell
+      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+      .getInterface(Components.interfaces.nsISelectionDisplay)
+      .QueryInterface(Components.interfaces.nsISelectionController);
+    return selCon;
+  },
+
+  getDocShellForFrame: function getDocShellForFrame(aFrame){
+    return aFrame
+      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+      .getInterface(Components.interfaces.nsIWebNavigation)
+      .QueryInterface(Components.interfaces.nsIDocShell);
+  },
+
+  click: function(event) {
+    //window.userChrome_js.debug("click " + this.mStatus);
+    if (event.button == this.MOUSEBUTTON && this.mStatus == 2) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (event.button == 0 && this.mStatus >= 2 && this._doc instanceof Ci.nsIImageDocument) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.grabFinish();
+    this.mStatus = 0;
+  },
+
+  mouseup:  function(event) {
+    //window.userChrome_js.debug("museup " + this.mStatus);
+    if (event.button == this.MOUSEBUTTON && this.mStatus > 1) {
+      event.preventDefault();
+      //event.stopPropagation();
+
+      this.grabFinish();
+      if (this.mStatus == 2)
+        this.mStatus = 3;
+
+      if (this.INERTIA &&
+          (Math.abs(this.cSpeedX) > this.INERTIATHRESHOLD || Math.abs(this.cSpeedY) > this.INERTIATHRESHOLD )){
+        if (this.cScroll)
+          clearTimeout(this.cScroll);
+        //this.winY = this.NS ? (this.NS.clientHeight) : (this.NSEW ? this.NSEW.clientHeight : 0);
+        //this.winX = this.EW ? (this.EW.clientWidth)  : (this.NSEW ? this.NSEW.clientWidth  : 0);
+        var v = this.INERTIARATE;
+        if (this.cSpeedX > 0)
+          this.cSpeedX = Math.min(this.cSpeedX, v);
+        else
+          this.cSpeedX = Math.max(this.cSpeedX, -v);
+        if (this.cSpeedY > 0)
+          this.cSpeedY = Math.min(this.cSpeedY, v);
+        else
+          this.cSpeedY = Math.max(this.cSpeedY, -v);
+
+        var Start;
+        function scrolling(event, self){
+          Start = new Date().getTime();
+          self.scroll2(event);
+
+          self.cScroll = setTimeout(arguments.callee,
+                         Math.max(25 - ((new Date()).getTime()-Start), 0), event, self);
+        }
+        this.scroll2(event);
+        scrolling(event, this);
+/*
+        this.cScroll = setInterval(function(self){
+          self.scroll2(event);
+        }, Math.max(20 - ((new Date()).getTime()-Start), 0), this)
+*/
+      }
+    } else if (event.button == this.MOUSEBUTTON && this.mStatus == 1){
+      this.grabFinish();
+      this.mStatus = 0;
+    }
+  },
+
+  scroll2: function(event){
+    var ay = Math.abs(this.cSpeedY);
+    var ax = Math.abs(this.cSpeedX);
+    //this.winY -= ay;
+    //this.winX -= ax;
+    //if (this.winY < 30)this.cSpeedY = 0;
+    //if (this.winX < 30)this.cSpeedX = 0;
+    if (ay < 1 && ax  < 1){
+       clearTimeout(this.cScroll);
+       return;
+    }
+    this.scroll(event);
+    if      (ax >= 100) this.cSpeedX = this.cSpeedX * 0.95;
+    else if (ax < 100) this.cSpeedX = this.cSpeedX * 0.95;
+    else if (ax < 20) this.cSpeedX = this.cSpeedX * 0.95;
+    else if (ax < 10) this.cSpeedX = this.cSpeedX * 0.95;
+    else if (ax < 5) this.cSpeedX = this.cSpeedX * 0.95;
+    else if (ax < 1) this.cSpeedX = 0;
+
+    if      (ay >= 100) this.cSpeedY = this.cSpeedY * 0.95;
+    else if (ay < 100) this.cSpeedY = this.cSpeedY * 0.95;
+    else if (ay < 20) this.cSpeedY = this.cSpeedY * 0.95;
+    else if (ay < 10) this.cSpeedY = this.cSpeedY * 0.95;
+    else if (ay < 5) this.cSpeedY = this.cSpeedY * 0.95;
+    else if (ay < 1) this.cSpeedY = 0;
+  },
+
+  scroll: function(event){
+    this._mtimer = true;
+    if(this.NS && this.NS == this.EW){
+      if ("scrollBy" in this.NS) {
+        this.NS.scrollBy(this.cSpeedX, this.cSpeedY);
+      } else {
+        this.NS.scrollLeft += this.cSpeedX;
+        this.NS.scrollTop  += this.cSpeedY;
+      }
+    } else {
+      if(this.NS){
+        if ("scrollBy" in this.NS) {
+          this.NS.scrollBy(0, this.cSpeedY);
+        } else {
+          this.NS.scrollTop += this.cSpeedY;
+        }
+      }
+      if(this.EW){
+        if ("scrollBy" in this.EW) {
+          this.EW.scrollBy(this.cSpeedX, 0);
+        } else {
+          this.EW.scrollLeft += this.cSpeedX;
+        }
+      }
+    }
+    setTimeout(function(self){
+      self._mtimer = false;
+    }, 20, this);
+  },
+
+  isText: function(event) {
+    return event.explicitOriginalTarget.nodeType == document.TEXT_NODE;
+  },
+
+  isImage: function(event) {
+    if (event.target instanceof HTMLImageElement)
+      return event.target;
+    else
+      return null;
+  },
+
+  isIgnore: function(aNode){
+     while (aNode){
+      var name = aNode.nodeName.toLowerCase();
+      if (name == "html")
+        return false;
+      if (/(scrollbar|select|option|embed|object|tree|applet|statusbar)/.test(name))
+        return true;
+      aNode = aNode.parentNode;
+    }
+    return false;
+  },
+
+  isParentClickableNode : function(aNode) {
+    if (!aNode) return null;
+    var d = aNode.ownerDocument;
+    try {
+      var xpathResult = d.evaluate(
+          'ancestor-or-self::*[((local-name() = "a" or local-name() = "A") and @href) or local-name() = "button" or local-name() = "BUTTON" or ((local-name() = "input" or local-name() = "INPUT") and (@type = "SUBMIT" or @type = "submit" or @type = "BUTTON" or @type = "button" or @type = "IMAGE" or @type = "image"))]',
+          aNode,
+          this.NSResolver,
+          XPathResult.FIRST_ORDERED_NODE_TYPE,
+          null
+        );
+    }
+    catch(e) {
+      return null;
+    }
+    return xpathResult.singleNodeValue;
+  },
+
+  NSResolver : {
+    lookupNamespaceURI : function(aPrefix) {
+      switch (aPrefix) {
+        case 'xul':
+          return 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
+        case 'html':
+        case 'xhtml':
+          return 'http://www.w3.org/1999/xhtml';
+        case 'xlink':
+          return 'http://www.w3.org/1999/xlink';
+        default:
+          return '';
+      }
+    }
+  },
+
+  isParentEditableNode : function(node){
+    try {
+      if (Components.lookupMethod(node.ownerDocument, 'designMode').call(node.ownerDocument) == 'on')
+        return node;
+    } catch(e) {}
+    while (node && node.parentNode) {
+      try {
+        node.QueryInterface(Ci.nsIDOMNSEditableElement);
+        return node;
+      }
+      catch(e) {
+      }
+      node = node.parentNode;
+    }
+    return null;
+  },
+
+  isParentDraggableNode : function(node){
+    while (node && node.parentNode) {
+      //window.userChrome_js.debug(node.getAttribute('draggable') == 'true');
+      if (node.getAttribute('draggable') == 'true')
+        return node;
+      node = node.parentNode;
+    }
+    return null;
+  },
+
+  isVideoControl: function(node) {
+    if (/^(audio|video)$/i.test(node.localName)) {
+      return true;
+      var i = 0;
+      while (i < node.childNodes.length) {
+        var child =node.childNodes[i];
+        if (child.hasAttribute('controls') && child.getAttribute('controls') == 'controls') {
+          return true;
+        }
+        i++;
+      }
+    }
+    return false;
+  },
+
+  setCursor: function(element, cursor) {
+    if (!!element && element.style) {
+      try {
+        this.mCursor = element.style.cursor;
+        this.mCursorElement  = element;
+        element.style.cursor = cursor;
+      } catch(e) { }
+    }
+  },
+
+
+  resetCursor: function() {
+    var element = this.mCursorElement;
+    if (!!element) {
+      try {
+          element.style.cursor = this.mCursor;
+          this.mCursor = null;
+          this.mCursorElement = null;
+      } catch(e) { }
+    }
+  },
+
+  resetCursorWithTimer: function() {
+    if (this._ctimer)
+      clearTimeout(this._ctimer);
+    this._ctimer = setTimeout(function(self){
+      self.resetCursor();
+    }, this.adjustedTimer(), this);
+  },
+
+  resetCursorTimer: function() {
+    if (this._ctimer) {
+      clearTimeout(this._ctimer);
+      this._ctimer = null;
+    }
+  },
+
+  // Converts a pattern in this programs simple notation to a regular expression.
+  // thanks AdBlock! http://www.mozdev.org/source/browse/adblock/adblock/
+  convert2RegExp: function( pattern ) {
+    var s = new String(pattern);
+    var res = new String("^");
+
+    for (var k = 0 ; k < s.length ; k++) {
+      switch(s[k]) {
+        case '*' :
+          res += ".*";
+          break;
+        case '.' :
+        case '?' :
+        case '^' :
+        case '$' :
+        case '+' :
+        case '{' :
+        case '[' :
+        case '|' :
+        case '(' :
+        case ')' :
+        case ']' :
+          res += "\\" + s[k];
+          break;
+        case '\\' :
+          res += "\\\\";
+          break;
+        case ' ' :
+          // Remove spaces from URLs.
+          break;
+        default :
+          res += s[k];
+          break;
+      }
+    }
+
+    // fortunately, we don't need .tld in chrome :)
+    return new RegExp(res + '$', "i");
+  },
+
+  toggle: function(flag){
+    if(typeof flag =='undefined')
+      var flag = this.getPref("grabScroll.enable","bool",true);
+    this.setPref("grabScroll.enable","bool",!flag);
+    this.setIcon(!flag);
+  },
+  button: function(){
+    this.MOUSEBUTTON = this.getPref("grabScroll.button","int",this.MOUSEBUTTON);
+    var value = prompt("button(L M R): ","LMR".substr(this.MOUSEBUTTON,1));
+    if (!value)
+      return;
+    switch(value.toUpperCase()){
+      case "M": value =1; break;
+      case "R": value =2; break;
+      default:
+      case "L": value =0; break;
+    }
+    this.MOUSEBUTTON = value;
+    this.setPref("grabScroll.button","int",value);
+  },
+  threshold: function(){
+    this.TIMER = this.getPref("grabScroll.timer","int",this.TIMER);
+    var value = prompt("Timer: ",this.TIMER);
+    if (!value)
+      return;
+    this.TIMER = parseInt(value,10);
+    if( this.TIMER <=0 || !this.TIMER ) this.TIMER = 1000;
+    this.setPref("grabScroll.timer","int",this.TIMER);
+  },
+  moverate: function(){
+    this.MOVERATE = this.getPref("grabScroll.moverate","int",this.MOVERATE);
+    var value = prompt("[+-]rate: ",this.MOVERATE);
+    if (!value)
+      return;
+    this.MOVERATE = parseInt(value,10);
+    if( !this.MOVERATE ) this.MOVERATE = -1;
+    this.setPref("grabScroll.moverate","int",this.MOVERATE);
+  },
+  inertiaToggle: function(){
+    this.INERTIA = !this.getPref("grabScroll.enableinertia","bool",this.INERTIA);
+    this.setPref("grabScroll.enableinertia","bool",this.INERTIA);
+  },
+  inertiaThreshold: function(){
+    this.INERTIATHRESHOLD = this.getPref("grabScroll.inertiathreshold","int",this.INERTIATHRESHOLD);
+    var value = prompt("Kinetic scroll threshold: ",this.INERTIATHRESHOLD);
+    if (!value)
+      return;
+    this.INERTIATHRESHOLD = parseInt(value,10);
+    if( !this.INERTIATHRESHOLD ) this.INERTIATHRESHOLD = 20;
+    this.setPref("grabScroll.inertiathreshold","int",this.INERTIATHRESHOLD);
+  },
+  inertiarate: function(){
+    this.INERTIARATE = this.getPref("grabScroll.inertiarate","int",this.INERTIARATE);
+    var value = prompt("Kinetic scroll speed: ",this.INERTIARATE);
+    if (!value)
+      return;
+    this.INERTIARATE = parseInt(value,10);
+    if( !this.INERTIARATE ) this.INERTIARATE = 20;
+    this.setPref("grabScroll.inertiarate","int",this.INERTIARATE);
+  },
+  clickable: function(){
+    this.NOTCLICABLELINK = !this.getPref("grabScroll.clickable","bool",this.NOTCLICABLELINK);
+    this.setPref("grabScroll.clickable","bool",this.NOTCLICABLELINK);
+  },
+  onpopup: function(){
+    document.getElementById('GrabScroll_enable')
+      .setAttribute('checked', this.getPref("grabScroll.enable","bool",true));
+    document.getElementById('GrabScroll_enableInertia')
+      .setAttribute('checked', this.getPref("grabScroll.enableinertia","bool",this.INERTIA));
+    document.getElementById('GrabScroll_clickable')
+      .setAttribute('checked', !this.getPref("grabScroll.clickable","bool",this.NOTCLICABLELINK));
+  },
+  setIcon: function(flag){
+    try{
+      document.getElementById("GrabScroll-image").setAttribute('status', flag);
+      return true;
+    }catch(e){
+      return false;
+    }
+  },
+
+  getScrollView: function (event) {
+    //var Start = new Date().getTime();
+    var NS,EW,NSEW;
+    NS = EW = NSEW = null;
+    var _scrollingView = null;
+    var overflowx, overflowy, ox, oy;
+    var scw, sch, horz, vert;
+    var doc, style;
+    var borderTop;
+    var borderBottom;
+    var borderLeft;
+    var borderRight;
+
+    if (event.originalTarget.ownerDocument.contentType == "application/xml") {
+      _scrollingView = event.originalTarget.ownerDocument.defaultView;
+      if (_scrollingView.scrollMaxX > 0) {
+        if (_scrollingView.scrollMaxY > 0) {
+          NSEW = _scrollingView;
+          NS = _scrollingView;
+        }
+        EW = _scrollingView;
+      }
+      else if (_scrollingView.scrollMaxY > 0) {
+        NS = _scrollingView;
+      }
+      else {
+        return [NS, EW, NSEW];
+      }
+   } else {
+
+      for (_scrollingView = event.originalTarget; _scrollingView; _scrollingView = _scrollingView.parentNode) {
+        if (_scrollingView instanceof NSHTMLElement) {
+          if (_scrollingView.localName.toUpperCase() == "HTML" ||
+              _scrollingView.localName.toUpperCase() == "BODY") {
+              _scrollingView = _scrollingView.ownerDocument.defaultView;
+            if (_scrollingView.scrollMaxX > 0 &&
+                _scrollingView.scrollMaxY > 0) {
+              NSEW = !NSEW ? _scrollingView : NSEW;
+              EW = !EW ? _scrollingView : EW;
+              NS = !NS ? _scrollingView : NS;
+            }
+            if (_scrollingView.scrollMaxX > 0) {
+              EW = !EW ? _scrollingView : EW;
+            }
+            if (_scrollingView.scrollMaxY > 0) {
+              NS = !NS ? _scrollingView : NS;
+            }
+            break;
+          }
+          if (_scrollingView.localName.toLowerCase() == "select") {
+              _scrollingView.parentNode.focus();
+            return [NS, EW, NSEW];
+          }
+
+          overflowx = "";
+          overflowy = "";
+          ox = true;
+          oy = true;
+          try {
+            doc = _scrollingView.ownerDocument;
+            style = doc.defaultView.getComputedStyle(_scrollingView, "");
+            overflowx = style.getPropertyValue("overflow-x");
+            ox = overflowx != "hidden" && overflowx != "visible";
+            overflowy = style.getPropertyValue("overflow-y");
+            oy = overflowy != "hidden" && overflowy != "visible";
+          } catch (ex) {
+          }
+          borderTop    = 0;
+          borderBottom = 0;
+          borderLeft   = 0;
+          borderRight  = 0;
+          if (/^(td|th)$/i.test(_scrollingView.localName)) {
+            try {
+              doc = _scrollingView.ownerDocument;
+              style = doc.defaultView.getComputedStyle(_scrollingView, "");
+              borderTop    = style.getPropertyValue("border-top-width").replace('px', '');
+              borderBottom = style.getPropertyValue("border-bottom-width").replace('px', '');
+              borderLeft   = style.getPropertyValue("border-left-width").replace('px', '');
+              borderRight  = style.getPropertyValue("border-right-width").replace('px', '');
+            } catch (ex) {
+            }
+          }
+          scw = _scrollingView.clientWidth;
+          horz = ox && scw !== 0 &&
+                 scw + borderLeft + borderRight < _scrollingView.scrollWidth;
+          sch = _scrollingView.clientHeight;
+          vert = oy && sch !== 0 &&
+                 sch + borderTop + borderBottom < _scrollingView.scrollHeight;
+
+          if (horz && vert) {
+            NSEW = !NSEW ? _scrollingView : NSEW;
+            EW = !EW ? _scrollingView : EW;
+            NS = !NS ? _scrollingView : NS;
+            break;
+          }
+          if (horz) {
+            EW = !EW ? _scrollingView : EW;
+          }
+          if (vert) {
+            NS = !NS ? _scrollingView : NS;
+          }
+        }
+      } // for
+    }
+    //this.debug('getScrollView: '+((new Date()).getTime()-Start) +'msec\n');
+    return [NS, EW, NSEW];
+  },
+
+  getPref: function(aPrefString, aPrefType, aDefault){
+    var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case "str":
+          return xpPref.getCharPref(aPrefString).toString(); break;
+        case "int":
+          return xpPref.getIntPref(aPrefString); break;
+        case "bool":
+        default:
+          return xpPref.getBoolPref(aPrefString); break;
+      }
+    }catch(e){
+    }
+    return aDefault;
+  },
+  setPref: function(aPrefString, aPrefType, aValue){
+    var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case "str":
+          return xpPref.setCharPref(aPrefString, aValue); break;
+        case "int":
+          aValue = parseInt(aValue);
+          return xpPref.setIntPref(aPrefString, aValue);  break;
+        case "bool":
+        default:
+          return xpPref.setBoolPref(aPrefString, aValue); break;
+      }
+    }catch(e){
+    }
+    return null;
+  },
+
+  debug: function(aMsg){
+    Cc["@mozilla.org/consoleservice;1"]
+      .getService(Ci.nsIConsoleService)
+      .logStringMessage(aMsg);
+  },
+
+  // 監視を開始する
+  addPrefListener: function(aObserver) {
+    try {
+      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+      pbi.addObserver(aObserver.domain, aObserver, false);
+    } catch(e) {}
+  },
+
+  // 監視を終了する
+  removePrefListener: function(aObserver) {
+    try {
+      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+      pbi.removeObserver(aObserver.domain, aObserver);
+    } catch(e) {}
+  },
+
+  buttonPrefListener:{
+    domain  : 'grabScroll.',
+      //"grabScroll.XXX"という名前の設定が変更された場合全てで処理を行う
+
+    observe : function(aSubject, aTopic, aPrefstring) {
+      if (aTopic == 'nsPref:changed') {
+          // 設定が変更された時の処理
+          GrabScroll.initPrefs();
+      }
+    }
+  }
+};
+GrabScroll.initGrabScroll();
+window.addEventListener("unload", function(){ GrabScroll.uninitGrabScroll(); }, false);
+  ]]></script>
+  <menupopup id="menu_ToolsPopup">
+    <menu id="GrabScroll_optionsMenu"
+          label="GrabScrollの設定" insertbefore="menu_preferences" accesskey="g">
+      <menupopup id="GrabScroll_options"
+                 onpopupshowing="event.stopPropagation();GrabScroll.onpopup()"
+                 menugenerated="true">
+        <menuitem id="GrabScroll_enable"
+                  label="GrabScroll有効"
+                  accesskey="g"
+                  oncommand="GrabScroll.toggle();"
+                  type="checkbox" />
+        <menuitem label="GrabScrollを開始するボタン"
+                  accesskey="b"
+                  oncommand="GrabScroll.button();"/>
+        <menuseparator/>
+        <menuitem label="GrabScrollを開始する閾値"
+                  accesskey="x"
+                  oncommand="GrabScroll.threshold();"/>
+        <menuitem label="GrabScrollの倍率"
+                  accesskey="r"
+                  oncommand="GrabScroll.moverate();"/>
+        <menuseparator/>
+        <menuitem id="GrabScroll_enableInertia"
+                  label="慣性スクロール有効"
+                  accesskey="i"
+                  oncommand="GrabScroll.inertiaToggle();"
+                  type="checkbox" />
+        <menuitem label="慣性スクロールの閾値"
+                  accesskey="k"
+                  oncommand="GrabScroll.inertiaThreshold();"/>
+        <menuitem label="慣性スクロールの速度"
+                  accesskey="s"
+                  oncommand="GrabScroll.inertiarate();"/>
+        <menuseparator/>
+        <menuitem id="GrabScroll_clickable"
+                  label="クリック可能リンクでも開始する"
+                  accesskey="c"
+                  oncommand="GrabScroll.clickable();"
+                  type="checkbox" />
+      </menupopup>
+    </menu>
+  </menupopup>
+
+  <statusbar id="status-bar">
+    <statusbarpanel id="GrabScroll-status">
+      <image
+        id="GrabScroll-image"
+        label=""
+        status="false"
+        tooltiptext="GrabScroll"
+        onclick="GrabScroll.toggle();" />
+     </statusbarpanel>
+  </statusbar>
+
+</overlay>

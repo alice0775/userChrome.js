@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<overlay id="openLibraryContextMenuOverlay"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           openLibraryContextMenu.uc.xul
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    ブックマークのコンテキストメニューからLibraryを開く
+// @include        main
+// @include        chrome://browser/content/bookmarks/bookmarksPanel.xul
+// @compatibility  Firefox 3.0 3.5 3.6a1 3.7a1pre
+// @author         Alice0775
+// @version        2009/08/17 01:55 見えるようにスクロール
+// @version        2009/08/17 01:40 ブックマークのコンテキストメニューからLibraryを開く
+// ==/UserScript==
+ -->
+
+  <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+var openLibraryContextMenu = {
+  node: null,
+  organizer:null,
+  get ios() {
+    return Components.classes["@mozilla.org/network/io-service;1"]
+                    .getService(Components.interfaces.nsIIOService);
+  },
+
+  get bmsvc() {
+    return Components.classes["@mozilla.org/browser/nav-bookmarks-service;1"]
+                  .getService(Components.interfaces.nsINavBookmarksService);
+  },
+
+  showOrganizer : function () {
+    var view = PlacesUIUtils.getViewForNode(document.popupNode);
+    this.node = view.selectedNode;
+    var wm = Cc["@mozilla.org/appshell/window-mediator;1"].getService(Ci.nsIWindowMediator);
+    this.organizer = wm.getMostRecentWindow("Places:Organizer");
+
+    if (!this.organizer) {
+      this.organizer = openDialog("chrome://browser/content/places/places.xul",
+                             "", "chrome,toolbar=yes,dialog=no,resizable");
+      this.organizer.addEventListener("load", this, false);
+    } else {
+      this.selectNode(this.node);
+    }
+  },
+
+  getParentFolderByItemId: function(aNode){
+    var parentFolderId = null;
+    var itemType = PlacesUtils.nodeIsFolder(aNode) ||
+                   PlacesUtils.nodeIsTagQuery(aNode) ? "folder" : "bookmark";
+    var concreteId = PlacesUtils.getConcreteItemId(aNode);
+    var isRootItem = PlacesUtils.isRootItem(concreteId);
+    var itemId = aNode.itemId;
+    if (isRootItem || PlacesUtils.nodeIsTagQuery(aNode)) {
+      // If this is a root or the Tags query we use the concrete itemId to catch
+      // the correct title for the node.
+      itemId = concreteId;
+    }
+
+    //if (PlacesUtils.nodeIsBookmark(aNode)) {
+      parentFolderId = this.bmsvc.getFolderIdForItem(itemId);
+    //}
+
+    return parentFolderId;
+  },
+
+  selectNode: function(aNode) {
+    var itemType = PlacesUtils.nodeIsFolder(aNode) ||
+                   PlacesUtils.nodeIsTagQuery(aNode) ? "folder" : "bookmark";
+    var concreteId = PlacesUtils.getConcreteItemId(aNode);
+    var isRootItem = PlacesUtils.isRootItem(concreteId);
+    var itemId = aNode.itemId;
+    if (isRootItem || PlacesUtils.nodeIsTagQuery(aNode)) {
+      // If this is a root or the Tags query we use the concrete itemId to catch
+      // the correct title for the node.
+      itemId = concreteId;
+    }
+    var isFolder = PlacesUtils.nodeIsFolder(aNode);
+    if (isFolder) {
+      this.selectLeftPane([itemId]);
+    } else if (PlacesUtils.nodeIsQuery(aNode)) {
+      var folderId = aNode.parent.itemId;
+
+      if (folderId){
+        this.selectLeftPane([folderId]);
+      }
+      this.selectRightPane([itemId]);
+    } else {
+      var folderId = this.getParentFolderByItemId(aNode);
+      if (folderId){
+        this.selectLeftPane([folderId]);
+      }
+      this.selectRightPane([itemId]);
+    }
+
+    setTimeout(function(self){
+      self.organizer.window.focus();
+    }, 1, this);
+  },
+
+  selectRightPane: function(rightPaneItemIds) {
+    var places = this.organizer.document.getElementById("placeContent");
+    places.selectItems(rightPaneItemIds, true);
+    var tbo = places.treeBoxObject;
+    tbo.ensureRowIsVisible(places.currentIndex);
+  },
+
+  selectLeftPane: function(leftPaneItemIds) {
+    var places = this.organizer.document.getElementById("placesList");
+    places.selectItems(leftPaneItemIds, true);
+    var tbo = places.treeBoxObject;
+    tbo.ensureRowIsVisible(places.currentIndex);
+  },
+
+  selectOnLoad: function() {
+    setTimeout(function(self){
+      self.selectNode(self.node);
+    }, 1, this);
+    this.organizer.removeEventListener("load", this, false);
+  },
+
+  handleEvent: function(event){
+    switch (event.type){
+      case 'load':
+        this.selectOnLoad(event);
+        break;
+    }
+  }
+}
+
+
+  ]]></script>
+
+  <!-- Firefox Bookmark Context Menu -->
+  <popup id="placesContext">
+    <menuitem id="placesContext_manageFolder" insertafter="placesContext_openLinks:tabs"
+              label="Organize Bookmark"
+              oncommand="openLibraryContextMenu.showOrganizer();"
+              selectiontype="single"
+              selection="bookmark|folder|query|livemark/feedURI"
+              accesskey="k;"
+    />
+  </popup>
+
+</overlay>

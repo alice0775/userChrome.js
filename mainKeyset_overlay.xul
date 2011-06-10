@@ -1,0 +1,121 @@
+<?xml version="1.0"?>
+<!DOCTYPE overlay>
+<!--
+// ==UserScript==
+// @name           mainKeyset_overlay
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    mainKeyset_overlay
+// @include        main
+// @compatibility  Firefox 2.0 3.0
+// @author         Alice0775
+// @version        LastMod 2008/04/24 Fx3 en-US版ページズームに対応
+// @Note           alt+C コンテンツエリアをフォーカス
+// @Note           alt+shift+M SidebarMixを トグル, alt+shift+ZXCASDでタブ選択
+// @Note           1から0 タブ選択(FAYT をoff, XUL/Migemo自動起動OFFの時)
+// ==/UserScript==
+ -->
+ <overlay id="mainKeyset_overlay"
+   xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+  <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+    //SidebarMix用タブ切り替え
+    function ucjsSidebarMix(aIndex){
+      if(typeof document.getElementById('sidebar').contentWindow.sidebarmix == 'undefined') return;
+      var tabs = document.getElementById('sidebar').contentDocument.getElementById("tabs");
+      for(var i=0; i < tabs.childNodes.length;i++)
+        tabs.childNodes[i].selected=false;
+      tabs.childNodes[aIndex].selected=true;
+      if( document.getElementById('sidebar').contentWindow.sidebarmix._inited )
+        document.getElementById('sidebar').contentWindow.sidebarmix.setAttrib(aIndex);
+    }
+
+function removeCurrentTab2(){
+  window.addEventListener("focus", xfocus, true);
+  gBrowser.removeTab(gBrowser.mCurrentTab);
+  function xfocus(event){
+    window.removeEventListener("focus", arguments.callee, true);
+    window.minimize();
+  }
+}
+
+function key_keywordSearch(key){
+  function getFocusedWindow(){ //現在のウインドウを得る
+    var focusedWindow = document.commandDispatcher.focusedWindow;
+    if (!focusedWindow || focusedWindow == window)
+      return window._content;
+    else
+      return focusedWindow;
+  }
+
+  function getselection() {  //選択されている文字列を得る
+    var targetWindow = getFocusedWindow();
+    var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+    // for textfields
+    if (sel && !sel.toString()) {
+      var node = document.commandDispatcher.focusedElement;
+      if (node &&
+          (node.type == "text" || node.type == "textarea") &&
+          'selectionStart' in node &&
+          node.selectionStart != node.selectionEnd) {
+        var offsetStart = Math.min(node.selectionStart, node.selectionEnd);
+        var offsetEnd   = Math.max(node.selectionStart, node.selectionEnd);
+        return node.value.substr(offsetStart, offsetEnd-offsetStart);
+      }
+    }
+    return sel ? sel.toString().replace(/\s/g,' ').replace(/^[\ ]+|[\ ]+$/g,'').replace(/[\ ]+/g,' ') : "";
+  }
+  var sel = getselection();
+  key = sel ? key + " " + sel : key;
+  var postData = {};
+  var url = getShortcutOrURI(key, postData);
+  if (window.loadURI && url) {
+    loadURI(url, null, postData.value, false);
+  }
+}
+  ]]></script>
+  <window id="main-window">
+    <keyset id="mainKeyset2">
+      <key id="Key_addons" key="A" command="Tools:Addons"  modifiers="accel shift"/>
+      <key id="Key_pageInfo" key="P" command="View:PageInfo"  modifiers="accel shift"/>
+      <key id="key_content_focus" key="C" oncommand="content.focus();" modifiers="alt"/>
+      <key id="key_toggleSidebarMix" key="M" oncommand="toggleSidebar('viewSidebarMix');" modifiers="alt,shift"/>
+      <key id="key_SidebarMixTab1" key="Z" oncommand="ucjsSidebarMix(0);" modifiers="alt,shift"/>
+      <key id="key_SidebarMixTab2" key="X" oncommand="ucjsSidebarMix(1);" modifiers="alt,shift"/>
+      <key id="key_SidebarMixTab3" key="C" oncommand="ucjsSidebarMix(2);" modifiers="alt,shift"/>
+      <key id="key_SidebarMixTab4" key="A" oncommand="ucjsSidebarMix(3);" modifiers="alt,shift"/>
+      <key id="key_SidebarMixTab5" key="S" oncommand="ucjsSidebarMix(4);" modifiers="alt,shift"/>
+      <key id="key_SidebarMixTab6" key="D" oncommand="ucjsSidebarMix(5);" modifiers="alt,shift"/>
+      <key id="key_Tab0" key="1" oncommand="gBrowser.mTabContainer.selectedIndex=0;"/>
+      <key id="key_Tab1" key="2" oncommand="gBrowser.mTabContainer.selectedIndex=1;"/>
+      <key id="key_Tab2" key="3" oncommand="gBrowser.mTabContainer.selectedIndex=2;"/>
+      <key id="key_Tab3" key="4" oncommand="gBrowser.mTabContainer.selectedIndex=3;"/>
+      <key id="key_Tab4" key="5" oncommand="gBrowser.mTabContainer.selectedIndex=4;"/>
+      <key id="key_Tab5" key="6" oncommand="gBrowser.mTabContainer.selectedIndex=5;"/>
+      <key id="key_Tab6" key="7" oncommand="gBrowser.mTabContainer.selectedIndex=6;"/>
+      <key id="key_Tab7" key="8" oncommand="gBrowser.mTabContainer.selectedIndex=7;"/>
+      <key id="key_Tab8" key="9" oncommand="gBrowser.mTabContainer.selectedIndex=8;"/>
+      <key id="key_Tab9" key="0" oncommand="gBrowser.mTabContainer.selectedIndex=9;"/>
+
+      <!--
+      <key id="key_title" key="x"
+           oncommand="Components.classes['@mozilla.org/widget/clipboardhelper;1'].getService(Components.interfaces.nsIClipboardHelper).copyString(gBrowser.contentWindow.document.title);"
+           modifiers="accel,shift"/>
+      -->
+      <key id="key_focus" key="b"
+           oncommand="(function(){doc=window.content.document;elems=doc.evaluate('//input[@type=\'text\']|//textarea',doc, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);if(elems.snapshotLength>0){elems.snapshotItem(0).focus()}})();"
+           modifiers="accel,shift"/>
+
+      <key key=";" command="cmd_fullZoomEnlarge" modifiers="accel"/>
+
+
+      <key key="r" oncommand="removeCurrentTab2()" modifiers="alt,shift"/>
+
+      //using keyword search
+      <key id="key_yahoo"   key="y" oncommand="key_keywordSearch('yahoo');"   modifiers="accel"/>
+      <key id="key_gmail"   key="g" oncommand="key_keywordSearch('gmail');"   modifiers="alt,shift"/>
+      <key id="key_greader" key="r" oncommand="key_keywordSearch('greader');" modifiers="alt,shift"/>
+
+  </keyset>
+
+  </window>
+</overlay>

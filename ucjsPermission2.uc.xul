@@ -1,0 +1,688 @@
+<?xml version="1.0"?>
+
+<overlay id="ucjsPermission" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           ucjsPermission2
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    add UI for hostperm.1 to context menu
+// @include        main
+// @compatibility  Firefox 2.0 3.0
+// @author         Alice0775
+// @version        2009/04/06 17:00 linuxでも
+// ==/UserScript==
+// @version        2009/02/07 bug fix
+// @version        2009/02/02 frameようとして"リンク上右クリックではリンクアドレスを追加"
+// @version        2008/10/02 linkタグのstylesheet
+// @version        2008/07/06 00:00 例外処理
+// @version        2008/03/02 15:00 appletにも
+// @version        2008/02/24 19:00 subdocument処理変更
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+const ioService = Components.classes['@mozilla.org/network/io-service;1']
+                      .getService(Components.interfaces.nsIIOService);
+const nsIPermissionManager = Components.interfaces.nsIPermissionManager;
+const nsICookiePermission = Components.interfaces.nsICookiePermission;
+const BEHAVIOR_NOFOREIGN = 3;
+var ucjsPermission = {
+  locale: Components.classes["@mozilla.org/preferences-service;1"]
+                   .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale"),
+  _pm: Components.classes["@mozilla.org/permissionmanager;1"]
+       .getService(Components.interfaces.nsIPermissionManager),
+
+   activeBrowser: function() {
+    return ('SplitBrowser' in window ? SplitBrowser.activeBrowser : null )
+            ||  gBrowser;
+  },
+
+  //イベントターゲットのhost名を得る
+  getTartgetHost: function(aNode){
+    var url;
+    url = this.activeBrowser().currentURI.spec;  //ルートドキュメントurl
+    if(aNode && gContextMenu){
+      url = gContextMenu.target.ownerDocument.location.href;    //ドキュメントurl
+      if(gContextMenu.onImage){           //画像src url
+        url = gContextMenu.target.src;
+      }else if(gContextMenu.onLink){      //リンクurl
+        url = gContextMenu.linkURL;
+      }else{
+        //var target = gContextMenu.target;
+        //var aNode = this.isObject(target);
+        if( this.isObject(aNode) ){
+          if(aNode.hasAttribute('src')) url = aNode.getAttribute('src');     //オブジェクトsrc url
+          if(aNode.hasAttribute('value')) url = aNode.getAttribute('value'); //オブジェクトvalue url
+          if(aNode.hasAttribute('data')) url = aNode.getAttribute('data'); //オブジェクトdata url
+        }
+      }
+    }
+
+    var host = this.convertUrl2host(url);
+    return host;
+  },
+
+  //現在のウインドウを得る
+  _getFocusedWindow: function(){
+    var focusedWindow = document.commandDispatcher.focusedWindow;
+    if (!focusedWindow || focusedWindow == window)
+        return window.content;
+    else
+        return focusedWindow;
+  },
+
+  //doc内の外部CSSのhostの配列を得る
+  getStyleSheets : function(doc){
+    var _css = [];
+    if (!doc) return _css;
+    function chkdup(host){
+      var flg = true;
+      for (var j = 0; j < _css.length;j++){
+        if(_css[j] != host) continue;
+        flg = false;
+        break;
+      }
+      return flg;
+    }
+    var links = Array.slice(doc.getElementsByTagName("link"));
+    for(var i=0; i<links.length; i++){
+      if(links[i].rel.indexOf('stylesheet') >= 0 /*&& links[i].type == "text/css" */){
+        var host = ucjsPermission.convertUrl2host(links[i].href);
+        if(host && chkdup(host)) _css.push(host);
+      }
+    }
+
+    //これ以降は冗長かもしれないが念のため
+    var links = doc.styleSheets;
+    var loc = doc.location;
+    if(!links) return _css;
+
+    for (var i = 0; i < links.length; i++) {
+      // Determine if href is an external url.
+      // If href matches with location is external
+      if (links[i].type == "text/css" && links[i].href != loc) {
+        var host = ucjsPermission.convertUrl2host(links[i].href);
+        if(host && chkdup(host)) _css.push(host);
+      }
+      try {
+        var rules = links[i].cssRules;
+        for (var r = 0; r < rules.length; r++) {
+          if (rules[r].type == CSSRule.IMPORT_RULE) {
+            if(!rules[r].styleSheet) continue;
+            var host = ucjsPermission.convertUrl2host(rules[r].styleSheet.href);
+            if(host && chkdup(host)) _css.push(host);
+          }
+        }
+      } catch(ex){}
+    }
+    return _css;
+  },
+
+  //doc内の外部スクリプトのhostの配列を得る
+  getScripts : function(doc){
+      var _script = [];
+      if (!doc) return _script
+
+      var scripts = Array.slice(doc.getElementsByTagName('script'));
+      if(!scripts) return _script;
+
+      for (var i = 0; i < scripts.length; i++) {
+        var host = ucjsPermission.convertUrl2host(scripts[i].src);
+        if(host == 'browser') continue;
+        var flg = true;
+        for (var j = 0; j < _script.length;j++){
+          if(_script[j] != host) continue;
+          flg = false;
+          break;
+        }
+        if(flg && host) _script.push(host);
+      }
+      return _script;
+  },
+    //doc内のframe/iframeのhostの配列を得る
+  getFrames : function(doc){
+      var _frames = [];
+      if (!doc) return _frames;
+      var frames = Array.slice(doc.getElementsByTagName('frame'));
+      for (var i = 0; i < frames.length; i++) {
+        var host = ucjsPermission.convertUrl2host(frames[i].src);
+        if(host == 'browser') continue;
+        var flg = true;
+        for (var j = 0; j < _frames.length;j++){
+          if(_frames[j] != host) continue;
+          flg = false;
+          break;
+        }
+        if(flg && host) _frames.push(host);
+      }
+      var frames = Array.slice(doc.getElementsByTagName('iframe'));
+      for (var i = 0; i < frames.length; i++) {
+//alert(frames[i].src);
+        var host = ucjsPermission.convertUrl2host(frames[i].src);
+        if(host == 'browser') continue;
+        var flg = true;
+        for (var j = 0; j < _frames.length;j++){
+          if(_frames[j] != host) continue;
+          flg = false;
+          break;
+        }
+        if(flg && host) _frames.push(host);
+      }
+      return _frames;
+  },
+
+  //doc内のobjectのhostの配列を得る
+  getObjects : function(doc){
+      var _object = [];
+      if (!doc) return _object;
+
+      var objects = Array.slice(doc.getElementsByTagName('object'));
+      if(!objects) return _object;
+
+      for (var i = 0; i < objects.length; i++) {
+        var host = ucjsPermission.convertUrl2host(objects[i].data);
+        if(host == 'browser') continue;
+        var flg = true;
+        for (var j = 0; j < _object.length;j++){
+          if(_object[j] != host) continue;
+          flg = false;
+          break;
+        }
+        if(flg && host) _object.push(host);
+      }
+
+      var objects = Array.slice(doc.getElementsByTagName('embed'));
+      if(!objects) return _object;
+
+      for (var i = 0; i < objects.length; i++) {
+        var host = ucjsPermission.convertUrl2host(objects[i].src);
+        if(host == 'browser') continue;
+        var flg = true;
+        for (var j = 0; j < _object.length;j++){
+          if(_object[j] != host) continue;
+          flg = false;
+          break;
+        }
+        if(flg && host) _object.push(host);
+      }
+      var objects = Array.slice(doc.getElementsByTagName('applet'));
+      if(!objects) return _object;
+
+      for (var i = 0; i < objects.length; i++) {
+        var host;
+        if (objects[i].hasAttribute("codebase")) host = ucjsPermission.convertUrl2host(objects[i].getAttribute("codebase"));
+        if (host=="") host = ucjsPermission.convertUrl2host(objects[i].code);
+        if (host == 'browser') continue;
+        var flg = true;
+        for (var j = 0; j < _object.length;j++){
+          if(_object[j] != host) continue;
+          flg = false;
+          break;
+        }
+        if(flg && host) _object.push(host);
+      }
+      return _object;
+  },
+
+  //doc内のMatarefreshのhostの配列を得る
+  getMatarefresh : function(doc){
+      var _refresh = [];
+      if (!doc) return _refresh;
+
+      function chkdup(host){
+        var flg = true;
+        for (var j = 0; j < _refresh.length;j++){
+          if(_refresh[j] != host) continue;
+          flg = false;
+          return flg;
+        }
+        return flg;
+      }
+      function goParentDirectory(dlh){
+        var u;
+        if(dlh==doc.location.protocol+'//'+document.location.hostname+'/'){
+          return dlh;
+        }
+        else{
+          u =dlh.match(/\//g);
+          if(RegExp.rightContext!=''){
+            return RegExp.leftContext+'/';
+          }
+          else{
+            u=RegExp.leftContext.match(/\//g);
+            return RegExp.leftContext+'/';
+          }
+        }
+      }
+      var metaTag = Array.slice(doc.getElementsByTagName("meta"));
+      for(var i=0; i<metaTag.length; i++){
+        if(/refresh/i.test(metaTag[i].httpEquiv)){
+
+          var tmpURL;
+          var refreshURL = metaTag[i].content.match(/[^(0-9+;url)(\W)][(a-zA-Z\.\/)].+[^(\W)]/i);
+          if(refreshURL == null){ refreshURL = "";}
+          refreshURL += "";
+          if(refreshURL.indexOf("http://",0) == -1){
+            if(/[0-9]+;url=\//i.test(metaTag[i].content)){
+              refreshURL = doc.location.protocol+'//'+document.location.hostname+'/';
+            }else if(!(/\.{2}\//g.test(metaTag[i].content))){
+              if(/\/$/.test(doc.location.href)){
+                refreshURL = doc.location.href + refreshURL;
+              }else{
+                refreshURL = goParentDirectory(document.location.href) + refreshURL;
+              }
+            }else{
+              tmpURL = goParentDirectory(docu.location.href);
+              for(k=0; k < (metaTag[i].content.match(/\.{2}\//g).length); k++){
+                tmpURL = goParentDirectory(tmpURL);
+              }
+              refreshURL = tmpURL + refreshURL;
+            }
+          }
+          var host = this.convertUrl2host(refreshURL);
+          if(refreshURL !='' && chkdup(host)) _refresh.push(host);
+        }
+      }
+      return _refresh;
+  },
+
+  //urlからhostを得る
+  convertUrl2host: function(url){
+    var baseURI = ioService.newURI(this._getFocusedWindow().content.document.location.href, null, null);
+    try{
+      var uri = ioService.newURI(url, null, baseURI);
+      uri = uri.host.replace(/^\s*/,"").replace(/\s*$/,"");
+      return uri;
+    }catch(e){}
+    return '';
+  },
+
+  //hostのPermissionを設定する
+  addCapability: function(type,aCapabilityString, host){
+    if(gContextMenu)document.getElementById("contentAreaContextMenu").hidePopup();
+    var aCapability = this._setCapability(aCapabilityString);
+    if(ucjsPermission.locale.indexOf("ja") == -1){
+      host = window.prompt('Set to '+this._getCapabilityString1(aCapability)+' '
+                          +this._exceptionsParamsText[type].permissionstitle.replace(' filter','')+' :',host);
+    }else{
+      host = window.prompt(this._exceptionsParamsText[type].permissionstitle.replace(' フィルタ','')+' を'
+                          +this._getCapabilityString2(aCapability)+'するサイト: ',host);
+    }
+    if(!host) return;
+    host = (host.charAt(0) == ".") ? host.substring(1,host.length) : host;
+    //this._pm.remove(host, type);
+    var uri = ioService.newURI("http://" + host, null, null);
+    this._pm.add(uri, type, aCapability);
+  },
+
+  //hostの Permissionを削除する
+  delCapability: function(type, host){
+    if(gContextMenu)document.getElementById("contentAreaContextMenu").hidePopup();
+    if(ucjsPermission.locale.indexOf("ja") == -1){
+      host = window.prompt('Delete setting of '+this._exceptionsParamsText[type].permissionstitle+': ',host);
+    }else{
+      host = window.prompt(this._exceptionsParamsText[type].permissionstitle+' の設定を削除するサイト: ',host);
+    }
+    if(!host) return;
+    host = (host.charAt(0) == ".") ? host.substring(1,host.length) : host;
+    var uri = ioService.newURI("http://" + host, null, null);
+    this._pm.remove(uri.host, type);
+  },
+
+  //urlのPermissionを得る
+  getCapability: function(url, type){
+    if( !url || url =='' ) return;
+    if(!/^https?:/.test(url)) url = 'http://' + url;
+    var host = this.convertUrl2host(url);
+    var uri = ioService.newURI("http://" + host, null, null);
+
+    var aCapability = this._pm.testPermission(uri,type);
+    var aCapabilityString = this._getCapabilityString(aCapability)
+
+    return aCapabilityString;
+  },
+
+  //CapabilityStringからPRUint32 permissionへ変換
+  _setCapability: function (aCapabilityString)
+  {
+    var intKey = null;
+    switch (aCapabilityString) {
+    case "can":
+      intKey = nsIPermissionManager.ALLOW_ACTION;
+      break;
+    case "cannot":
+      intKey = nsIPermissionManager.DENY_ACTION;
+      break;
+    case "noforeign":
+      intKey = BEHAVIOR_NOFOREIGN;
+      break;
+    case "canSession":
+      intKey = nsICookiePermission.ACCESS_SESSION;
+      break;
+    }
+    return intKey;
+  },
+
+  //PRUint32 permissionからCapabilityStringへ変換
+  _getCapabilityString: function (aCapability)
+  {
+    var stringKey = null;
+    switch (aCapability) {
+    case nsIPermissionManager.ALLOW_ACTION:
+      stringKey = "can";
+      break;
+    case nsIPermissionManager.DENY_ACTION:
+      stringKey = "cannot";
+      break;
+    case BEHAVIOR_NOFOREIGN:
+      stringKey = "noforeign";
+      break;
+    case nsICookiePermission.ACCESS_SESSION:
+      stringKey = "canSession";
+      break;
+    }
+    return stringKey;
+  },
+
+  //PRUint32 permissionから表示用CapabilityStringへ変換
+  _getCapabilityString1: function (aCapability)
+  {
+    var stringKey = null;
+    switch (aCapability) {
+    case nsIPermissionManager.ALLOW_ACTION:
+      stringKey = "allow ";
+      break;
+    case nsIPermissionManager.DENY_ACTION:
+      stringKey = "block";
+      break;
+    case BEHAVIOR_NOFOREIGN:
+      stringKey = "block foreign domain";
+      break;
+    case nsICookiePermission.ACCESS_SESSION:
+      stringKey = "allow for session";
+      break;
+    }
+    return stringKey;
+  },
+  //PRUint32 permissionから表示用CapabilityStringへ変換
+  _getCapabilityString2: function (aCapability)
+  {
+    var stringKey = null;
+    switch (aCapability) {
+    case nsIPermissionManager.ALLOW_ACTION:
+      stringKey = "許可";
+      break;
+    case nsIPermissionManager.DENY_ACTION:
+      stringKey = "拒否";
+      break;
+    case BEHAVIOR_NOFOREIGN:
+      stringKey = "他ドメイン拒否";
+      break;
+    case nsICookiePermission.ACCESS_SESSION:
+      stringKey = "一時的に許可";
+      break;
+    }
+    return stringKey;
+  },
+
+  //aNodeがオブジェクトノードの一部かどうか, オブジェクトノードを返す
+  isObject: function(aNode){
+    while(aNode && (aNode.nodeName != 'object' && aNode.nodeName != 'embed' )){
+      aNode = aNode.parentNode;
+    }
+    return aNode;
+  },
+
+  //ツールメニューの表示に際して
+  forToolMenu: function(){
+    if(document.getElementById("ucjsPermission_tool_menupopup"))return;
+
+    var popup = document.getElementById("menu_ToolsPopup");
+    var menu = document.createElement("menu");
+    menu.setAttribute('id','ucjsPermission_Toolmenu');
+    menu.setAttribute('label',ucjsPermission.locale.indexOf("ja")== -1?"Permissions":"フィルタの追加・変更");
+    menu.setAttribute('accesskey','f');
+
+    var menupopup = document.createElement("menupopup");
+    menupopup.setAttribute('id',"ucjsPermission_tool_menupopup");
+    menupopup.setAttribute('onpopupshowing',"event.stopPropagation();ucjsPermission.onToolSubMenupopup(event);");
+    menupopup.setAttribute('menugenerated',"true");
+
+    menu.appendChild(menupopup);
+    if (document.getElementById("menu_preferences").parentNode == popup)
+      popup.insertBefore(menu, document.getElementById("menu_preferences"));
+    else
+      popup.appendChild(menu);
+
+    var arr=['script','stylesheet','cookie','object'/*,'refresh'*/,'subdocument'];
+    for(var i=0;i<arr.length;i++){
+      var type = arr[i];
+      var label = ucjsPermission._exceptionsParamsText[type].permissionstitle;
+      var accesskey = ucjsPermission._exceptionsParamsText[type].permissionskey;
+      ucjsPermission.addMenu(menupopup,label,accesskey,"ucjsPermission_"+type+"_tool_menupopup","event.stopPropagation();");
+    }
+  },
+
+  onToolSubMenupopup: function(){
+    this.addMenuItem('tool', this.getScripts(window.content.document), 'script' );
+    this.addMenuItem('tool', this.getStyleSheets(window.content.document), 'stylesheet' );
+    this.addMenuItem('tool', [this.getTartgetHost(null)], 'cookie' );
+    this.addMenuItem('tool', this.getObjects(window.content.document), 'object' );
+    //this.addMenuItem('tool', this.getMatarefresh(window.content.document), 'refresh' );
+    this.addMenuItem('tool', this.getFrames(window.content.document), 'subdocument' );
+
+  },
+
+  //コンテキストメニューの表示に際して
+  forContextMenu: function(event){
+    if(document.getElementById("ucjsPermission_menupopup"))return;
+
+    var popup = document.getElementById("contentAreaContextMenu");
+    var menu = document.createElement("menu");
+    menu.setAttribute('id','ucjsPermission_Contextmenu');
+    menu.setAttribute('label',ucjsPermission.locale.indexOf("ja")== -1?"Permissions":"フィルタの追加・変更");
+    menu.setAttribute('accesskey','f');
+    var menupopup = document.createElement("menupopup");
+    menupopup.setAttribute('id',"ucjsPermission_menupopup");
+    menupopup.setAttribute('onpopupshowing',"event.stopPropagation();ucjsPermission.onContextSubMenupopup(event);");
+    menupopup.setAttribute('menugenerated',"true");
+
+    menu.appendChild(menupopup);
+    popup.appendChild(menu);
+
+    var arr=['script','stylesheet','menuseparator','cookie','image','object'/*,'refresh'*/,'subdocument'];
+    for(var i=0;i<arr.length;i++){
+      if(arr[i]=='menuseparator'){
+        var menuseparator = document.createElement("menuseparator");
+        menuseparator.setAttribute('id',"ucjsPermission_menuseparator");
+        menupopup.appendChild(menuseparator);
+      }else{
+        var type = arr[i];
+        var label = ucjsPermission._exceptionsParamsText[type].permissionstitle;
+        var accesskey = ucjsPermission._exceptionsParamsText[type].permissionskey;
+        ucjsPermission.addMenu(menupopup,label,accesskey,"ucjsPermission_"+type+"_menupopup","event.stopPropagation();");
+      }
+    }
+  },
+
+  onContextSubMenupopup: function(event){
+    //外部CSSと外部スクリプトのメニューに追加
+    var win = this._getFocusedWindow(); //ウインドウ(フレーム)オブジェクト
+    var doc = win.content.document;     //ドキュメント
+    this.addMenuItem('', this.getScripts(doc), 'script' );
+    this.addMenuItem('', this.getStyleSheets(doc), 'stylesheet' );
+    //セパレータどうする
+    document.getElementById("ucjsPermission_menuseparator").setAttribute("hidden",
+      document.getElementById("ucjsPermission_script_menupopup").parentNode.getAttribute("hidden") ||
+      document.getElementById("ucjsPermission_stylesheet_menupopup").parentNode.getAttribute("hidden")
+    );
+    //イベントターゲットの種類に依存するメニュー
+    this.addMenuItem('', [this.getTartgetHost(gContextMenu.target)], 'cookie' );
+    this.addMenuItem('',  gContextMenu.onImage?[this.getTartgetHost(gContextMenu.target)]:[], 'image' );
+    this.addMenuItem('',  (event && this.isObject(gContextMenu.target))?[this.getTartgetHost(gContextMenu.target)]:this.getObjects(gContextMenu.target.ownerDocument), 'object' );
+    //this.addMenuItem('',  this.getMatarefresh(gContextMenu.target.ownerDocument), 'refresh' );
+    this.addMenuItem('',  [].concat(this.getFrames(doc)), 'subdocument' );
+  },
+
+  //menu
+  addMenu: function(parentmenupopup,label,accesskey,id,func){
+    var menu = document.createElement("menu");
+    menu.setAttribute('label',label);
+    menu.setAttribute('accesskey',accesskey);
+    var menupopup = document.createElement("menupopup");
+    menupopup.setAttribute('id',id);
+    menupopup.setAttribute('onpopupshowing',func);
+    menu.appendChild(menupopup);
+    parentmenupopup.appendChild(menu);
+  },
+
+  //menupopupにmenuを追加
+  addMenuItem: function(menuid, arr, type){
+    var menupopupid, menu, menuitem, menuseparator;
+
+    //menupopupを得る
+    if(menuid==''){
+      menupopupid = "ucjsPermission_"+type+"_menupopup";
+    }else{
+      menupopupid = "ucjsPermission_"+type+"_"+menuid+"_menupopup";
+    }
+    var menupopup = document.getElementById(menupopupid);
+
+    //menupopup下を消去
+    while(menupopup.lastChild){
+      menupopup.removeChild(menupopup.lastChild);
+    }
+
+    //hostないならmenu非表示
+    if(arr.length == 0){
+      menupopup.parentNode.setAttribute("hidden",true);
+      return;
+    }else{
+      menupopup.parentNode.setAttribute("hidden",false);
+    }
+
+    var text = this._exceptionsParamsText[type].permissionstitle.replace(ucjsPermission.locale.indexOf("ja")== -1?' filter':' フィルタ','');
+
+    for(var i=0,len=arr.length;i<len;i++){
+      var host = arr[i];
+      var aCapabilityString = this.getCapability(host, type);
+      if(this._exceptionsParams[type].blockVisible){
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("label",ucjsPermission.locale.indexOf("ja")== -1?"Block to "+host:host+" の" + text + "を拒否");
+        menuitem.setAttribute("oncommand","ucjsPermission.addCapability('"+type+"','cannot','"+host+"');");
+        menuitem.setAttribute("type","checkbox");
+        menuitem.setAttribute("accesskey","b");
+        if(aCapabilityString=='cannot') menuitem.setAttribute('checked',true);
+        menupopup.appendChild(menuitem);
+      }
+      if(this._exceptionsParams[type].noforeignVisible){
+        menuitem = document.createElement("menuitem");
+        var etld = host;
+        /*
+        try {
+          var eTLDService = Components.classes["@mozilla.org/network/effective-tld-service;1"]
+                      .getService(Components.interfaces.nsIEffectiveTLDService);
+          etld = eTLDService.getBaseDomainFromHost(host);
+        } catch(e) {}
+        */
+        etld = etld.indexOf('.') > 0?etld.substring(etld.indexOf('.')+1):etld;
+        menuitem.setAttribute("label",ucjsPermission.locale.indexOf("ja")== -1?"Block to foreign "+etld:etld+" の" + text + "を他ドメイン拒否");
+        menuitem.setAttribute("oncommand","ucjsPermission.addCapability('"+type+"','noforeign','"+etld+"');");
+        menuitem.setAttribute("type","checkbox");
+        menuitem.setAttribute("accesskey","f");
+        if(aCapabilityString=='noforeign') menuitem.setAttribute('checked',true);
+        menupopup.appendChild(menuitem);
+      }
+      if(this._exceptionsParams[type].sessionVisible){
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("label",ucjsPermission.locale.indexOf("ja")== -1?"Allow for session to "+host:host+" の" + text + "を一時的に許可");
+        menuitem.setAttribute("oncommand","ucjsPermission.addCapability('"+type+"','canSession','"+host+"');");
+        menuitem.setAttribute("type","checkbox");
+        menuitem.setAttribute("accesskey","s");
+        if(aCapabilityString=='canSession') menuitem.setAttribute('checked',true);
+        menupopup.appendChild(menuitem);
+      }
+      if(this._exceptionsParams[type].allowVisible){
+        menuitem = document.createElement("menuitem");
+        menuitem.setAttribute("label",ucjsPermission.locale.indexOf("ja")== -1?"Allow to "+host:host+" の" + text + "を許可");
+        menuitem.setAttribute("oncommand","ucjsPermission.addCapability('"+type+"','can','"+host+"');");
+        menuitem.setAttribute("type","checkbox");
+        menuitem.setAttribute("accesskey","a");
+        if(aCapabilityString=='can') menuitem.setAttribute('checked',true);
+        menupopup.appendChild(menuitem);
+      }
+      menuitem = document.createElement("menuitem");
+      menuitem.setAttribute("label",ucjsPermission.locale.indexOf("ja")== -1?"Delete to "+host:host+" の" + text + "の設定を削除");
+      menuitem.setAttribute("oncommand","ucjsPermission.delCapability('"+type+"','"+host+"');");
+      menuitem.setAttribute("type","checkbox");
+      menuitem.setAttribute("accesskey","d");
+      menupopup.appendChild(menuitem);
+      if(aCapabilityString=='noforeign') {
+      menuitem = document.createElement("menuitem");
+      menuitem.setAttribute("label",ucjsPermission.locale.indexOf("ja")== -1?"Delete to "+etld:etld+" の" + text + "の設定を削除");
+      menuitem.setAttribute("oncommand","ucjsPermission.delCapability('"+type+"','"+etld+"');");
+      menuitem.setAttribute("type","checkbox");
+      menuitem.setAttribute("accesskey","t");
+      menupopup.appendChild(menuitem);
+      }
+
+      if(i < len - 1){
+        menuseparator = document.createElement("menuseparator");
+        menupopup.appendChild(menuseparator);
+      }
+    }
+  },
+
+  /**
+   * The exceptions types which may be passed to this._showExceptions().
+   */
+  _exceptionsParams: {
+        cookie:     { blockVisible:true,  noforeignVisible:true, sessionVisible:true,  allowVisible:true, prefilledHost:"", permissionType:"cookie"},
+        document:   { blockVisible:false, noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"document"},
+        image:      { blockVisible:true , noforeignVisible:false,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"image"},
+        object:     { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"object"},
+        other:      { blockVisible:false, noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"other"},
+        popup:      { blockVisible:false, noforeignVisible:false,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"popup"},
+        refresh:    { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"refresh"},
+        script:     { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"script"},
+        stylesheet: { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"stylesheet"},
+        subdocument:{ blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"subdocument"}
+  },
+
+  _exceptionsParamsText: Components.classes["@mozilla.org/preferences-service;1"]
+                   .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale").indexOf("ja") == -1
+      ?{
+        cookie:     { permissionstitle:"Exceptions - Cookies", permissionstext:"You can specify which web sites are always, never allowed to use cookies.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, Allow for Session, or Allow.",permissionskey:"c"},
+        document:   { permissionstitle:"document filter", permissionstext:"You can specify which web sites are always, never allowed to load document.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"d"},
+        image:      { permissionstitle:"Exceptions - Images", permissionstext:"You can specify which web sites are allowed to load images. Type the exact address of the site you want to manage and then click Block or Allow.",permissionskey:"i"},
+        object:     { permissionstitle:"object filter", permissionstext:"You can specify which web sites are always, never allowed to load object.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"o"},
+        other:      { permissionstitle:"other filter", permissionstext:"You can specify which web sites are always, never allowed to use XBL bindings.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"t"},
+        popup:      { permissionstitle:"Allowed Sites - Popups", permissionstext:"You can specify which web sites are allowed to open popup windows. Type the exact address of the site you want to allow and then click Allow.",permissionskey:"p"},
+        refresh:    { permissionstitle:"meta refresh tag filter", permissionstext:"You can specify which web sites are always, never allowed to use meta refresh tag.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"r"},
+        script:     { permissionstitle:"External Script filter", permissionstext:"You can specify which web sites are always, never allowed to use External Script.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"j"},
+        stylesheet: { permissionstitle:"External CSS filter", permissionstext:"You can specify which web sites are always, never allowed to use External CSS.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"s"},
+        subdocument:{ permissionstitle:"Frame filter", permissionstext:"You can specify which web sites are always, never allowed to use frame.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"f"}
+       }
+      :{
+        cookie:     { permissionstitle:"Cookie フィルタ", permissionstext:"Cookie の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[現在のセッションのみ]、[許可] のいずれかをクリックしてください。",permissionskey:"c"},
+        document:   { permissionstitle:"document フィルタ", permissionstext:"document の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"d"},
+        image:      { permissionstitle:"例外サイト - 画像の読み込み", permissionstext:"画像の読み込みを許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]または[許可] をクリックしてください。",permissionskey:"i"},
+        object:     { permissionstitle:"object フィルタ", permissionstext:"object の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"o"},
+        other:      { permissionstitle:"other フィルタ", permissionstext:"XBL bindings の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"t"},
+        popup:      { permissionstitle:"許可サイト - ポップアップ", permissionstext:"ポップアップウィンドウを開くことを許可するサイトを指定できます。許可するサイトの正確なアドレスを入力して [許可] をクリックしてください。",permissionskey:"p"},
+        refresh:    { permissionstitle:"meta refresh tag フィルタ", permissionstext:"meta refresh tag の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"r"},
+        script:     { permissionstitle:"外部スクリプト フィルタ", permissionstext:"外部スクリプト の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"j"},
+        stylesheet: { permissionstitle:"外部CSS フィルタ", permissionstext:"外部CSS の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"s"},
+        subdocument:{ permissionstitle:"フレーム フィルタ", permissionstext:"フレーム の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"f"}
+  },
+
+  debug: function(aMsg){
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    Cc["@mozilla.org/consoleservice;1"]
+      .getService(Ci.nsIConsoleService)
+      .logStringMessage(aMsg);
+  }
+}
+ucjsPermission.forToolMenu();
+ucjsPermission.forContextMenu();
+  ]]></script>
+</overlay>

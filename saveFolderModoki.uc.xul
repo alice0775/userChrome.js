@@ -1,0 +1,980 @@
+<?xml version="1.0"?>
+
+<overlay id="saveFolderModokiOverlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           saveFolderModoki
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    saveFolderModoki
+// @include        main
+// @compatibility  Firefox 2.0 3.0
+// @author         Alice0775
+// @version        2010/04/21 01:00  Firefox3.7a5pre
+// @version        2009/04/10 00:00 Minefield3.6a1pre での動作改善 (メニューのidが"SaveFolder"だとダメ なぜ?)
+// @version        2008/10/17 12:00 コード整理 (DragNgoModoki5.uc.jsも修正)
+// ==/UserScript==
+// Original function of directSaveLink and setLeafName are from Drag de Go.xpi,
+// and author is Yukichi http://bushwhacker.up.seesaa.net/ .
+//
+// ツールメニューで保存するホルダを指定する
+// 指定されたホルダは about:config  userChrome.save.folders に 「,」区切りで保存
+//
+// 画像をダブルクリックしたときの保存フォルダをIMAGE_DBLCLICKに指定
+// これはabout:config  userChrome.save.folderOnImageDblclickにて変更可能
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+
+var saveFolderModoki = {
+//-- config --
+  IMAGE_DBLCLICK          : "D:\\ほげほげ", // 画像を右ダブルクリックしたときの保存フォルダ, nullならファイルピッカ起動
+  CONTENTDISPOSITION      : true,       // content-disposition 使う[true], 使わないfalse
+  REPLACE_SYSTEM_saveURL  : true,       // CONTENTDISPOSITIONがtrueのとき, システム既定のsaveURLでもcontent-disposition 使う[true], 使わないfalse
+  REPLACE_SYSTEM_fileTitle: true,      // デフォルトのファイル名にtitle属性を 使うtrue, 使わない[false]
+//-- config --
+
+  //リスナー登録
+  init: function() {
+    this.initPrefs();
+    gBrowser.mPanelContainer.addEventListener("dblclick", function(event){saveFolderModoki.onDblClick(event,saveFolderModoki.imagedblclick);}, true);
+    this.addPrefListener(saveFolderModoki.buttonPrefListener); // 登録処理
+    if(this.FILENAMEasLINKTEXT && this.FORCELINKTEXT){
+      nsContextMenu.prototype.saveImage = saveFolderModoki.saveImageFolder;
+    }
+  },
+
+  //リスナー削除
+  uninit: function() {
+    gBrowser.mPanelContainer.removeEventListener("dblclick", function(event){saveFolderModoki.onDblClick(event,saveFolderModoki.imagedblclick);}, true);
+    this.removePrefListener(saveFolderModoki.buttonPrefListener); // 登録処理
+  },
+
+  //バージョン
+  getVer: function(){
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    var info = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
+    var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
+    return ver;
+  },
+
+  //デバッグ用
+  debug: function(aMsg){
+    const Cc = Components.classes;
+    const Ci = Components.interfaces;
+    Cc["@mozilla.org/consoleservice;1"]
+      .getService(Ci.nsIConsoleService)
+      .logStringMessage(aMsg);
+  },
+
+  getStringBundle: function getStringBundle() {
+      return Components.classes['@mozilla.org/intl/stringbundle;1']
+             .getService(Components.interfaces.nsIStringBundleService)
+             .createBundle("chrome://global/locale/contentAreaCommands.properties");
+  },
+
+  //メニュー用
+  //保存用フォルダを新規追加する
+  addFolderPath: function(){
+    var fp = this.getFolderPath();
+    var folders = this.getPref('userChrome.save.folders', 'str', '') + ',';
+    if (fp){
+      if((',' + folders).indexOf(',' + fp.file.path + ',')<0){
+        folders = folders + fp.file.path;
+        this.setPref('userChrome.save.folders', 'str', folders);
+      }
+    }
+  },
+
+  //保存用フォルダを編集する
+  editFolderPath: function(){
+    var folders = this.getPref('userChrome.save.folders', 'str', '');
+    folders = window.prompt('Edit Folders', folders);
+    if (folders)
+    this.setPref('userChrome.save.folders', 'str', folders);
+  },
+
+  //保存用フォルダをファイルピッカにより選択する
+  getFolderPath: function(){
+    var nsIFilePicker = Components.interfaces.nsIFilePicker;
+    var fp = Components.classes["@mozilla.org/filepicker;1"]
+            .createInstance(nsIFilePicker);
+    fp.init(window, "Select a Folder", nsIFilePicker.modeGetFolder);
+    var file = Components.classes["@mozilla.org/file/directory_service;1"]
+                         .getService(Components.interfaces.nsIProperties)
+                         .get("TmpD", Components.interfaces.nsIFile);
+
+    fp.displayDirectory = file;
+    var res = fp.show();
+    if (res == nsIFilePicker.returnOK){
+      return fp;
+    }
+    return null;
+  },
+
+  //Documentlinkの保存
+  saveDocFolder: function(event, afolder){
+    var focusedWindow = document.commandDispatcher.focusedWindow;
+    if (isContentFrame(focusedWindow)){
+      var aDocument = focusedWindow.document;
+      if (!aDocument)
+        throw "Must have a document when calling saveDocument";
+
+      // We want to use cached data because the document is currently visible.
+      var contentDisposition = null;
+      try {
+        contentDisposition =
+          aDocument.defaultView
+                   .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                   .getInterface(Components.interfaces.nsIDOMWindowUtils)
+                   .getDocumentMetadata("content-disposition");
+      } catch (ex) {
+        // Failure to get a content-disposition is ok
+      }
+      this.internalSave(aDocument.location.href, aDocument, null, contentDisposition,
+                   aDocument.contentType, false, null, null,
+                   aDocument.referrer ? makeURI(aDocument.referrer) : null,
+                   !afolder?false:true, afolder);
+    }
+  },
+
+  //urlの保存 この内部および DragNgoModoki5.uc.js から呼び出される
+  saveLink: function(url, text, afolder){
+    var doc = this._getFocusedWindow().document;
+    contentDisposition.saveURL(url, text, null, true,
+                       afolder?true:false, doc.documentURIObject, afolder);
+  },
+
+  //画像urlの保存
+  saveImageURL: function saveImageURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+                        aSkipPrompt, aReferrer, aFolder){
+    const imgICache = Components.interfaces.imgICache;
+    const nsISupportsCString = Components.interfaces.nsISupportsCString;
+    var contentType = null;
+    var contentDisposition = null;
+
+    if (!aShouldBypassCache) {
+      try {
+        var imageCache = Components.classes["@mozilla.org/image/cache;1"]
+                                   .getService(imgICache);
+        var props =
+          imageCache.findEntryProperties(makeURI(aURL, getCharsetforSave(null)));
+        if (props) {
+          contentType = props.get("type", nsISupportsCString);
+          contentDisposition = props.get("content-disposition",
+                                         nsISupportsCString);
+        }
+      } catch (e) {
+        // Failure to get type and content-disposition off the image is non-fatal
+      }
+    }
+    if (aFolder){
+      this.internalSave(aURL, null, aFileName, contentDisposition, contentType,
+                  aShouldBypassCache, aFilePickerTitleKey, null, aReferrer, aSkipPrompt, aFolder);
+    } else {
+      this.internalSave(aURL, null, aFileName, contentDisposition, contentType,
+                  aShouldBypassCache, aFilePickerTitleKey, null, aReferrer, false);
+    }
+  },
+
+  //画像の右ダブルクリック保存
+  onDblClick: function(event, aFolder){
+    if(event.button != 2) return;
+    if (event.target.tagName.toLowerCase() == "img" && event.target.src){
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById("contentAreaContextMenu").hidePopup();
+      if(aFolder=='') aFolder =null;
+      saveFolderModoki.saveImageFolder(event.target, aFolder);
+    }
+  },
+
+  //リンク等の保存
+  saveLinkFolder: function(target, afolder){
+    var url;
+    if (target instanceof HTMLAnchorElement ||
+        target instanceof HTMLAreaElement){
+      url = target.href;
+      if(!url) return;
+      var text = this.linkText(target, url);
+      this.saveLink(url, text, afolder);
+    } else if (target instanceof HTMLImageElement){
+      this.saveImageFolder(target, afolder);
+    }
+  },
+
+  //画像の保存
+  saveImageFolder: function(target, afolder){
+    var url;
+    if (target instanceof HTMLImageElement){
+      url = target.src;
+    }
+    if(!url) return;
+    var text = this.linkText(target, url);
+
+    aShouldBypassCache = false;
+    if (/^data:/.test(url)){
+      text = "index.png";
+      // Bypass cache, since it's a data: URL.
+      aShouldBypassCache = true;
+    }
+
+    this.saveImageURL(url, text, "SaveImageTitle", aShouldBypassCache,
+                      afolder?true:false, target.ownerDocument.documentURIObject, afolder);
+},
+
+  //rebuild_userChrome.uc.xulから呼び出される
+  directSaveLink: function(dummy, aURL, aDefaultFileName, aDocumentURI, aFolder){
+    this.internalSave(aURL, null, aDefaultFileName, null, null, false,
+           null, null, aDocumentURI, true, aFolder.path);
+  },
+
+  //パス文字列からnsILocalFileを返す この内部およびrebuild_userChrome.uc.xul から呼び出される
+  initFileWithPath : function(aPath){
+    var file = Components.classes["@mozilla.org/file/local;1"].
+            createInstance(Components.interfaces.nsILocalFile);
+    file.initWithPath(aPath);
+    return file;
+  },
+
+  // リンクや画像のリンクからファイル名にする文字列を得る
+  // IMAGEFILENAME, LINKFILENAME が "FILENAME" のとき hrefまたはsrc属性のパスを返す
+  // 上記以外のとき, リンクテキストまたはtitle,alt属性の文字列を返す
+  //
+  linkText : function(target, url) {
+    var text = gatherTextUnder( target );
+    if (!text || !text.match(/\S/)) {
+      text = target.getAttribute("title");
+      if (!text || !text.match(/\S/)) {
+        if (target.hasAttribute("alt")){
+          text = target.getAttribute("alt");
+          //fx2
+          if (!!text && text.match(/画像ファイル ".+" は壊れているため、表示できませんでした。/)) text = null;
+          if (!!text && text.match(/The image ".+" cannot be displayed, because it contains errors./)) text = null;
+          //fx3
+          if(!!text && text.match(/.*\/(.+)$/)) text = RegExp.$1;
+        }
+        if (!text || !text.match(/\S/)) {
+          if(target.hasAttribute("href")) text = target.href;
+          if(target.hasAttribute("src")) text = target.src;
+          if(text.match(/.*\/(.+)$/)) text = RegExp.$1;
+        }
+      }
+    }
+    return text.replace(/[\\\/:\*\?"<>\|]/g,' '); //"
+  },
+
+  /**
+   * internalSave: Used when saving a document or URL. This method:
+   *  - Determines a local target filename to use (unless parameter
+   *    aChosenData is non-null)
+   *  - Determines content-type if possible
+   *  - Prompts the user to confirm the destination filename and save mode
+   *    (content-type affects this)
+   *  - Creates a 'Persist' object (which will perform the saving in the
+   *    background) and then starts it.
+   *
+   * @param aURL The String representation of the URL of the document being saved
+   * @param aDocument The document to be saved
+   * @param aDefaultFileName The caller-provided suggested filename if we don't
+   *        find a better one
+   * @param aContentDisposition The caller-provided content-disposition header
+   *         to use.
+   * @param aContentType The caller-provided content-type to use
+   * @param aShouldBypassCache If true, the document will always be refetched
+   *        from the server
+   * @param aFilePickerTitleKey Alternate title for the file picker
+   * @param aChosenData If non-null this contains an instance of object AutoChosen
+   *        (see below) which holds pre-determined data so that the user does not
+   *        need to be prompted for a target filename.
+   * @param aReferrer the referrer URI object (not URL string) to use, or null
+            if no referrer should be sent.
+   * @param aSkipPrompt If true, the file will be saved to the default download folder.
+   */
+  internalSave: function internalSave(aURL, aDocument, aDefaultFileName, aContentDisposition,
+                        aContentType, aShouldBypassCache, aFilePickerTitleKey,
+                        aChosenData, aReferrer, aSkipPrompt, aFolderName)
+  {
+    if (aSkipPrompt == undefined)
+      aSkipPrompt = false;
+
+    // Note: aDocument == null when this code is used by save-link-as...
+    var saveMode = GetSaveModeForContentType(aContentType);
+    var isDocument = aDocument != null && saveMode != SAVEMODE_FILEONLY;
+    var saveAsType = kSaveAsType_Complete;
+
+    var file, fileURL;
+    // Find the URI object for aURL and the FileName/Extension to use when saving.
+    // FileName/Extension will be ignored if aChosenData supplied.
+    var fileInfo = new FileInfo(aDefaultFileName);
+    if (aChosenData)
+      file = aChosenData.file;
+    else {
+      var charset = null;
+      if (aDocument)
+        charset = aDocument.characterSet;
+      else if (aReferrer)
+        charset = aReferrer.originCharset;
+      initFileInfo(fileInfo, aURL, charset, aDocument,
+                   aContentType, aContentDisposition);
+      var fpParams = {
+        fpTitleKey: aFilePickerTitleKey,
+        isDocument: isDocument,
+        fileInfo: fileInfo,
+        contentType: aContentType,
+        saveMode: saveMode,
+        saveAsType: saveAsType,
+        file: file,
+        fileURL: fileURL
+      };
+      if (!this.getTargetFile(fpParams, aSkipPrompt, aFolderName))
+        // If the method returned false this is because the user cancelled from
+        // the save file picker dialog.
+        return;
+
+      saveAsType = fpParams.saveAsType;
+      saveMode = fpParams.saveMode;
+      file = fpParams.file;
+      fileURL = fpParams.fileURL;
+    }
+
+    if (!fileURL)
+      fileURL = makeFileURI(file);
+
+    // XXX We depend on the following holding true in appendFiltersForContentType():
+    // If we should save as a complete page, the saveAsType is kSaveAsType_Complete.
+    // If we should save as text, the saveAsType is kSaveAsType_Text.
+    var useSaveDocument = isDocument &&
+                          (((saveMode & SAVEMODE_COMPLETE_DOM) && (saveAsType == kSaveAsType_Complete)) ||
+                           ((saveMode & SAVEMODE_COMPLETE_TEXT) && (saveAsType == kSaveAsType_Text)));
+    // If we're saving a document, and are saving either in complete mode or
+    // as converted text, pass the document to the web browser persist component.
+    // If we're just saving the HTML (second option in the list), send only the URI.
+    var source = useSaveDocument ? aDocument : fileInfo.uri;
+    var persistArgs = {
+      source      : source,
+      contentType : (!aChosenData && useSaveDocument &&
+                     saveAsType == kSaveAsType_Text) ?
+                    "text/plain" : null,
+      target      : fileURL,
+      postData    : isDocument ? getPostData() : null,
+      bypassCache : aShouldBypassCache
+    };
+
+    var persist = makeWebBrowserPersist();
+
+    // Calculate persist flags.
+    const nsIWBP = Components.interfaces.nsIWebBrowserPersist;
+    const flags = nsIWBP.PERSIST_FLAGS_REPLACE_EXISTING_FILES;
+    if (aShouldBypassCache)
+      persist.persistFlags = flags | nsIWBP.PERSIST_FLAGS_BYPASS_CACHE;
+    else
+      persist.persistFlags = flags | nsIWBP.PERSIST_FLAGS_FROM_CACHE;
+
+    // Leave it to WebBrowserPersist to discover the encoding type (or lack thereof):
+    persist.persistFlags |= nsIWBP.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
+
+    // Create download and initiate it (below)
+    var tr = Components.classes["@mozilla.org/transfer;1"].createInstance(Components.interfaces.nsITransfer);
+
+    if (useSaveDocument) {
+      // Saving a Document, not a URI:
+      var filesFolder = null;
+      if (persistArgs.contentType != "text/plain") {
+        // Create the local directory into which to save associated files.
+        filesFolder = file.clone();
+
+        var nameWithoutExtension = getFileBaseName(filesFolder.leafName);
+        var filesFolderLeafName = this.getStringBundle().formatStringFromName("filesFolder",
+                                                                         [nameWithoutExtension],
+                                                                         1);
+
+        filesFolder.leafName = filesFolderLeafName;
+      }
+
+      var encodingFlags = 0;
+      if (persistArgs.contentType == "text/plain") {
+        encodingFlags |= nsIWBP.ENCODE_FLAGS_FORMATTED;
+        encodingFlags |= nsIWBP.ENCODE_FLAGS_ABSOLUTE_LINKS;
+        encodingFlags |= nsIWBP.ENCODE_FLAGS_NOFRAMES_CONTENT;
+      }
+      else {
+        encodingFlags |= nsIWBP.ENCODE_FLAGS_ENCODE_BASIC_ENTITIES;
+      }
+
+      const kWrapColumn = 80;
+      tr.init((aChosenData ? aChosenData.uri : fileInfo.uri),
+              persistArgs.target, "", null, null, null, persist);
+      try{
+        persist.progressListener = new DownloadListener(window, tr);
+      } catch(e) {
+        persist.progressListener = tr;
+      }
+      persist.saveDocument(persistArgs.source, persistArgs.target, filesFolder,
+                           persistArgs.contentType, encodingFlags, kWrapColumn);
+    } else {
+      tr.init((aChosenData ? aChosenData.uri : source),
+              persistArgs.target, "", null, null, null, persist);
+      try{
+        persist.progressListener = new DownloadListener(window, tr);
+      } catch(e) {
+        persist.progressListener = tr;
+      }
+      persist.saveURI((aChosenData ? aChosenData.uri : source),
+                      null, aReferrer, persistArgs.postData, null,
+                      persistArgs.target);
+    }
+  },
+
+  getTargetFile: function getTargetFile(aFpP, aSkipPrompt, aFolderPath)
+  {
+    const prefSvcContractID = "@mozilla.org/preferences-service;1";
+    const prefSvcIID = Components.interfaces.nsIPrefService;
+    var prefs = Components.classes[prefSvcContractID]
+                          .getService(prefSvcIID).getBranch("browser.download.");
+
+    const nsILocalFile = Components.interfaces.nsILocalFile;
+
+    // For information on download folder preferences, see
+    // mozilla/browser/components/preferences/main.js
+
+    var useDownloadDir = prefs.getBoolPref("useDownloadDir");
+    var dir = null;
+
+    // Default to lastDir if useDownloadDir is false, and lastDir
+    // is configured and valid. Otherwise, use the user's default
+    // downloads directory configured through download prefs.
+    var dnldMgr = Components.classes["@mozilla.org/download-manager;1"]
+                            .getService(Components.interfaces.nsIDownloadManager);
+    //フォルダパスが設定されているなら, dirとしてセットする。
+    //aSkipPromptがtrueならファイルピッカを起動しないようにuseDownloadDirをtrueにしておく
+    if (aFolderPath){
+      try {
+        dir = saveFolderModoki.initFileWithPath(aFolderPath);
+        if (dir && !dir.exists())
+          dir = null;
+        if (aSkipPrompt)
+          useDownloadDir = true;
+      } catch(ex) {}
+    }
+    //
+    if (!dir){
+      try {
+        var lastDir = prefs.getComplexValue("lastDir", nsILocalFile);
+        if ((!aSkipPrompt || !useDownloadDir) && lastDir.exists())
+          dir = lastDir;
+        else
+          dir = dnldMgr.userDownloadsDirectory;
+      } catch(ex) {
+        dir = dnldMgr.userDownloadsDirectory;
+      }
+    }
+    if (!aSkipPrompt || !useDownloadDir || !dir || (dir && !dir.exists())) {
+      if (!dir || (dir && !dir.exists())) {
+        // Default to desktop.
+        var fileLocator = Components.classes["@mozilla.org/file/directory_service;1"]
+                                    .getService(Components.interfaces.nsIProperties);
+        dir = fileLocator.get("Desk", nsILocalFile);
+      }
+
+      var fp = makeFilePicker();
+      var titleKey = aFpP.fpTitleKey || "SaveLinkTitle";
+      var bundle = this.getStringBundle();
+      fp.init(window, bundle.GetStringFromName(titleKey),
+              Components.interfaces.nsIFilePicker.modeSave);
+
+      fp.defaultExtension = aFpP.fileInfo.fileExt;
+      fp.defaultString = getNormalizedLeafName(aFpP.fileInfo.fileName,
+                                               aFpP.fileInfo.fileExt);
+      appendFiltersForContentType(fp, aFpP.contentType, aFpP.fileInfo.fileExt,
+                                  aFpP.saveMode);
+
+      if (dir)
+        fp.displayDirectory = dir;
+
+      if (aFpP.isDocument) {
+        try {
+          fp.filterIndex = prefs.getIntPref("save_converter_index");
+        }
+        catch (e) {
+        }
+      }
+
+      if (fp.show() == Components.interfaces.nsIFilePicker.returnCancel || !fp.file)
+        return false;
+
+      var directory = fp.file.parent.QueryInterface(nsILocalFile);
+      prefs.setComplexValue("lastDir", nsILocalFile, directory);
+
+      fp.file.leafName = validateFileName(fp.file.leafName);
+      aFpP.saveAsType = fp.filterIndex;
+      aFpP.file = fp.file;
+      aFpP.fileURL = fp.fileURL;
+
+      if (aFpP.isDocument)
+        prefs.setIntPref("save_converter_index", aFpP.saveAsType);
+    }
+    else {
+      dir.append(getNormalizedLeafName(aFpP.fileInfo.fileName,
+                                       aFpP.fileInfo.fileExt));
+      var file = dir;
+
+      // Since we're automatically downloading, we don't get the file picker's
+      // logic to check for existing files, so we need to do that here.
+      //
+      // Note - this code is identical to that in
+      //   mozilla/toolkit/mozapps/downloads/src/nsHelperAppDlg.js.in
+      // If you are updating this code, update that code too! We can't share code
+      // here since that code is called in a js component.
+      var collisionCount = 0;
+      while (file.exists()) {
+        collisionCount++;
+        if (collisionCount == 1) {
+          // Append "(2)" before the last dot in (or at the end of) the filename
+          // special case .ext.gz etc files so we don't wind up with .tar(2).gz
+          if (file.leafName.match(/\.[^\.]{1,3}\.(gz|bz2|Z)$/i))
+            file.leafName = file.leafName.replace(/\.[^\.]{1,3}\.(gz|bz2|Z)$/i, "(2)$&");
+          else
+            file.leafName = file.leafName.replace(/(\.[^\.]*)?$/, "(2)$&");
+        }
+        else {
+          // replace the last (n) in the filename with (n+1)
+          file.leafName = file.leafName.replace(/^(.*\()\d+\)/, "$1" + (collisionCount+1) + ")");
+        }
+      }
+      aFpP.file = file;
+    }
+
+    return true;
+  },
+
+  //コンテキストメニューポップアップ
+  popupContextMenu: function(popup){
+    //メニュー構築
+    const kXULNS =
+           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    var folders = this.getPref('userChrome.save.folders', 'str', '').split(',');
+    var targets = this.getTargetFromSourceNode(gContextMenu.target);
+
+    var menupopup = document.getElementById('saveFolderModokiContextMenu');
+    while(menupopup.lastChild){
+      menupopup.removeChild(menupopup.lastChild);
+    }
+
+    for(var i=0,len=folders.length;i<len;i++){
+      var folder = folders[i];
+      if(!folder) continue;
+      var menuitem = document.createElementNS(kXULNS,"menuitem");
+      menuitem.setAttribute("label", "Save Document to "+ folder);
+      menuitem.setAttribute('oncommand',"saveFolderModoki.saveDocFolder(event, this.fp);");
+      menuitem.fp = folder;
+      menupopup.appendChild(menuitem);
+    }
+    //フォルダを選択して保存
+    menuitem = document.createElementNS(kXULNS,"menuitem");
+    menuitem.setAttribute("label", 'Save Document As...');
+    menuitem.setAttribute('oncommand',"saveFolderModoki.saveDocFolder(event, null);");
+    menupopup.appendChild(menuitem);
+    if (targets.image || targets.link){
+      //セパセータ
+      var menusepa = document.createElementNS(kXULNS,"menuseparator");
+      menupopup.appendChild(menusepa);
+    }
+    //イメージおよびリンク用ポップアップアップ をappendする
+    this.makePopup(menupopup, folders, targets);
+  },
+
+  //イメージおよびリンク用ポップアップアップ
+  makePopup: function(menupopup, folders, targets){
+    const kXULNS =
+           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    if(targets.image){
+      //フォルダに画像を保存
+      for(var i=0,len=folders.length;i<len;i++){
+        var folder = folders[i];
+        if(!folder) continue;
+        var menuitem = document.createElementNS(kXULNS,"menuitem");
+        menuitem.setAttribute("label", "Save Image to "+ folder);
+        menuitem.setAttribute('oncommand',"saveFolderModoki.saveLinkFolder(this.target, this.fp);");
+        menuitem.fp = folder;
+        menuitem.target = targets.image;
+        menupopup.appendChild(menuitem);
+      }
+      //フォルダを選択して画像を保存
+      menuitem = document.createElementNS(kXULNS,"menuitem");
+      menuitem.setAttribute("label", 'Save Image As...');
+      menuitem.setAttribute('oncommand',"saveFolderModoki.saveLinkFolder(this.target, null);");
+      menuitem.target =targets.image;
+      menupopup.appendChild(menuitem);
+      if (targets.link){
+        //セパセータ
+        var menusepa = document.createElementNS(kXULNS,"menuseparator");
+        menupopup.appendChild(menusepa);
+      }
+    }
+    if (targets.link){
+      //フォルダにリンクを保存
+      for(var i=0,len=folders.length;i<len;i++){
+        var folder = folders[i];
+        if(!folder) continue;
+        var menuitem = document.createElementNS(kXULNS,"menuitem");
+        menuitem.setAttribute("label", "Save Link to "+ folder);
+        menuitem.setAttribute('oncommand',"saveFolderModoki.saveLinkFolder(this.target, this.fp);");
+        menuitem.fp = folder;
+        menuitem.target = targets.link;
+        menupopup.appendChild(menuitem);
+      }
+      //フォルダを選択してリンクを保存
+      menuitem = document.createElementNS(kXULNS,"menuitem");
+      menuitem.setAttribute("label", 'Save Link As...');
+      menuitem.setAttribute('oncommand',"saveFolderModoki.saveLinkFolder(this.target, null);");
+      menuitem.target = targets.link;
+      menupopup.appendChild(menuitem);
+    }
+  },
+
+  //D&Dホットメニュー DragNgoModoki5.uc.js から呼び出される
+  showHotMenu: function(x, y){
+    const kXULNS =
+           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    var hotmenu = document.getElementById("saveFolderModokihotmenu");
+    if(!hotmenu){
+      hotmenu = document.createElementNS(kXULNS,"menupopup");
+      hotmenu.setAttribute("id", "saveFolderModokihotmenu");
+      this.activeBrowser().appendChild(hotmenu);
+    }
+    while(hotmenu.lastChild){
+      hotmenu.removeChild(hotmenu.lastChild);
+    }
+
+    //ポップアップメニュー構築
+    var folders = this.getPref('userChrome.save.folders', 'str', '').split(',');
+    //sourcenode
+    var target = (('DragNGo' in window) ? DragNGo.sourcenode : (this.sourcenode) ? this.sourcenode : null);
+    if (!target) return;
+    var targets = this.getTargetFromSourceNode(target);
+
+    this.makePopup(hotmenu, folders, targets);
+
+    document.popupNode = null;
+    hotmenu.showPopup(this.activeBrowser(), x, y, "context","bottomleft","topleft");
+  },
+
+  //targetの上位のイメージとリンクノードを得る
+  getTargetFromSourceNode: function(target){
+    var targets = {link:null, image:null};
+    if (target &&
+        target instanceof HTMLImageElement &&
+        target.src){
+      targets.image = target;
+    }
+    while (target &&
+          !(target instanceof HTMLAnchorElement ||
+           target instanceof HTMLAreaElement)){
+      target = target.parentNode;
+    }
+    if (!target)
+      return targets;
+    targets.link = target;
+    if (targets.link && !targets.image){
+      var images = targets.link.ownerDocument.
+                           evaluate('.//*[contains(" img IMG ", concat(" ", local-name(), " "))]',
+                                    targets.link,
+                                    null,
+                                    XPathResult.FIRST_ORDERED_NODE_TYPE,
+                                    null);
+      if (images && images.singleNodeValue){
+        targets.image = images.singleNodeValue;
+      }
+    }
+    return targets;
+  },
+
+  //現在のウインドウを得る
+  _getFocusedWindow: function(){
+      var focusedWindow = document.commandDispatcher.focusedWindow;
+      if (!focusedWindow || focusedWindow == window)
+          return window.content;
+      else
+          return focusedWindow;
+  },
+
+  //ブラウザを得る
+  activeBrowser: function() {
+    return ('SplitBrowser' in window ? SplitBrowser.activeBrowser : null )
+            ||  gBrowser;
+  },
+
+  //設定を読む
+  initPrefs: function() {
+    var that = saveFolderModoki;
+    that.imagedblclick = that.IMAGE_DBLCLICK;
+    var folders = that.getPref('userChrome.save.folders', 'str', '').split(',');
+    that.imagedblclick = that.getPref('userChrome.save.folderOnImageDblclick', 'str', that.imagedblclick);
+  },
+
+  //prefを得る
+  getPref: function(aPrefString, aPrefType, aDefault){
+    var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+      createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+    UI.charset = "UTF-8";
+    var xpPref = Components.classes['@mozilla.org/preferences-service;1']
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case 'complex':
+          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+        case 'str':
+          return UI.ConvertToUnicode(xpPref.getCharPref(aPrefString).toString()); break;
+        case 'int':
+          return xpPref.getIntPref(aPrefString); break;
+        case 'bool':
+        default:
+          return xpPref.getBoolPref(aPrefString); break;
+      }
+    }catch(e){
+    }
+    return aDefault;
+  },
+
+  //prefを保存
+  setPref: function(aPrefString, aPrefType, aValue){
+    var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+      createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+    UI.charset = "UTF-8";
+    var xpPref = Components.classes['@mozilla.org/preferences-service;1']
+                  .getService(Components.interfaces.nsIPrefBranch2);
+    try{
+      switch (aPrefType){
+        case 'complex':
+          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+        case 'str':
+          return xpPref.setCharPref(aPrefString, UI.ConvertFromUnicode(aValue)); break;
+        case 'int':
+          aValue = parseInt(aValue);
+          return xpPref.setIntPref(aPrefString, aValue);  break;
+        case 'bool':
+        default:
+          return xpPref.setBoolPref(aPrefString, aValue); break;
+      }
+    }catch(e){
+    }
+    return null;
+  },
+
+  // 監視を開始する
+  addPrefListener: function(aObserver) {
+      try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+          pbi.addObserver(aObserver.domain, aObserver, false);
+      } catch(e) {}
+  },
+
+  // 監視を終了する
+  removePrefListener: function(aObserver) {
+      try {
+          var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+          pbi.removeObserver(aObserver.domain, aObserver);
+      } catch(e) {}
+  },
+  //変更処理
+  buttonPrefListener:{
+      domain  : 'userChrome.save',
+          //"userChrome.save.folders.XXX"という名前の設定が変更された場合全てで処理を行う
+
+      observe : function(aSubject, aTopic, aPrefstring) {
+          if (aTopic == 'nsPref:changed') {
+              // 設定が変更された時の処理
+              saveFolderModoki.initPrefs();
+          }
+      }
+  }
+}
+saveFolderModoki.init();
+window.addEventListener("unload", function(){ saveFolderModoki.uninit(); }, false);
+
+//Workarounds bug 299372 (Content-Disposition headers no longer looked at for Save Link As filename,
+//so it uses e.g. "attachment.cgi" in bugzilla instead of the name of the attachment; Save Page As works fine).
+// ****** global
+var contentDisposition = {
+  cdisp: new  Array(),
+  // ****** if reponse times out
+  skip: function(){
+    clearTimeout(this.cdisp.timeout);
+    this.cdisp.timeout = null;
+    saveFolderModoki.internalSave(this.cdisp.url, null, this.cdisp.fileName, null, null, this.cdisp.shouldBypassCache,
+                this.cdisp.filePickerTitleKey, null, this.cdisp.referrer, this.cdisp.skipPrompt, this.cdisp.folder);
+  },
+  saveURL: function(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+                    aSkipPrompt, aReferrer, aFolder){
+    // ****** fill global
+    var that = contentDisposition;
+    that.cdisp.url = aURL;
+    that.cdisp.fileName = aFileName;
+    that.cdisp.shouldBypassCache = aShouldBypassCache;
+    that.cdisp.filePickerTitleKey = aFilePickerTitleKey;
+    that.cdisp.referrer = aReferrer;
+    that.cdisp.skipPrompt = aSkipPrompt;
+    that.cdisp.folder = aFolder;
+    that.cdisp.timeout = null;
+    if (!saveFolderModoki.CONTENTDISPOSITION){
+      //  content-disposition 使わない
+      that.skip();
+      return;
+    }
+    try {
+           that.cdisp.timeout = 15000;
+
+        var http_request = new XMLHttpRequest();
+        // ******  if reponse recieved and finnished
+        http_request.onreadystatechange = function() {
+          if (http_request.readyState == 4) {
+            // ****** get "Content-disposition" and "Content-Type"
+            var disposititon = http_request.getResponseHeader( "Content-disposition");
+            var type = http_request.getResponseHeader( "Content-Type");
+            if (!disposititon) disposititon = null;
+            if (!type) type = null;
+            // ****** don't include characterset, better matching
+            if ((/text\/html/).test(type)) type = "text/html";
+            // ****** default to .htm for links instead of .com, .asp, .php, etc
+            if (disposititon == null) {
+                    aFileName = aFileName+".htm";
+            }
+            // ****** alert(aFileName+'******'+disposititon+'******'+type);
+            // ****** clear timer
+            if (that.cdisp.timeout) {
+              // ****** alert(cdisp.timeout);
+              clearTimeout(that.cdisp.timeout);
+              that.cdisp.timeout = null;
+              saveFolderModoki.internalSave(aURL, null, aFileName, disposititon, type, aShouldBypassCache,
+                           aFilePickerTitleKey, null, aReferrer, aSkipPrompt, aFolder);
+            }
+          }
+        };
+        // ******  send request, asyncronous true, works in background
+        http_request.open("HEAD", aURL, true);
+        http_request.send(null);
+        // ****** set reponse timeout
+        that.cdisp.timeout = setTimeout(function(self){self.skip();}, that.cdisp.timeout, that);
+
+    } catch(e) {
+      that.skip();
+    }
+  }
+}
+
+if (saveFolderModoki.REPLACE_SYSTEM_saveURL)
+  // システム既定のsaveURLでもcontent-disposition を使う
+  window.saveURL = contentDisposition.saveURL;
+
+
+//Save as" title as default like in IE
+var savefileTitle = {
+  getDefaultFileName:  function(aDefaultFileName, aURI, aDocument, aContentDisposition)
+  {
+
+    try {
+      fileType = aDocument.contentType;
+    }
+    catch (e) {
+      // nepodarilo se zjistit typ dokumentu
+    }
+
+     // 1) look for a filename in the content-disposition header, if any
+    if (aContentDisposition) {
+      const mhpContractID = "@mozilla.org/network/mime-hdrparam;1";
+      const mhpIID = Components.interfaces.nsIMIMEHeaderParam;
+      const mhp = Components.classes[mhpContractID].getService(mhpIID);
+      var dummy = { value: null };  // Need an out param...
+      var charset = getCharsetforSave(aDocument);
+
+      var fileName = null;
+      try {
+        fileName = mhp.getParameter(aContentDisposition, "filename", charset,
+                                    true, dummy);
+      }
+      catch (e) {
+        try {
+          fileName = mhp.getParameter(aContentDisposition, "name", charset, true,
+                                      dummy);
+        }
+        catch (e) {
+        }
+      }
+      if (fileName)
+        return fileName;
+    }
+
+    if (aDocument && fileType == "text/html") {
+      var docTitle = validateFileName(aDocument.title).replace(/^\s+|\s+$/g, "");
+      if (docTitle) {
+        // 3) Use the document title
+        return docTitle;
+      }
+    }
+
+    try {
+      var url = aURI.QueryInterface(Components.interfaces.nsIURL);
+      if (url.fileName != "") {
+        // 2) Use the actual file name, if present
+        var textToSubURI = Components.classes["@mozilla.org/intl/texttosuburi;1"]
+                                     .getService(Components.interfaces.nsITextToSubURI);
+        return validateFileName(textToSubURI.unEscapeURIForUI(url.originCharset || "UTF-8", url.fileName));
+      }
+    } catch (e) {
+      // This is something like a data: and so forth URI... no filename here.
+    }
+
+    if (aDefaultFileName)
+      // 4) Use the caller-provided name, if any
+      return validateFileName(aDefaultFileName);
+
+    // 5) If this is a directory, use the last directory name
+    var path = aURI.path.match(/\/([^\/]+)\/$/);
+    if (path && path.length > 1)
+      return validateFileName(path[1]);
+
+    try {
+      if (aURI.host)
+        // 6) Use the host.
+        return aURI.host;
+    } catch (e) {
+      // Some files have no information at all, like Javascript generated pages
+    }
+    try {
+      // 7) Use the default file name
+      return this.getStringBundle().GetStringFromName("DefaultSaveFileName");
+    } catch (e) {
+      //in case localized string cannot be found
+    }
+    // 8) If all else fails, use "index"
+    return "index";
+  }
+}
+if (saveFolderModoki.REPLACE_SYSTEM_fileTitle)
+  // システム既定のsaveURLでもgetDefaultFileName を使う
+  window.getDefaultFileName = savefileTitle.getDefaultFileName;
+
+
+  ]]></script>
+  <menupopup id="menu_ToolsPopup">
+    <menu id="SaveFolderToolsMenu" label="Save Folder" accesskey="S" insertbefore="menu_preferences">
+      <menupopup>
+
+        <menuitem label="保存するフォルダの登録"
+                  accesskey="S"
+                  oncommand="saveFolderModoki.addFolderPath();"/>
+        <menuseparator/>
+        <menuitem label="保存するフォルダの修正"
+                  accesskey="a"
+                  oncommand="saveFolderModoki.editFolderPath();"/>
+      </menupopup>
+    </menu>
+  </menupopup>
+
+  <menupopup id="contentAreaContextMenu">
+    <menu label="Save Folder Modoki" accesskey="S">
+      <menupopup id="saveFolderModokiContextMenu"
+                 onpopupshowing="saveFolderModoki.popupContextMenu(this);event.stopPropagation();"/>
+    </menu>
+  </menupopup>
+</overlay>
