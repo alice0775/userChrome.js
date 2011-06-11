@@ -5,6 +5,7 @@
 // @include        *
 // @compatibility  Firefox 3.0 3.5 3.6 3.7a1pre
 // @author         Alice0775
+// @version        2011/06/12 menupopupの親がmenuでないときは何もしない
 // @version        2010/02/21 Bug 530504 -  Mouse wheel scrolling interferes with action popup in applications tab of preferences
 // @version        2010/02/09
 // @Note
@@ -56,6 +57,10 @@ var bug515979 = {
     var target = aEvent.originalTarget;
     while (target && !/^(?:menupopup|richlistbox|listbox)$/.test(target.localName)) {
       target = target.parentNode;
+    }
+    userChrome_js.debug(target.parentNode.localName);
+    if (target && !/menu/.test(target.parentNode.localName)) {
+      return;
     }
     if (target && target != aEvent.target) {
       aEvent.preventDefault();
