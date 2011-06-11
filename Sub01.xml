@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<SearchPlugin xmlns="http://www.mozilla.org/2006/browser/search/">
+<ShortName>{ショッピング</ShortName>
+<Description>ショッピング</Description>
+<InputEncoding>UTF-8</InputEncoding>
+<Image width="16" height="16">data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8%2F9hAAAAB3RJTUUH1gUfETYqh2oMzwAAABd0RVh0U29mdHdhcmUAR0xEUE5HIHZlciAzLjRxhaThAAAACHRwTkdHTEQzAAAAAEqAKR8AAAAEZ0FNQQAAsY8L%2FGEFAAAAG0lEQVR4nGP4%2F%2F8%2FAyWYIs2jBowaMGrAYDIAAMWt%2FR9U%2BnmLAAAAAElFTkSuQmCC</Image>
+<Url type="text/html" method="GET" template="http://"></Url>
+</SearchPlugin>
