@@ -775,64 +775,64 @@ var DragNGo = {
     return ver;
   },
 
-  getElementsByXPath: function getElementsByXPath(xpath, node) {
-    var nodesSnapshot = this.getXPathResult(xpath, node,
-        XPathResult.ORDERED_NODE_SNAPSHOT_TYPE)
-    var data = []
-    for (var i = 0; i < nodesSnapshot.snapshotLength; i++) {
-         data.push(nodesSnapshot.snapshotItem(i))
+  getElementsByXPath: function getNodesFromXPath(aXPath, aContextNode) {
+    const XULNS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
+    const XHTMLNS = 'http://www.w3.org/1999/xhtml';
+    const XLinkNS = 'http://www.w3.org/1999/xlink';
+
+    // 引数の型チェック。
+    if (aXPath) {
+      aXPath = String(aXPath);
     }
-    return data
-  },
-
-  getFirstElementByXPath: function getFirstElementByXPath(xpath, node) {
-    var result = this.getXPathResult(xpath, node,
-        XPathResult.FIRST_ORDERED_NODE_TYPE)
-    return result.singleNodeValue
-  },
-
-  getXPathResult: function getXPathResult(xpath, node, resultType) {
-      node = node || this.focusedWindow.document;
-      var doc = node.ownerDocument || node
-      var resolver = doc.createNSResolver(node.documentElement || node)
-      // Use |node.lookupNamespaceURI('')| for Opera 9.5
-      var defaultNS = node.lookupNamespaceURI(null)
-      if (defaultNS) {
-          const defaultPrefix = '__default__'
-          xpath = this.addDefaultPrefix(xpath, defaultPrefix)
-          var defaultResolver = resolver
-          resolver = function (prefix) {
-              return (prefix == defaultPrefix)
-                  ? defaultNS : defaultResolver.lookupNamespaceURI(prefix)
-          }
+    else {
+      throw 'ERROR: blank XPath expression';
+    }
+    if (aContextNode) {
+      try {
+        if (!(aContextNode instanceof Node))
+          throw '';
       }
-      return doc.evaluate(xpath, node, resolver, resultType, null)
-  },
-
-  addDefaultPrefix: function addDefaultPrefix(xpath, prefix) {
-      const tokenPattern = /([A-Za-z_\u00c0-\ufffd][\w\-.\u00b7-\ufffd]*|\*)\s*(::?|\()?|(".*?"|'.*?'|\d+(?:\.\d*)?|\.(?:\.|\d+)?|[\)\]])|(\/\/?|!=|[<>]=?|[\(\[|,=+-])|([@$])/g
-      const TERM = 1, OPERATOR = 2, MODIFIER = 3
-      var tokenType = OPERATOR
-      prefix += ':'
-      function replacer(token, identifier, suffix, term, operator, modifier) {
-          if (suffix) {
-              tokenType =
-                  (suffix == ':' || (suffix == '::' &&
-                   (identifier == 'attribute' || identifier == 'namespace')))
-                  ? MODIFIER : OPERATOR
-          }
-          else if (identifier) {
-              if (tokenType == OPERATOR && identifier != '*') {
-                  token = prefix + token
-              }
-              tokenType = (tokenType == TERM) ? OPERATOR : TERM
-          }
-          else {
-              tokenType = term ? TERM : operator ? OPERATOR : MODIFIER
-          }
-          return token
+      catch(e) {
+        throw 'ERROR: invalid context node';
       }
-      return xpath.replace(tokenPattern, replacer)
+    }
+
+    const xmlDoc  = aContextNode ? aContextNode.ownerDocument : document ;
+    const context = aContextNode || xmlDoc.documentElement;
+    const type    = XPathResult.ORDERED_NODE_SNAPSHOT_TYPE;
+    const resolver = {
+      lookupNamespaceURI : function(aPrefix)
+      {
+        switch (aPrefix)
+        {
+          case 'xul':
+            return XULNS;
+          case 'html':
+          case 'xhtml':
+            return XHTMLNS;
+          case 'xlink':
+            return XLinkNS;
+          default:
+            return '';
+        }
+      }
+    };
+
+    try {
+      var expression = xmlDoc.createExpression(aXPath, resolver);
+      var result = expression.evaluate(context, type, null);
+    }
+    catch(e) {
+      return {
+        snapshotLength : 0,
+        snapshotItem : function()
+        {
+          return null;
+        }
+      };
+    }
+
+    return result;
   },
 
   isParentEditableNode: function(node) {
