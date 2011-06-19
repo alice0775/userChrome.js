@@ -3,11 +3,12 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ファイル名をD&D
 // @include        main
-// @compatibility  Firefox 4.0
+// @compatibility  Firefox 4.0 5.0 6.0
 // @author         Alice0775
+// @version        2011/06/19 21:00 Google modified getElementsByXPath
+// ==/UserScript==
 // @version        2011/04/14 21:00 Google doc などでdrag drop uploadができないので外部ファイルのドロップは止め
 // @version        2011/03/30 10:20 プロンプト
-// ==/UserScript==
 // @version        2011/03/29 14:20 copyToSearchBar, appendToSearchBar, searchWithEngine 追加変更
 // @version        2011/03/11 10:30 Bug641090
 // @version        2010/12/10 08:30 close button非表示 Bug 616014 - Add close button to the add-on bar
