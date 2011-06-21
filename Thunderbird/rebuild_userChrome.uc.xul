@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           rebuild_userChrome.uc.xul
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    userChrome.js用のスクリプトのキャッシュをクリアーし,新しいウインドウを開く
+// @include        main
+// @compatibility  Firefox 2.0 3.0
+// @author         Alice0775
+// @version        
+// @Note           
+// ==/UserScript==
+ --> 
+  <script language="JavaScript"><![CDATA[
+  var userChromejs = {
+    rebuild: function(){
+      var prefObj = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService);
+      try{
+        var flag = prefObj.getBoolPref("userChrome.enable.reuse",false);
+      }catch(e){
+        var flag =false;
+      }
+      prefObj.setBoolPref("userChrome.enable.reuse",false);
+      setTimeout(function(){OpenBrowserWindow();},500);
+      setTimeout(function(){prefObj.setBoolPref("userChrome.enable.reuse",flag);},5000);
+    },
+    setting: function(){
+      var prefObj = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService);
+      try{
+        var flag = prefObj.getBoolPref("userChrome.enable.reuse",false);
+      }catch(e){
+        var flag =false;
+      }
+      prefObj.setBoolPref("userChrome.enable.reuse",!flag);
+    },
+    onpopup: function(){
+      var prefObj = Components.classes["@mozilla.org/preferences-service;1"]
+                    .getService(Components.interfaces.nsIPrefService);
+      try{
+        var flag = prefObj.getBoolPref("userChrome.enable.reuse",false);
+      }catch(e){
+        var flag =false;
+      }
+      var menuitem = document.getElementById('userChrome_setting');
+      menuitem.setAttribute('checked', !flag);
+    }
+  }
+  ]]></script>
+
+  <menupopup id="taskPopup">
+    <menu label="userChrome.jsの設定" insertbefore="menu_preferences" >
+      <menupopup id="userChromejs_options" 
+                 accesskey="u"
+                 onpopupshowing="userChromejs.onpopup()"
+                 menugenerated="true">
+        <menuitem id="userChrome_setting"
+                  label="スクリプトをウィンドウ毎に読み直す"
+                  accesskey="u"
+                  oncommand="userChromejs.setting();"
+                  type="checkbox" />
+        <menuitem label="userChrome.js再構築/新しいウィンドウ"
+                  accesskey="x"
+                  oncommand="userChromejs.rebuild();"/>
+      </menupopup>
+    </menu>
+  </menupopup>
+</overlay>
