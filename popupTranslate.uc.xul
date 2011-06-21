@@ -19,6 +19,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 2.0 3.0 3.5 3.6a1pre, Tb3
 // @author         Alice0775
+// @version        2011/06/22 01:00 Yahoo!翻訳 jp復活
 // @version        2011/04/01 12:00 @nifty翻訳
 // @version        2011/04/01 12:00 Yahoo!翻訳jpが動かないのでcomの方にした
 // @version        2010/08/12 00:00 Excite 文字コード
