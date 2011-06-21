@@ -194,6 +194,8 @@ display: none;
           prefechData:['__EVENTVALIDATION'],
           cookie:"lp=ja_en"
         },
+
+*/
         {
           Description:"Yahoo Translate 英日",
           method:"POST",
@@ -216,11 +218,11 @@ display: none;
           xpath:'.//textarea[@id="trn_textText"]',
           prefetchURL:'http://honyaku.yahoo.co.jp/transtext',
           prefechData:['key', 'time']
-        }
+        },
 
-*/
+
         {
-          Description:"Yahoo Translate 英日",
+          Description:"Babelfish Yahoo Translate 英日",
           method:"POST",
           Referer:"http://babelfish.yahoo.com/translate_txt",
           action:"http://babelfish.yahoo.com/translate_txt",
@@ -230,7 +232,7 @@ display: none;
         },
 
         {
-          Description:"Yahoo Translate 日英",
+          Description:"Babelfish Yahoo Translate 日英",
           method:"POST",
           Referer:"http://babelfish.yahoo.com/translate_txt",
           action:"http://babelfish.yahoo.com/translate_txt",
@@ -533,9 +535,13 @@ display: none;
           url: aUrl,
           data: aData,
           headers: (typeof engine.cookie != 'undefined') ?
-                   {'Referer': engine.Referer,'Content-Type':'application/x-www-form-urlencoded',
-                    'Cookie': cookie} :
-                   {'Referer': engine.Referer,'Content-Type':'application/x-www-form-urlencoded'},
+                   {'Referer': engine.Referer,
+                    'Content-Type':'application/x-www-form-urlencoded',
+                    'Cookie': cookie
+                   } :
+                   {'Referer': engine.Referer,
+                    'Content-Type':'application/x-www-form-urlencoded',
+                   },
           onload:function(details) {
             var txt = details.responseText.toString();
      //self.debug(txt);
