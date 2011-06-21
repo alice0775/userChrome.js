@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0
 // @author         Alice0775
+// @version        2011/06/22 00:00 getElementsByXPath 配列で返すのを忘れていた
 // @version        2011/06/19 21:00 Google modified getElementsByXPath
 // ==/UserScript==
 // @version        2011/04/14 21:00 Google doc などでdrag drop uploadができないので外部ファイルのドロップは止め
@@ -832,8 +833,12 @@ var DragNGo = {
         }
       };
     }
+    var arr = [];
+    for (let i = 0; i < result.snapshotLength; i++) {
+      arr.push(result.snapshotItem(i));
+    }
 
-    return result;
+    return arr;
   },
 
   isParentEditableNode: function(node) {

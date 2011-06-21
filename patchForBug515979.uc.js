@@ -56,13 +56,15 @@ var bug515979 = {
 
   DOMMouseScroll: function(aEvent) {
     var target = aEvent.originalTarget;
+    //userChrome_js.debug("1 " + target.localName);
     while (target && !/^(?:menupopup|richlistbox|listbox)$/.test(target.localName)) {
       target = target.parentNode;
+      //userChrome_js.debug("2 " + target.localName);
     }
-    if (target && target.parentNode.localName != "menu") {
-      return;
-    }
-    if (target && target != aEvent.target) {
+    //userChrome_js.debug("3 " + target.parentNode.localName);
+    if (target &&
+        target != aEvent.target &&
+        /^(?:menu)$/.test(target.parentNode.localName)) {
       aEvent.preventDefault();
       return;
     }
