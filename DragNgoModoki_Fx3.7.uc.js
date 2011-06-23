@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ファイル名をD&D
 // @include        main
-// @compatibility  Firefox 4.0 5.0 6.0
+// @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2011/06/23 16:00 openLinkInにした
 // @version        2011/06/22 00:00 getElementsByXPath 配列で返すのを忘れていた
 // @version        2011/06/19 21:00 Google modified getElementsByXPath
 // ==/UserScript==
@@ -275,21 +276,23 @@ var DragNGo = {
           this.currentRegExp.test(url)))
         where = 'current';
       switch (where) {
-        case 'window':
-          openNewWindowWith(submission.uri.spec, null, submission.postData, false)
-          break;
-        case 'current':
-          gBrowser.loadURI(submission.uri.spec, null, submission.postData, false);
-          break;
         case 'tab':
         case 'tabshifted':
-          var loadInBackground = getBoolPref("browser.tabs.loadInBackground");
+          if ("TreeStyleTabService" in window)
+            TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab, false);
+        case 'current':
+        case 'window':
           openLinkIn(submission.uri.spec,
-                     (loadInBackground && where == 'tab') ? 'tabshifted': 'tab',
-                     { postData: submission.postData,
-                       referrerURI : null,
-                       relatedToCurrent: false });
-          //gBrowser.loadOneTab(submission.uri.spec, null, null, submission.postData, where == 'tabshifted', false);
+                     where,
+                     {
+                      fromChrome:false,
+                      allowThirdPartyFixup:false,
+                      postData:submission.postData,
+                      charset:null,
+                      referrerURI:null,
+                      relatedToCurrent:true
+                     }
+                    );
           break;
       }
       where = 'tabshifted';
@@ -343,23 +346,24 @@ var DragNGo = {
           self.currentRegExp.test(url)))
         where = 'current';
       switch (where) {
-        case 'window':
-          openNewWindowWith(url, doc, null, null, false)
-          break;
-        case 'current':
-          gBrowser.loadURI(url, referrer, null);
-          break;
         case 'tab':
         case 'tabshifted':
           var loadInBackground = getBoolPref("browser.tabs.loadInBackground");
           if ("TreeStyleTabService" in window)
-              TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab, false);
+            TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab, false);
+        case 'current':
+        case 'window':
           openLinkIn(url,
-                     (loadInBackground && where == 'tab') ? 'tabshifted': 'tab',
-                     { postData: null,
-                       referrerURI : referrer,
-                       relatedToCurrent: true });
-          //gBrowser.loadOneTab(url, referrer, null, null, where == 'tabshifted', false);
+                     where,
+                     {
+                      fromChrome:false,
+                      allowThirdPartyFixup:false,
+                      postData:null,
+                      charset:null,
+                      referrerURI:referrer,
+                      relatedToCurrent:true
+                     }
+                    );
           break;
       }
       where = 'tabshifted';
