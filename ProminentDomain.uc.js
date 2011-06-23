@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 6.0 7.0
 // @author
+// @version        2011/06/24 Bug 665580
 // @version        2011/06/10
 // @Note
 // ==/UserScript==
@@ -16,6 +17,10 @@ var ProminentDomain = {
                   .getService(Components.interfaces.nsIPrefBranch2);
     try{
       if (xpPref.getBoolPref("browser.urlbar.formatting.enabled"))
+        return;
+    } catch(ex) {}
+    try{
+      if (xpPref.getBoolPref("browser.urlbar.trimURLs"))
         return;
     } catch(ex) {}
 
