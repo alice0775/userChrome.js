@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2011/06/23 16:00 browser.tabs.loadInBackgroundに関わらずtabおよびtabshiftedはそれぞれ強制的に前面および背面に開く
 // @version        2011/06/23 16:00 openLinkInにした
 // @version        2011/06/22 00:00 getElementsByXPath 配列で返すのを忘れていた
 // @version        2011/06/19 21:00 Google modified getElementsByXPath
@@ -278,6 +279,13 @@ var DragNGo = {
       switch (where) {
         case 'tab':
         case 'tabshifted':
+          var loadInBackground = getBoolPref("browser.tabs.loadInBackground");
+          if (loadInBackground) {
+            if (where == 'tabshifted')
+               where = 'tab';
+            else if (where == 'tab') 
+              where = 'tabshifted'
+          }
           if ("TreeStyleTabService" in window)
             TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab, false);
         case 'current':
@@ -349,6 +357,12 @@ var DragNGo = {
         case 'tab':
         case 'tabshifted':
           var loadInBackground = getBoolPref("browser.tabs.loadInBackground");
+          if (loadInBackground) {
+            if (where == 'tabshifted')
+               where = 'tab';
+            else if (where == 'tab') 
+              where = 'tabshifted'
+          }
           if ("TreeStyleTabService" in window)
             TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab, false);
         case 'current':
