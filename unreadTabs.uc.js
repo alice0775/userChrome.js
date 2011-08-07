@@ -6,6 +6,7 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  4.0b8pre
+// @version        2011/07/23 01:00 16桁の日付
 // @version        2010/12/22 11:00 最近のTree Style Tabは変更多すぎるからもう知らん
 // @version        2010/10/12 11:00 by Alice0775  4.0b8pre
 // @version        2010/03/26 13:00 Minefield/3.7a4pre Bug 554991 -  allow tab context menu to be modified by normal XUL overlays
@@ -459,7 +460,7 @@ unreadTabsEventListener.prototype = {
     try {
       if (aDocument.body) {
         var str = aDocument.body.textContent;
-        return str.replace(/\b\d{1,2}\b/g,'').replace(/\s/g,'');
+        return str.replace(/\b\d{1,2}\b/g,'').replace(/\b\d{1,16}\b/g,'').replace(/\s/g,'');
       }
     } catch(e) {
     }

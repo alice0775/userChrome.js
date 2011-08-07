@@ -4,6 +4,7 @@
 // @description    tabLock
 // @include        *
 // @compatibility  4.0b8pre
+// @version        2011/07/21 22:00  Bug 658383
 // @version        2011/03/30 22:00  undefined error
 // @version        2011/02/15 22:00  xxx paste and go 
 // @version        2011/02/11 11:00  xxx Bug 633260 bookmark menu does not open (involves app tabs and feeds) 
@@ -209,6 +210,31 @@ patch: {
 
       //locationbar
       func = gURLBar.handleCommand.toString();
+/*Fx6+ xxx Bug 658383*/
+      func = func.replace(
+        'let where = whereToOpenLink(aTriggeringEvent, false, false);',
+        <><![CDATA[
+        $&
+        if (where == "current" &&
+            gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) ) {
+          where = "tab";
+        }
+        ]]></>
+      );
+      func = func.replace(
+        'if (aTriggeringEvent &&',
+        <><![CDATA[
+        if ((aTriggeringEvent &&
+        ]]></>
+      );
+      func = func.replace(
+        'aTriggeringEvent.altKey && !isTabEmpty(gBrowser.selectedTab)) {',
+        <><![CDATA[
+        aTriggeringEvent.altKey && !isTabEmpty(gBrowser.selectedTab) ||
+        gBrowser.isLockTab(gBrowser.selectedTab)) && !/^\s*(javascript:|data:)/.test(url) ) {
+        ]]></>
+      );
+/**/      
       func = func.replace(
         'openUILinkIn(url, where, {allowThirdPartyFixup: true, postData: postData});',
         <><![CDATA[

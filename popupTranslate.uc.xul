@@ -204,8 +204,6 @@ display: none;
           post:"eid=CR-EJ&both=TH&clearFlg=1&text=%%SEL%%",
           code:"UTF-8",
           xpath:'.//textarea[@id="trn_textText"]',
-          prefetchURL:'http://honyaku.yahoo.co.jp/transtext',
-          prefechData:['key', 'time']
         },
 
         {
@@ -216,8 +214,6 @@ display: none;
           post:"eid=CR-JE&both=TH&clearFlg=1&text=%%SEL%%",
           code:"UTF-8",
           xpath:'.//textarea[@id="trn_textText"]',
-          prefetchURL:'http://honyaku.yahoo.co.jp/transtext',
-          prefechData:['key', 'time']
         },
 
 

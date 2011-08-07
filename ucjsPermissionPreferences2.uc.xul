@@ -14,6 +14,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a1pre
 // @author         Alice0775
+// @version        LastMod 2011/08/06 objectsubrequest追加
 // @version        LastMod 2010/08/26 エラー回避
 // @version        LastMod 2010/08/26 Minefield 4.0b5pre  Bug 546857 (kill-remote-xul) Drop support for XUL on web sites (remote XUL)
 // @version        LastMod 2009/08/25 Minefield 3.7a1pre  Bug 506985 -  remove java-specific preferences from Firefox UI, hidden prefs
@@ -113,7 +114,8 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
         script:     { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"script"},
         stylesheet: { blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"stylesheet"},
         subdocument:{ blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"subdocument"},
-        allowXULXBL:{ blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"allowXULXBL"}
+        allowXULXBL:{ blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"allowXULXBL"},
+        objectsubrequest:{ blockVisible:true,  noforeignVisible:true,  sessionVisible:false, allowVisible:true, prefilledHost:"", permissionType:"objectsubrequest"}
       }
       //フィルタのLocale Strings
       aWindow.gContentPane._exceptionsParamsText = Components.classes["@mozilla.org/preferences-service;1"]
@@ -129,7 +131,8 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
         script:     { permissionstitle:"External Script filter", permissionstext:"You can specify which web sites are always, never allowed to use External Script.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"j"},
         stylesheet: { permissionstitle:"External CSS filter", permissionstext:"You can specify which web sites are always, never allowed to use External CSS.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"s"},
         subdocument:{ permissionstitle:"Frame filter", permissionstext:"You can specify which web sites are always, never allowed to use frame.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"f"},
-        allowXULXBL:{ permissionstitle:"XULXBL filter", permissionstext:"You can specify which web sites are always, never allowed to use XULXBL.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"x"}
+        allowXULXBL:{ permissionstitle:"XULXBL filter", permissionstext:"You can specify which web sites are always, never allowed to use XULXBL.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"x"},
+        objectsubrequest:{ permissionstitle:"objectsubrequest filter", permissionstext:"You can specify which web sites are always, never allowed to use objectsubrequest.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"u"}
       }
       :{
         cookie:     { permissionstitle:"Cookie フィルタ", permissionstext:"Cookie の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[現在のセッションのみ]、[許可] のいずれかをクリックしてください。",permissionskey:"c"},
@@ -142,7 +145,8 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
         script:     { permissionstitle:"外部スクリプト フィルタ", permissionstext:"外部スクリプト の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"j"},
         stylesheet: { permissionstitle:"外部CSS フィルタ", permissionstext:"外部CSS の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"s"},
         subdocument:{ permissionstitle:"フレーム フィルタ", permissionstext:"フレーム の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"f"},
-        allowXULXBL:{ permissionstitle:"XULXBL フィルタ", permissionstext:"XULXBL の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"x"}
+        allowXULXBL:{ permissionstitle:"XULXBL フィルタ", permissionstext:"XULXBL の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"x"},
+        objectsubrequest:{ permissionstitle:"objectsubrequest フィルタ", permissionstext:"objectsubrequest の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"u"}
       }
 
       //prefから読み取り/書き込み
@@ -232,7 +236,7 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
       //配置用hbox作成
       var hbox =[],arrtype=[];
       arrtype[0] = ['script','object'];
-      arrtype[1] = ['stylesheet']; //,'refresh'];
+      arrtype[1] = ['stylesheet','objectsubrequest']; //,'refresh'];
       arrtype[2] = ['subdocument','cookie'];
       arrtype[3] = ['document', 'allowXULXBL'];
       for(var j=0;j<4;j++){

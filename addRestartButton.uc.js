@@ -54,7 +54,7 @@ try{
     menuitem = document.createElement("menuitem");
     menuitem.setAttribute("label", label);
     menuitem.setAttribute("accesskey", "R");
-    menuitem.setAttribute("oncommand", "ToolRstart.restartApp();");
+    menuitem.setAttribute("oncommand", "ToolRstart.restartApp(true);");
     optionsitem = document.getElementById("menu_FileQuitItem");
     optionsitem.parentNode.insertBefore(menuitem, optionsitem);
     menuitem.setAttribute("id", "Restart_Firefox");
@@ -69,12 +69,16 @@ try{
   SaveRestart: function(event) {
     event.stopPropagation();
     SessionManager.sessionUtil('save', 'allwindows');
-    ToolRstart.restartApp();
+    ToolRstart.restartApp(true);
   },
 
   //sessionsaver_.2-0.2.1.031-fx+mz.xpiから
-  restartApp: function() {
-    const nsIAppStartup = Components.interfaces.nsIAppStartup;
+  restartApp: function(clearCache) {
+    if (typeof clearCache == 'undefined')
+      clearCache = false;
+
+    const appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
+                      .getService(Components.interfaces.nsIAppStartup);
 
     // Notify all windows that an application quit has been requested.
     var os = Components.classes["@mozilla.org/observer-service;1"]
@@ -100,8 +104,12 @@ try{
       if (("tryToClose" in win) && !win.tryToClose())
         return;
     }
-    Components.classes["@mozilla.org/toolkit/app-startup;1"].getService(nsIAppStartup)
-              .quit(nsIAppStartup.eRestart | nsIAppStartup.eAttemptQuit);
+
+    if (clearCache) {
+      let XRE = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
+      XRE.invalidateCachesOnRestart();
+    }
+    appStartup.quit(appStartup.eRestart | appStartup.eAttemptQuit);
   }
 
 }

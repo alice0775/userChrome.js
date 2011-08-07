@@ -50,6 +50,7 @@ var ucjs_toggleFindBar = {
 
   searchBar: null,
   goButton : null,
+  addonbar :null,
   statusbarDisplay :null,
   isInit: false,
 
@@ -96,12 +97,15 @@ var ucjs_toggleFindBar = {
       document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", this, false);
     window.addEventListener("unload", this, false);
 
-    this.statusbarDisplay = document.getElementById("addon-bar") ||
-                            document.getElementById("statusbar-display") ||
+    this.addonbar = document.getElementById("addon-bar") ||
                             document.getElementById("statusbar-line-col") ||
                             document.getElementById("viewSource-main-menubar");
-    if(this.OPENFINDBAR_RCLICK_STATUSBAR && this.statusbarDisplay)
+    this.statusbarDisplay = document.getElementById("statusbar-display");
+    if (this.OPENFINDBAR_RCLICK_STATUSBAR && this.addonbar)
+      this.addonbar.addEventListener("click", this, false);
+    if (this.OPENFINDBAR_RCLICK_STATUSBAR && this.statusbarDisplay)
       this.statusbarDisplay.addEventListener("click", this, false);
+
 
     if(this.OPENFINDBAR_DARGOVER_STATUSBAR && this.statusbarDisplay)
       this.statusbarDisplay.addEventListener("dragover", this, false);
@@ -117,6 +121,8 @@ var ucjs_toggleFindBar = {
       document.getElementById("cmd_CustomizeToolbars").removeEventListener("DOMAttrModified", this, false);
     if(this.OPENFINDBAR_RCLICK_SEARCHGOBUTTON && this.goButton)
       this.goButton.removeEventListener("click", this, true);
+    if(this.OPENFINDBAR_RCLICK_STATUSBAR && this.addonbar)
+      this.addonbar.removeEventListener("click", this, false);
     if(this.OPENFINDBAR_RCLICK_STATUSBAR && this.statusbarDisplay)
       this.statusbarDisplay.removeEventListener("click", this, false);
     if(this.OPENFINDBAR_DARGOVER_STATUSBAR && this.statusbarDisplay)
@@ -140,15 +146,15 @@ var ucjs_toggleFindBar = {
             this.goButtonClick(event);
             break;
           case document.getElementById("status4evar-status-text"):
-          case document.getElementById("statusbar-display"):
-            event.stopPropagation();
           case this.statusbarDisplay:
+            event.stopPropagation();
+          case this.addonbar:
             this.statusbarDisplayClick(event);
             break;
         }
         if (elem.localName =="toolbarspring") {
           while(elem) {
-            if (elem == this.statusbarDisplay) {
+            if (elem == this.addonbar) {
               this.statusbarDisplayClick(event);
               break;
             }
