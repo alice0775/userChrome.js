@@ -6,6 +6,7 @@
 // @compatibility  Nightly8.0a1
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/08/16 pinnedタブ とりあえず見かけは普通のタブと同じ(ただしボーダのみハイライト))
 // @version        2011/08/15 Nightly8.0a1
 // @version        2011/04/15 tryserver Bug 455694
 // @version        2011/04/22 13:00 Bug 648368 - Add Aurora branding, switch default branding from "Minefield" to "Nightly"
@@ -37,7 +38,7 @@ function zzzz_VerticalTabbar(){
         gPrefService = Components.classes["@mozilla.org/preferences-service;1"]
                                      .getService(Components.interfaces.nsIPrefBranch);
       // -- config --
-      var TABBARWIDTH = 130;
+      var TABBARWIDTH = 80;
       var TABBARLEFTMERGINE = 1;
       gPrefService.setIntPref("browser.tabs.tabMaxWidth", 250);
       gPrefService.setIntPref("browser.tabs.tabMinWidth", 0);
@@ -117,7 +118,6 @@ function zzzz_VerticalTabbar(){
         {
         -moz-box-orient: vertical !important;
         /*should delete orient="horizontal"*/
-
         }
 
         #tabbrowser-tabs > arrowscrollbox > scrollbox
@@ -137,6 +137,13 @@ function zzzz_VerticalTabbar(){
         #tabbrowser-tabs > arrowscrollbox > .scrollbutton-down
         {
         visibility:collapse;
+        }
+
+        .tabbrowser-tab[pinned],
+        .tabbrowser-tab:not([pinned])
+        {
+        min-width: 0 !important;
+        max-width: 1000px !important;
         }
 
         /*タブのアニメーションoff*/
@@ -215,6 +222,11 @@ function zzzz_VerticalTabbar(){
         /*background-color: ThreeDHighlight;*/
         }
 
+        .tabbrowser-tab[pinned]
+        {
+        border-color: ThreeDHighlight;
+        }
+
         .tabbrowser-tab:not([selected="true"]):hover
         {
         background-color: ThreeDHighlight;
@@ -285,6 +297,10 @@ function zzzz_VerticalTabbar(){
       tabbrowsertabs.removeAttribute('orient');
       arrowscrollbox.removeAttribute('orient');
 
+      //pinned
+      gBrowser.tabContainer._positionPinnedTabs = function() {
+        /*何もしない*/
+      };
 
       //フルスクリーン
       var func = FullScreen.mouseoverToggle.toString();
@@ -371,7 +387,7 @@ function zzzz_VerticalTabbar(){
       /*
       func = func.replace(
       '{',
-      '{userChrome_js.debug("_handleTabDrag");'
+      '{if ("userChrome_js" in window) userChrome_js.debug("_handleTabDrag");'
       )
       */
       func = func.replace(
@@ -401,7 +417,7 @@ function zzzz_VerticalTabbar(){
       func = gBrowser.tabContainer._handleTabDrop.toString();
       func = func.replace(
       '{',
-      '{userChrome_js.debug("_handleTabDrop");'
+      '{if ("userChrome_js" in window) userChrome_js.debug("_handleTabDrop");'
       )
       gBrowser.tabContainer._handleTabDrop = new Function(
          func.match(/\((.*)\)\s*\{/)[1],
@@ -646,33 +662,6 @@ function zzzz_VerticalTabbar(){
       }catch(e){}
     }
     gBrowser.tabContainer.mTabstrip.ensureElementIsVisible = ensureVisibleElement;
-
-    //pref読み込み
-    function getPref(aPrefString, aPrefType, aDefault) {
-      var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
-                    .getService(Components.interfaces.nsIPrefService);
-      try{
-        switch (aPrefType){
-          case "str":
-            return xpPref.getCharPref(aPrefString).toString(); break;
-          case "int":
-            return xpPref.getIntPref(aPrefString); break;
-          case "bool":
-          default:
-            return xpPref.getBoolPref(aPrefString); break;
-        }
-      }catch(e){
-      }
-      return aDefault;
-    }
-
-    function getVer(){
-      const Cc = Components.classes;
-      const Ci = Components.interfaces;
-      var info = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
-      var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
-      return ver;
-    }
 
     //デバッグ用
     function debug(aMsg){
