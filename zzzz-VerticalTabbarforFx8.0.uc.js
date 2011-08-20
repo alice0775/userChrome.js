@@ -6,6 +6,7 @@
 // @compatibility  Nightly8.0a1
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/08/20 デタッチ中タブがシフトしてしまう
 // @version        2011/08/16 pinnedタブ とりあえず見かけは普通のタブと同じ(ただしボーダのみハイライト))
 // @version        2011/08/15 Nightly8.0a1
 // @version        2011/04/15 tryserver Bug 455694
@@ -142,12 +143,14 @@ function zzzz_VerticalTabbar(){
         .tabbrowser-tab[pinned],
         .tabbrowser-tab:not([pinned])
         {
-        min-width: 0 !important;
-        max-width: 1000px !important;
+        min-width: 100% !important;
+        max-width: 100% !important;
         }
 
         /*タブのアニメーションoff*/
         .tabbrowser-tabs[drag=detach] > .tabbrowser-tab[dragged]:not(:only-child) {
+          min-width: 100% !important;
+          max-width: 100% !important;
           -moz-transition: max-width 0ms ease-out !important;
         }
 
@@ -411,8 +414,18 @@ function zzzz_VerticalTabbar(){
          func.match(/\((.*)\)\s*\{/)[1],
          func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
       );
-
-
+/*      
+      func = gBrowser.tabContainer._slideTab.toString();
+      func = func.replace(
+      'let destination = "translate(" + displacement + "px)";',
+      'let destination = "translate(0px)";'
+      )
+      
+      gBrowser.tabContainer._slideTab = new Function(
+         func.match(/\((.*)\)\s*\{/)[1],
+         func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+      );
+*/
 
       func = gBrowser.tabContainer._handleTabDrop.toString();
       func = func.replace(
