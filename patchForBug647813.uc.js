@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2011/08/11 Bug 647813 was fixed
 // @version        2011/04/05
 // @Note
 // ==/UserScript==
@@ -32,7 +33,7 @@ var bug647813 = {
 
   patch: function() {
     let popup = this.popup = document.getElementById("invalid-form-popup");
-    popup.removeAttribute("type");
+    //popup.removeAttribute("type"); /*Bug 647813 was fixed*/
     popup.setAttribute("level", "top");
     popup.addEventListener("popupshowing", this, false);
   },

@@ -46,6 +46,7 @@ function zzzz_VerticalTabbar(){
       gPrefService.setIntPref("browser.tabs.tabClipWidth", 40);
       // -- config --
 
+      var TOOLBARBUTTON_AS_TAB = true;
       // xxx Bug 380960 - Implement closing tabs animation
       gPrefService.setBoolPref("browser.tabs.animate", false);
       gPrefService.setBoolPref("browser.tabs.autoHide", false);
@@ -242,17 +243,33 @@ function zzzz_VerticalTabbar(){
 
 
 
-        #TabsToolbar .toolbarbutton-1
+        #TabsToolbar > toolbarbutton[collapsed="true"],
+        #TabsToolbar > toolbarbutton[hidden="true"]
+        {
+        display:none;
+        }
+        #TabsToolbar > toolbarbutton
         {
         height: 18px;
         }
 
-        #TabsToolbar .toolbarbutton-1:hover
+        #TabsToolbar > toolbarbutton:hover
         {
         height: 18px;
         }
 
-      ]]>.toString().replace(/\s+/g, " ")
+      ]]>.toString();
+      if (TOOLBARBUTTON_AS_TAB) {
+        style += <![CDATA[
+          #TabsToolbar > toolbarbutton:not([collapsed="true"]),
+          #TabsToolbar > toolbarbutton:not([hidden="true"])
+          {
+          width:100% !important;
+          }
+       ]]>.toString();
+
+      }
+      style = style.replace(/\s+/g, " ")
       .replace("{TABBARWIDTH+TABBARLEFTMERGINE}", TABBARWIDTH + TABBARLEFTMERGINE)
       .replace(/\{TABBARWIDTH\}/g, TABBARWIDTH);
       var sspi = document.createProcessingInstruction(
@@ -617,13 +634,23 @@ function zzzz_VerticalTabbar(){
         tabsToolbar.style.width = verticalTabToolBox.boxObject.width - TABBARLEFTMERGINE + "px";
         //高さ調整
         var toolbuttonH = 0;
-        var newtabbutton = document.getElementById("new-tab-button");
-        if (newtabbutton)
-          toolbuttonH = newtabbutton.boxObject.height;
-        var alltabsbutton = document.getElementById("alltabs-button");
-        if (alltabsbutton)
-          toolbuttonH = Math.max(toolbuttonH, alltabsbutton.boxObject.height);
-
+        if (!TOOLBARBUTTON_AS_TAB) {
+          var newtabbutton = document.getElementById("new-tab-button");
+          if (newtabbutton)
+            toolbuttonH = newtabbutton.boxObject.height;
+          var alltabsbutton = document.getElementById("alltabs-button");
+          if (alltabsbutton)
+            toolbuttonH = Math.max(toolbuttonH, alltabsbutton.boxObject.height);
+        } else {
+          var toolbutton = tabbrowsertabs.nextSibling;
+          while (toolbutton) {
+            if (toolbutton.localName == "toolbarbutton" ||
+                toolbutton.localName == "toolbarpaletteitem") {
+              toolbuttonH += toolbutton.boxObject.height;
+            }
+            toolbutton = toolbutton.nextSibling;
+          }
+        }
 
         tabsToolbar.style.left = sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
         tabsToolbar.style.top = navigatortoolbox.boxObject.height + "px";
