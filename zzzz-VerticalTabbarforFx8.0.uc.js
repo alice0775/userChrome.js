@@ -173,6 +173,7 @@ function zzzz_VerticalTabbar(){
 
 
         /*ポップアップの時*/
+        #main-window[chromehidden~="extrachrome"] #TabsToolbar,
         #main-window[chromehidden~="extrachrome"] #verticalTabToolBox,
         #main-window[chromehidden~="extrachrome"] #vtb_splitter
         {
