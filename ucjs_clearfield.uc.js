@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    テキストエリア等,Findbar, Serachbarコンテキストメニューにクリアを追加
 // @include        main
-// @compatibility  Firefox 2.0 3.0
+// @compatibility  Firefox 2 - 9
 // @author         Alice0775
+// @version        LastMod 2011/08/29 13:00
 // @version        LastMod 2008/05/17 20:00
 // @Note
 // ==/UserScript==
@@ -51,12 +52,20 @@ var ucjs_clearfield = {
   initxul: function(){
     //urlbar,findbar,searchbarコンテキストメニューポップアップイベント追加
     ucjs_clearfield.addxultarget("urlbar");
+
+    if ('historyFindbar' in window) {
+      setTimeout(function() {
+        ucjs_clearfield.addxultarget("find-field2");
+      }, 2000);
+    }
+
     if('gFindBar' in window && 'onFindAgainCommand' in gFindBar ){ // Fx3
       document.getAnonymousElementByAttribute(gFindBar, "anonid", "findbar-textbox").id = "findbar-textbox";
       ucjs_clearfield.addxultarget("findbar-textbox");
     }else if(typeof gFindBar == "object") { //Bon Echo 2.0a3
       ucjs_clearfield.addxultarget("find-field");
     }
+
     ucjs_clearfield.addxultarget("searchbar");
   },
 

@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2011/08/29 11:50 tree_style_tab
 // @version        2011/06/08 11:50 tree_style_tab-0.12.2011060202
 // @version        2010/08/12 Bug 574217 - Land TabCandy on trunk
 // @version        2010/03/29 02:30 tree_style_tab-0.10.2010032802
@@ -144,8 +145,8 @@
     var x = aEvent.screenX;
     return ( iconX < x && x < iconX + iconW);
   }
-  var func = TreeStyleTabBrowser.prototype.onClick.toString();
   if ("TreeStyleTabBrowser" in window) {
+    var func = TreeStyleTabBrowser.prototype.onClick.toString();
     if(!/mainWindow\.tabDblclickisIcon/.test(func)) {
 
       func = func.replace(
