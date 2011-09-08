@@ -33,9 +33,20 @@ var bug685470 = {
 
   browserOnClick: function(event) {
     var elm = event.target;
-    var win = elm.ownerDocument.defaultView;
-    
-    var evt = document.createEvent("MouseEvents");
+    var doc = elm.ownerDocument;
+    var win = doc.defaultView;
+
+    var tip = doc.evaluate(
+                'ancestor-or-self::*[@tooltip or @tooltiptext or @title or @alt]',
+                elm,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+              ).singleNodeValue;
+    if (!tip)
+      return;
+
+    var evt = doc.createEvent("MouseEvents");
     evt.initMouseEvent("mouseout", true, true, win,
       0, 0, 0, 0, 0,
       false, false, false, false, 0, null);
