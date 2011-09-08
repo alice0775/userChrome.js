@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 7.0+
 // @author         Alice0775
+// @version        2011/09/09
 // @version        2011/08/30
 // @Note
 // ==/UserScript==
@@ -32,7 +33,7 @@ var bug685470 = {
   },
 
   browserOnClick: function(event) {
-    var elm = event.target;
+    var elm = event.originalTarget;
     var doc = elm.ownerDocument;
     var win = doc.defaultView;
 
