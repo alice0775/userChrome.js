@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.1
 // @author         Alice0775
+// @version        2011/05/01 00:00 TAB_DROP_TYPE change in PlacesUIUtils
 // @version        2010/03/25 00:00   Bug 545714 -  Consolidate browser and nsContentAreaDragDrop.cpp dropped link handlers
 // @version        2009/06/22 00:00  Bug 456106 -  Switch to new drag and drop api in toolkit/browser
 // @version        2009/06/16 16:00 タブをdropした場合はurlでなくラベルをドロップ
@@ -193,6 +194,7 @@ var seachbarOnDropUseTextContent = {
     var types = dt.mozTypesAt(0);
     var sourceNode = null;
     // tabs are always added as the first type
+    var TAB_DROP_TYPE = "application/x-moz-tabbrowser-tab";
     if (types[0] == TAB_DROP_TYPE) {
       sourceNode = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
     } else {

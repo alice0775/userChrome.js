@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりバージョン
 // @include        main
-// @compatibility  Nightly8.0a1
+// @compatibility  Nightly9.0a1
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/09/13 Menu bar非表示の時
 // @version        2011/08/20 デタッチ中タブがシフトしてしまう
 // @version        2011/08/16 pinnedタブ とりあえず見かけは普通のタブと同じ(ただしボーダのみハイライト))
 // @version        2011/08/15 Nightly8.0a1
@@ -654,13 +655,13 @@ function zzzz_VerticalTabbar(){
         }
 
         tabsToolbar.style.left = sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
-        tabsToolbar.style.top = navigatortoolbox.boxObject.height + "px";
+        tabsToolbar.style.top = gBrowser.boxObject.y + "px";
         tabsToolbar.style.bottom = browserbottombox.boxObject.height + "px";
 
         tabbrowsertabs.style.height = tabsToolbar.boxObject.height - toolbuttonH + "px";
 
         indicatorbox.style.left = sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
-        indicatorbox.style.top = -5 + navigatortoolbox.boxObject.height + "px";
+        indicatorbox.style.top = -5 + gBrowser.boxObject.y + "px";
         indicatorbox.style.bottom = browserbottombox.boxObject.height + "px";
 
         //選択タブが見えるように
