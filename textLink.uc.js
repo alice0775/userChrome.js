@@ -11,6 +11,7 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2011/09/14 13:00 url ad hoc修正
 // @version        2011/08/11 11:00 url regexp修正
 // @version        2010/10/18 18:00 探索足切り
 // @version        2010/09/29 22:00 aタグは無視するように
@@ -246,23 +247,8 @@ function ucjs_textlink(event){
       if(i1 <= si && ei <= i2){
         //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
         var url = arrUrl[i];
-        // ~等 を半角に
-        url = url.replace(/\u301c/g,'\uff5e');
-        url = url.replace(/\uffe3/g,'\uff5e');
-        // 末尾の )や] の調整
-        if (/\)$/.test(url)){
-          if (url.indexOf("(") == -1)
-            url = url.replace(/\)$/,'');
-        }
-        /*
-        if (/\]$/.test(url)){
-          if (url.indexOf("[") == -1)
-            url = url.replace(/\]$/,'');
-        }
-        */
-        if (/[.,]$/.test(url)){
-          url = url.replace(/[.,]$/,'');
-        }
+        url = additionalFixUpURL(url);
+
         // ttp等を http等に および  :// を 半角に
         url = /^(ftp|\uff46\uff54\uff50)/i.test(url)
                     ? url.replace(urlRx1,'://')
@@ -302,23 +288,8 @@ function ucjs_textlink(event){
 //debug(arrUrl[i]);
       //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
       var url = arrUrl[i];
-      // ~等 を半角に
-      url = url.replace(/\u301c/g,'\uff5e');
-      url = url.replace(/\uffe3/g,'\uff5e');
-      // 末尾の )や] の調整
-      if (/\)$/.test(url)){
-        if (url.indexOf("(") == -1)
-          url = url.replace(/\)$/,'');
-      }
-      /*
-      if (/\]$/.test(url)){
-        if (url.indexOf("[") == -1)
-          url = url.replace(/\]$/,'');
-      }
-      */
-      if (/[.,]$/.test(url)){
-        url = url.replace(/[.,]$/,'');
-      }
+      url = additionalFixUpURL(url);
+
       // host名が ftp で始まるなら ftp://に
       if (/^ftp/.test(url)){
         url = "ftp://" + url;
@@ -362,6 +333,35 @@ debug(url);
         }catch(e){}
       return;
     }
+  }
+
+  function additionalFixUpURL(url) {
+    // ad hoc fix up
+    // ~等 を半角に
+    url = url.replace(/\u301c/g,'\uff5e');
+    url = url.replace(/\uffe3/g,'\uff5e');
+
+    // 末尾の )や] の調整
+    if (/\)$/.test(url)) {
+      if (url.indexOf("(") == -1)
+        url = url.replace(/\)$/,'');
+    }
+    /*
+    if (/\]$/.test(url)) {
+      if (url.indexOf("[") == -1)
+        url = url.replace(/\]$/,'');
+    }
+    */
+    if (/^[:\uff1a;\uff1b,\uff0c]/.test(url)) {
+      url = url.replace(/^[:\uff1a;\uff1b,\uff0c]/,'');
+    }
+    if (/[:\uff1a]$/.test(url)) {
+      url = url.replace(/[:\uff1a]$/,'');
+    }
+    if (/[.,]$/.test(url)) {
+      url = url.replace(/[.,]$/,'');
+    }
+    return url;
   }
 
   function activeBrowser() {
