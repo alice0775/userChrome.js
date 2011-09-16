@@ -28,6 +28,7 @@
   <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
 WindowHook.register("chrome://browser/content/preferences/preferences.xul",
   function(aWindow){
+    aWindow.resizeBy(0,30);
     //DOMにボタン類を追加
     if (aWindow.document.getElementById("privacyPreferences")) modCookie();
     if (aWindow.document.getElementById("enableJavaRow")) // < Fx3.6
@@ -100,6 +101,10 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
     aWindow.document.getElementById("paneContent").addEventListener("paneload", addButton, false);
 
     function addButton(){
+      var paneContent = aWindow.document.getElementById("paneContent");
+      var paneContentbox = aWindow.document.getAnonymousElementByAttribute(paneContent, "class", "content-box");
+      paneContentbox.style.removeProperty("height");
+
       var locale = Components.classes["@mozilla.org/preferences-service;1"]
                    .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale")
       //_exceptionsParams用のパラメータ

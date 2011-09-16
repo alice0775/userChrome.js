@@ -6,6 +6,7 @@
 // @compatibility  Nightly9.0a1
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/09/16 resize時の実行方法
 // @version        2011/09/13 Menu bar非表示の時
 // @version        2011/08/20 デタッチ中タブがシフトしてしまう
 // @version        2011/08/16 pinnedタブ とりあえず見かけは普通のタブと同じ(ただしボーダのみハイライト))
@@ -627,8 +628,11 @@ function zzzz_VerticalTabbar(){
     function VerticalTabbarOnresized() {
       if (!!resizeTimer1)
         return;
-      resizeTimer1 = setTimeout(function() {
+      setTimeout(function() {
         resizeTimer1 = null;
+      }, 250);
+      resizeTimer1 = true;
+      (function() {
         tabbrowsertabs.setAttribute('overflow', true);
 
         //幅調整
@@ -666,7 +670,7 @@ function zzzz_VerticalTabbar(){
 
         //選択タブが見えるように
         ensureVisibleElement(gBrowser.selectedTab);
-      }, 100);
+      })();
     }
 
     VerticalTabbarOnresized();

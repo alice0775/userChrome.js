@@ -5,7 +5,8 @@
 // @author         Alice0775
 // @include        main
 // @modified by    Alice0775
-// @compatibility  4.0b8pre
+// @compatibility  4.0b8pre - 9
+// @version        2011/09/16 01:00 Bug 487242 - Implement 'unread' attribute for tabbrowser tabs
 // @version        2011/07/23 01:00 16桁の日付
 // @version        2010/12/22 11:00 最近のTree Style Tabは変更多すぎるからもう知らん
 // @version        2010/10/12 11:00 by Alice0775  4.0b8pre
@@ -76,13 +77,13 @@ var unreadTabs = {
         }else{
           that.initTab(aTab);
           if (!(aTab.hasAttribute('unreadTabs-restoring') ||
-                aTab.hasAttribute('unread')) ){
+                aTab.hasAttribute('unreadTab')) ){
             that.restoreUnreadForTab(aTab);
             that.restoreMD5ForTab(aTab);
           }
           if (aTab.selected) {
               aTab.removeAttribute('unreadTabs-restoring')
-            if (aTab.hasAttribute('unread'))
+            if (aTab.hasAttribute('unreadTab'))
               that.setReadForTab(aTab);
           }
           i++;
@@ -100,11 +101,11 @@ var unreadTabs = {
         func = func.replace(
         'targetBrowser.swapBrowsersAndCloseOther(tab, aTab);',
         <><![CDATA[
-//window.userChrome_js.debug("swap  " + aTab.label + "  " + aTab.hasAttribute("unread"));
-        if (aTab.hasAttribute("unread")) {
-          tab.setAttribute('unread', true);
+//window.userChrome_js.debug("swap  " + aTab.label + "  " + aTab.hasAttribute("unreadTab"));
+        if (aTab.hasAttribute("unreadTab")) {
+          tab.setAttribute('unreadTab', true);
         } else {
-          tab.removeAttribute('unread');
+          tab.removeAttribute('unreadTab');
         }
         $&
         ]]></>
@@ -116,11 +117,11 @@ var unreadTabs = {
         func = func.replace(
         'this.swapBrowsersAndCloseOther(newTab, draggedTab);',
         <><![CDATA[
-//window.userChrome_js.debug("swap  " + draggedTab.label + "  " + draggedTab.hasAttribute("unread"));
-        if (draggedTab.hasAttribute("unread")) {
-          newTab.setAttribute("unread", true);
+//window.userChrome_js.debug("swap  " + draggedTab.label + "  " + draggedTab.hasAttribute("unreadTab"));
+        if (draggedTab.hasAttribute("unreadTab")) {
+          newTab.setAttribute("unreadTab", true);
         } else {
-          newTab.removeAttribute("unread");
+          newTab.removeAttribute("unreadTab");
         }
         $&
         ]]></>
@@ -139,8 +140,8 @@ var unreadTabs = {
     var style = <><![CDATA[
     @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
       /*未読のタブの文字色*/
-      .tabbrowser-tab[unread] .tab-text,
-      .alltabs-item[unread]
+      .tabbrowser-tab[unreadTab] .tab-text,
+      .alltabs-item[unreadTab]
       {
         color: %UNREAD_COLOR%;
         font-style: %UNREAD_STYLE%;
@@ -229,25 +230,25 @@ var unreadTabs = {
 
   // タブの状態をセッションデータに保存
   saveUnreadForTab: function (aTab){
-    if (aTab.hasAttribute("unread"))
-      this.ss.setTabValue(aTab, "unread", true);
+    if (aTab.hasAttribute("unreadTab"))
+      this.ss.setTabValue(aTab, "unreadTab", true);
     else {
       //try {
         this.checkCachedSessionDataExpiration(aTab);
-        this.ss.setTabValue(aTab, "unread", '');
-        //this.ss.deleteTabValue(aTab, "unread");
+        this.ss.setTabValue(aTab, "unreadTab", '');
+        //this.ss.deleteTabValue(aTab, "unreadTab");
       //} catch(e) {}
     }
   },
 
   // タブの状態をセッションデータから復元
   restoreUnreadForTab: function(aTab){
-    var retrievedData = this.ss.getTabValue(aTab, "unread");
+    var retrievedData = this.ss.getTabValue(aTab, "unreadTab");
 //window.userChrome_js.debug( "restoreUnreadForTab " + !!retrievedData)
     if(typeof retrievedData != 'undefined' && retrievedData)
-      aTab.setAttribute('unread', true);
+      aTab.setAttribute('unreadTab', true);
     else
-      aTab.removeAttribute('unread');
+      aTab.removeAttribute('unreadTab');
     return retrievedData;
   },
 
@@ -280,14 +281,14 @@ var unreadTabs = {
 
   setUnreadForTab: function(aTab){
 //window.userChrome_js.debug("setUnreadForTab");
-    aTab.setAttribute('unread', true);
+    aTab.setAttribute('unreadTab', true);
     this.saveUnreadForTab(aTab);
     this.saveMD5ForTab(aTab);
   },
 
   setReadForTab: function(aTab){
 //window.userChrome_js.debug("setReadForTab");
-    aTab.removeAttribute('unread');
+    aTab.removeAttribute('unreadTab');
     this.saveUnreadForTab(aTab);
     this.saveMD5ForTab(aTab);
   },
@@ -297,7 +298,7 @@ var unreadTabs = {
     for (var i= 0; i < tabs.length; i++) {
       if (tabs[i].selected)
         continue;
-      if (tabs[i].hasAttribute('unread'))
+      if (tabs[i].hasAttribute('unreadTab'))
         this.setReadForTab(tabs[i]);
       else
         this.setUnreadForTab(tabs[i]);
@@ -308,7 +309,7 @@ var unreadTabs = {
     for (var i= 0; i < gBrowser.mTabs.length; i++) {
       var aTab = gBrowser.mTabs[i];
       if (!aTab.hasAttribute('busy') &&
-          aTab.hasAttribute('unread'))
+          aTab.hasAttribute('unreadTab'))
         this.setReadForTab(aTab);
     }
   },
@@ -319,7 +320,7 @@ var unreadTabs = {
     if (this._timer)
       clearTimeout(this._timer);
 
-    if (!aTab.hasAttribute('unread'))
+    if (!aTab.hasAttribute('unreadTab'))
       return;
 
     this._timer = setTimeout(function(self, aTab){
@@ -401,7 +402,7 @@ unreadTabsEventListener.prototype = {
       case 'scroll':
       case 'mousedown':
         aTab = this.mTab;
-        if (!aTab.hasAttribute('unread'))
+        if (!aTab.hasAttribute('unreadTab'))
           return;
 
         unreadTabs.setReadForTab(aTab);
@@ -436,7 +437,7 @@ unreadTabsEventListener.prototype = {
       // コンテントを読み込んだのが前面のタブなら既読にセット
       if (aTab.selected) {
           aTab.removeAttribute('unreadTabs-restoring')
-        if (!aTab.hasAttribute('unread'))
+        if (!aTab.hasAttribute('unreadTab'))
           return;
         unreadTabs.setReadForTab(aTab);
         return;

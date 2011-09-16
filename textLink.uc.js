@@ -342,6 +342,16 @@ debug(url);
     url = url.replace(/\uffe3/g,'\uff5e');
 
     // 末尾の )や] の調整
+    if (/^[:\uff1a;\uff1b,\uff0c]/.test(url)) {
+      url = url.replace(/^[:\uff1a;\uff1b,\uff0c]/,'');
+    }
+    if (/[:\uff1a]$/.test(url)) {
+      url = url.replace(/[:\uff1a]$/,'');
+    }
+    if (/[.,]$/.test(url)) {
+      url = url.replace(/[.,]$/,'');
+    }
+
     if (/\)$/.test(url)) {
       if (url.indexOf("(") == -1)
         url = url.replace(/\)$/,'');
@@ -352,15 +362,6 @@ debug(url);
         url = url.replace(/\]$/,'');
     }
     */
-    if (/^[:\uff1a;\uff1b,\uff0c]/.test(url)) {
-      url = url.replace(/^[:\uff1a;\uff1b,\uff0c]/,'');
-    }
-    if (/[:\uff1a]$/.test(url)) {
-      url = url.replace(/[:\uff1a]$/,'');
-    }
-    if (/[.,]$/.test(url)) {
-      url = url.replace(/[.,]$/,'');
-    }
     return url;
   }
 
