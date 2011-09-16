@@ -6,6 +6,7 @@
 // @compatibility  Nightly9.0a1
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/09/16 14:00 Sidebar伸縮時
 // @version        2011/09/16 13:30 resize時の実行方法
 // @version        2011/09/16 resize時の実行方法
 // @version        2011/09/13 Menu bar非表示の時
@@ -345,6 +346,9 @@ function zzzz_VerticalTabbar(){
       );
       eval("FullScreen.mouseoverToggle = " + func);
 
+      //sidebar
+      document.getElementById("sidebar-splitter").setAttribute("resizeafter", "flex");
+
       //xxx context fx4.0b2pre
       gBrowser.tabContainer.addEventListener('TabOpen', tabOpened, false);
       gBrowser.tabContainer.addEventListener('SSTabRestored', tabOpened, false);
@@ -625,22 +629,25 @@ function zzzz_VerticalTabbar(){
     verticalTabToolBox.style.width = TABBARWIDTH + TABBARLEFTMERGINE + "px";
     window.addEventListener('resize', VerticalTabbarOnresized, false);
 
-    var resizeTimer1 = null;
-    var resizeTimer2 = null;
+    var skipResize = null;
+    var resizeTimer = null;
     function VerticalTabbarOnresized() {
-      if (resizeTimer2)
-        clearTimeout(resizeTimer2);
-      resizeTimer2 = setTimeout(function() {
+      if (resizeTimer)
+        clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(function() {
         resized();
-        resizeTimer1 = null;
+        skipResize = null;
       }, 250);
-      if (!!resizeTimer1)
+      setTimeout(function() {
+        skipResize = null;
+      }, 100);
+      if (!!skipResize)
         return;
 
       resized();
       
       function resized() {
-        resizeTimer1 = true;
+        skipResize = true;
         tabbrowsertabs.setAttribute('overflow', true);
 
         //幅調整
