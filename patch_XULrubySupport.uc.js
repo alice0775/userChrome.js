@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    XUL/Ruby Suppot パッチ
 // @include        main
-// @compatibility  Firefox 3.0
+// @compatibility  Firefox 3.0 - 9
 // @author         Alice0775
-// @version        LastMod 2009/06/11
+// @version        2011/09/16 sidebar 閉じたときエラーが出る
 // @Note           3.0.2009060901用
 // @Note           rubysupport.add.ignore.always       :trueとすることでデフォルトでルビ変換しない
 // @Note           rubysupport.add.allowexecute.site   :変換を常に許可するサイトをスペース区切り
@@ -24,7 +24,7 @@
     func = func.replace(
       'if (!aWindow.document) {return false;}',
     <><![CDATA[
-       $&
+       if (!aWindow || !aWindow.document) {return false;}
        if (!Patch_XULrubySupport.allowexecute(aWindow))
          return false;
     ]]></>

@@ -6,6 +6,7 @@
 // @compatibility  Nightly9.0a1
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/09/16 13:30 resize時の実行方法
 // @version        2011/09/16 resize時の実行方法
 // @version        2011/09/13 Menu bar非表示の時
 // @version        2011/08/20 デタッチ中タブがシフトしてしまう
@@ -625,14 +626,21 @@ function zzzz_VerticalTabbar(){
     window.addEventListener('resize', VerticalTabbarOnresized, false);
 
     var resizeTimer1 = null;
+    var resizeTimer2 = null;
     function VerticalTabbarOnresized() {
-      if (!!resizeTimer1)
-        return;
-      setTimeout(function() {
+      if (resizeTimer2)
+        clearTimeout(resizeTimer2);
+      resizeTimer2 = setTimeout(function() {
+        resized();
         resizeTimer1 = null;
       }, 250);
-      resizeTimer1 = true;
-      (function() {
+      if (!!resizeTimer1)
+        return;
+
+      resized();
+      
+      function resized() {
+        resizeTimer1 = true;
         tabbrowsertabs.setAttribute('overflow', true);
 
         //幅調整
@@ -670,7 +678,7 @@ function zzzz_VerticalTabbar(){
 
         //選択タブが見えるように
         ensureVisibleElement(gBrowser.selectedTab);
-      })();
+      }
     }
 
     VerticalTabbarOnresized();
