@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.31mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.32mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2011/09/30 13:00 fix bug 640158
 // Date 2011/04/07 00:00 hackVersion
 // Date 2010/10/10 00:00 Bug 377498 mozIJSSubscriptLoader::loadSubScript charset 入ったけどメタデータ // @charset  UTF-8 としとけばUTF-8で読み込む
 // Date 2010/03/31 00:00 XULDocumentのみに適用
@@ -43,7 +44,7 @@
 (function(){
   // -- config --
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
-  const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使うtrue, 使わない[false]
+  const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
   const REPLACEDOCUMENTOVERLAY   = true;  //document.overlayを 置き換える[true], 置き換えないfalse
@@ -434,6 +435,10 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         var observer = {
           observe:function (subject, topic, data) {
             if (topic == 'xul-overlay-merged') {
+              //XXX We just caused localstore.rdf to be re-applied (bug 640158)
+              if ("retrieveToolbarIconsizesFromTheme" in window)
+                retrieveToolbarIconsizesFromTheme();
+
               if (!!aObserver) {
                 try {
                   aObserver.observe(subject, topic, data);
@@ -704,8 +709,16 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
        /*  !('TreeStyleTabService' in window) && */
           typeof StarUI != 'undefined' &&
           !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
-        that.loadOverlay("chrome://browser/content/places/editBookmarkOverlay.xul", null, doc);
-        StarUI._overlayLoaded = true;
+        var loadObserver = {
+          observe: function (aSubject, aTopic, aData) {
+            //XXX We just caused localstore.rdf to be re-applied (bug 640158)
+            if ("retrieveToolbarIconsizesFromTheme" in window)
+              retrieveToolbarIconsizesFromTheme();
+            StarUI._overlayLoading = false;
+            StarUI._overlayLoaded = true;
+          }
+        };
+        that.loadOverlay("chrome://browser/content/places/editBookmarkOverlay.xul", loadObserver, doc);
         delay = 0;
       }
       setTimeout(function(doc){that.runOverlays(doc);}, delay, doc);
