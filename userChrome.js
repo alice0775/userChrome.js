@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.32mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.33mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2011/09/30 13:40 fix bug 640158
 // Date 2011/09/30 13:00 fix bug 640158
 // Date 2011/04/07 00:00 hackVersion
 // Date 2010/10/10 00:00 Bug 377498 mozIJSSubscriptLoader::loadSubScript charset 入ったけどメタデータ // @charset  UTF-8 としとけばUTF-8で読み込む
@@ -44,7 +45,7 @@
 (function(){
   // -- config --
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
-  const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
+  const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使うtrue, 使わない[false]
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
   const REPLACEDOCUMENTOVERLAY   = true;  //document.overlayを 置き換える[true], 置き換えないfalse
@@ -711,9 +712,6 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
         var loadObserver = {
           observe: function (aSubject, aTopic, aData) {
-            //XXX We just caused localstore.rdf to be re-applied (bug 640158)
-            if ("retrieveToolbarIconsizesFromTheme" in window)
-              retrieveToolbarIconsizesFromTheme();
             StarUI._overlayLoading = false;
             StarUI._overlayLoaded = true;
           }
