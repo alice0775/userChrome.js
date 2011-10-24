@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 3.0 3.5 3.6 4.0
 // @author         Alice0775
+// @version        2011/10/02 18:00 ctrl+enter toggle hiligight all
 // @version        2011/03/29 17:00 コンテキストメニューにClear Search Historyを追加
 // @version        2011/02/12 14:00 ESCでfindbarを閉じた後, 黒色矩形のゴーストがでるのを修正
 // @version        2010/07/09 07:00
@@ -338,7 +339,6 @@ var historyFindbar = {
       this._findField2.addEventListener("dragdrop", function(event){nsDragAndDrop.drop(event, historyFindbar);}, true);
     else
       this._findField2.addEventListener("drop", this, true);
-    this._findField2.addEventListener("keypress", this, true);
     this._findField2.addEventListener("undo", this, true);
     gFindBar._findField.addEventListener("focus", this, false);
     //終了のためESCの監視と, 少なくともF3,F4が押されたとき保存する
@@ -368,7 +368,6 @@ var historyFindbar = {
       this._findField2.removeEventListener("dragdrop", function(event){nsDragAndDrop.drop(event, historyFindbar);}, true);
     else
       this._findField2.removeEventListener("drop", this, true);
-    this._findField2.removeEventListener("keypress", this, true);
     this._findField2.removeEventListener("undo", this, true);
     gFindBar._findField.removeEventListener("focus", this, false);
     window.removeEventListener("keypress", this, true);
@@ -394,7 +393,7 @@ var historyFindbar = {
         gFindBar.removeAttribute('hidden');
         break;
       case 'keypress':
-        if (aEvent.target == this._findField2 &&
+        if (aEvent.originalTarget == this._findField2.inputField &&
             aEvent.keyCode == KeyEvent.DOM_VK_TAB) {
           this._handleTab(aEvent);
           break;
@@ -403,6 +402,7 @@ var historyFindbar = {
           gFindBar.close();
           break;
         }
+
         if (aEvent.keyCode == KeyEvent.DOM_VK_F3 ||
             aEvent.keyCode == KeyEvent.DOM_VK_F4 ||
             aEvent.altKey && aEvent.keyCode == KeyEvent.DOM_VK_A ||
@@ -412,16 +412,29 @@ var historyFindbar = {
            this._findField2.popupOpen = false;
            break;
         }
-        if (aEvent.target == this._findField2 &&
+
+        if (aEvent.originalTarget == this._findField2.inputField &&
+            aEvent.keyCode == KeyEvent.DOM_VK_RETURN &&
+            aEvent.ctrlKey) {
+              gFindBar.getElement("highlight").click();
+           break;
+        }
+
+        if (aEvent.originalTarget == this._findField2.inputField &&
             (aEvent.keyCode == KeyEvent.DOM_VK_RETURN ||
-             aEvent.keyCode == KeyEvent.DOM_VK_ENTER)) {
+             aEvent.keyCode == KeyEvent.DOM_VK_ENTER ||
+             aEvent.keyCode == KeyEvent.DOM_VK_PAGE_UP ||
+             aEvent.keyCode == KeyEvent.DOM_VK_PAGE_DOWN)) {
           gFindBar._findField.value = this._findField2.value;
           var evt = document.createEvent("KeyboardEvent");
-          evt.initKeyEvent ('keypress', true, true, null,
+          evt.initKeyEvent ('keypress', true, true, window,
                         aEvent.ctrlKey, aEvent.altKey,
                         aEvent.shiftKey, aEvent.metaKey,
                         aEvent.keyCode, 0);
           gFindBar._findField.dispatchEvent(evt);
+
+          if (!(aEvent.keyCode == KeyEvent.DOM_VK_RETURN))
+            aEvent.preventDefault();
           break;
         }
        break;

@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0b13pre
 // @author         Alice0775
+// @version        2011/10/03 16:00 same hostのみ
 // @version        2011/03/03 13:30
 // ==/UserScript==
 if (!("bug638598" in window)) {
@@ -94,6 +95,9 @@ if (!("bug638598" in window)) {
         if (win != linkNode.ownerDocument.defaultView)
           return;
 
+        if (win.location.host != wintop.location.host)
+          return;
+
         var targethref = linkNode.getAttribute("href");
         var baseURI = this.ios.newURI(linkNode.baseURI, null, null);
 
@@ -104,10 +108,9 @@ if (!("bug638598" in window)) {
 
         var doc = linkNode.ownerDocument;
         var xpath = "//a[@id=" + "'" + hash[1] +"']|//a[@name=" + "'" + hash[1] +"']";
-        var elem = this.getFirstElementByXPath(xpath, doc.body);
-
-        if (elem) {
-          elem.scrollIntoView(true);
+        var elem = this.getElementsByXPath(xpath, doc.body);
+        if (elem && elem.length > 0) {
+          elem[0].scrollIntoView(true);
         }
       }
     },
@@ -130,60 +133,69 @@ if (!("bug638598" in window)) {
 
     // utilities
     
-    getFirstElementByXPath: function(xpath, node, css) {
-      if (typeof css != 'undefined' && css) {
-        if (!node || !(querySelector in node))
-          node = document;
-        return  node.querySelector(xpath);
-      } else {
-        var result = this.getXPathResult(xpath, node,
-            XPathResult.FIRST_ORDERED_NODE_TYPE);
-        return result.singleNodeValue;
+    getElementsByXPath: function getNodesFromXPath(aXPath, aContextNode) {
+      const XULNS = 'http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul';
+      const XHTMLNS = 'http://www.w3.org/1999/xhtml';
+      const XLinkNS = 'http://www.w3.org/1999/xlink';
+
+      // 引数の型チェック。
+      if (aXPath) {
+        aXPath = String(aXPath);
       }
-    },
-
-    getXPathResult: function(xpath, node, resultType) {
-        var node = node || document;
-        var doc = node.ownerDocument || node;
-        var resolver = doc.createNSResolver(node.documentElement || node);
-        var defaultNS = node.lookupNamespaceURI(null);
-        if (defaultNS) {
-            const defaultPrefix = '__default__';
-            xpath = this.addDefaultPrefix(xpath, defaultPrefix);
-            var defaultResolver = resolver;
-            resolver = function (prefix) {
-                return (prefix == defaultPrefix)
-                    ? defaultNS : defaultResolver.lookupNamespaceURI(prefix);
-            };
+      else {
+        throw 'ERROR: blank XPath expression';
+      }
+      if (aContextNode) {
+        try {
+          if (!(aContextNode instanceof Node))
+            throw '';
         }
-        return doc.evaluate(xpath, node, resolver, resultType, null);
-    },
-
-    addDefaultPrefix: function(xpath, prefix) {
-        const tokenPattern = /([A-Za-z_\u00c0-\ufffd][\w\-.\u00b7-\ufffd]*|\*)\s*(::?|\()?|(".*?"|'.*?'|\d+(?:\.\d*)?|\.(?:\.|\d+)?|[\)\]])|(\/\/?|!=|[<>]=?|[\(\[|,=+-])|([@$])/g;
-        const TERM = 1, OPERATOR = 2, MODIFIER = 3;
-        var tokenType = OPERATOR;
-        prefix += ':';
-        function replacer(token, identifier, suffix, term, operator, modifier) {
-            if (suffix) {
-                tokenType =
-                    (suffix == ':' || (suffix == '::' &&
-                     (identifier == 'attribute' || identifier == 'namespace')))
-                    ? MODIFIER : OPERATOR;
-            }
-            else if (identifier) {
-                if (tokenType == OPERATOR && identifier != '*') {
-                    token = prefix + token;
-                }
-                tokenType = (tokenType == TERM) ? OPERATOR : TERM;
-            }
-            else {
-                tokenType = term ? TERM : operator ? OPERATOR : MODIFIER;
-            }
-            return token;
+        catch(e) {
+          throw 'ERROR: invalid context node';
         }
-        return xpath.replace(tokenPattern, replacer);
+      }
+
+      const xmlDoc  = aContextNode ? aContextNode.ownerDocument : document ;
+      const context = aContextNode || xmlDoc.documentElement;
+      const type    = XPathResult.ORDERED_NODE_SNAPSHOT_TYPE;
+      const resolver = {
+        lookupNamespaceURI : function(aPrefix)
+        {
+          switch (aPrefix)
+          {
+            case 'xul':
+              return XULNS;
+            case 'html':
+            case 'xhtml':
+              return XHTMLNS;
+            case 'xlink':
+              return XLinkNS;
+            default:
+              return '';
+          }
+        }
+      };
+
+      try {
+        var expression = xmlDoc.createExpression(aXPath, resolver);
+        var result = expression.evaluate(context, type, null);
+      }
+      catch(e) {
+        return {
+          snapshotLength : 0,
+          snapshotItem : function()
+          {
+            return null;
+          }
+        };
+      }
+      var arr = [];
+      for (let i = 0; i < result.snapshotLength; i++) {
+        arr.push(result.snapshotItem(i));
+      }
+
+      return arr;
     }
-   }
+  }
   bug638598.init();
 }

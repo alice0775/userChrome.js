@@ -32,6 +32,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2011/10/18 22:00 オーバーフロウなしのiframeの場合は親ドキュメント
 // @version        2010/10/28 22:00 image documentの時自動リサイズされてしまうのを修正。
 // @version        2010/08/14 12:00 クリックしたときの処理を変更
 // @version        2010/03/19 23:00 Bug 442228 - Implement CSS property to control element resizability
@@ -575,7 +576,8 @@ var GrabScroll = {
     var d = aNode.ownerDocument;
     try {
       var xpathResult = d.evaluate(
-          'ancestor-or-self::*[((local-name() = "a" or local-name() = "A") and @href) or local-name() = "button" or local-name() = "BUTTON" or ((local-name() = "input" or local-name() = "INPUT") and (@type = "SUBMIT" or @type = "submit" or @type = "BUTTON" or @type = "button" or @type = "IMAGE" or @type = "image"))]',
+          /*'ancestor-or-self::*[((local-name() = "a" or local-name() = "A") and @href) or local-name() = "button" or local-name() = "BUTTON" or ((local-name() = "input" or local-name() = "INPUT") and (@type = "SUBMIT" or @type = "submit" or @type = "BUTTON" or @type = "button" or @type = "IMAGE" or @type = "image"))]',*/
+          'ancestor-or-self::*[((local-name() = "a" or local-name() = "A")) or local-name() = "button" or local-name() = "BUTTON" or ((local-name() = "input" or local-name() = "INPUT") and (@type = "SUBMIT" or @type = "submit" or @type = "BUTTON" or @type = "button" or @type = "IMAGE" or @type = "image"))]',
           aNode,
           this.NSResolver,
           XPathResult.FIRST_ORDERED_NODE_TYPE,
@@ -838,7 +840,7 @@ var GrabScroll = {
         if (_scrollingView instanceof NSHTMLElement) {
           if (_scrollingView.localName.toUpperCase() == "HTML" ||
               _scrollingView.localName.toUpperCase() == "BODY") {
-              _scrollingView = _scrollingView.ownerDocument.defaultView;
+            _scrollingView = _scrollingView.ownerDocument.defaultView;
             if (_scrollingView.scrollMaxX > 0 &&
                 _scrollingView.scrollMaxY > 0) {
               NSEW = !NSEW ? _scrollingView : NSEW;
@@ -850,6 +852,9 @@ var GrabScroll = {
             }
             if (_scrollingView.scrollMaxY > 0) {
               NS = !NS ? _scrollingView : NS;
+            }
+            if (_scrollingView.frameElement && !NS && !EW && !NSEW) {
+               return this.getScrollView({originalTarget : _scrollingView.frameElement});
             }
             break;
           }
@@ -875,7 +880,7 @@ var GrabScroll = {
           borderBottom = 0;
           borderLeft   = 0;
           borderRight  = 0;
-          if (/^(td|th)$/i.test(_scrollingView.localName)) {
+          if (/^(table|td|th)$/i.test(_scrollingView.localName)) {
             try {
               doc = _scrollingView.ownerDocument;
               style = doc.defaultView.getComputedStyle(_scrollingView, "");

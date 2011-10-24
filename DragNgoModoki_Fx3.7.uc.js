@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ファイル名をD&D
 // @include        main
-// @compatibility  Firefox 4.0 5.0 6.0 7.0
+// @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2011/07/22 21:00 Bug 50660 [FILE]Drag and drop for file upload form control (Fx7 and later)
 // @version        2011/06/23 16:00 browser.tabs.loadInBackgroundに関わらずtabおよびtabshiftedはそれぞれ強制的に前面および背面に開く
 // @version        2011/06/23 16:00 openLinkInにした
 // @version        2011/06/22 00:00 getElementsByXPath 配列で返すのを忘れていた
@@ -114,6 +115,10 @@ var DragNGo = {
     {dir:'RD', modifier:'',name:'画像を名前を受けて保存'  ,obj:'image',cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0]);}},
     {dir:'RD', modifier:'',name:'リンクを名前を受けて保存',obj:'link' ,cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0]);}},
 
+  /*=== appPathをparamsで開く, paramsはtxtで置き換えcharsetに変換される ===*/
+    {dir:'U', modifier:'shift,ctrl',name:'リンクをInternet Explorerで開く',obj:'link',cmd:function(self,event,info){self.launch(info.urls[0], "C:\\Program Files\\Internet Explorer\\iexplore.exe",["%%URL%%"],"Shift_JIS");}},
+    {dir:'R', modifier:'shift,ctrl',name:'テキストをDDwinで開く',obj:'text',cmd:function(self,event,info){self.launch(info.texts[0], "c:\\Program Files\\DDwin\\ddwin.exe", [",2,,G1,%%SEL%%"], "Shift_JIS");}},
+
   /*=== Utility ===*/
     {dir:'RDR', modifier:'',name:'Eijiro',obj:'text',cmd:function(){var TERM=getBrowserSelection().toString();var URL="http://eow.alc.co.jp/"+TERM+"/UTF-8/";if(TERM)gBrowser.loadOneTab(URL,null,null,null,false,false);}},
     {dir:'RDRD', modifier:'',name:'Excite で英和',obj:'text', /*要popupTranslate.uc.xul*/
@@ -183,7 +188,7 @@ var DragNGo = {
   },
 
   //appPathをparamsで開く, paramsはtxtで置き換えcharsetに変換される
-  launch: function launch(appPath, params, charset, txt){
+  launch: function launch(txt, appPath, params, charset){
     var UI = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
           createInstance(Ci.nsIScriptableUnicodeConverter);
     UI.charset = charset;
@@ -581,6 +586,32 @@ var DragNGo = {
     return contentType;
   },
 
+  //appPathをparamsで開く, paramsはtxtで置き換えcharsetに変換される
+  launch: function launch(txt, appPath,params,charset){
+    var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+          createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+    UI.charset = charset;
+
+    var appfile = Components.classes['@mozilla.org/file/local;1']
+                    .createInstance(Components.interfaces.nsILocalFile);
+    appfile.initWithPath(decodeURIComponent(escape(appPath)));
+    if (!appfile.exists()){
+      alert("Executable does not exist.");
+      return;
+    }
+    var process = Components.classes['@mozilla.org/process/util;1']
+                  .createInstance(Components.interfaces.nsIProcess);
+
+    var args = new Array();
+    for(var i=0,len=params.length;i<len;i++){
+      if(params[i]){
+        args.push(UI.ConvertFromUnicode(params[i].replace(/%%URL%%/i,txt).replace(/%%SEL%%/i,txt)));
+      }
+    }
+    process.init(appfile);
+    process.run(false, args, args.length, {});
+  },
+
   //ファイルのパスをインプットフィールドに記入
   putMultipleFilePath: function putMultipleFilePath(inputElement, URLs) {
     var self = this;
@@ -919,11 +950,15 @@ var DragNGo = {
     }
     if (inputElement instanceof HTMLInputElement && inputElement.type == 'file') {
       if (/drop/.test(event.type)) {
-        if (inputElement.hasAttribute("multiple") &&
-            typeof inputElement.mozSetFileNameArray =="function") {
-          this.putMultipleFilePath(inputElement, urls);
+        if (this.getVer >= 7) {
+          dragSession.canDrop = true;
         } else {
-          this.putFilePath(inputElement, urls[0]);
+          if (inputElement.hasAttribute("multiple") &&
+              typeof inputElement.mozSetFileNameArray =="function") {
+            this.putMultipleFilePath(inputElement, urls);
+          } else {
+            this.putFilePath(inputElement, urls[0]);
+          }
         }
         event.preventDefault();
         return true;
@@ -1156,6 +1191,17 @@ var DragNGo = {
     if (this.isParentEditableNode(target))
       return;
 
+    // do nothing if event.defaultPrevented (maybe hosted d&d by web page)
+    if (event.defaultPrevented)
+      return;
+    /*
+    if (sourceNode) {
+      var xpath = 'ancestor-or-self::*[@draggable="true"]';
+      var elm = this.getElementsByXPath(xpath, sourceNode);
+      if (elm.length > 0)
+        return;
+    }
+    */
 
     var isSameBrowser = !(sourceNode &&
                          (gBrowser &&
@@ -1265,8 +1311,9 @@ var DragNGo = {
         break;
       }
     }; // GESTURES
-    if (!dragSession.canDrop)
+    if (!dragSession.canDrop) {
       self.setStatusMessage('未定義', 0, false);
+    }
   },
 
   getDragObject: function getDragObject(event, objcets) {
@@ -1391,7 +1438,7 @@ var DragNGo = {
               if (self.linkRegExp.test(data)) {
                 var url = data.match(self.linkRegExp)[1];
                 var url = self.getDroppedURL_Fixup(url);
-                if (url && self.dragDropSecurityCheck(event, dragSession, url)) {
+                if (url.trim() && self.dragDropSecurityCheck(event, dragSession, url)) {
                   info.urls.push(url);
                   info.texts.push(url);
                   info.nodes.push(null);
@@ -1401,7 +1448,7 @@ var DragNGo = {
               } else if (self.localLinkRegExp.test(data)) {
                 var url = data.match(self.localLinkRegExp)[0];
                 var url = self.getDroppedURL_Fixup(url);
-                if (url && self.dragDropSecurityCheck(event, dragSession, url)) {
+                if (url.trim() && self.dragDropSecurityCheck(event, dragSession, url)) {
                   info.urls.push(url);
                   info.texts.push(url);
                   info.nodes.push(null);
@@ -1421,7 +1468,7 @@ var DragNGo = {
             //  break;
             var targetWindow = node.ownerDocument.defaultView;
             var data = targetWindow.getSelection().toString();
-            if (data) {
+            if (data.trim()) {
               info.urls.push(null);
               info.texts.push(data);
               info.nodes.push(null);
@@ -1433,6 +1480,8 @@ var DragNGo = {
               for each (var type in supportedTypes) {
                 if (event.dataTransfer.types.contains(type)) {
                   data = event.dataTransfer.getData(type);
+                  if (!data.trim())
+                    return null;
                   info.urls.push(null);
                   info.texts.push(data);
                   info.nodes.push(null);
@@ -1448,6 +1497,8 @@ var DragNGo = {
             for each (var type in supportedTypes) {
               if (event.dataTransfer.types.contains(type)) {
                 data = event.dataTransfer.getData(type);
+                if (!data.trim())
+                  return null;
                 info.urls.push(null);
                 info.texts.push(data);
                 info.nodes.push(null);

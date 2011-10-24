@@ -6,6 +6,7 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  4.0b8pre - 9
+// @version        2011/10/16 12:00 エラー
 // @version        2011/09/16 01:00 Bug 487242 - Implement 'unread' attribute for tabbrowser tabs
 // @version        2011/07/23 01:00 16桁の日付
 // @version        2010/12/22 11:00 最近のTree Style Tabは変更多すぎるからもう知らん
@@ -184,9 +185,9 @@ var unreadTabs = {
 
     // タブのイベントリスナを削除
     for (var i = 0; i < gBrowser.mTabs.length; i++) {
-      //try {
+      try {
         gBrowser.mTabs[i].unreadTabsEventListener.destroy();
-      //} catch(e) {}
+      } catch(e) {}
     }
   },
 

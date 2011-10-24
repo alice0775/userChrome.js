@@ -6,6 +6,7 @@
 // @compatibility  Nightly9.0a1
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/10/07 scrollbar position
 // @version        2011/09/16 14:00 Sidebar伸縮時
 // @version        2011/09/16 13:30 resize時の実行方法
 // @version        2011/09/16 resize時の実行方法
@@ -39,6 +40,11 @@
 // @license        The MIT License
 
 function zzzz_VerticalTabbar(){
+      // Tab Mix plus
+      if("tablib" in window) return;
+      // Tree Style tab
+      if('TreeStyleTabService' in window) return;
+
       if (!gPrefService)
         gPrefService = Components.classes["@mozilla.org/preferences-service;1"]
                                      .getService(Components.interfaces.nsIPrefBranch);
@@ -54,11 +60,6 @@ function zzzz_VerticalTabbar(){
       // xxx Bug 380960 - Implement closing tabs animation
       gPrefService.setBoolPref("browser.tabs.animate", false);
       gPrefService.setBoolPref("browser.tabs.autoHide", false);
-
-     // Tab Mix plus
-      if("tablib" in window) return;
-      // Tree Style tab
-      if('TreeStyleTabService' in window) return;
 
       //window['piro.sakura.ne.jp'].stopRendering.stop();
 
@@ -130,13 +131,13 @@ function zzzz_VerticalTabbar(){
         {
         overflow-y: auto;
         -moz-box-orient: vertical !important;
-
+        direction: rtl; /*scroll bar position*/
         }
 
         #tabbrowser-tabs > arrowscrollbox > scrollbox > box
         {
-
         -moz-box-orient: vertical !important;
+        direction: ltr; /*scroll bar position*/
         }
 
         #tabbrowser-tabs > arrowscrollbox > .scrollbutton-up,
@@ -287,6 +288,22 @@ function zzzz_VerticalTabbar(){
         return document.documentElement.getAttribute(name);
       };
 
+
+      style = <![CDATA[
+      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+      /* 縦のスクロールバーを細く＆背景着色 */
+      #tabbrowser-tabs > arrowscrollbox * scrollbar[orient="vertical"],
+      #tabbrowser-tabs > arrowscrollbox * scrollbar[orient="vertical"] * {
+      min-width: 12px!important;
+      max-width: 12px!important;
+      }
+      }
+      ]]>.toString().replace(/\s+/g, " ");
+      var uri = "data:text/css;charset=utf-8," + encodeURIComponent(style);
+      Cc["@mozilla.org/content/style-sheet-service;1"]
+            .getService(Ci.nsIStyleSheetService)
+            .loadAndRegisterSheet(Services.io.newURI(uri, null, null), Ci.nsIStyleSheetService.AGENT_SHEET);
+
       var tabsToolbar = document.getElementById('TabsToolbar');
       var tabbrowsertabs = gBrowser.mTabContainer;
       var indicatorbox = gBrowser.tabContainer._tabDropIndicator.parentNode;
@@ -321,6 +338,9 @@ function zzzz_VerticalTabbar(){
       tabbrowsertabs.setAttribute('overflow', true);
       tabbrowsertabs.removeAttribute('orient');
       arrowscrollbox.removeAttribute('orient');
+
+      //context menu
+      tabbrowsertabs.setAttribute("context", "tabContextMenu");
 
       //pinned
       gBrowser.tabContainer._positionPinnedTabs = function() {
@@ -615,7 +635,7 @@ function zzzz_VerticalTabbar(){
               eX < wX || wX + window.outerWidth < eX )) {
           return;
         }
-
+        let TAB_DROP_TYPE = 'application/x-moz-tabbrowser-tab';
         var draggedTab = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
         this.tabbrowser.replaceTabWithWindow(draggedTab);
         event.stopPropagation();

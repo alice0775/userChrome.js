@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2 - 9
 // @author         Alice0775
+// @version        LastMod 2011/10/02 18:00 autocomlete ポップアップには無視するように
 // @version        LastMod 2011/08/29 13:00
 // @version        LastMod 2008/05/17 20:00
 // @Note
@@ -76,6 +77,8 @@ var ucjs_clearfield = {
     UI.charset = "UTF-8";
     if(!document.getElementById(target)) return;
     document.getElementById(target).addEventListener("popupshowing", function(event){
+        if (/autocomplete-result-popupset/.test(event.originalTarget.classNmae))
+          return;
         if(document.getElementById(target).value == "")
           var cannotCut = "true";
         else
@@ -95,6 +98,7 @@ var ucjs_clearfield = {
         }
         menuitem.setAttribute("disabled", cannotCut);
     }, false);
+
   }
 }
 
