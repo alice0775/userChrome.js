@@ -5,11 +5,13 @@
 // @include        main
 // @compatibility  Firefox 7-
 // @author         Alice0775
+// @version        2011/10/24 19:20 DELAY 500 -> 300 , check frame scrolling attribute
+// @version        2011/10/24 19:00 xxx scroll amount become small when forst tick of wheel scroll
 // @version        2011/10/22 12:00
 // @Note           コンテンツにDIV要素を挿入しているので留意
 // ==/UserScript==
 var patchForBug675866_choppyScrollRemover = {
-  DELAY: 500,
+  DELAY: 300,
   timer: null,
   scrolling: false,
 
@@ -74,6 +76,9 @@ var patchForBug675866_choppyScrollRemover = {
         self.insertScreen(aSubFrame);
       });
     }
+
+    if (win.frameElement && win.frameElement.getAttribute('scrolling') == "no")
+      return;
     var doc = win.document;
     // skip when document is in design mode
     if (Components.lookupMethod(doc, 'designMode').call(doc) == 'on')
@@ -95,7 +100,10 @@ var patchForBug675866_choppyScrollRemover = {
 
     var screen = doc.createElement("div");
     screen.setAttribute("id", this.KscreenId);
+    bodies[0].addEventListener('DOMNodeInserted', this, true);
+    bodies[0].addEventListener('DOMNodeInsertedIntoDocument', this, true);
     var screen = bodies[0].insertBefore(screen, bodies[0].lastChild);
+    screen.addEventListener('DOMAttrModified', this, true);
   },
 
   screenSwitch: function(on, win) {
@@ -119,13 +127,14 @@ var patchForBug675866_choppyScrollRemover = {
       screen.setAttribute('on', true);
       // xxx hack for document mode
       var rectObject = screen.getBoundingClientRect();
-      var height = rectObject.bottom - rectObject.top;
-      var scrollH = bodies[0].parentNode.scrollHeight
-      var scrollW = bodies[0].parentNode.scrollWidth
+      var height = Math.floor(rectObject.bottom - rectObject.top);
+      var scrollH = Math.max(bodies[0].parentNode.scrollHeight, bodies[0].offsetHeight);
+      var scrollW = Math.max(bodies[0].parentNode.scrollWidth , bodies[0].offsetWidth);
       //userChrome_js.debug(height+ " " +scrollH);
       if (height < scrollH) {
-        screen.style.setProperty('min-height', scrollH + 'px', 'important');
-        screen.style.setProperty('min-width', scrollW + 'px', 'important');
+        // xxx -5 ;  This prevent that scroll amount become small when forst tick of wheel scroll
+        screen.style.setProperty('min-height', scrollH-5 + 'px', 'important');
+        screen.style.setProperty('min-width', scrollW-5 + 'px', 'important');
       }
     } else {
       screen.removeAttribute('on');
@@ -190,6 +199,20 @@ var patchForBug675866_choppyScrollRemover = {
         break;
       case 'popuphidden':
         this.popuphidden();
+        break;
+      case 'DOMAttrModified':
+        event.preventDefault();
+        event.stopPropagation();
+        break;
+      case 'DOMNodeInserted':
+        event.relatedNode.removeEventListener('DOMNodeInserted', this, true);
+        event.preventDefault();
+        event.stopPropagation();
+        break;
+      case 'DOMNodeInsertedIntoDocument':
+        event.relatedNode.removeEventListener('DOMNodeInsertedIntoDocument', this, true);
+        event.preventDefault();
+        event.stopPropagation();
         break;
       case 'unload':
         this.uninit();

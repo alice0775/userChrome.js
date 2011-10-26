@@ -11,6 +11,8 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2011/10/25 19:00 contextmenuは閉じる
+// @version        2011/09/28 20:00 openLinkIn
 // @version        2011/09/14 13:00 url ad hoc修正
 // @version        2011/08/11 11:00 url regexp修正
 // @version        2010/10/18 18:00 探索足切り
@@ -269,6 +271,7 @@ function ucjs_textlink(event){
           else
             openNewTab(uri);
         }catch(e){}
+        closeContextMenu();
         return;
       }
     }
@@ -331,6 +334,7 @@ debug(url);
         else
           openNewTab(uri);
         }catch(e){}
+        closeContextMenu();
       return;
     }
   }
@@ -439,7 +443,7 @@ debug(url);
     }
   }
 
-  function saveAsURL(uri,doc){
+  function saveAsURL(uri, doc){
     var linkText = uri.spec;
     //Thunderbird
     if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
@@ -495,15 +499,18 @@ debug(url);
     else
       urlSecurityCheck(uri.spec, activeBrowser().currentURI.spec,Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
     if( (event.ctrlKey) ){
-        loadURI(uri.spec, null, null, false);
+      openLinkIn(uri.spec, "current", {});
     }else{
       if ('TreeStyleTabService' in window)
         TreeStyleTabService.readyToOpenChildTab(activeBrowser().selectedTab);
-      openNewTabWith(uri.spec, null,  null, null, false)
-      //activeBrowser().loadOneTab(uri.spec, null, null, null, getPref("browser.tabs.loadInBackground", "bool", false), false);
-
-      //activeBrowser().selectedTab = activeBrowser().addTab(uri.spec);
+      openLinkIn(uri.spec, "tab", {relatedToCurrent:true});
+      //openNewTabWith(uri.spec, null,  null, null, false)
     }
+  }
+
+  function closeContextMenu() {
+    var popup = document.getElementById("contentAreaContextMenu");
+    popup.hidePopup();
   }
 
   function getVer(){
