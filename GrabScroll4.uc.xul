@@ -32,6 +32,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2011/10/30 Bug 684821 - Remove nsIDOMNSHTMLElement 
 // @version        2011/10/18 22:00 オーバーフロウなしのiframeの場合は親ドキュメント
 // @version        2010/10/28 22:00 image documentの時自動リサイズされてしまうのを修正。
 // @version        2010/08/14 12:00 クリックしたときの処理を変更
@@ -837,7 +838,7 @@ var GrabScroll = {
    } else {
 
       for (_scrollingView = event.originalTarget; _scrollingView; _scrollingView = _scrollingView.parentNode) {
-        if (_scrollingView instanceof NSHTMLElement) {
+        if (_scrollingView instanceof HTMLElement) {
           if (_scrollingView.localName.toUpperCase() == "HTML" ||
               _scrollingView.localName.toUpperCase() == "BODY") {
             _scrollingView = _scrollingView.ownerDocument.defaultView;
