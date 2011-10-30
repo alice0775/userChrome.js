@@ -5,12 +5,15 @@
 // @include        main
 // @compatibility  Firefox 7.0+
 // @author         Alice0775
+// @version        2011/10/30 due to Bug 658001 - need to clear mouse capture if the capturing frame is inside a hidden deck panel or hidden tab
 // @version        2011/09/17
 // @version        2011/09/09
 // @version        2011/08/30
 // @Note
 // ==/UserScript==
 var bug685470 = {
+  
+  noTooltip : false,
 
   get tipNode() {
     delete this.tipNode;
@@ -35,19 +38,36 @@ var bug685470 = {
     window.addEventListener("unload", this, false);
     window.addEventListener("mousedown", this, true);
     window.addEventListener("click", this, true);
+    if ("FillInHTMLTooltip" in window && !/bug685470/.test(window.FillInHTMLTooltip.toString())) {
+      var func = window.FillInHTMLTooltip.toString();
+        func = func.replace(
+        /{/,
+        <><![CDATA[
+        $&
+        if ("bug685470" in window && bug685470.noTooltip) {
+          return false;
+        }
+        ]]></>
+      );
+      window.FillInHTMLTooltip = new Function(
+         func.match(/\((.*)\)\s*\{/)[1],
+         func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+      );
+    }
   },
 
   uninit: function() {
     window.removeEventListener("click", this, true);
     window.removeEventListener("mousedown", this, true);
     window.removeEventListener("unload", this, false);
+    
   },
 
   browserOnMousedown: function(event) {
-    this.tipNode.style.setProperty("display", "none", "important");
-    setTimeout(function(tipNode) {
-      tipNode.style.removeProperty("display");
-    }, 500, this.tipNode);
+    this.noTooltip = true;
+    setTimeout(function(self) {
+      self.noTooltip = false;
+    }, 500, this);
 
     this.browserOnClick(event);
   },

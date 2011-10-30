@@ -7,7 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 3.0 3.5 3.6a1pre  4.0b2pre
 // @author         Alice0775
-// @version        2010/07/09 07:00
+// @version        2011/10/30 12:00 Bug 684821 - Remove nsIDOMNSHTMLElement
 // @version        2010/04/05 12:00 Firefox3.7以上 Bug 396392 - Support for getClientRects and getBoundingClientRect in DOM Range
 // @version        2009/08/06 12:00 gBrowser.tabContainerエラーとなるのを修正
 // @version        2009/08/05 12:00 xxxx なぜか elem.getBoundingClientRect().top等 を取得できないバグがある
@@ -128,8 +128,9 @@ var findcenter = {
     if (!document.getElementById("FindToolbar") &&
         typeof gFindBarInitialized != 'undefined' &&
         !gFindBarInitialized) {
-      window.watch('gFindBarInitialized', function() { findcenter.init(); });
-      return;
+      //window.watch('gFindBarInitialized', function() { findcenter.init(); });
+      gFindBar;
+      //return;
     }
 
     if (!("gFindBar" in window)) {
@@ -829,7 +830,7 @@ var findcenter = {
     NS = EW = NSEW = null;
     var _scrollingView = null;
     for (_scrollingView = aTarget; _scrollingView; _scrollingView = _scrollingView.parentNode) {
-      if (_scrollingView instanceof NSHTMLElement) {
+      if (_scrollingView instanceof HTMLElement) {
         if (_scrollingView.localName.toLowerCase() == "select") {
           _scrollingView.parentNode.focus();
           return [NS, EW, NSEW];
