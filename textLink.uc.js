@@ -11,7 +11,9 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2011/11/05 11:00 textNodeの隣がnullで親の隣がbrなら探索を終わりにしてみる
 // @version        2011/10/25 19:00 contextmenuは閉じる
+// @version        2011/10/25 19:00 選してみる
 // @version        2011/09/28 20:00 openLinkIn
 // @version        2011/09/14 13:00 url ad hoc修正
 // @version        2011/08/11 11:00 url regexp修正
@@ -74,7 +76,8 @@ function ucjs_textlink(event){
 
   var Start = new Date().getTime();
 
-  const relative = true; //相対urlを解決するかどうか
+  const RELATIVE = true; //相対urlを解決するかどうか
+  const SELECTUTL = false; //urlらしき文字列を選択するかどうか
 
   const ioService = Components.classes['@mozilla.org/network/io-service;1']
                       .getService(Components.interfaces.nsIIOService);
@@ -120,9 +123,9 @@ function ucjs_textlink(event){
     text = selection.toString();
     if(text == '') return;
   //debug(text);
-    var sNode = selRange.startContainer; //debug(sNode.nodeName);
+    var sNode = selRange.startContainer; //debug(sNode.localName);
     var soffset = selRange.startOffset;
-    var eNode = selRange.endContainer; //debug(eNode.nodeName);
+    var eNode = selRange.endContainer; //debug(eNode.localName);
     var eoffset = selRange.endOffset;
     if (sNode != eNode){
       eNode = sNode;
@@ -137,7 +140,8 @@ function ucjs_textlink(event){
       root = doc;
     if (!root)
       return;
-//debug("eOyaNode " + eOyaNode.nodeName);
+//debug("sOyaNode " + sOyaNode.localName + " soffset " + soffset);
+//debug("eOyaNode " + eOyaNode.localName + " eoffset " + eoffset);
 
   //親ブロック要素の文字列をすべて得る
     const allowedParents = [
@@ -163,8 +167,8 @@ function ucjs_textlink(event){
       for (var i = i1; i >= 0 ; i--){
         if(sOyaNode == oyaNode(candidates.snapshotItem(i))){
           if (candidates.snapshotItem(i).nextSibling &&
-              /^br$/i.test(candidates.snapshotItem(i).nextSibling.nodeName)) {
-            //debug(candidates.snapshotItem(i).nodeValue + "  " + candidates.snapshotItem(i).nextSibling.nodeName);
+              /^br$/i.test(candidates.snapshotItem(i).nextSibling.localName)) {
+            //debug(candidates.snapshotItem(i).nodeValue + "  " + candidates.snapshotItem(i).nextSibling.localName);
             break;
           }
           str1 = candidates.snapshotItem(i).nodeValue + str1;
@@ -180,17 +184,23 @@ function ucjs_textlink(event){
     if(sNode.nodeValue && soffset > 0) str1 = str1 + sNode.nodeValue.substr(0,soffset);
 
   //レンジより後ろにある文字列
-    for(var i = i1 + 1, len = candidates.snapshotLength; i < len; i++){
-      if(sOyaNode == oyaNode(candidates.snapshotItem(i))){
+    for(var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
+      if(sOyaNode == oyaNode(candidates.snapshotItem(i))) {
         str2 = str2 + candidates.snapshotItem(i).nodeValue;
-//debug("str2 "+str2);
+//debug(candidates.snapshotItem(i).nodeValue);
         if (i > i1 + 1 && /[ 　]/.test(candidates.snapshotItem(i).nodeValue))
           break;
       } else {
         break;
       }
+
       if (candidates.snapshotItem(i).nextSibling &&
-          /^br$/i.test(candidates.snapshotItem(i).nextSibling.nodeName)) {
+          /^br$/i.test(candidates.snapshotItem(i).nextSibling.localName)) {
+        break;
+      }
+      if (!candidates.snapshotItem(i).nextSibling &&
+          candidates.snapshotItem(i).parentNode &&
+          /^br$/i.test(candidates.snapshotItem(i).parentNode.nextSibling.localName)) {
         break;
       }
     }
@@ -238,18 +248,21 @@ function ucjs_textlink(event){
 //すべての文字列の中でURLと思しき文字列を配列として得る
   var i1, i2;
   var arrUrl = allStr.match(urlRegex);
-  if(arrUrl){
+  if (arrUrl) {
 //見つかったURLと思しき文字列の中にレンジが含まれているかどうか
-    i2=0
-    for(var i =0,len = arrUrl.length; i < len; i++){
+    i2 = 0;
+    for (var i = 0, len = arrUrl.length; i < len; i++){
 //debug(i + "] " + arrUrl[i]);
       i1 = allStr.indexOf(arrUrl[i],i2);
       i2 = i1 + arrUrl[i].length;
 //debug(i1 <= si && ei <= i2);
       if(i1 <= si && ei <= i2){
+//debug(arrUrl[i]);
         //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
         var url = arrUrl[i];
         url = additionalFixUpURL(url);
+        if (SELECTUTL)
+          var URLRange = getURLRange(selRange, url)
 
         // ttp等を http等に および  :// を 半角に
         url = /^(ftp|\uff46\uff54\uff50)/i.test(url)
@@ -264,34 +277,32 @@ function ucjs_textlink(event){
         if (!isValidTld(uri))
           return;
         uri = ioService.newURI(uri.spec, null, null);
-        debug('Parsing ucjs_textlink: '+((new Date()).getTime()-Start) +'msec\n');
-        try{
-          if(event.shiftKey)
-            saveAsURL(uri,doc);
-          else
-            openNewTab(uri);
-        }catch(e){}
-        closeContextMenu();
+//debug('Parsing ucjs_textlink: '+((new Date()).getTime()-Start) +'msec\n');
+        if (SELECTUTL)
+          selectRange(URLRange);
+        textlink(event, doc, uri);
         return;
       }
     }
   }
-  if( !relative ) return;
+  if ( !RELATIVE ) return;
 //すべての文字列の中で相対URLと思しき文字列を配列として得る
   arrUrl = allStr.match(urlRegex1);
-  if(!arrUrl) return;
-  i2=0
-  for(var i =0,len = arrUrl.length; i < len; i++){
+  if (!arrUrl) return;
+  i2 = 0;
+  for (var i = 0, len = arrUrl.length; i < len; i++){
 //debug("Relative " + arrUrl[i]);
     i1 = allStr.indexOf(arrUrl[i],i2);
     i2 = i1 + arrUrl[i].length;
 
 //debug(i1 +" "+ si +" "+ ei +" "+ i2);
-    if(i1 <= si && ei <= i2){
+    if (i1 <= si && ei <= i2){
 //debug(arrUrl[i]);
       //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
       var url = arrUrl[i];
       url = additionalFixUpURL(url);
+      if (SELECTUTL)
+        var URLRange = getURLRange(selRange, url)
 
       // host名が ftp で始まるなら ftp://に
       if (/^ftp/.test(url)){
@@ -325,16 +336,13 @@ function ucjs_textlink(event){
       if (!isValidTld(uri)) {
         return;
       }
-debug(url);
+//debug('Parsing ucjs_textlink: ' + url);
+      if (SELECTUTL)
+        selectRange(URLRange);
+
       uri = ioService.newURI(uri.spec, null, null);
-      debug('Parsing ucjs_textlink: '+((new Date()).getTime()-Start) +'msec\n'+uri.spec);
-      try{
-        if(event.shiftKey)
-          saveAsURL(uri,doc);
-        else
-          openNewTab(uri);
-        }catch(e){}
-        closeContextMenu();
+//debug('Parsing ucjs_textlink: '+((new Date()).getTime()-Start) +'msec\n'+uri.spec);
+      textlink(event, doc, uri);
       return;
     }
   }
@@ -385,7 +393,7 @@ debug(url);
 //レンジの要素が所属する親ブロック要素を得る
   function oyaNode(aNode){
     var pNode = aNode.parentNode;
-    while(pNode && /^(a|abbr|acronym|b|bdo|big|body|code|dfn|em|font|i|kbd|label|pre|q|samp|small|span|strong|sub|sup|tt|var|wbr)$/i.test(pNode.nodeName) ){
+    while(pNode && /^(a|abbr|acronym|b|bdo|big|body|code|dfn|em|font|i|kbd|label|pre|q|samp|small|span|strong|sub|sup|tt|var|wbr)$/i.test(pNode.localName) ){
       pNode = pNode.parentNode;
     }
     return pNode;
@@ -441,6 +449,16 @@ debug(url);
         return (regexpIP.test(host));
       }
     }
+  }
+
+  function textlink(event, doc, uri) {
+      try{
+        if(event.shiftKey)
+          saveAsURL(uri, doc);
+        else
+          openNewTab(uri);
+      }catch(e){}
+      closeContextMenu();
   }
 
   function saveAsURL(uri, doc){
@@ -511,6 +529,142 @@ debug(url);
   function closeContextMenu() {
     var popup = document.getElementById("contentAreaContextMenu");
     popup.hidePopup();
+  }
+
+  function getURLRange(selRange, url) {
+    //レンジのノードなど
+    var doc = selRange.startContainer.ownerDocument
+    var bodyNode = getDocumentBody(doc);
+    if(!bodyNode)return;
+
+    //nsIFindげと
+    var mFind = Components.classes["@mozilla.org/embedcomp/rangefind;1"]
+                .createInstance(Components.interfaces.nsIFind);
+
+    //Rangeげと
+    var theRange = doc.createRange();
+    var start = doc.createRange();
+    var end = doc.createRange();
+
+    try{
+      var count = bodyNode.childNodes.length;
+    }catch(e){
+      var count = 0;
+    }
+    theRange.setStart(bodyNode, 0);
+    theRange.setEnd(bodyNode, count);
+
+    start.setStart(bodyNode, 0);
+    start.setEnd(bodyNode, 0);
+    end.setStart(bodyNode, count);
+    end.setEnd(bodyNode, count);
+
+    var selRangeBox = selRange.getBoundingClientRect();
+    mFind.caseSensitive = false;
+    while ((foundRange = mFind.Find(url, theRange, start, end))) {
+      //検索range更新
+      start = doc.createRange();
+      start.setStart(foundRange.endContainer, foundRange.endOffset);
+      start.collapse(true);
+
+ //debug("loop 1");
+      // selRange 始点が foundRange の始点よりも前
+      if (selRange.compareBoundaryPoints(Range.START_TO_START, foundRange) == -1) 
+        continue;
+      // selRangeの終点がfoundRangeの終点より後ろにある場合
+      //if (foundRange.compareBoundaryPoints(Range.END_TO_END, selRange) == -1)
+      // xxx selRangeの次がbrの時endContainerが先祖の要素になるので...
+      var foundRangeBox = foundRange.getBoundingClientRect();
+      if (selRangeBox.right > foundRangeBox.right ||
+          selRangeBox.top < foundRangeBox.top ||
+          selRangeBox.bottom > foundRangeBox.bottom)
+        continue;
+      return foundRange;
+    }
+    return null;
+  }
+
+  function getDocumentBody(aDocument) {
+    if (aDocument instanceof Components.interfaces.nsIDOMHTMLDocument)
+      return aDocument.body;
+
+    try {
+      var xpathResult = aDocument.evaluate(
+          'descendant::*[contains(" BODY body ", concat(" ", local-name(), " "))]',
+          aDocument,
+          null,
+          Components.interfaces.nsIDOMXPathResult.FIRST_ORDERED_NODE_TYPE,
+          null
+        );
+      return xpathResult.singleNodeValue;
+    }
+    catch(e) {
+    }
+    return null;
+  }
+
+  function selectRange(aRange) {
+    if (!aRange)
+      return;
+
+    var doc = aRange.startContainer.ownerDocument;
+    var elm = findParentEditable(aRange);
+
+    var selCon = getSelectionController(elm);
+    if(!selCon) selCon = getSelconForDoc(doc);
+    var selection = selCon.getSelection(selCon.SELECTION_NORMAL);
+    selection.removeAllRanges();  //既存の選択領域を取得し、全て破棄
+    selection.addRange(aRange);
+  }
+
+  //レンジは編集可能ノードにある?
+  function findParentEditable(aRange) {
+    var node = aRange.commonAncestorContainer.parentNode;
+    while (node && node.parentNode){
+      try {
+        node.QueryInterface(Components.interfaces.nsIDOMNSEditableElement);
+        return node;
+      }
+      catch(e){}
+      node = node.parentNode;
+    }
+    return null;
+  }
+
+  function getSelectionController(aTarget) {
+    if (!aTarget) return null;
+
+    const nsIDOMNSEditableElement = Components.interfaces.nsIDOMNSEditableElement;
+    const nsIDOMWindow = Components.interfaces.nsIDOMWindow;
+    try {
+      return (aTarget instanceof nsIDOMNSEditableElement) ?
+            aTarget.QueryInterface(nsIDOMNSEditableElement).editor.selectionController :
+          (aTarget instanceof nsIDOMWindow) ?
+            DocShellIterator.prototype.getDocShellFromFrame(aTarget)
+              .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+              .getInterface(Components.interfaces.nsISelectionDisplay)
+              .QueryInterface(Components.interfaces.nsISelectionController) :
+          null;
+    }
+    catch(e) {
+    }
+    return null;
+  }
+
+  function getSelconForDoc(doc) {
+    var docShell = getDocShellForFrame(doc.defaultView);
+    var selCon = docShell
+      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+      .getInterface(Components.interfaces.nsISelectionDisplay)
+      .QueryInterface(Components.interfaces.nsISelectionController);
+    return selCon;
+  }
+
+  function getDocShellForFrame(aFrame) {
+    return aFrame
+      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+      .getInterface(Components.interfaces.nsIWebNavigation)
+      .QueryInterface(Components.interfaces.nsIDocShell);
   }
 
   function getVer(){
