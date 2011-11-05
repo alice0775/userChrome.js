@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 7.0+
 // @author         Alice0775
+// @version        2011/10/30 formfox?
 // @version        2011/10/30 due to Bug 658001 - need to clear mouse capture if the capturing frame is inside a hidden deck panel or hidden tab
 // @version        2011/09/17
 // @version        2011/09/09
@@ -38,6 +39,34 @@ var bug685470 = {
     window.addEventListener("unload", this, false);
     window.addEventListener("mousedown", this, true);
     window.addEventListener("click", this, true);
+    setTimeout(function(self) {self.delayedStartup();}, 1000, this);
+  },
+
+  uninit: function() {
+    window.removeEventListener("click", this, true);
+    window.removeEventListener("mousedown", this, true);
+    window.removeEventListener("unload", this, false);
+    
+  },
+
+  delayedStartup: function() {
+    if ("__linkformfox__FillInHTMLTooltip" in window &&
+        !/bug685470/.test(window.__linkformfox__FillInHTMLTooltip.toString())) {
+      var func = window.__linkformfox__FillInHTMLTooltip.toString();
+        func = func.replace(
+        /{/,
+        <><![CDATA[
+        $&
+        if ("bug685470" in window && bug685470.noTooltip) {
+          return false;
+        }
+        ]]></>
+      );
+      window.__linkformfox__FillInHTMLTooltip = new Function(
+         func.match(/\((.*)\)\s*\{/)[1],
+         func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+      );
+    }
     if ("FillInHTMLTooltip" in window && !/bug685470/.test(window.FillInHTMLTooltip.toString())) {
       var func = window.FillInHTMLTooltip.toString();
         func = func.replace(
@@ -54,13 +83,6 @@ var bug685470 = {
          func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
       );
     }
-  },
-
-  uninit: function() {
-    window.removeEventListener("click", this, true);
-    window.removeEventListener("mousedown", this, true);
-    window.removeEventListener("unload", this, false);
-    
   },
 
   browserOnMousedown: function(event) {

@@ -10,6 +10,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a3pre
 // @author         Alice0775
+// @version        2011/10/04 22:00 Mouse Gesture Redox があるとHTML5 contextmenuが動かないのを修正
 // @version        2010/03/10 09:00 Mouse Gesture Redox があると動かないのを修正
 // @version        2009/07/21 00:00 mousedownタイミング修正
 // ==/UserScript==
@@ -189,16 +190,25 @@
         if (context) {
           //window.userChrome_js.debug("contextmenu");
           if ('mgGestureState' in window) {
+            mgGestureState.allowContext = true;
+            var mouseEvent = document.createEvent("MouseEvents");
+            mouseEvent.initMouseEvent("contextmenu", true, true, event.view, 1,
+                                      event.screenX, event.screenY, event.clientX, event.clientY,
+                                      false, false, false, false, 2, null);
+            this.contextOpen = true;
+            event.target.dispatchEvent(mouseEvent);
+/*
             document.popupNode = event.target;
             //document.getElementById("contentAreaContextMenu").
             //         openPopup(null, "after_pointer", event.clientX, event.clientY, true, true);
             document.getElementById("contentAreaContextMenu").
                      showPopup( event.target, event.screenX, event.screenY, 'context');
+*/
             this.contextOpen = true;
           } else {
             // Mouse Gesture Redox があると動かない
             var mouseEvent = document.createEvent("MouseEvents");
-            mouseEvent.initMouseEvent("contextmenu", true, true, window, 1,
+            mouseEvent.initMouseEvent("contextmenu", true, true, event.view, 1,
                                       event.screenX, event.screenY, event.clientX, event.clientY,
                                       false, false, false, false, 2, null);
             this.contextOpen = true;
