@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0b13pre
 // @author         Alice0775
+// @version        2011/11/08 06:00 *
 // @version        2011/10/03 16:00 same hostのみ
 // @version        2011/03/03 13:30
 // ==/UserScript==
@@ -55,64 +56,62 @@ if (!("bug638598" in window)) {
           return;
       }
 
-      setTimeout(function(self, event){self.delayedClick(event);}, 250, this, event);
-    },
-
-    delayedClick: function(event) {
-      if (event.originalTarget && event.originalTarget.ownerDocument instanceof HTMLDocument) {
-        var win = event.originalTarget.ownerDocument.defaultView;
-        var wintop= win;
-        if (win && win.frameElement) {
-          wintop = win.top;
-        }
-
-        var linkNode = this.isAnchorElement(event);
-        if (!linkNode)
-          return;
-
-        if (linkNode.getAttribute("onclick"))
-          return;
-
-        if (wintop == win) {
-          /*
-          /// xxx Bug 662170 - Go to top anchor "#" doesn't work in Firefox 6 and Firefox 7
-          {
-            var targethref = linkNode.getAttribute("href");
-            var baseURI = this.ios.newURI(linkNode.baseURI, null, null);
-
-            var uri = this.ios.newURI(targethref, null, baseURI);
-            var hash = uri.spec.match(/#(.*)$/);
-            if (!hash || hash.length < 2)
-            return;
-            if (!hash[1]) {
-              win.scrollTo(0, 0);
-            }
+      setTimeout(function(self, event) {
+        if (event.originalTarget && event.originalTarget.ownerDocument instanceof HTMLDocument) {
+          var win = event.originalTarget.ownerDocument.defaultView;
+          var wintop= win;
+          if (win && win.frameElement) {
+            wintop = win.top;
           }
-          */
-          return;
+
+          var linkNode = self.isAnchorElement(event);
+          if (!linkNode)
+            return;
+
+          if (linkNode.getAttribute("onclick"))
+            return;
+
+          if (wintop == win) {
+            /*
+            /// xxx Bug 662170 - Go to top anchor "#" doesn't work in Firefox 6 and Firefox 7
+            {
+              var targethref = linkNode.getAttribute("href");
+              var baseURI = self.ios.newURI(linkNode.baseURI, null, null);
+
+              var uri = self.ios.newURI(targethref, null, baseURI);
+              var hash = uri.spec.match(/#(.*)$/);
+              if (!hash || hash.length < 2)
+              return;
+              if (!hash[1]) {
+                win.scrollTo(0, 0);
+              }
+            }
+            */
+            return;
+          }
+
+          if (win != linkNode.ownerDocument.defaultView)
+            return;
+
+          if (win.location.host != wintop.location.host)
+            return;
+
+          var targethref = linkNode.getAttribute("href");
+          var baseURI = self.ios.newURI(linkNode.baseURI, null, null);
+
+          var uri = self.ios.newURI(targethref, null, baseURI);
+          var hash = uri.spec.match(/#(.+)$/);
+          if (!hash || hash.length < 2 || !hash[1])
+            return;
+
+          var doc = linkNode.ownerDocument;
+          var xpath = "//*[@id=" + "'" + hash[1] +"']|//*[@name=" + "'" + hash[1] +"']";
+          var elem = self.getElementsByXPath(xpath, doc.body);
+          if (elem && elem.length > 0) {
+            elem[0].scrollIntoView(true);
+          }
         }
-
-        if (win != linkNode.ownerDocument.defaultView)
-          return;
-
-        if (win.location.host != wintop.location.host)
-          return;
-
-        var targethref = linkNode.getAttribute("href");
-        var baseURI = this.ios.newURI(linkNode.baseURI, null, null);
-
-        var uri = this.ios.newURI(targethref, null, baseURI);
-        var hash = uri.spec.match(/#(.+)$/);
-        if (!hash || hash.length < 2 || !hash[1])
-          return;
-
-        var doc = linkNode.ownerDocument;
-        var xpath = "//a[@id=" + "'" + hash[1] +"']|//a[@name=" + "'" + hash[1] +"']";
-        var elem = this.getElementsByXPath(xpath, doc.body);
-        if (elem && elem.length > 0) {
-          elem[0].scrollIntoView(true);
-        }
-      }
+      }, 250, this, event);
     },
 
     isAnchorElement: function(event) {

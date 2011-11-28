@@ -1,17 +1,17 @@
 // ==UserScript==
 // @name           patchForBug675866_choppyScrollRemover.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    Workaround Bug 675866 scrolling complex pages like Engadget is consistently slower and jerkier than the competition 
+// @description    Workaround Bug 675866 scrolling complex pages like Engadget is consistently slower and jerkier than the competition and Bug 705174 Bug 705361 ftp slow scroll and hover
 // @include        main
 // @compatibility  Firefox 7-
 // @author         Alice0775
-// @version        2011/10/24 19:20 DELAY 500 -> 300 , check frame scrolling attribute
+// @version        2011/11/08 13:00 タブ選択時
 // @version        2011/10/24 19:00 xxx scroll amount become small when forst tick of wheel scroll
 // @version        2011/10/22 12:00
 // @Note           コンテンツにDIV要素を挿入しているので留意
 // ==/UserScript==
 var patchForBug675866_choppyScrollRemover = {
-  DELAY: 300,
+  DELAY: 400,
   timer: null,
   scrolling: false,
 
@@ -28,6 +28,9 @@ var patchForBug675866_choppyScrollRemover = {
   },
 
   init : function() {
+    gBrowser.tabContainer.addEventListener('TabSelect', this, false);
+    gBrowser.tabContainer.addEventListener('mousedown', this, true);
+    window.addEventListener('resize', this, false);
     this.DELAY_SHOW = Services.prefs.getIntPref("browser.overlink-delay");
     this.box.addEventListener('scroll', this, true);
     this.autoscroller.addEventListener('popupshowing', this, false);
@@ -51,6 +54,24 @@ var patchForBug675866_choppyScrollRemover = {
     #__patchForBug675866_Screen[on] {
       display : -moz-box !important;
     }
+
+    @-moz-document url-prefix(ftp://) {
+
+
+    tbody > tr:nth-child(2n+1) {
+      background:#efefff;
+      /*color:#000000;*/
+    }
+    tbody > tr:nth-child(2n) {
+      background-color: #feffff;
+      /*color:#000000;*/
+    }
+
+    tbody > tr:hover {
+      outline: none !important;
+      background-color: #ccccff;
+    }
+    }
     ]]>).replace(/\s+/g, " ");
     
 		code = "data:text/css;charset=utf-8," + encodeURIComponent(style);
@@ -60,6 +81,9 @@ var patchForBug675866_choppyScrollRemover = {
   },
 
   uninit : function() {
+    gBrowser.tabContainer.removeEventListener('TabSelect', this, false);
+    gBrowser.tabContainer.removeEventListener('mousedown', this, true);
+    window.removeEventListener('resize', this, false);
     window.removeEventListener('unload', this, false);
     this.box.removeEventListener('scroll', this, true);
     this.autoscroller.removeEventListener('popupshowing', this, false);
@@ -70,15 +94,14 @@ var patchForBug675866_choppyScrollRemover = {
   insertScreen : function(win) {
     if (typeof win == 'undefined')
       win = content;
+    if (/^ftp:/.test(win.location.href))
+      return;
     if (win.frames && win.frames.length) {
       var self = this;
       Array.prototype.slice.call(win.frames).forEach(function(aSubFrame) {
         self.insertScreen(aSubFrame);
       });
     }
-
-    if (win.frameElement && win.frameElement.getAttribute('scrolling') == "no")
-      return;
     var doc = win.document;
     // skip when document is in design mode
     if (Components.lookupMethod(doc, 'designMode').call(doc) == 'on')
@@ -100,15 +123,14 @@ var patchForBug675866_choppyScrollRemover = {
 
     var screen = doc.createElement("div");
     screen.setAttribute("id", this.KscreenId);
-    bodies[0].addEventListener('DOMNodeInserted', this, true);
-    bodies[0].addEventListener('DOMNodeInsertedIntoDocument', this, true);
     var screen = bodies[0].insertBefore(screen, bodies[0].lastChild);
-    screen.addEventListener('DOMAttrModified', this, true);
   },
 
   screenSwitch: function(on, win) {
     if (typeof win == 'undefined')
       win = content;
+    if (/^ftp:/.test(win.location.href))
+      return;
     if (win.frames && win.frames.length) {
       var self = this;
       Array.prototype.slice.call(win.frames).forEach(function(aSubFrame) {
@@ -130,7 +152,7 @@ var patchForBug675866_choppyScrollRemover = {
       var height = Math.floor(rectObject.bottom - rectObject.top);
       var scrollH = Math.max(bodies[0].parentNode.scrollHeight, bodies[0].offsetHeight);
       var scrollW = Math.max(bodies[0].parentNode.scrollWidth , bodies[0].offsetWidth);
-      //userChrome_js.debug(height+ " " +scrollH);
+      userChrome_js.debug(height+ " " +scrollH);
       if (height < scrollH) {
         // xxx -5 ;  This prevent that scroll amount become small when forst tick of wheel scroll
         screen.style.setProperty('min-height', scrollH-5 + 'px', 'important');
@@ -144,6 +166,9 @@ var patchForBug675866_choppyScrollRemover = {
   },
 
   scroll: function(event) {
+    if (this.autoscroller.state == "open" ||
+        this.autoscroller.state == "showing")
+      return;
     if ("GrabScroll" in window && GrabScroll.mStatus == 2)
       return;
     var doc = event.originalTarget;
@@ -156,9 +181,6 @@ var patchForBug675866_choppyScrollRemover = {
     }
     if (this.timer)
       clearTimeout(this.timer);
-    if (this.autoscroller.state == "open" ||
-        this.autoscroller.state == "showing")
-      return;
     this.timer = setTimeout(function(self) {
       self.removeListener();
     }, this.DELAY, this); 
@@ -173,6 +195,8 @@ var patchForBug675866_choppyScrollRemover = {
 
   removeListener: function() {
     //userChrome_js.debug('removeListener');
+    if (this.timer)
+      clearTimeout(this.timer);
     this.scrolling = false;
     this.screenSwitch(false);
   },
@@ -184,9 +208,18 @@ var patchForBug675866_choppyScrollRemover = {
 
   popuphidden: function(event) {
     this.autoscroller.removeEventListener('popuphidden', this, false);
-    if (this.timer)
-      clearTimeout(this.timer);
     this.removeListener();
+  },
+
+  resized: null,
+  resize: function(event) {
+    this.box.removeEventListener('scroll', this, true);
+    if (this.resized)
+      clearTimeout(this.resized);
+    this.resized = setTimeout(function(self) {
+      self.removeListener();
+      self.box.addEventListener('scroll', self, true);
+    }, 500, this);
   },
 
   handleEvent: function(event) {
@@ -194,25 +227,21 @@ var patchForBug675866_choppyScrollRemover = {
       case 'scroll':
         this.scroll(event);
         break;
+      case 'mousedown':
+        if (event.originalTarget.id != this.KscreenId)
+          return;
+        //no break
+      case 'TabSelect':
+        this.removeListener();
+        break;
       case 'popupshowing':
         this.popupshowing();
         break;
       case 'popuphidden':
         this.popuphidden();
         break;
-      case 'DOMAttrModified':
-        event.preventDefault();
-        event.stopPropagation();
-        break;
-      case 'DOMNodeInserted':
-        event.relatedNode.removeEventListener('DOMNodeInserted', this, true);
-        event.preventDefault();
-        event.stopPropagation();
-        break;
-      case 'DOMNodeInsertedIntoDocument':
-        event.relatedNode.removeEventListener('DOMNodeInsertedIntoDocument', this, true);
-        event.preventDefault();
-        event.stopPropagation();
+      case 'resize':
+        this.resize(event);
         break;
       case 'unload':
         this.uninit();

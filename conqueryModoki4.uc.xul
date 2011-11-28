@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5, 3.6
 // @author         Alice0775
+// @version        2011/11/10 12:30 defolt change R: shift, M:Tab Clipboard
 // @version        2011/03/11 10:30 Bug641090
 // @version        2010/10/11 21:30 Site
 // @version        2009/04/14 21:30 グローバル汚染修正, typo 修正
@@ -25,7 +26,7 @@
   var conqueryModoki = {
     // -- config -- //大文字小文字留意すること
     //button + key :               //L M R = 左中右ボタン, S C A = shift,ctrl,altキー(SCAの順で指定)
-    // 'Current', 'Tab', 'Shift'   //Current=現在のタブ, Tab =前面タブ, Shift=背面タブ
+    // 'Current', 'Tab', 'Shift'   //Current=現在のタブ, Tab =browser.tabs.loadInBackground, Shift=逆
     // 'Prompt', 'Clipboard'       //Prompt=検索語句の入力窓表示, Clipboard=クリップボードの語句で検索
     // 'Clear'                     //Clear=検索実行後検索バーをクリア
     //  検索バーの検索エンジンプルダウン上の検索エンジンでの動作 (左クリック変更不可)
@@ -41,8 +42,8 @@
                          'L'  : 'Tab',
                          'LS' : 'Tab Prompt',
                          'M'  : 'Tab Clipboard',
-                         'R'  : 'Tab',
-                         'RS' : 'Shift',
+                         'R'  : 'Shift',
+                         'RS' : 'Tab',
                          'RSC': 'Tab Prompt',
                          'RC' : 'Tab Clipboard',
                         },
@@ -205,13 +206,15 @@
       if (useNewWin) {
         openNewWindowWith(submission.uri.spec, null, submission.postData, false)
       }else if (useNewTab) {
-        if (this.getVer() >= 4) //fx4
+        if (this.getVer() >= 4) { //fx4
+          this.debug("tabshifted " + backGround);
           openLinkIn(submission.uri.spec,
                      backGround ? "tabshifted": "tab",
                      { postData: submission.postData,
                        relatedToCurrent: true });
-        else
+        } else {
           gBrowser.loadOneTab(submission.uri.spec, null, null, submission.postData, backGround, false);
+        }
       }else
         gBrowser.loadURI(submission.uri.spec, null, submission.postData, false);
     },

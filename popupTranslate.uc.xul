@@ -14,11 +14,12 @@ display: none;
 // ==UserScript==
 // @name           popupTranslate
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    Popup translation.
+// @description    Popup translation. Shift+P/(Shift+)中Crick:日本語に翻訳, Shift+Alt+P/Shift+Alt+中Click:英語に翻訳
 // @include        main
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 2.0 3.0 3.5 3.6a1pre, Tb3
 // @author         Alice0775
+// @version        2011/11/08 12:45 Bing翻訳
 // @version        2011/06/22 01:00 Yahoo!翻訳 jp復活
 // @version        2011/04/01 12:00 @nifty翻訳
 // @version        2011/04/01 12:00 Yahoo!翻訳jpが動かないのでcomの方にした
@@ -135,7 +136,7 @@ display: none;
           method:'POST',
           Referer:'http://translate.google.com/?tab=yT#en',
           action:"http://translate.google.com/",
-          post:"js=y&prev=_t&hl=ja&ie=UTF-8&layout=1&eotf=1&sl=en&tl=ja&sourceid=Mozilla-search&text=%%SEL%%",
+          post:"client=t&hl=ja&sl=auto&tl=ja&multires=1&prev=btn&ssel=0&tsel=0&uptl=ja&sc=1&text=%%SEL%%",
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
         },
@@ -144,7 +145,7 @@ display: none;
           method:'POST',
           Referer:'http://translate.google.com/?tab=yT#ja',
           action:"http://translate.google.com/",
-          post:"js=y&prev=_t&hl=ja&ie=UTF-8&layout=1&eotf=1&sl=ja&tl=en&sourceid=Mozilla-search&text=%%SEL%%",
+          post:"client=t&hl=ja&sl=ja&tl=en&multires=1&prev=btn&ssel=0&tsel=0&sc=1&text=%%SEL%%",
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
         },
@@ -255,6 +256,26 @@ display: none;
           post:"SLANG=ja&TLANG=en&XMODE=0&SSRC=%%SEL%%&txtDirection=jaen",
           code:"UTF-8",
           xpath:'.//textarea[@id="txtTransArea2"]'
+        },
+
+        {
+          Description:"Bing翻訳 英日",
+          method:'GET',
+          Referer:"http://www.microsofttranslator.com/",
+          action:"http://api.microsofttranslator.com/v2/ajax.svc/TranslateArray?appId=%2246846E697D3BC6FA50998483EF31894654002928%22&from=%22%22&to=%22ja%22&loc=en&ctr=Japan&texts=[%22%%SEL%%%22]",
+          code:"UTF-8",
+          start:"\"TranslatedText\":\"",
+          end:"\",\"TranslatedTextSentenceLengths\"",
+        },
+
+        {
+          Description:"Bing翻訳 日英",
+          method:'GET',
+          Referer:"http://www.microsofttranslator.com/",
+          action:"http://api.microsofttranslator.com/v2/ajax.svc/TranslateArray?appId=%2246846E697D3BC6FA50998483EF31894654002928%22&from=%22%22&to=%22en%22&loc=en&ctr=Japan&texts=[%22%%SEL%%%22]",
+          code:"UTF-8",
+          start:"\"TranslatedText\":\"",
+          end:"\",\"TranslatedTextSentenceLengths\"",
         }
       ],
 
@@ -297,16 +318,22 @@ display: none;
                    target instanceof HTMLLinkElement)
           return;
         var sel = this._getselection();
+        if (!sel)
+          return;
         var engine = null;
-        if (sel != "" &&
-            popupTranslate.isJapanese(sel) &&
-            !event.shiftKey && !event.ctrlKey && !event.altKey){
-          engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, event.shiftKey);
+        if (popupTranslate.isJapanese(sel) &&
+            !event.shiftKey && !event.ctrlKey && !event.altKey ||
+            event.shiftKey && !event.ctrlKey && event.altKey) {
+          engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, false);
+        }
+        if (!popupTranslate.isJapanese(sel) &&
+            event.shiftKey && !event.ctrlKey && !event.altKey) {
+          engine = this.selectEngine();
         }
         if (!engine) {
-          engine = this.selectEngine(event.shiftKey);
+          engine = this.selectEngine();
         }
-        if(sel != "" && engine){
+        if(engine){
           var prefetch = null;
           if (engine.prefetchURL){
             this.getPrefetchResult(sel,engine);
@@ -341,20 +368,21 @@ display: none;
 
       onCommand: function(aAlt) {
         var sel = this._getselection();
+        if (!sel)
+          return;
         var engine = null;
-        if (sel != "" &&
-            popupTranslate.isJapanese(sel) && !aAlt){
-          engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, aAlt);
+        if (popupTranslate.isJapanese(sel) && aAlt){
+          engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, false);
         }
         if (!engine) {
           engine = this.selectEngine(aAlt);
         }
-        if(sel != "" && engine){
+        if(engine){
           var prefetch = null;
           if (engine.prefetchURL){
             this.getPrefetchResult(sel,engine);
           }else{
-            this.getTranslateResult(sel,engine,null);
+            this.getTranslateResult(sel,engine, null);
           }
         }
       },
@@ -544,6 +572,8 @@ display: none;
             var res = null;
             try {
               if(!xpath){
+     //self.debug("Exp.source " + Exp.source);
+     //self.debug("txt " + txt);
                 res = txt.match(new RegExp(Exp.source,"i"));
      //self.debug(res.toString());
                 res = RegExp.$1;

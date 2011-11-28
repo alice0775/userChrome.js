@@ -11,6 +11,8 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2011/11/28 09:00 update TLD リスト
+// @version        2011/11/23 19:00 エラー修正
 // @version        2011/11/05 11:00 textNodeの隣がnullで親の隣がbrなら探索を終わりにしてみる
 // @version        2011/10/25 19:00 contextmenuは閉じる
 // @version        2011/10/25 19:00 選してみる
@@ -200,6 +202,7 @@ function ucjs_textlink(event){
       }
       if (!candidates.snapshotItem(i).nextSibling &&
           candidates.snapshotItem(i).parentNode &&
+          candidates.snapshotItem(i).parentNode.nextSibling &&
           /^br$/i.test(candidates.snapshotItem(i).parentNode.nextSibling.localName)) {
         break;
       }
@@ -257,7 +260,7 @@ function ucjs_textlink(event){
       i2 = i1 + arrUrl[i].length;
 //debug(i1 <= si && ei <= i2);
       if(i1 <= si && ei <= i2){
-//debug(arrUrl[i]);
+debug(arrUrl[i]);
         //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
         var url = arrUrl[i];
         url = additionalFixUpURL(url);
@@ -419,7 +422,7 @@ function ucjs_textlink(event){
   }
 
   function isValidTld(aURI){
-    const regexpTLD = new RegExp("\\.(arpa|int|nato|com|net|org|info|biz|name|pro|museum|coop|aero|edu|gov|mil|ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|bu|bv|bw|by|bz|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|co|cp|cr|cs|sk|cu|cv|cx|cy|cz|dd|de|dg|dj|dk|dm|do|dz|ea|ec|ee|eg|eh|er|es|et|fi|fj|fk|fm|fo|fr|fx|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|ic|id|ie|il|im|in|io|iq|ir|is|it|je|jm|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|md|mg|mh|mk|ml|mm|mn|mo|mp|mq|mr|ms|mt|mu|mv|mw|mx|my|mz|na|nc|ne|nf|ng|ni|nl|no|np|nr|nt|nu|nz|om|pa|pc|pe|pf|pg|ph|pk|pl|pm|pn|pr|ps|pt|pw|py|qa|re|ro|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|sk|sl|sm|sn|so|sr|st|su|sv|sy|sz|ta|tc|td|tf|tg|th|tj|tk|tm|tn|to|tp|tr|tt|tv|tw|tz|ua|ug|uk|um|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|wg|ws|yd|ye|yt|yu|za|zm|zr|zw)\\.?$","");
+    const regexpTLD = new RegExp("\\.(arpa|asia|int|nato|cat|com|net|org|info|biz|name|pro|mobi|museum|coop|aero|edu|gov|jobs|mil|tel|travel|xxx|ac|ad|ae|af|ag|ai|al|am|an|ao|aq|ar|as|at|au|aw|ax|az|ba|bb|bd|be|bf|bg|bh|bi|bj|bm|bn|bo|br|bs|bt|bu|bv|bw|by|bz|ca|cc|cd|cf|cg|ch|ci|ck|cl|cm|cn|co|cp|cr|cs|sk|cu|cv|cx|cy|cz|dd|de|dg|dj|dk|dm|do|dz|ea|ec|ee|eg|eh|er|es|et|eu|fi|fj|fk|fm|fo|fr|fx|ga|gb|gd|ge|gf|gg|gh|gi|gl|gm|gn|gp|gq|gr|gs|gt|gu|gw|gy|hk|hm|hn|hr|ht|hu|ic|id|ie|il|im|in|io|iq|ir|is|it|je|jm|jo|jp|ke|kg|kh|ki|km|kn|kp|kr|kw|ky|kz|la|lb|lc|li|lk|lr|ls|lt|lu|lv|ly|ma|mc|me|md|mg|mh|mk|ml|mm|mn|mo|mp|mq|mr|ms|mt|mu|mv|mw|mx|my|mz|na|nc|ne|nf|ng|ni|nl|no|np|nr|nt|nu|nz|om|pa|pc|pe|pf|pg|ph|pk|pl|pm|pn|pr|ps|pt|pw|py|qa|re|ro|rs|ru|rw|sa|sb|sc|sd|se|sg|sh|si|sj|sk|sl|sm|sn|so|sr|ss|st|su|sv|sy|sz|ta|tc|td|tf|tg|th|tj|tk|tl|tm|tn|to|tp|tr|tt|tv|tw|tz|ua|ug|uk|um|us|uy|uz|va|vc|ve|vg|vi|vn|vu|wf|wg|ws|yd|ye|yt|yu|za|zm|zr|zw|localhost)\\.?$","");
     const regexpIP = new RegExp("^[1-2]?[0-9]?[0-9]\\.[1-2]?[0-9]?[0-9]\\.[1-2]?[0-9]?[0-9]\\.[1-2]?[0-9]?[0-9]$","");
     var host, tlds;
     try {
