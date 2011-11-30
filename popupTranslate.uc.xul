@@ -14,11 +14,13 @@ display: none;
 // ==UserScript==
 // @name           popupTranslate
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    Popup translation. Shift+P/(Shift+)中Crick:日本語に翻訳, Shift+Alt+P/Shift+Alt+中Click:英語に翻訳
+// @description    Popup translation. 英日選択時:Shift+P/中Crick:日本語に翻訳, Shift+Alt+P/Shift+中Click:英語に翻訳
+// @note                              基本的にメニューでxxx英日を選んでおくこと
 // @include        main
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 2.0 3.0 3.5 3.6a1pre, Tb3
 // @author         Alice0775
+// @version        2011/11/30 20:30 Infoseek動かないので削除
 // @version        2011/11/08 12:45 Bing翻訳
 // @version        2011/06/22 01:00 Yahoo!翻訳 jp復活
 // @version        2011/04/01 12:00 @nifty翻訳
@@ -149,7 +151,8 @@ display: none;
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
         },
-        {
+/*
+       {
           Description:"Infoseek 英日",
           method:'GET',
           Referer:'http://translation.infoseek.co.jp/',
@@ -169,7 +172,6 @@ display: none;
           prefetchURL:'http://translation.infoseek.co.jp/',      //あらかじめアクセスするURL
           prefechData:['token']                                  //必要なinput type= hidden の name
         },
-/*
         {
           Description:"Live Translate 英日",
           method:'POST',
@@ -326,12 +328,8 @@ display: none;
             event.shiftKey && !event.ctrlKey && event.altKey) {
           engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, false);
         }
-        if (!popupTranslate.isJapanese(sel) &&
-            event.shiftKey && !event.ctrlKey && !event.altKey) {
-          engine = this.selectEngine();
-        }
         if (!engine) {
-          engine = this.selectEngine();
+          engine = this.selectEngine(event.shiftKey);
         }
         if(engine){
           var prefetch = null;
@@ -371,7 +369,7 @@ display: none;
         if (!sel)
           return;
         var engine = null;
-        if (popupTranslate.isJapanese(sel) && aAlt){
+        if (popupTranslate.isJapanese(sel) && !aAlt){
           engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, false);
         }
         if (!engine) {

@@ -260,7 +260,7 @@ function ucjs_textlink(event){
       i2 = i1 + arrUrl[i].length;
 //debug(i1 <= si && ei <= i2);
       if(i1 <= si && ei <= i2){
-debug(arrUrl[i]);
+//debug(arrUrl[i]);
         //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
         var url = arrUrl[i];
         url = additionalFixUpURL(url);

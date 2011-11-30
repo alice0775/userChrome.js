@@ -152,7 +152,7 @@ var patchForBug675866_choppyScrollRemover = {
       var height = Math.floor(rectObject.bottom - rectObject.top);
       var scrollH = Math.max(bodies[0].parentNode.scrollHeight, bodies[0].offsetHeight);
       var scrollW = Math.max(bodies[0].parentNode.scrollWidth , bodies[0].offsetWidth);
-      userChrome_js.debug(height+ " " +scrollH);
+      //userChrome_js.debug(height+ " " +scrollH);
       if (height < scrollH) {
         // xxx -5 ;  This prevent that scroll amount become small when forst tick of wheel scroll
         screen.style.setProperty('min-height', scrollH-5 + 'px', 'important');
