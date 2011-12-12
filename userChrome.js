@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.33mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.34mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2011/11/19 15:30 REPLACECACHE 追加 Bug 648125
 // Date 2011/09/30 13:40 fix bug 640158
 // Date 2011/09/30 13:00 fix bug 640158
 // Date 2011/04/07 00:00 hackVersion
@@ -49,6 +50,7 @@
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
   const REPLACEDOCUMENTOVERLAY   = true;  //document.overlayを 置き換える[true], 置き換えないfalse
+  const REPLACECACHE = true; //スクリプトの更新日付によりキャッシュを更新する: [true] , しない:false
   //=====================USE_0_63_FOLDER = falseの時===================
   var UCJS      = new Array("UCJSFiles","userContent","userMenu"); //UCJS Loader 仕様を適用 (NoScriptでfile:///を許可しておく)
   var arrSubdir = new Array("", "xul","TabMixPlus","withTabMixPlus", "SubScript", "UCJSFiles", "userCrome.js.0.8","userContent","userMenu");    //スクリプトはこの順番で実行される
@@ -97,7 +99,7 @@
     INFO: INFO,
     BROWSERCHROME: BROWSERCHROME,
     EXCLUDE_CHROMEHIDDEN: EXCLUDE_CHROMEHIDDEN,
-    
+    REPLACECACHE: REPLACECACHE,
     get hackVersion () {
       delete this.hackVersion;
       //拡張のバージョン違いを吸収
@@ -418,6 +420,19 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       }
     },
 
+    getLastModifiedTime: function(aScriptFile) {
+      try {
+        if (this.REPLACECACHE) {
+          var aLocalfile = Components.classes["@mozilla.org/file/local;1"]
+          .createInstance(Components.interfaces.nsILocalFile);
+          aLocalfile.initWithPath(aScriptFile.path);
+          return aLocalfile.lastModifiedTime;
+        }
+        return aScriptFile.lastModifiedTime;
+      } catch(e) {}
+      return "";
+    },
+
     //window.userChrome_js.loadOverlay
     overlayWait:0,
     overlayUrl:[],
@@ -494,7 +509,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           // decide whether to run the script
           if(overlay.regex.test(dochref)){
             if (this.INFO) this.debug("loadOverlay: " + overlay.filename);
-            this.loadOverlay(overlay.url, null, doc);
+            this.loadOverlay(overlay.url + "?" + this.getLastModifiedTime(overlay.file), null, doc);
           }
         }
       }else{
@@ -567,7 +582,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
             if (this.INFO) this.debug("loadUCJSSubScript: " + script.filename);
             aScript = doc.createElementNS("http://www.w3.org/1999/xhtml", "script");
             aScript.type = "application/javascript; version=" + maxJSVersion.toString().substr(0,3);
-            aScript.src = script.url;
+            aScript.src = script.url + "?" + this.getLastModifiedTime(script.file);
             try {
               doc.documentElement.appendChild(aScript);
             }catch(ex) {
@@ -578,10 +593,12 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           try {
             if (script.charset)
               Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
-                       .loadSubScript(script.url, doc.defaultView, script.charset);
+                       .loadSubScript(script.url + "?" + this.getLastModifiedTime(script.file),
+                                      doc.defaultView, script.charset);
             else
               Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
-                       .loadSubScript(script.url, doc.defaultView);
+                       .loadSubScript(script.url + "?" + this.getLastModifiedTime(script.file),
+                                      doc.defaultView);
           }catch(ex) {
             this.error(script.filename, ex);
           }
