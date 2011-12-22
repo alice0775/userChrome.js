@@ -4,11 +4,12 @@
 // @description    サイドバーのブックマークにマウスオーバーするとすぐにタブタイトルをポップアップする。
 // @include        main
 // @include        chrome://browser/content/bookmarks/bookmarksPanel.xul
-// @compatibility  Firefox 3.0
+// @compatibility  Firefox 3.0 12.0
 // @author         Alice0775
 // @Note
-// @version        2009/11/19 13:00  annotation取得で例外出るのでgetConcreteItemIdを使うようにした
+// @version        2011/12/22 15:00  11.0 12.0 bhTooltip を hidden にしないとダメになった8Bug 703210 - tooltip is not shown if stopPropagation() of mousemove event is called)
 // ==/UserScript==
+// @version        2009/11/19 13:00  annotation取得で例外出るのでgetConcreteItemIdを使うようにした
 // @version        2009/10/02 22:00  Bug 498130 -  Reduce places-views overhead.
 // @version        2009/09/12 11:00  Bug 516088 -  blank tooltip displayed in empty area of bookmark sidebar
 // @version        2009/03/05 11:00  Bug 452979 -  Invisible control characters in URL MUST NOT be decoded when showing its address
@@ -70,6 +71,7 @@ var bookmarkSidebarTooltip = {
     this._tree.addEventListener("mouseout", this, false);
     this._tree.addEventListener("mousedown", this, false);
     window.addEventListener("unload", this, false);
+    document.getElementById("bhTooltip").hidden = true;;
   },
 
   onUnload: function() {

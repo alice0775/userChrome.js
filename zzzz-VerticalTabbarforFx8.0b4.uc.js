@@ -6,6 +6,7 @@
 // @compatibility  Firefox 8.0b4
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2011/12/19 02:00 toolbarbutton
 // @version        2011/10/14 12:00 Bug 690227 - Back out bug 455694 (tab drag/detach animations)
 // ==/UserScript==
 // @version        2010/06/24 23:00 ウインドサイズがおかしくなるので rendering stop/startは止め
@@ -229,6 +230,11 @@ function zzzz_VerticalTabbar(){
         }
 
 
+        /*toolbarbutton*/
+        #TabsToolbar > toolbarbutton[collapsed="true"]
+        {
+        display: none;
+        }
 
         #TabsToolbar .toolbarbutton-1
         {
