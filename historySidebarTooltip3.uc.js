@@ -2,10 +2,10 @@
 // @name           historySidebarTooltip3.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    サイドバーの履歴にマウスオーバーするとすぐにタブタイトルをポップアップする。
-// @include        main
 // @include        chrome://browser/content/history/history-panel.xul
 // @compatibility  Firefox 3.0 12.0
 // @author         Alice0775
+// @version        2012/01/04 00:00  Bug fix for 2011/12/22
 // @version        2011/12/22 15:00  11.0 12.0 bhTooltip を hidden にしないとダメになった8Bug 703210 - tooltip is not shown if stopPropagation() of mousemove event is called)
 // ==/UserScript==
 // @version        2009/10/02 22:00  Bug 498130 -  Reduce places-views overhead.
@@ -59,7 +59,8 @@ var historySidebarTooltip = {
     tree.addEventListener("mouseout", this, false);
     tree.addEventListener("mousedown", this, false);
     window.addEventListener("unload", this, false);
-    document.getElementById("bhTooltip").hidden = true;;
+    if (window.location.href == "chrome://browser/content/history/history-panel.xul")
+      document.getElementById("bhTooltip").hidden = true;
   },
 
   onUnload: function() {
