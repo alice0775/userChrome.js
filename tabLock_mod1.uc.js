@@ -3,7 +3,8 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    tabLock
 // @include        *
-// @compatibility  4.0b8pre
+// @compatibility  4.0b8pre 12.0a2
+// @version        2012/01/04 22:00  gURLBar.handleCommand 修正
 // @version        2011/07/21 22:00  Bug 658383
 // @version        2011/03/30 22:00  undefined error
 // @version        2011/02/15 22:00  xxx paste and go 
@@ -210,9 +211,17 @@ patch: {
 
       //locationbar
       func = gURLBar.handleCommand.toString();
+      // xxx 
+      func = func.replace(
+       'altEnter = altEnter && !isTabEmpty(gBrowser.selectedTab);',
+        <><![CDATA[
+        $&
+        altEnter = gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) || altEnter
+        ]]></>
+      );
 /*Fx6+ xxx Bug 658383*/
       func = func.replace(
-        'let where = whereToOpenLink(aTriggeringEvent, false, false);',
+        'where = whereToOpenLink(aTriggeringEvent, false, false);',
         <><![CDATA[
         $&
         if (where == "current" &&
