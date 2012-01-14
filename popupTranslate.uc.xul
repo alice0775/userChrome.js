@@ -20,6 +20,8 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 2.0 3.0 3.5 3.6a1pre, Tb3
 // @author         Alice0775
+// @version        2012/01/12 23:30 Bing翻訳変更
+// @version        2012/01/09 00:30 "のエスケープ
 // @version        2011/11/30 20:30 Infoseek動かないので削除
 // @version        2011/11/08 12:45 Bing翻訳
 // @version        2011/06/22 01:00 Yahoo!翻訳 jp復活
@@ -264,20 +266,20 @@ display: none;
           Description:"Bing翻訳 英日",
           method:'GET',
           Referer:"http://www.microsofttranslator.com/",
-          action:"http://api.microsofttranslator.com/v2/ajax.svc/TranslateArray?appId=%2246846E697D3BC6FA50998483EF31894654002928%22&from=%22%22&to=%22ja%22&loc=en&ctr=Japan&texts=[%22%%SEL%%%22]",
+          action:"http://api.microsofttranslator.com/V2/Ajax.svc/Translate?appId=46846E697D3BC6FA50998483EF31894654002928&from=%22%22&to=%22ja%22&loc=en&ctr=Japan&text=%%SEL%%",
           code:"UTF-8",
-          start:"\"TranslatedText\":\"",
-          end:"\",\"TranslatedTextSentenceLengths\"",
+          start:'^"',
+          end:'"$',
         },
 
         {
           Description:"Bing翻訳 日英",
           method:'GET',
           Referer:"http://www.microsofttranslator.com/",
-          action:"http://api.microsofttranslator.com/v2/ajax.svc/TranslateArray?appId=%2246846E697D3BC6FA50998483EF31894654002928%22&from=%22%22&to=%22en%22&loc=en&ctr=Japan&texts=[%22%%SEL%%%22]",
+          action:"http://api.microsofttranslator.com/V2/Ajax.svc/Translate?appId=46846E697D3BC6FA50998483EF31894654002928&from=%22%22&to=%22en%22&loc=en&ctr=Japan&text=%%SEL%%",
           code:"UTF-8",
-          start:"\"TranslatedText\":\"",
-          end:"\",\"TranslatedTextSentenceLengths\"",
+          start:'^"',
+          end:'"$',
         }
       ],
 
