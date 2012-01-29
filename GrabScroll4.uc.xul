@@ -32,6 +32,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2012/01/30 01:00 pagehide, this.xxx = null;
 // @version        2011/10/30 Bug 684821 - Remove nsIDOMNSHTMLElement 
 // @version        2011/10/18 22:00 オーバーフロウなしのiframeの場合は親ドキュメント
 // @version        2010/10/28 22:00 image documentの時自動リサイズされてしまうのを修正。
@@ -119,6 +120,7 @@ var GrabScroll = {
     this._window.addEventListener("mousedown", this, true);
     this._window.addEventListener("click", this, true);
     this._window.addEventListener("mouseup", this, true);
+    gBrowser.addEventListener('pagehide', this, false);
     GrabScroll.addPrefListener(GrabScroll.buttonPrefListener); // 登録処理
     setTimeout(function(){GrabScroll.initPrefs();},0);
   },
@@ -154,6 +156,7 @@ var GrabScroll = {
     this._window.removeEventListener("mousedown", this, true);
     this._window.removeEventListener("click", this, true);
     this._window.removeEventListener("mouseup", this, true);
+    gBrowser.removeEventListener('pagehide', this, false);
     GrabScroll.removePrefListener(GrabScroll.buttonPrefListener); // 登録処理
     this.mStatus==0;
     this._window.removeEventListener("mousemove", this, true);
@@ -186,6 +189,15 @@ var GrabScroll = {
         this.click(event); break;
       case "mouseup":
         this.mouseup(event); break;
+      case 'pagehide':
+        this._doc = null;
+        this.mCursorElement = null;
+        this._target = null;
+        this._target2 = null;
+        this._isImage = null;
+        this.NS = this.EW = this.NSEW = null;
+
+        break;
     }
   },
 

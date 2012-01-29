@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2012/01/30 01:00 tavClose, this.sourcenode = null;
 // @version        2011/07/22 21:00 Bug 50660 [FILE]Drag and drop for file upload form control (Fx7 and later)
 // @version        2011/06/23 16:00 browser.tabs.loadInBackgroundに関わらずtabおよびtabshiftedはそれぞれ強制的に前面および背面に開く
 // @version        2011/06/23 16:00 openLinkInにした
@@ -1566,6 +1567,9 @@ var DragNGo = {
       case 'dragstart':
         this.dragstart(event);
         break;
+      case 'pagehide':
+        this.sourcenode = null;
+        break;
       case 'unload':
         this.uninit();
         break;
@@ -1573,6 +1577,7 @@ var DragNGo = {
   },
 
   init: function() {
+    gBrowser.addEventListener('pagehide', this, false);
     gBrowser.addEventListener('dragend', this, false);
     gBrowser.addEventListener('drop', this, false);
     gBrowser.addEventListener('dragover', this, false);
@@ -1609,6 +1614,7 @@ var DragNGo = {
   },
 
   uninit: function() {
+    gBrowser.removeEventListener('pagehide', this, false);
     gBrowser.removeEventListener('dragend', this, false);
     gBrowser.removeEventListener('drop', this, false);
     gBrowser.removeEventListener('dragover', this, false);
