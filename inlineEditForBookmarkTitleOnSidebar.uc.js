@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/bookmarks/bookmarksPanel.xul
 // @compatibility Firefox 10-
 // @author        Alice0775
+// @version       2012/02/06 編集終了Enterでブックマークが開かないように
 // @version       2012/02/06
 // @note          ツリーの左端をF2またはダブルクリックでブックマークのタイトルの編集開始
 // @note          ブックマークフォルダはF2でタイトルの編集開始
@@ -20,6 +21,22 @@ var inlineEditForBookmarkTitleOnSidebar = {
   init: function(){
     if (!this._BTree)
       return;
+
+    var func = SidebarUtils.handleTreeKeyPress.toString();
+    func = func.replace(
+      '{',
+    <><![CDATA[
+      $&
+      var tree = aEvent.target.parentNode;
+      if (tree.editing)
+        return;
+    ]]></>
+    );
+    //Replace function
+    SidebarUtils.handleTreeKeyPress = new Function(
+       func.match(/\((.*)\)\s*\{/)[1],
+       func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+    );
 
     this._BTree.setAttribute('editable', true);
     this._BTree.addEventListener('keypress', this, false);
