@@ -4,6 +4,8 @@
 // @description    tabLock
 // @include        *
 // @compatibility  4.0b8pre 12.0a2
+// @compatibility  4.0b8pre 12.0a2
+// @version        2012/02/06 07:00  sidebar 修正
 // @version        2012/01/04 22:00  gURLBar.handleCommand 修正
 // @version        2011/07/21 22:00  Bug 658383
 // @version        2011/03/30 22:00  undefined error
@@ -41,7 +43,9 @@ patch: {
   }
 
 
-  if (location.href == "chrome://browser/content/places/places.xul") {
+  if (location.href == "chrome://browser/content/places/places.xul" ||
+      location.href == "chrome://browser/content/bookmarks/bookmarksPanel.xul" ||
+      location.href == "chrome://browser/content/history/history-panel.xul") {
     var func = openLinkIn.toString();
     if (!/isLockTab/.test(func)) {
       func = func.replace(
