@@ -7,6 +7,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5 3.6 3.7a1pre  WinXP
 // @author         Alice0775
+// @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2010/02/05 00:00 ウインドウが閉じてしまわないように
 // @version        2009/09/02 13:00 quickproxy.typeをセットしないで使おうとする方のため直前のproxy.typeをquickproxy.typeにするようにした。
 // @note           左クリック:オンオフ. 中クリック:起動時の設定 quickproxy.autooff, 右クリック:プロキシの設定
@@ -102,7 +103,7 @@
           } else {
             if (this.optionInTab) {
               //Fx3 タブバージョン (タブが一つの時, 閉じるとFxも閉じてしまう)
-              if (gBrowser.currentURI.spec == "about:blank")
+              if ("isBlankPageURL" in window ? isBlankPageURL(gBrowser.currentURI.spec) : gBrowser.currentURI.spec == "about:blank")
                  gBrowser.loadOneTab(aURL);
                else
                  gBrowser.selectedTab = gBrowser.addTab(aURL);

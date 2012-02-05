@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  4.0b8pre
+// @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2010/10/12 11:00 by Alice0775  4.0b8pre
 // @version        2009/04/29 00:00 空白タブを削除する前にもう一度チェック
 // @Note           need 000-windowhook.uc.js
@@ -30,7 +31,7 @@ WindowHook.register("chrome://mozapps/content/downloads/unknownContentType.xul",
             || aTab.linkedBrowser.docShell.busyFlags
             || aTab.linkedBrowser.docShell.restoringDocument
             || !aTab.linkedBrowser.webNavigation.currentURI
-            || aTab.linkedBrowser.currentURI.spec != 'about:blank'
+            || ("isBlankPageURL" in window ? !isBlankPageURL(aTab.linkedBrowser.currentURI.spec) : aTab.linkedBrowser.currentURI.spec != "about:blank")
             || aTab.getAttribute('ontap') == 'true') {
           continue;
         }

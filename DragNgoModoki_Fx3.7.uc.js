@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2012/01/30 01:00 tavClose, this.sourcenode = null;
 // @version        2011/07/22 21:00 Bug 50660 [FILE]Drag and drop for file upload form control (Fx7 and later)
 // @version        2011/06/23 16:00 browser.tabs.loadInBackgroundに関わらずtabおよびtabshiftedはそれぞれ強制的に前面および背面に開く
@@ -279,7 +280,7 @@ var DragNGo = {
       if (/tab|window/.test(where) && (
           !gBrowser.mCurrentBrowser.docShell.busyFlags &&
           !gBrowser.mCurrentBrowser.docShell.restoringDocument &&
-           gBrowser.currentURI.spec == "about:blank" ||
+          ("isBlankPageURL" in window ? isBlankPageURL(gBrowser.currentURI.spec) : gBrowser.currentURI.spec == "about:blank") ||
           this.currentRegExp.test(url)))
         where = 'current';
       switch (where) {
@@ -356,7 +357,7 @@ var DragNGo = {
       if (/tab|window/.test(where) && (
           !gBrowser.mCurrentBrowser.docShell.busyFlags &&
           !gBrowser.mCurrentBrowser.docShell.restoringDocument &&
-           gBrowser.currentURI.spec == "about:blank" ||
+           ("isBlankPageURL" in window ? isBlankPageURL(gBrowser.currentURI.spec) : gBrowser.currentURI.spec == "about:blank") ||
           self.currentRegExp.test(url)))
         where = 'current';
       switch (where) {

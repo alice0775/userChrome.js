@@ -46,7 +46,7 @@ function ucjs_link_and_wrap(doc){
   var URIFixup = Components.classes['@mozilla.org/docshell/urifixup;1']
                          .getService(Components.interfaces.nsIURIFixup);
   var url = doc.location.href;
-  if (!url||url==null||url.match(/about:blank/))
+  if (!url||url==null||url.match(/about:blank|about:newtab/))
     return;
   //http,https,ttp,ttps,tp,tps,h**p,h**ps,ftpなどのテキストをリンクに変換
   if (CONVHTTP){

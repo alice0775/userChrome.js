@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2011/08/29 11:50 tree_style_tab
 // @version        2011/06/08 11:50 tree_style_tab-0.12.2011060202
 // @version        2010/08/12 Bug 574217 - Land TabCandy on trunk
@@ -41,7 +42,7 @@
     //load home if blank
     if (!tab.linkedBrowser.docShell.busyFlags
         && !tab.linkedBrowser.docShell.restoringDocument
-        && tab.linkedBrowser.contentDocument.URL == 'about:blank'){
+        && ("isBlankPageURL" in window ? isBlankPageURL(tab.linkedBrowser.contentDocument.URL) : tab.linkedBrowser.contentDocument.URL == "about:blank")){
       document.getElementById("Browser:Home").doCommand();
       return;
     }

@@ -3,14 +3,14 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Workaround Bug 715838 - Double-clicking title bar in small window sends click event to the maximized window on mouse position
 // @include        main
-// @compatibility  Firefox 4.0 - 12.0
+// @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
 // @version        2012/01/07
 // @Note
 // ==/UserScript==
 var bug715838 = {
   timer: null,
-  duration: 5000,
+  duration: 500,
 
   handleEvent: function(event) {
     switch (event.type) {
@@ -40,7 +40,9 @@ var bug715838 = {
   },
 
   onresize: function(event) {
-    if(window.windowState  == window.STATE_MAXIMIZED) {
+    if (event.originalTarget != window)
+      return;
+    if (window.windowState  == window.STATE_MAXIMIZED) {
       window.addEventListener("mouseup", this, true);
       window.addEventListener("mousemove", this, true);
       if (this.timer)
@@ -61,10 +63,12 @@ var bug715838 = {
   },
 
   onmousemove: function(event) {
-    window.removeEventListener("mouseup", this, true);
     window.removeEventListener("mousemove", this, true);
     if (this.timer)
       clearTimeout(this.timer);
+    setTimeout(function(self) {
+      window.removeEventListener("mouseup", self, true);
+    }, 0, this);
   }
 }
 bug715838.init();
