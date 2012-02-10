@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には toggleSidebar(何タラ);
 // @Note
+// @version        2012/02/08 14:00 splitter width in full screen
 // @version        2011/05/26 12:00 5.0a2でマウスが要素上通過する時, 移動速度が速すぎるとmouseoverイベントが発火しない? 感度が落ちた?
 // @version        2011/03/24 12:00 ドラッグオーバー遅延を別設定とした
 // @version        2010/10/30 18:00 http://hg.mozilla.org/mozilla-central/pushloghtml?fromchange=84baf90b040c&tochange=16eac4b8b8e0
@@ -70,7 +71,6 @@ var ucjs_expand_sidebar = {
     var style = <><![CDATA[
     @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
 
-    #navigator-toolbox + #browser * #sidebar-splitter:-moz-system-metric(windows-default-theme),
     #main-window #sidebar-splitter:-moz-system-metric(windows-default-theme)
     {
       -moz-box-align: center;
@@ -80,16 +80,14 @@ var ucjs_expand_sidebar = {
       border-style: solid;
       -moz-border-left-colors: ThreeDShadow ThreeDHighlight;
       -moz-border-right-colors: ThreeDDarkShadow ThreeDFace;
-      width: 3px;
-      max-width: 3px;
+      width: 2px;
+      max-width: 2px;
       min-width: 0px;
       background-color: ThreeDFace;
       margin-left: 0px;
     }
-    #navigator-toolbox[inFullscreen="true"] + #browser > #sidebar-box[collapsed="true"] + #sidebar-splitter,
-    #navigator-toolbox[inFullscreen="true"] + * + #browser > #sidebar-box[collapsed="true"] + #sidebar-splitter,
-    #main-window[inFullscreen="true"] #navigator-toolbox + #browser > #sidebar-box[collapsed="true"] + #sidebar-splitter,
-    #main-window[inFullscreen="true"] #navigator-toolbox + * + #browser > #sidebar-box[collapsed="true"] + #sidebar-splitter
+    #navigator-toolbox[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter,
+    #main-window[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter
     {
       width: 0px;
       max-width: 1px;

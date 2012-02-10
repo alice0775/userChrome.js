@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2012/02/10 10:00 tab-icon-imageも見るように
 // @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2011/08/29 11:50 tree_style_tab
 // @version        2011/06/08 11:50 tree_style_tab-0.12.2011060202
@@ -140,7 +141,9 @@
       return false;
 
     var icon = aEvent.originalTarget.ownerDocument.getAnonymousElementByAttribute(
-                 tab, 'class', 'tab-icon');
+                 tab, 'class', 'tab-icon') ||
+               aEvent.originalTarget.ownerDocument.getAnonymousElementByAttribute(
+                 tab, 'class', 'tab-icon-image');
     var iconX = icon.boxObject.screenX;
     var iconW = icon.boxObject.width;
     var x = aEvent.screenX;
