@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2012/02/12 16:00 fixed Bug 703514
 // @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2012/01/30 01:00 tavClose, this.sourcenode = null;
 // @version        2011/07/22 21:00 Bug 50660 [FILE]Drag and drop for file upload form control (Fx7 and later)
@@ -1112,6 +1113,14 @@ var DragNGo = {
             } catch (ex) {}
           }
         }
+      }
+    }
+    // xxx Bug 703514 - can't drag bookmarklet to toolbar  (regression from Firefox 4)
+    if (event.originalTarget instanceof HTMLAnchorElement) {
+      var href = event.originalTarget.href;
+      if (/^javascript:/.test(href)) {
+        var str = gatherTextUnder(event.originalTarget);
+        event.dataTransfer.mozSetDataAt("text/x-moz-url", href + "\n" + str, 0);
       }
     }
   },
