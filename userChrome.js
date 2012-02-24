@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.34mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.35mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
