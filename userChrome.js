@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2012/02/04 00:00 due to bug 726440
 // Date 2011/11/19 15:30 REPLACECACHE 追加 Bug 648125
 // Date 2011/09/30 13:40 fix bug 640158
 // Date 2011/09/30 13:00 fix bug 640158
@@ -50,7 +51,7 @@
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
   const REPLACEDOCUMENTOVERLAY   = true;  //document.overlayを 置き換える[true], 置き換えないfalse
-  const REPLACECACHE = true; //スクリプトの更新日付によりキャッシュを更新する: [true] , しない:false
+  const REPLACECACHE = false; //スクリプトの更新日付によりキャッシュを更新する: true , しない:[false]
   //=====================USE_0_63_FOLDER = falseの時===================
   var UCJS      = new Array("UCJSFiles","userContent","userMenu"); //UCJS Loader 仕様を適用 (NoScriptでfile:///を許可しておく)
   var arrSubdir = new Array("", "xul","TabMixPlus","withTabMixPlus", "SubScript", "UCJSFiles", "userCrome.js.0.8","userContent","userMenu");    //スクリプトはこの順番で実行される
@@ -727,13 +728,30 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
        /*  !('TreeStyleTabService' in window) && */
           typeof StarUI != 'undefined' &&
           !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
+        // xxxx bug 726440
         var loadObserver = {
           observe: function (aSubject, aTopic, aData) {
+            //XXX We just caused localstore.rdf to be re-applied (bug 640158)
+            if ("retrieveToolbarIconsizesFromTheme" in window)
+              retrieveToolbarIconsizesFromTheme();
+
+            // Move the header (star, title, button) into the grid,
+            // so that it aligns nicely with the other items (bug 484022).
+            let header = StarUI._element("editBookmarkPanelHeader");
+            let rows = StarUI._element("editBookmarkPanelGrid").lastChild;
+            rows.insertBefore(header, rows.firstChild);
+            header.hidden = false;
+
             StarUI._overlayLoading = false;
             StarUI._overlayLoaded = true;
+            // this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
           }
         };
-        that.loadOverlay("chrome://browser/content/places/editBookmarkOverlay.xul", loadObserver, doc);
+        StarUI._overlayLoading = true;
+        document.loadOverlay(
+          "chrome://browser/content/places/editBookmarkOverlay.xul",
+          loadObserver
+        );
         delay = 0;
       }
       setTimeout(function(doc){that.runOverlays(doc);}, delay, doc);
