@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2012/02/25 23:00 幅
 // @version        2012/02/10 10:00 tab-icon-imageも見るように
 // @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2011/08/29 11:50 tree_style_tab
@@ -87,7 +88,7 @@
       } else {
         gBrowser.reloadTab(tab);
       }
-    } else if (x < iconW + tabx + tabw - 18) {
+    } else if (x <= tab.boxObject.screenX + tab.boxObject.width - 18) {
       //タブ幅の0.3倍～右端から18pxの範囲
       //タブを再読み込み
       if (aEvent.altKey) {
@@ -96,7 +97,7 @@
       } else {
         gBrowser.reloadTab(tab);
       }
-    } else {
+    } else if (x > tab.boxObject.screenX + tab.boxObject.width - 18) {
       //右端から18pxの範囲
       //すべてのタブを再読み込み
       if (aEvent.altKey) {

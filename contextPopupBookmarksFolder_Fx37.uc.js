@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    任意のブックマークフォルダをコンテキストメニューやホットメニューに表示
 // @include        main
-// @compatibility  Firefox 3.7
+// @compatibility  Firefox 3.7 13
 // @author         Alice0775
+// @version        2012/03/05 12:00 remove deprecated code(PlacesUtils.nodeIsLivemarkItem)
 // @version        2010/04/17 23:00 後処理追加
 // @version        2009/01/15 21:20
 // @Note           Sub-Script/Overlay Loader v3.0.20mod
@@ -107,7 +108,7 @@ var contextPopupBookmarksFolder = {
           return node.itemId;
         }else
         if (PlacesUtils.nodeIsFolder(node)
-        && !PlacesUtils.nodeIsLivemarkContainer(node)){
+           && !PlacesUtils.annotations.itemHasAnnotation(node.itemId, PlacesUtils.LMANNO_FEEDURI)){
           var hoge = arguments.callee(node.itemId, folderName);
           if (hoge)
             return hoge;

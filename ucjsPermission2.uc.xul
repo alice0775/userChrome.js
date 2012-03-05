@@ -9,8 +9,9 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
-// @version        2009/04/06 17:00 linuxでも
+// @version        2012/02/21 00:00 etld = host
 // ==/UserScript==
+// @version        2009/04/06 17:00 linuxでも
 // @version        2009/02/07 bug fix
 // @version        2009/02/02 frameようとして"リンク上右クリックではリンクアドレスを追加"
 // @version        2008/10/02 linkタグのstylesheet
@@ -583,7 +584,7 @@ var ucjsPermission = {
           etld = eTLDService.getBaseDomainFromHost(host);
         } catch(e) {}
         */
-        etld = etld.indexOf('.') > 0?etld.substring(etld.indexOf('.')+1):etld;
+        //etld = etld.indexOf('.') > 0?etld.substring(etld.indexOf('.')+1):etld;
         menuitem.setAttribute("label",ucjsPermission.locale.indexOf("ja")== -1?"Block to foreign "+etld:etld+" の" + text + "を他ドメイン拒否");
         menuitem.setAttribute("oncommand","ucjsPermission.addCapability('"+type+"','noforeign','"+etld+"');");
         menuitem.setAttribute("type","checkbox");
