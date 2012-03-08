@@ -5,6 +5,7 @@
 // @author         Alice0775
 // @include        main
 // @compatibility  10-
+// @version        2012/03/08 21:15 error xxx.xxx.xxx
 // @version        2012/03/08 20:50 error in about: ftp etc
 // @version        2012/03/08
 // ==/UserScript==
@@ -20,7 +21,7 @@ func = func.replace(
     } 
     linkURI = makeURI(linkURI);
     if (!this.isValidTld(linkURI)) {
-      if (!/^[a-zA-Z-+.]+:/.test(linkURI.spec))
+      if (!/^[a-zA-Z-+.]+:/.test(url))
         throw new Error();
     }
   } catch(ex) {
