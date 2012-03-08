@@ -5,6 +5,7 @@
 // @author         Alice0775
 // @include        main
 // @compatibility  10-
+// @version        2012/03/08 20:50 error in about: ftp etc
 // @version        2012/03/08
 // ==/UserScript==
 var func = gURLBar._canonizeURL.toString();
@@ -12,13 +13,16 @@ func = func.replace(
   'url = getShortcutOrURI(url, postData, mayInheritPrincipal);',
 <><![CDATA[
   var linkURI = url;
+  
   try {
-    if (linkURI.indexOf(".") && !/^https?:\/\//.test(url)) {
+    if (linkURI.indexOf(".") > -1 && !/^[a-zA-Z-+.]+:/.test(linkURI)) {
       linkURI = "http://" + linkURI;
     } 
     linkURI = makeURI(linkURI);
-    if (!this.isValidTld(linkURI))
-      throw new Error(); 
+    if (!this.isValidTld(linkURI)) {
+      if (!/^[a-zA-Z-+.]+:/.test(linkURI.spec))
+        throw new Error();
+    }
   } catch(ex) {
     var offset = url.indexOf(" ");
     if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) {
