@@ -1,10 +1,11 @@
 // ==UserScript==
 // @name           patchForBug734653.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    Cannot scroll by mouse wheel if hidden elements exist in menumopup (workaround Bug734653)
-// @include        main
-// @compatibility  Firefox 4-12 (maybe fixed in 13)
+// @description    Force scroll menupopup (workaround Bug734653)
+// @include        *
+// @compatibility  Firefox 4-12 (fixed in 13)
 // @author         Alice0775
+// @version        2012/03/13 20:00
 // @version        2012/03/11 00:00
 // ==/UserScript==
 var patchForBug734653 = {
@@ -32,9 +33,12 @@ var patchForBug734653 = {
     var target = event.target;
     if (!/menupopup/.test(target.localName))
       return;
-    var arrowscrollbox = document.getAnonymousElementByAttribute(target, "class", "popup-internal-box");
-    //var scrollbox = document.getAnonymousElementByAttribute(arrowscrollbox, "class", "arrowscrollbox-scrollbox");
-    if (/return !element.hidden;/.test(arrowscrollbox._canScrollToElement.toString()))
+    var arrowscrollbox = target.ownerDocument.getAnonymousElementByAttribute(target, "class", "popup-internal-box");
+    //var scrollbox = document.getAnonymousElementByAttribute(arrowscrollbox, "class", "arrowscrollbox-scrollbox");   
+    if (target.ownerDocument.defaultView.top != window)
+      arrowscrollbox = arrowscrollbox.wrappedJSObject;
+    
+    if (!arrowscrollbox || /return !element.hidden;/.test(arrowscrollbox._canScrollToElement.toString()))
       return;
     arrowscrollbox._canScrollToElement = function(element) {
       return !element.hidden;

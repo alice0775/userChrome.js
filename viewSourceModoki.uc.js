@@ -7,6 +7,8 @@
 // @author         Alice0775
 // @version        2008/07/06 00:00 例外処理
 // ==/UserScript==
+// @version        2012/03/25 18:00 aLineNumber
+// @version        2012/01/08 23:00 aLineNumber
 // @version        2008/03/24 13:00 テンポラリファイルを削除するように
 // @version        2008/03/24 12:00
 /*あらかじめ使用するエディタをprefにセットしておく
@@ -335,6 +337,7 @@ this.debug(file.path);
 
   launch: function(aURL){
     var aDocument = null;
+    var aLineNumber = null;
     var aCallBack = null; //this.aCallBack;
     var aContentType = null;
     // make a uri
@@ -344,7 +347,10 @@ this.debug(file.path);
     var aURI = ios.newURI(aURL, charset, null);
     var aPageDescriptor = null;
     this.TMP.push(gViewSourceUtils.getTemporaryFile(aURI, aDocument, aContentType));
-    gViewSourceUtils.openInExternalEditor(aURL, aPageDescriptor, aDocument, aCallBack);
+    if(/aLineNumber/.test(gViewSourceUtils.openInExternalEditor.toSource()))
+      gViewSourceUtils.openInExternalEditor(aURL, aPageDescriptor, aDocument, aLineNumber, aCallBack);
+    else
+      gViewSourceUtils.openInExternalEditor(aURL, aPageDescriptor, aDocument, aCallBack);
   },
 
   aCallBack: function(status,data){
