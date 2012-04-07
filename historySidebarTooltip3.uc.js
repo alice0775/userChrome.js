@@ -5,6 +5,7 @@
 // @include        chrome://browser/content/history/history-panel.xul
 // @compatibility  Firefox 3.0 12.0
 // @author         Alice0775
+// @version        2012/04/07 20:00  Ez Sidebar 4.0.2012040701 対応
 // @version        2012/01/04 00:00  Bug fix for 2011/12/22
 // @version        2011/12/22 15:00  11.0 12.0 bhTooltip を hidden にしないとダメになった8Bug 703210 - tooltip is not shown if stopPropagation() of mousemove event is called)
 // ==/UserScript==
@@ -61,6 +62,8 @@ var historySidebarTooltip = {
     window.addEventListener("unload", this, false);
     if (window.location.href == "chrome://browser/content/history/history-panel.xul")
       document.getElementById("bhTooltip").hidden = true;
+    //Ez Sidebar 4.0.2012040701 対応
+    this.tooltip.addEventListener("popuphiding", this, true);
   },
 
   onUnload: function() {
@@ -70,6 +73,7 @@ var historySidebarTooltip = {
     tree.addEventListener("mouseout", this, false);
     tree.addEventListener("mousedown", this, false);
     window.removeEventListener("unload", this, false);
+    this.tooltip.removeEventListener("popuphiding", this, true);
   },
 
   handleEvent: function(event){
@@ -84,6 +88,9 @@ var historySidebarTooltip = {
       case 'mouseout':
       case 'mousedown':
         this.hide(event);
+        break;
+      case 'popuphiding':
+        event.stopPropagation();
         break;
     }
   },

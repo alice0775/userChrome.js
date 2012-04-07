@@ -5,8 +5,9 @@
 // @include        main
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
-// @compatibility  Firefox 3.0 3.5 3.6 4.0
+// @compatibility  Firefox 3.0 3.5 3.6 4.0 14
 // @author         Alice0775
+// @version        2012/04/02 23:00 Bug 482057
 // @version        2011/10/02 18:00 ctrl+enter toggle hiligight all
 // @version        2011/03/29 17:00 コンテキストメニューにClear Search Historyを追加
 // @version        2011/02/12 14:00 ESCでfindbarを閉じた後, 黒色矩形のゴーストがでるのを修正
@@ -57,24 +58,35 @@ var historyFindbar = {
   lastInputValue: "",
 
   get historyfindbar(){
-    return document.getElementById("historyfindbar");
+    delete this.historyfindbar;
+    return this.historyfindbar = document.getElementById("historyfindbar");
   },
 
   get _findField2(){
-    return document.getElementById("find-field2");
+    delete this._findField2;
+    return this._findField2 = document.getElementById("find-field2");
   },
 
   get autocomplete_textbox_container(){
-    return document.getAnonymousElementByAttribute(historyFindbar._findField2,
-                                            "class", "autocomplete-textbox-container");
+    delete this.autocomplete_textbox_container;
+    return this.autocomplete_textbox_container = document.getAnonymousElementByAttribute(
+                                                   historyFindbar._findField2,
+                                                  "class", "autocomplete-textbox-container");
   },
 
   get inputbox(){
-    return document.getAnonymousElementByAttribute(this._findField2, "anonid", "textbox-input-box");
+    delete this.inputbox;
+    return this.inputbox = document.getAnonymousElementByAttribute(this._findField2, "anonid", "textbox-input-box");
   },
   
   get contextmenu(){
-    return document.getAnonymousElementByAttribute(this.inputbox, "anonid", "input-box-contextmenu");
+    delete this.contextmenu;
+    return this.contextmenu = document.getAnonymousElementByAttribute(this.inputbox, "anonid", "input-box-contextmenu");
+  },
+
+  get historyPopup(){
+    delete this.historyPopup;
+    return this.historyPopup = document.getAnonymousElementByAttribute(this._findField2, "anonid", "historydropmarker");
   },
 
   init :function(){
@@ -379,6 +391,7 @@ var historyFindbar = {
   },
 
   handleEvent: function(aEvent){
+    var controller = null;
     //window.userChrome_js.debug("handleEvent " + aEvent.type);
     switch (aEvent.type) {
       case 'unload':
@@ -393,6 +406,12 @@ var historyFindbar = {
         gFindBar.removeAttribute('hidden');
         break;
       case 'keypress':
+        
+        if (aEvent.originalTarget == this._findField2.inputField) {
+          var win = gFindBar._currentWindow ||
+                    gFindBar.browser.contentWindow;
+          controller = gFindBar._getSelectionController(win);
+        }
         if (aEvent.originalTarget == this._findField2.inputField &&
             aEvent.keyCode == KeyEvent.DOM_VK_TAB) {
           this._handleTab(aEvent);
@@ -424,7 +443,12 @@ var historyFindbar = {
             (aEvent.keyCode == KeyEvent.DOM_VK_RETURN ||
              aEvent.keyCode == KeyEvent.DOM_VK_ENTER ||
              aEvent.keyCode == KeyEvent.DOM_VK_PAGE_UP ||
-             aEvent.keyCode == KeyEvent.DOM_VK_PAGE_DOWN)) {
+             aEvent.keyCode == KeyEvent.DOM_VK_PAGE_DOWN ||
+             aEvent.keyCode == KeyEvent.DOM_VK_UP ||
+             aEvent.keyCode == KeyEvent.DOM_VK_DOWN)) {
+          // do nothing if history drop down is openned
+          if (!!this.historyPopup.getAttribute("open"))
+            return
           gFindBar._findField.value = this._findField2.value;
           var evt = document.createEvent("KeyboardEvent");
           evt.initKeyEvent ('keypress', true, true, window,

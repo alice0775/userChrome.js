@@ -6,6 +6,7 @@
 // @compatibility  Firefox 3.0 12.0
 // @author         Alice0775
 // @Note
+// @version        2012/04/07 20:00  Ez Sidebar 4.0.2012040701 対応
 // @version        2012/01/04 00:00  Bug fix for 2011/12/22
 // @version        2011/12/22 15:00  11.0 12.0 bhTooltip を hidden にしないとダメになった8Bug 703210 - tooltip is not shown if stopPropagation() of mousemove event is called)
 // ==/UserScript==
@@ -73,6 +74,8 @@ var bookmarkSidebarTooltip = {
     window.addEventListener("unload", this, false);
     if (window.location.href == "chrome://browser/content/bookmarks/bookmarksPanel.xul")
       document.getElementById("bhTooltip").hidden = true;
+    //Ez Sidebar 4.0.2012040701 対応
+    this.tooltip.addEventListener("popuphiding", this, true);
   },
 
   onUnload: function() {
@@ -81,6 +84,7 @@ var bookmarkSidebarTooltip = {
     this._tree.removeEventListener("mouseout", this, false);
     this._tree.removeEventListener("mousedown", this, false);
     window.removeEventListener("unload", this, false);
+    this.tooltip.removeEventListener("popuphiding", this, true);
   },
 
   handleEvent: function(event){
@@ -95,6 +99,9 @@ var bookmarkSidebarTooltip = {
       case 'mouseout':
       case 'mousedown':
         this.hide(event);
+        break;
+      case 'popuphiding':
+        event.stopPropagation();
         break;
     }
   },
