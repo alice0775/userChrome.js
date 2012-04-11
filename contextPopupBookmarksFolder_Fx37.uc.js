@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    任意のブックマークフォルダをコンテキストメニューやホットメニューに表示
 // @include        main
-// @compatibility  Firefox 3.7 13
+// @compatibility  Firefox 3.7 13 14
 // @author         Alice0775
+// @version        2012/04/11 12:00 Bug 739451 Don't rely on XPConnect-magic for getting the owner window of a places view
 // @version        2012/03/05 12:00 remove deprecated code(PlacesUtils.nodeIsLivemarkItem)
 // @version        2010/04/17 23:00 後処理追加
 // @version        2009/01/15 21:20
@@ -39,8 +40,8 @@ var contextPopupBookmarksFolder = {
             <menupopup  id="contextPopupBookmarksFolderPopup"
                         context="placesContext"
                         openInTabs="children"
-                        oncommand="BookmarksEventHandler.onCommand(event);"
-                        onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event);"
+                        oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);"
+                        onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event, this.parentNode._placesView);"
                         onpopupshowing="if (!document.getElementById('contextPopupBookmarksFolderMenu')._placesView) new PlacesMenu(event, '{ this.kPLACE_QUERY }');"/>
           </menu>
         </menupopup>
@@ -49,8 +50,8 @@ var contextPopupBookmarksFolder = {
           <menupopup  id="contextPopupBookmarksFolderhotMenuPopup"
                       context="placesContext"
                       openInTabs="children"
-                      oncommand="BookmarksEventHandler.onCommand(event);"
-                      onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event);"
+                      oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);"
+                      onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event, this.parentNode._placesView);"
                       onpopupshowing="if (!document.getElementById('contextPopupBookmarksFolderhotMenuPopup')._placesView) new PlacesMenu(event, '{ this.kPLACE_QUERY }');"/>
         </popupset>
       </overlay>;
