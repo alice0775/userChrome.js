@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.35mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.36mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2012/02/04 00:00 due to bug 726444 Implement the Downloads Panel.
 // Date 2012/02/04 00:00 due to bug 726440
 // Date 2011/11/19 15:30 REPLACECACHE 追加 Bug 648125
 // Date 2011/09/30 13:40 fix bug 640158
@@ -446,6 +447,9 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     load: function (){
         if(!window.userChrome_js.overlayUrl.length) return --window.userChrome_js.overlayWait;
         var [url, aObserver, doc] = this.overlayUrl.shift();
+        if (!!aObserver && typeof aObserver == 'function') {
+          aObserver.observe = aObserver;
+        }
         if (!doc) doc = document;
         if (!(doc instanceof XULDocument))
           return 0;
@@ -455,8 +459,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
               //XXX We just caused localstore.rdf to be re-applied (bug 640158)
               if ("retrieveToolbarIconsizesFromTheme" in window)
                 retrieveToolbarIconsizesFromTheme();
-
-              if (!!aObserver) {
+              if (!!aObserver && typeof aObserver.observe == 'function') {
                 try {
                   aObserver.observe(subject, topic, data);
                 } catch(ex){
@@ -722,39 +725,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
   }else{
     setTimeout(function(doc){
       that.runScripts(doc);
-      //面倒だからFirefox 3 の場合はeditBookmarkOverlay.xulを先読みしておく
-      var delay = 500;
-      if (location.href === that.BROWSERCHROME &&
-       /*  !('TreeStyleTabService' in window) && */
-          typeof StarUI != 'undefined' &&
-          !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
-        // xxxx bug 726440
-        var loadObserver = {
-          observe: function (aSubject, aTopic, aData) {
-            //XXX We just caused localstore.rdf to be re-applied (bug 640158)
-            if ("retrieveToolbarIconsizesFromTheme" in window)
-              retrieveToolbarIconsizesFromTheme();
-
-            // Move the header (star, title, button) into the grid,
-            // so that it aligns nicely with the other items (bug 484022).
-            let header = StarUI._element("editBookmarkPanelHeader");
-            let rows = StarUI._element("editBookmarkPanelGrid").lastChild;
-            rows.insertBefore(header, rows.firstChild);
-            header.hidden = false;
-
-            StarUI._overlayLoading = false;
-            StarUI._overlayLoaded = true;
-            // this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
-          }
-        };
-        StarUI._overlayLoading = true;
-        document.loadOverlay(
-          "chrome://browser/content/places/editBookmarkOverlay.xul",
-          loadObserver
-        );
-        delay = 0;
-      }
-      setTimeout(function(doc){that.runOverlays(doc);}, delay, doc);
+      setTimeout(function(doc){that.runOverlays(doc);}, 0, doc);
     },500, doc);
   }
   //Sidebar for Trunc
