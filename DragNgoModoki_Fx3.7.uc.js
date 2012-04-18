@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2012/04/19 00:00 designModeはなにもしないようにした
+// @version        2012/03/01 12:00 isTabEmpty使うように
 // @version        2012/02/12 16:00 fixed Bug 703514
 // @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2012/01/30 01:00 tavClose, this.sourcenode = null;
@@ -279,9 +281,7 @@ var DragNGo = {
         return false;
       var url = submission.uri.spec;
       if (/tab|window/.test(where) && (
-          !gBrowser.mCurrentBrowser.docShell.busyFlags &&
-          !gBrowser.mCurrentBrowser.docShell.restoringDocument &&
-          ("isBlankPageURL" in window ? isBlankPageURL(gBrowser.currentURI.spec) : gBrowser.currentURI.spec == "about:blank") ||
+          isTabEmpty(gBrowser.selectedTab) ||
           this.currentRegExp.test(url)))
         where = 'current';
       switch (where) {
@@ -356,9 +356,7 @@ var DragNGo = {
       doc = content.document;
     urls.forEach(function(url){
       if (/tab|window/.test(where) && (
-          !gBrowser.mCurrentBrowser.docShell.busyFlags &&
-          !gBrowser.mCurrentBrowser.docShell.restoringDocument &&
-           ("isBlankPageURL" in window ? isBlankPageURL(gBrowser.currentURI.spec) : gBrowser.currentURI.spec == "about:blank") ||
+          isTabEmpty(gBrowser.selectedTab) ||
           self.currentRegExp.test(url)))
         where = 'current';
       switch (where) {
@@ -893,7 +891,9 @@ var DragNGo = {
     return arr;
   },
 
-  isParentEditableNode: function(node) {
+  isParentEditableNode: function isParentEditableNode(node){
+    //if (Components.lookupMethod(node.ownerDocument, 'designMode').call(node.ownerDocument) == 'on')
+    //  return node;
     while (node && node.parentNode) {
       try {
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
@@ -902,7 +902,9 @@ var DragNGo = {
       }
       catch(e) {
       }
-      if (node.isContentEditable)
+      if (/input|textarea/.test(node.localName))
+        return node;
+      if (node.isContentEditable || node.contentEditable=='true')
         return node;
       node = node.parentNode;
     }
@@ -1169,7 +1171,6 @@ var DragNGo = {
     return (flg == flg1);
   },
 
-
   dragover: function dragover(event) {
     var self = this;
     var dragService = Cc["@mozilla.org/widget/dragservice;1"]
@@ -1199,8 +1200,16 @@ var DragNGo = {
       return;
     }
 
-    if (this.isParentEditableNode(target))
+    //designModeなら何もしない
+    if (Components.lookupMethod(target.ownerDocument, 'designMode').call(target.ownerDocument) == 'on') {
+      self.setStatusMessage('', 0, false);
       return;
+    }
+    // input/textarea何もしないで置く
+    if (self.isParentEditableNode(target)) {
+      self.setStatusMessage('', 0, false);
+      return;
+    }
 
     // do nothing if event.defaultPrevented (maybe hosted d&d by web page)
     if (event.defaultPrevented)
@@ -1226,11 +1235,6 @@ var DragNGo = {
         return;
       }
       // file以外のドロップ
-      // input/textarea何もしないで置く
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-        self.setStatusMessage('', 0, false);
-        return;
-      }
 
       for (var i = 0; i < self.GESTURES.length; i++) {
         var GESTURES = self.GESTURES[i];
@@ -1258,11 +1262,6 @@ var DragNGo = {
       }
       return;
     } else if (sourceNode && !isSameBrowser) { //別ブラウザから
-      // input/textarea何もしないで置く
-      if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
-        self.setStatusMessage('', 0, false);
-        return;
-      }
       for (var i = 0; i < self.GESTURES.length; i++) {
         var GESTURES = self.GESTURES[i];
         // 方向はないこと
@@ -1633,7 +1632,7 @@ var DragNGo = {
   },
 
   debug: function(aMsg){
-    return;
+    //return;
 
     const UI = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
           createInstance(Ci.nsIScriptableUnicodeConverter);
