@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2012/04/19 00:05 debugなし
 // @version        2012/04/19 00:00 designModeはなにもしないようにした
 // @version        2012/03/01 12:00 isTabEmpty使うように
 // @version        2012/02/12 16:00 fixed Bug 703514
@@ -1632,7 +1633,7 @@ var DragNGo = {
   },
 
   debug: function(aMsg){
-    //return;
+    return;
 
     const UI = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
           createInstance(Ci.nsIScriptableUnicodeConverter);
