@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.36mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.37mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2012/04/19 21:00 starUI元に戻した
 // Date 2012/02/04 00:00 due to bug 726444 Implement the Downloads Panel.
 // Date 2012/02/04 00:00 due to bug 726440
 // Date 2011/11/19 15:30 REPLACECACHE 追加 Bug 648125
@@ -725,7 +726,39 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
   }else{
     setTimeout(function(doc){
       that.runScripts(doc);
-      setTimeout(function(doc){that.runOverlays(doc);}, 0, doc);
+      //面倒だからFirefox 3 の場合はeditBookmarkOverlay.xulを先読みしておく
+      var delay = 500;
+      if (location.href === that.BROWSERCHROME &&
+       /*  !('TreeStyleTabService' in window) && */
+          typeof StarUI != 'undefined' &&
+          !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
+        // xxxx bug 726440
+        var loadObserver = {
+          observe: function (aSubject, aTopic, aData) {
+            //XXX We just caused localstore.rdf to be re-applied (bug 640158)
+            if ("retrieveToolbarIconsizesFromTheme" in window)
+              retrieveToolbarIconsizesFromTheme();
+
+            // Move the header (star, title, button) into the grid,
+            // so that it aligns nicely with the other items (bug 484022).
+            let header = StarUI._element("editBookmarkPanelHeader");
+            let rows = StarUI._element("editBookmarkPanelGrid").lastChild;
+            rows.insertBefore(header, rows.firstChild);
+            header.hidden = false;
+
+            StarUI._overlayLoading = false;
+            StarUI._overlayLoaded = true;
+            // this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
+          }
+        };
+        StarUI._overlayLoading = true;
+        document.loadOverlay(
+          "chrome://browser/content/places/editBookmarkOverlay.xul",
+          loadObserver
+        );
+        delay = 0;
+      }
+      setTimeout(function(doc){that.runOverlays(doc);}, delay, doc);
     },500, doc);
   }
   //Sidebar for Trunc
