@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.37mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.38mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2012/04/19 23:00 starUIをbindを使うように
 // Date 2012/04/19 21:00 starUI元に戻した
 // Date 2012/02/04 00:00 due to bug 726444 Implement the Downloads Panel.
 // Date 2012/02/04 00:00 due to bug 726440
@@ -49,7 +50,7 @@
 (function(){
   // -- config --
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
-  const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使うtrue, 使わない[false]
+  const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
   const REPLACEDOCUMENTOVERLAY   = true;  //document.overlayを 置き換える[true], 置き換えないfalse
@@ -60,7 +61,8 @@
   //===================================================================
   const ALWAYSEXECUTE   = 'rebuild_userChrome.uc.xul'; //常に実行するスクリプト
   var INFO = true;
-  var BROWSERCHROME = "chrome://browser/content/browser.xul";//Seamonkey:chrome://navigator/content/navigator.xul
+  var BROWSERCHROME = "chrome://browser/content/browser.xul"; //Firfox
+  //var BROWSERCHROME = "chrome://navigator/content/navigator.xul"; //SeaMonkey:
   // -- config --
 /* USE_0_63_FOLDER true の時
  * chrome直下およびchrome/xxx.uc 内の *.uc.js および *.uc.xul
@@ -729,32 +731,28 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       //面倒だからFirefox 3 の場合はeditBookmarkOverlay.xulを先読みしておく
       var delay = 500;
       if (location.href === that.BROWSERCHROME &&
-       /*  !('TreeStyleTabService' in window) && */
           typeof StarUI != 'undefined' &&
           !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
         // xxxx bug 726440
-        var loadObserver = {
-          observe: function (aSubject, aTopic, aData) {
+        StarUI._overlayLoading = true;
+        document.loadOverlay(
+          "chrome://browser/content/places/editBookmarkOverlay.xul",
+          (function (aSubject, aTopic, aData) {
             //XXX We just caused localstore.rdf to be re-applied (bug 640158)
             if ("retrieveToolbarIconsizesFromTheme" in window)
               retrieveToolbarIconsizesFromTheme();
 
             // Move the header (star, title, button) into the grid,
             // so that it aligns nicely with the other items (bug 484022).
-            let header = StarUI._element("editBookmarkPanelHeader");
-            let rows = StarUI._element("editBookmarkPanelGrid").lastChild;
+            let header = this._element("editBookmarkPanelHeader");
+            let rows = this._element("editBookmarkPanelGrid").lastChild;
             rows.insertBefore(header, rows.firstChild);
             header.hidden = false;
 
-            StarUI._overlayLoading = false;
-            StarUI._overlayLoaded = true;
-            // this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
-          }
-        };
-        StarUI._overlayLoading = true;
-        document.loadOverlay(
-          "chrome://browser/content/places/editBookmarkOverlay.xul",
-          loadObserver
+            this._overlayLoading = false;
+            this._overlayLoaded = true;
+            //this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
+          }).bind(StarUI)
         );
         delay = 0;
       }

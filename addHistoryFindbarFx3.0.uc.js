@@ -603,6 +603,8 @@ var historyFindbar = {
 
     var textboxX = textbox_boxObject.screenX - gFindBar_boxObject.screenX;
     var textboxY = textbox_boxObject.screenY - gFindBar_boxObject.screenY;
+    var textboxW = textbox_boxObject.width;
+    var textboxH = textbox_boxObject.height;
 
     var findField2 = this._findField2;
     var dropmark  = document.getAnonymousElementByAttribute(findField2, "anonid", "historydropmarker");
@@ -626,9 +628,9 @@ var historyFindbar = {
                         getPropertyValue('border-top-width').replace('px','')
       var bleft = window.getComputedStyle(findField2, '').
                         getPropertyValue('border-left-width').replace('px','')
-      if (findField2.boxObject.width + dropmark.boxObject.width != textbox_boxObject.width)
-        findField2.style.width  = textbox_boxObject.width + "px";
-      findField2.style.height = textbox_boxObject.height + "px";
+      if (findField2.boxObject.width + dropmark.boxObject.width != textboxW)
+        findField2.style.width  = textboxW + "px";
+      findField2.style.height = textboxH + "px";
       historyfindbarbox.style.marginLeft = textboxX - bleft + "px";
       findField2.style.marginTop  = textboxY - btop + "px";
 
@@ -643,11 +645,11 @@ var historyFindbar = {
       var textboxbbot = window.getComputedStyle(textbox, '').
                         getPropertyValue('border-bottom-width').replace('px','')
 
-      //window.userChrome_js.debug(findField2.boxObject.width +"\n"+ dropmark.boxObject.width +"\n"+ textbox_boxObject.width);
+      //window.userChrome_js.debug(findField2.boxObject.width +"\n"+ dropmark.boxObject.width +"\n"+ textboxW);
       //more Minefield/3.6a1pre ID:20090501045247
-      findField2.style.width  = textbox_boxObject.width /*-
+      findField2.style.width  = textboxW /*-
                                   textboxblft - textboxbrgt*/ + "px";
-      findField2.style.height = textbox_boxObject.height /*-
+      findField2.style.height = textboxH /*-
                                 textboxbtop - textboxbbot*/ + "px";
       //
       historyfindbarbox.style.marginLeft = textboxX + "px";
@@ -762,15 +764,17 @@ var historyFindbar = {
         else
           this._findField2.removeAttribute('flash');
         //fail safe
+
         if (this.adjustSizeTimer)
           clearTimeout(this.adjustSizeTimer);
         this.adjustSizeTimer = setTimeout(function(self){
           self.adjustSize();
         }, this.adjustSizeDelay, this);
+
         break;
       case "status":
 //window.userChrome_js.debug("_DOMAttrModified " + aEvent.newValue);
-       this._findField2.value = gFindBar._findField.value;
+       //this._findField2.value = gFindBar._findField.value;
        //ステータス同期して色を変える
        if (aEvent.newValue == "notfound"){
           this._findField2.setAttribute('status', 'notfound');
@@ -780,11 +784,13 @@ var historyFindbar = {
           this._findField2.removeAttribute('status');
         }
         //fail safe
+
         if (this.adjustSizeTimer)
           clearTimeout(this.adjustSizeTimer);
         this.adjustSizeTimer = setTimeout(function(self){
           self.adjustSize();
         }, this.adjustSizeDelay, this);
+
         break;
     }
   },

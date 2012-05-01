@@ -12,12 +12,13 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    add UI for hostperm.1 to Preferences
 // @include        main
-// @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a1pre
+// @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a1pre 15.0a1
 // @author         Alice0775
-// @version        LastMod 2011/08/06 objectsubrequest追加
-// @version        LastMod 2010/08/26 エラー回避
-// @version        LastMod 2010/08/26 Minefield 4.0b5pre  Bug 546857 (kill-remote-xul) Drop support for XUL on web sites (remote XUL)
-// @version        LastMod 2009/08/25 Minefield 3.7a1pre  Bug 506985 -  remove java-specific preferences from Firefox UI, hidden prefs
+// @version        2012/04/30 コメント外した
+// @version        2011/08/06 objectsubrequest追加
+// @version        2010/08/26 エラー回避
+// @version        2010/08/26 Minefield 4.0b5pre  Bug 546857 (kill-remote-xul) Drop support for XUL on web sites (remote XUL)
+// @version        2009/08/25 Minefield 3.7a1pre  Bug 506985 -  remove java-specific preferences from Firefox UI, hidden prefs
 // @version        2008/03/12 13:30 Gecko/2008031112 Minefield/3.0b5pre 以降用に
 // ==/UserScript==
 // @version        2009/06/26
@@ -52,13 +53,13 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
          +"  if(cookieBehavior == 0)radiogroup.selectedIndex = 0;"
          +"  else if(cookieBehavior == 1)radiogroup.selectedIndex = 2;"
          +"  else if(cookieBehavior == 2)radiogroup.selectedIndex = 1;"
-         +"}},100);"
+         +"}},350);"
          +"$&");
        //alert(func);
       eval("aWindow.gPrivacyPane.writeAcceptCookies = " + func);
       if(/acceptThirdParty/.test(func) ){//Fx3
         var func = aWindow.gPrivacyPane.writeAcceptThirdPartyCookies.toString();
-       // func = func.replace(/document/g,"aWindow.document");
+        func = func.replace(/document/g,"aWindow.document");
         func = func.replace('return',
             "setTimeout(function(){"
            +"var cookieBehavior = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch2).getIntPref('network.cookie.cookieBehavior');"
@@ -67,7 +68,7 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
            +"  if(cookieBehavior == 0)radiogroup.selectedIndex = 0;"
            +"  else if(cookieBehavior == 1)radiogroup.selectedIndex = 2;"
            +"  else if(cookieBehavior == 2)radiogroup.selectedIndex = 1;"
-           +"}},100);"
+           +"}},350);"
            +"$&");
          //alert(func);
         eval("aWindow.gPrivacyPane.writeAcceptThirdPartyCookies = " + func);
