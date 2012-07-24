@@ -5,6 +5,9 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2012/06/01 23:00 regression 04/19
+// ==/UserScript==
+// @version        2012/05/04 13:00 Bug 741216 対策
 // @version        2012/04/19 00:05 debugなし
 // @version        2012/04/19 00:00 designModeはなにもしないようにした
 // @version        2012/03/01 12:00 isTabEmpty使うように
@@ -16,7 +19,6 @@
 // @version        2011/06/23 16:00 openLinkInにした
 // @version        2011/06/22 00:00 getElementsByXPath 配列で返すのを忘れていた
 // @version        2011/06/19 21:00 Google modified getElementsByXPath
-// ==/UserScript==
 // @version        2011/04/14 21:00 Google doc などでdrag drop uploadができないので外部ファイルのドロップは止め
 // @version        2011/03/30 10:20 プロンプト
 // @version        2011/03/29 14:20 copyToSearchBar, appendToSearchBar, searchWithEngine 追加変更
@@ -661,7 +663,7 @@ var DragNGo = {
       function buildNextInstall() {
           if (pos == URLs.length) {
               if (installs.length > 0) {
-                  AddonManager.installAddonsFromWebpage("application/x-xpinstall", this, null, installs);
+                  AddonManager.installAddonsFromWebpage("application/x-xpinstall", window, null, installs);
               }
               return;
           }
@@ -895,7 +897,7 @@ var DragNGo = {
   isParentEditableNode: function isParentEditableNode(node){
     //if (Components.lookupMethod(node.ownerDocument, 'designMode').call(node.ownerDocument) == 'on')
     //  return node;
-    while (node && node.parentNode) {
+    while (node) {
       try {
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
         if (!node.hasOwnProperty("type") || node.type != "file")
@@ -1202,16 +1204,10 @@ var DragNGo = {
     }
 
     //designModeなら何もしない
-    if (Components.lookupMethod(target.ownerDocument, 'designMode').call(target.ownerDocument) == 'on') {
+    if (target.ownerDocument instanceof HTMLDocument && Components.lookupMethod(target.ownerDocument, 'designMode').call(target.ownerDocument) == 'on') {
       self.setStatusMessage('', 0, false);
       return;
     }
-    // input/textarea何もしないで置く
-    if (self.isParentEditableNode(target)) {
-      self.setStatusMessage('', 0, false);
-      return;
-    }
-
     // do nothing if event.defaultPrevented (maybe hosted d&d by web page)
     if (event.defaultPrevented)
       return;
@@ -1236,6 +1232,13 @@ var DragNGo = {
         return;
       }
       // file以外のドロップ
+      
+      // input/textarea何もしないで置く
+      if (self.isParentEditableNode(target)) {
+        self.setStatusMessage('', 0, false);
+        return;
+      }
+
 
       for (var i = 0; i < self.GESTURES.length; i++) {
         var GESTURES = self.GESTURES[i];
@@ -1263,6 +1266,12 @@ var DragNGo = {
       }
       return;
     } else if (sourceNode && !isSameBrowser) { //別ブラウザから
+      // input/textarea何もしないで置く
+      if (self.isParentEditableNode(target)) {
+        self.setStatusMessage('', 0, false);
+        return;
+      }
+
       for (var i = 0; i < self.GESTURES.length; i++) {
         var GESTURES = self.GESTURES[i];
         // 方向はないこと
@@ -1292,7 +1301,9 @@ var DragNGo = {
 
     // 同じブラウザ内から
     // input/textarea何もしないで置く
-    if (target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement) {
+    if (target instanceof HTMLInputElement ||
+        target instanceof HTMLTextAreaElement ||
+        self.isParentEditableNode(target)) {
       self.setStatusMessage('', 0, false);
       return;
     }

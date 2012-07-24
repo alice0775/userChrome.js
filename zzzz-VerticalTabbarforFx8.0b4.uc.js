@@ -6,9 +6,10 @@
 // @compatibility  Firefox 8.0b4
 // @author         Alice0775
 // @note           デフォルトテーマ
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
+// ==/UserScript==
 // @version        2011/12/19 02:00 toolbarbutton
 // @version        2011/10/14 12:00 Bug 690227 - Back out bug 455694 (tab drag/detach animations)
-// ==/UserScript==
 // @version        2010/06/24 23:00 ウインドサイズがおかしくなるので rendering stop/startは止め
 // @version        2010/07/22 12:00 tab context
 // @version        2010/06/24 23:00 ウインドサイズがおかしくなるので rendering stop/startは止め
@@ -49,7 +50,7 @@ function zzzz_VerticalTabbar(){
       gPrefService.setIntPref("browser.tabs.tabMinWidth", 100);
       gPrefService.setIntPref("browser.tabs.tabClipWidth", 140);
       // -- config --
-      var TOOLBARBUTTON_AS_TAB = true;
+      var TOOLBARBUTTON_AS_TAB = false;
       // xxx Bug 380960 - Implement closing tabs animation
       gPrefService.setBoolPref("browser.tabs.animate", false);
       gPrefService.setBoolPref("browser.tabs.autoHide", false);
@@ -236,16 +237,11 @@ function zzzz_VerticalTabbar(){
         display: none;
         }
 
-        #TabsToolbar .toolbarbutton-1
+        #TabsToolbar toolbarbutton,
+        #TabsToolbar toolbarbutton:hover
         {
-        height: 18px;
+        height: 20px !important;
         }
-
-        #TabsToolbar .toolbarbutton-1:hover
-        {
-        height: 18px;
-        }
-
       ]]>.toString();
       if (TOOLBARBUTTON_AS_TAB) {
         style += <![CDATA[
@@ -267,6 +263,8 @@ function zzzz_VerticalTabbar(){
       sspi.getAttribute = function(name) {
         return document.documentElement.getAttribute(name);
       };
+      document.getElementById('alltabs-button').removeAttribute('type');
+      document.getElementById('alltabs-button').setAttribute('onclick', "this.firstChild.openPopup(document.getElementById('alltabs-button'))");
 
       var tabsToolbar = document.getElementById('TabsToolbar');
       var tabbrowsertabs = gBrowser.mTabContainer;
@@ -335,6 +333,10 @@ function zzzz_VerticalTabbar(){
 
       //D&Dの調整
       func = gBrowser.tabContainer._setEffectAllowedForDataTransfer.toString();
+      func = func.replace(
+        /\(sourceNode\.boxObject\.screenX \+[\r]*[\s]*sourceNode\.boxObject\.width\)/,
+        'sourceNode.boxObject.screenX + sourceNode.boxObject.width'
+      );
       func = func.replace(
         'event.screenX <= sourceNode.boxObject.screenX + sourceNode.boxObject.width',
         <><![CDATA[

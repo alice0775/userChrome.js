@@ -7,6 +7,8 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 3.0 3.5 3.6 4.0 14
 // @author         Alice0775
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
+// ==/UserScript==
 // @version        2012/04/02 23:00 Bug 482057
 // @version        2011/10/02 18:00 ctrl+enter toggle hiligight all
 // @version        2011/03/29 17:00 コンテキストメニューにClear Search Historyを追加
@@ -16,7 +18,6 @@
 // @version        2010/03/30 00:10 DOM_VK_ENTER
 // @version        2010/03/13 00:10 undo
 // @version        2010/02/07 00:10 enter, shift+enterで 前,次検索
-// ==/UserScript==
 // @version        2010/02/03 00:10 Bug seachbarOnDropUseTextContent.uc.js連動
 // @version        2009/12/23 00:10 Bug 509298 - updateCurrentBrowser leaves focus in location bar if no specific element is focused in that browser
 // @version        2009/12/05 23:00 ドラッグドロップ Firefox3.6
@@ -90,7 +91,6 @@ var historyFindbar = {
   },
 
   init :function(){
-    window.addEventListener('unload', this, false);
     try {
       gFindBar;
     } catch (e) {}
@@ -300,9 +300,15 @@ var historyFindbar = {
     // in location bar if no specific element is focused in that browser
     if ('gBrowser' in window && 'updateCurrentBrowser' in gBrowser) {
       var func = gBrowser.updateCurrentBrowser.toString();
+      //=fx3.6
       func = func.replace(
         'gFindBar.getElement("findbar-textbox").getAttribute("focused") != "true"',
-        '($& && historyFindbar._findField2).getAttribute("focused") != "true"'
+        '($& && historyFindbar._findField2.getAttribute("focused") != "true")'
+      );
+      //>=fx4
+      func = func.replace(
+        'gFindBar.getElement("findbar-textbox").getAttribute("focused") == "true"',
+        '($& || historyFindbar._findField2.getAttribute("focused") == "true")'
       );
       eval("gBrowser.updateCurrentBrowser = " + func);
     }

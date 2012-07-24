@@ -4,8 +4,9 @@
 // @description    Edit Bookmark Panelにリサイザ追加すると共に, フォルダツリーとタグセレクタのエキスパンダ開閉状態を記憶する。および 設定によりdescription, location, loadInSidebar, keywordを表示/非表示
 // @include        main
 // @author         Alice0775
-// @version        2010/12/06 10:30 Bug Bug 597557 - Bookmarks & Identity panels should use an Arrowpanel
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
 // ==/UserScript==
+// @version        2010/12/06 10:30 Bug Bug 597557 - Bookmarks & Identity panels should use an Arrowpanel
 // @version        2010/04/01 00:00 Bug 556342  - Invalid Treeview in bookmark menu via star pane
 // @version        2009/12/22 00:00 namePickerにフォ－カスあるように
 // @version        2009/12/21 14:00 BETTER WORKAROUND FIX  Bug 536024 -  When i expand folder-tree on Edit This Bookmark, the bookmarked folder is changed.
@@ -140,7 +141,7 @@ var openbookResizer = {
     // default all show
     func = StarUI._doShowEditBookmarkPanel.toString();
     func = func.replace(
-     '["description", "location", "loadInSidebar", "keyword"]',
+     /\["description", "location",[\r]*[\s]*"loadInSidebar", "keyword"\]/,
      'openbookResizer.getHideRow'
     );
     eval("StarUI._doShowEditBookmarkPanel = " + func);
@@ -152,7 +153,7 @@ var openbookResizer = {
       ''
     );
     func = func.replace(
-      'expander.className = "expander-up";',
+      /expander.className = "expander-up";*/,
       <><![CDATA[
       var currentFolder = this._getFolderIdFromMenuList();
       var onselect = this._folderTree.getAttribute("onselect");
@@ -286,11 +287,14 @@ var openbookResizer = {
       panel.setAttribute('onmouseup', 'openbookResizer.mouseup(event)');
 
       if ("TreeStyleTabBookmarksServiceEditable" in window) {
-
+        with (window)
         eval('gEditItemOverlay._showHideRows = '+window.gEditItemOverlay._showHideRows.toSource().replace(
           'TreeStyleTabBookmarksServiceEditable.parentRow.collapsed = this._element("keywordRow").collapsed && this._element("folderRow").collapsed;',
           ''
-        ), window);
+        ).replace(
+          "TreeStyleTabBookmarksServiceEditable.parentRow.collapsed = this._element('keywordRow').collapsed && this._element('folderRow').collapsed;",
+          ''
+        ));
 
         TreeStyleTabBookmarksServiceEditable.parentRow.collapsed = true;
       }

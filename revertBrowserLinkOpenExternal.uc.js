@@ -5,8 +5,9 @@
 // @include        main
 // @compatibility  Firefox 3.5 3.6a1pre
 // @author         Alice0775
-// @version        2009/10/08 00:00 Bug 514310 -  browserDOMWindow.openURI should always pass the referrer to loadOneTab and avoid loading about:blank if possible のチェックインによる
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
 // ==/UserScript==
+// @version        2009/10/08 00:00 Bug 514310 -  browserDOMWindow.openURI should always pass the referrer to loadOneTab and avoid loading about:blank if possible のチェックインによる
 // @version        2009/09/21 00:00
 // @version        2009/06/21 00:00
 // 設定はabout:config等で
@@ -63,9 +64,8 @@
         }
         ]]></>
     );
-
     func = func.replace(
-        'if (needToFocusWin || !loadInBackground && isExternal) {',
+        /if \(needToFocusWin \|\| \(*!loadInBackground \&\& isExternal\)*\)/,
         <><![CDATA[
         if (isExternalFocus && isExternal) {
           setTimeout(function(){

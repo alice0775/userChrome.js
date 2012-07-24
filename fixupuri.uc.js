@@ -6,22 +6,23 @@
 // @compatibility  Firefox 3.5
 // @author         Alice0775
 // @Note
-// @version        2009/09/22 go-button_enhancements.uc.jsの無いときの処理追加
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
 // ==/UserScript==
+// @version        2009/09/22 go-button_enhancements.uc.jsの無いときの処理追加
 // @version        2009/07/06 ロケーションバーにおいて全角スペースが含まれるの検索語句を入力しても検索できない
 var fixupuri = {
   init: function() {
     var func = loadURI.toString();
     func = func.replace(
-    'if (allowThirdPartyFixup) {',
-    'if (allowThirdPartyFixup && fixupuri.fixup(uri)) {'
+    /if \(allowThirdPartyFixup\)/,
+    'if (allowThirdPartyFixup && fixupuri.fixup(uri))'
     );
     eval("loadURI = " + func);
 
     func = gBrowser.addTab.toString();
     func = func.replace(
-    'if (aAllowThirdPartyFixup) {',
-    'if (aAllowThirdPartyFixup && fixupuri.fixup(aURI)) {'
+    /if \(aAllowThirdPartyFixup\)/,
+    'if (aAllowThirdPartyFixup && fixupuri.fixup(aURI))'
     );
     eval("gBrowser.addTab = " + func);
 

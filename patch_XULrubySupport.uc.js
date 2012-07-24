@@ -5,11 +5,12 @@
 // @include        main
 // @compatibility  Firefox 3.0 - 9
 // @author         Alice0775
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
+// ==/UserScript==
 // @version        2011/09/16 sidebar 閉じたときエラーが出る
 // @Note           3.0.2009060901用
 // @Note           rubysupport.add.ignore.always       :trueとすることでデフォルトでルビ変換しない
 // @Note           rubysupport.add.allowexecute.site   :変換を常に許可するサイトをスペース区切り
-// ==/UserScript==
 // @include        chrome://browser/content/bookmarks/bookmarksPanel.xul
 // @include        chrome://browser/content/history/history-panel.xul
 // @include        chrome://browser/content/web-panels.xul
@@ -22,6 +23,10 @@
   try{
     var func = RubyService.processRubyNodes.toSource();
     func = func.replace(
+      'if (!aWindow.document) return false;',
+      'if (!aWindow.document) {return false;}'
+     );
+    func = func.replace(
       'if (!aWindow.document) {return false;}',
     <><![CDATA[
        if (!aWindow || !aWindow.document) {return false;}
@@ -31,6 +36,10 @@
     );
     eval("RubyService.processRubyNodes = " + func);
     func = RubyService.handleEvent.toSource();
+    func = func.replace(
+      "case 'MozAfterPaint':",
+      'case "MozAfterPaint":'
+    );
     func = func.replace(
       'case "MozAfterPaint":',
     <><![CDATA[

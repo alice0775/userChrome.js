@@ -7,16 +7,19 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 12-15
 // @author         Alice0775
+// @version        2012/05/01 21:30 delete this.xxx;
 // @version        2012/05/01 20:00
 // ==/UserScript==
 var findSelectionInFindbar = {
   // addHistoryFindbarFx3.0.uc.js
   get _findField2(){
+    delete this._findField2;
     return this._findField2 = document.getElementById("find-field2");
   },
 
   // addHistoryFindbarFx3.0.uc.js
   get inputbox2(){
+    delete this.inputbox2;
     return this.inputbox2 = document.getAnonymousElementByAttribute(this._findField2,
                                                                     "anonid",
                                                                     "textbox-input-box");
@@ -80,7 +83,7 @@ var findSelectionInFindbar = {
     var offset = event.rangeOffset;
     var a = this._findField.selectionStart;
     var b = this._findField.selectionEnd;
-userChrome_js.debug(a);
+//userChrome_js.debug(a);
     if ( (offset < a || offset >= b) &&
          ("gSearchWP" in this.getWin && "Tokenizer" in this.getWin.gSearchWP && "getByOffset" in this.getWin.gSearchWP.Tokenizer)) {
       // gSearchWP

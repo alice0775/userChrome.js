@@ -6,6 +6,7 @@
 // @include       chrome://browser/content/bookmarks/bookmarksPanel.xul
 // @compatibility Firefox 3.0 3.1
 // @author        Alice0775
+// @version       2012/06/28 00:00 Firefox14-
 // @version       2009/09/11 00:00 Minefield 3.7a1pre
 // @version       2009/08/14 19:00 面倒だから中クリックに置き換え
 // @version       2009/01/04 16:00 bookmarksHistoryPanel.uc.xulに対応
@@ -59,8 +60,17 @@ var sidebarBookmarksOpenInTabs = {
       tbo.getCellAt(aEvent.clientX + 16, aEvent.clientY, row1, col1, obj1);
 
       if (!col1.value){
-        var node = tbo.view.nodeForTreeIndex(row.value);
-        if (tbo.view.isContainer(row.value) || !/^javascript:/.test((node.uri))) {
+        try {
+          var node = tbo.view.nodeForTreeIndex(row.value);
+        } catch(e) {
+          node = this._BTree.view.nodeForTreeIndex(row.value);
+        }
+        try {
+          var isContainer = tbo.view.isContainer(row.value);
+        } catch(e) {
+          isContainer = this._BTree.view.isContainer(row.value);
+        }
+        if (isContainer || !/^javascript:/.test((node.uri))) {
           aEvent.preventDefault();
           aEvent.stopPropagation();
           this.handleTreeClick(this._BTree, aEvent);
@@ -75,9 +85,18 @@ var sidebarBookmarksOpenInTabs = {
     var row = { }, col = { }, obj = { };
     tbo.getCellAt(aEvent.clientX, aEvent.clientY, row, col, obj);
 
-    var isContainer = tbo.view.isContainer(row.value);
+    try {
+      var isContainer = tbo.view.isContainer(row.value);
+    } catch(e) {
+      isContainer = this._BTree.view.isContainer(row.value);
+    }
+    try {
+      var index = tbo.view.nodeForTreeIndex(row.value)
+    } catch(e) {
+      index = this._BTree.view.nodeForTreeIndex(row.value)
+    }
     var openInTabs = isContainer &&
-                     PlacesUtils.hasChildURIs(tbo.view.nodeForTreeIndex(row.value));
+                     PlacesUtils.hasChildURIs(index);
 
     if (openInTabs &&
         isContainer &&

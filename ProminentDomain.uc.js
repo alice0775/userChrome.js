@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 6.0 7.0
 // @author
+// @version        2012/05/13 23:00 by Alice0775  Bug 754498 - Domain should not be highlighted in the address bar when the URL differs from the page 
 // @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2011/06/24 data:等は無視
 // @version        2011/06/24 Bug 665580
@@ -127,9 +128,9 @@ var ProminentDomain = {
     var aURI = gURLBar.value;
     if (/^(data:|javascript:|chrome:|view-|about:)/.test(aURI))
       return;
-    try {
-      var ioService = Components.classes['@mozilla.org/network/io-service;1']
+    var ioService = Components.classes['@mozilla.org/network/io-service;1']
                       .getService(Components.interfaces.nsIIOService);
+    try {
       //aURI =  ioService.newURI(aURI, null, null).spec;
       aURI =  losslessDecodeURI(ioService.newURI(aURI, null, null))
     } catch(ex) {}
@@ -137,6 +138,14 @@ var ProminentDomain = {
     {
       return;
     }
+    //xxx Bug 754498
+    try {
+      if (ioService.newURI(gURLBar.value, null, null).spec != gBrowser.selectedTab.linkedBrowser.currentURI.spec)
+        return;
+    } catch(ex) {
+      return;
+    }
+    
     if ("isBlankPageURL" in window ? !isBlankPageURL(aURI) : aURI != "about:blank")
       gURLBar.removeAttribute("isempty");
     this.label.style.setProperty("visibility", "visible", "");
