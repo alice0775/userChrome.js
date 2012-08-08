@@ -8,13 +8,15 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には toggleSidebar(何タラ);
 // @Note
+// @version        2012/08/04 09:00 private browsingを考慮
+// @version        2012/08/04 09:00 hiddenではなくcollapsedを使うように
+// ==/UserScript==
 // @version        2012/02/08 14:00 splitter width in full screen
 // @version        2011/05/26 12:00 5.0a2でマウスが要素上通過する時, 移動速度が速すぎるとmouseoverイベントが発火しない? 感度が落ちた?
 // @version        2011/03/24 12:00 ドラッグオーバー遅延を別設定とした
 // @version        2010/10/30 18:00 http://hg.mozilla.org/mozilla-central/pushloghtml?fromchange=84baf90b040c&tochange=16eac4b8b8e0
 // @version        2010/10/09 18:00 Windows7 Aero
 // @version        2009/06/06 20:00 ドラッグオーバーで閉じてしまうので
-// ==/UserScript==
 // @version        2009/05/24 18:00 chromeのチェック変更
 // @version        2009/04/30 18:00 サイドバーを開閉したときは必ずタイマーをクリアするようにした。
 // @version        2009/04/28 00:00 負荷軽減
@@ -47,6 +49,7 @@ var ucjs_expand_sidebar = {
   _CHECKBOX_AT_STARUP:false, //チェックボックスの初期値
   _CLOSE_AT_STARTUP:true, //最初は閉じておく
   _lastcommand: null,
+  _backup_lastcommand:null,
   _open_Timeout: null,
   _close_Timeout: null,
   _sidebar_box:null,
@@ -107,10 +110,18 @@ var ucjs_expand_sidebar = {
     };
 
     this._sidebar_box = document.getElementById('sidebar-box');
+    if (this._sidebar_box.hasAttribute('hidden') ||
+        this._CLOSE_AT_STARTUP) {
+      this._sidebar_box.collapsed = true;
+    }
+    this._sidebar_box.hidden = false;
+
     this._sidebar = document.getElementById('sidebar');
+
     this._sidebar_splitter = document.getElementById('sidebar-splitter');
-    if(this._sidebar_splitter.hasAttribute('hidden'))
+    if (this._sidebar_splitter.hasAttribute('hidden')) {
       this._sidebar_splitter.removeAttribute('hidden');
+    }
     this._sidebar_splitter.setAttribute('collapsed', false);
 
     var checkbox = document.createElement('checkbox');
@@ -140,44 +151,15 @@ var ucjs_expand_sidebar = {
     ));
 
     //toggleSidebarの置き換え
-    var func = toggleSidebar.toString();
-    // Splitter should be shown always
-    // sidebarSplitter.hidden = true;
-    // sidebarSplitter.hidden = false;
-    new_cmd = "sidebarSplitter.removeAttribute('hidden');";
-    func = func.replace(/sidebarSplitter.hidden = true;/g, new_cmd);
-    new_cmd = "sidebarSplitter.removeAttribute('hidden');";
-    func = func.replace(/sidebarSplitter.hidden = false;/g, new_cmd);
-
-    // Remember last commandID
-    // var sidebarBroadcaster = document.getElementById(commandID);
-    new_cmd = " $& if (!!commandID){ ucjs_expand_sidebar._lastcommand = commandID;ucjs_expand_sidebar._loadKeepItSizes(commandID);}";
-    // sidebarbutton を 使用しているとき see sidebarbutton_2.1.11.uc.js付属のreadme.txt
-    // new_cmd = " $& if (!!commandID && commandID !='viewWebPanelsSidebar') ucjs_expand_sidebar._lastcommand = commandID;";
-    func = func.replace(/var sidebarBroadcaster = document\.getElementById\(commandID\);/, new_cmd);
-/*
-
-    // fail safe?
-    // var sidebarBroadcaster = document.getElementById(commandID);
-    new_cmd = " $& if (!sidebarBroadcaster) {return;}";
-    func = func.replace(/var sidebarBroadcaster = document\.getElementById\(commandID\);/, new_cmd);
-
-    // Resize sidebar by commandID
-    // fireSidebarFocusedEvent();
-    // }
-    new_cmd = " $& if (sidebarBox.getAttribute('collapsed') != 'true') ucjs_expand_sidebar._loadKeepItSizes();";
-    func = func.replace(/fireSidebarFocusedEvent\(\);/, new_cmd);
-    new_cmd = "if (sidebarBox.getAttribute('collapsed') != 'true') ucjs_expand_sidebar._loadKeepItSizes(); $&";
-    func = func.replace(/}$/, new_cmd);
-
-    // return and clear timer
-    // return;
-    // }
-    new_cmd = "ucjs_expand_sidebar._clearOpenCloseTimer(); $&";
-    func = func.replace(/return;/g, new_cmd);
-    func = func.replace(/}$/, new_cmd);
-*/
-    eval('toggleSidebar = ' + func + ';');
+    var func = window.toggleSidebar.toString();
+    func = func.replace(/\.hidden/g, '.collapsed')
+          .replace(/sidebar\.setAttribute\("src", "about:blank"\)/, '')
+          .replace(/sidebar\.docShell\.createAboutBlankContentViewer\(null\)/, '')
+          .replace(/sidebarSplitter\.collapsed = true;/g, '')
+          .replace(/var sidebarBroadcaster = document\.getElementById\(commandID\);/, " $& if (!!commandID){ ucjs_expand_sidebar._lastcommand = commandID;ucjs_expand_sidebar._loadKeepItSizes(commandID);}")
+          .replace(/sidebar\.setAttribute\("src", url\);/g, 'if (sidebar.getAttribute("src") != url) {$&}')
+          .replace(/sidebarBox\.setAttribute\("src", url\);/g, 'if (sidebarBox.getAttribute("src") != url) {$&}');
+    eval('window.toggleSidebar=' + func);
     //this.debug(toggleSidebar.toString());
 
     //fireSidebarFocusedEventの置き換え
@@ -212,7 +194,7 @@ var ucjs_expand_sidebar = {
         }
       }
 
-    }, this._CLOSE_AT_STARTUP ? 0 : 500, this);
+    }, 500, this);
 
     this._content = document.getElementById("content");
 
@@ -234,6 +216,8 @@ var ucjs_expand_sidebar = {
     this._sidebar_box.addEventListener("mouseover", ucjs_expand_sidebar._mouseover, false);
     this._sidebar_splitter.addEventListener("dblclick", this, false);
     this._sidebar_splitter.addEventListener("dragover", this, false);
+
+    Services.obs.addObserver(this, "private-browsing", false);
   },
 
   uninit: function(){
@@ -255,6 +239,38 @@ var ucjs_expand_sidebar = {
     this._sidebar_box.removeEventListener("mouseover", ucjs_expand_sidebar._mouseover, false);
     this._sidebar_splitter.removeEventListener("dblclick", this, false);
     this._sidebar_splitter.removeEventListener("dragover", this, false);
+
+     Services.obs.removeObserver(this, "private-browsing");
+  },
+
+  _back_url: null,
+  _back_cachedurl: null,
+  observe: function(aSubject, aTopic, aData) {
+    var self = ucjs_expand_sidebar;
+    if (aData == "enter") {
+      self._back_url = self._sidebar_box.getAttribute("src");
+      if (self._back_url == "chrome://browser/content/web-panels.xul") {
+        var b = self._sidebar.contentDocument.getElementById("web-panels-browser");
+        self._back_cachedurl = b.getAttribute("cachedurl");
+      }
+      self._sidebar_box.setAttribute("src", "about:blank");
+      self._sidebar.setAttribute("src", "about:blank");
+      self._backup_lastcommand = self._lastcommand;
+    } else if (aData == "exit") {
+      self._lastcommand = self._backup_lastcommand;
+      self._backup_lastcommand = null;
+      self._sidebar.setAttribute("src", "about:blank");
+      if (self._back_url == "chrome://browser/content/web-panels.xul") {
+        if (!!self._back_cachedurl) {
+          b = self._sidebar.contentDocument.getElementById("web-panels-browser");
+          b.setAttribute("cachedurl", self._back_cachedurl);
+          document.persist("web-panels-browser", "cachedurl");
+          self._back_cachedurl = null;
+        }
+      }
+      self._sidebar_box.setAttribute("src", self._back_url);
+      self._back_url = null;
+    }
   },
 
   handleEvent: function(event){
@@ -341,8 +357,9 @@ var ucjs_expand_sidebar = {
       return;
     }
 
-    if (self._mousedown == true)
+    if (self._mousedown) {
       return;
+    }
     self._checkWindowSideOrNot(event);
   },
 
@@ -548,11 +565,12 @@ var ucjs_expand_sidebar = {
         if (this._open_Timeout)
           clearTimeout(this._open_Timeout);
         this._open_Timeout = null;
-        if (!this._close_Timeout) {
-          this._close_Timeout = setTimeout(function(self){
-            toggleSidebar();
-          }, this._CLOSE_DELAY, this);
-        }
+
+        if (this._close_Timeout)
+          clearTimeout(this._close_Timeout);
+        this._close_Timeout = setTimeout(function(self){
+          toggleSidebar();
+        }, this._CLOSE_DELAY, this);
       } else {
         if (this._close_Timeout)
           clearTimeout(this._close_Timeout);

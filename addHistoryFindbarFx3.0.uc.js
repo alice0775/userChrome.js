@@ -5,10 +5,11 @@
 // @include        main
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
-// @compatibility  Firefox 3.0 3.5 3.6 4.0 14
+// @compatibility  Firefox 10 17
 // @author         Alice0775
-// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
+// @version        2012/08/07 21:30 xxxx Tree Style Tab 0.14.2012080601
 // ==/UserScript==
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
 // @version        2012/04/02 23:00 Bug 482057
 // @version        2011/10/02 18:00 ctrl+enter toggle hiligight all
 // @version        2011/03/29 17:00 コンテキストメニューにClear Search Historyを追加
@@ -724,7 +725,8 @@ var historyFindbar = {
 
   _DOMAttrModified: function(aEvent){
     var attrName = aEvent.attrName;
-//window.userChrome_js.debug("_DOMAttrModified " + attrName);
+window.userChrome_js.debug(aEvent.originalTarget.localName);
+window.userChrome_js.debug("_DOMAttrModified " + attrName);
     switch (attrName) {
       case "_moz-xmigemo-disable-ime":
       case "_moz-xmigemo-inactivate-ime":
@@ -736,6 +738,8 @@ var historyFindbar = {
       case "hidden":
         //Findbarの表示/非表示に同期して重ね合わせる
 //window.userChrome_js.debug("aEvent.newValue " + aEvent.newValue);
+        if (aEvent.originalTarget.localName != "findbar")
+          break;
         if (!aEvent.newValue){
           this.adjustSize(aEvent);
           this.historyfindbar.removeAttribute('hidden');
