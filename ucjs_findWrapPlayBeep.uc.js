@@ -7,15 +7,14 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 3.0 3.5 3.6 3.7a1pre
 // @author         Alice0775
+// @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
+// ==/UserScript==
 // @version        2010/01/05 Migemoが無いときの処理
 // @version        2010/01/05
 // @note           Migemoの場合accessibility.typeaheadfind.enablesound;falseとした方がいいような
-// ==/UserScript==
 var findWrapPlayBeep = {
   init: function() {
-    if (!("gFindBar" in window)) {
-      window.gFindBar = document.getElementById("FindToolbar");
-    }
+    gFindBar;
     if (!('_updateStatusUI' in gFindBar))
       return;
     var timer, count = 0;
@@ -33,8 +32,8 @@ var findWrapPlayBeep = {
     func = func.replace(/(?:case this.nsITypeAheadFind.FIND_WRAPPED:)/, '$& findWrapPlayBeep.playBeep();');
     try{
       gFindBar._updateStatusUI = new Function(
-         func.match(/\((.*)\)\s*\{/)[1],
-         func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*/, '').replace(/^{/, '').replace(/}$/, '')
       );
     } catch(ex){}
 
@@ -45,8 +44,8 @@ var findWrapPlayBeep = {
     func = func.replace('{', '$& if (aEvent.resultFlag & XMigemoFind.WRAPPED) findWrapPlayBeep.playBeep();');
     try{
       XMigemoUI.onXMigemoFindProgress = new Function(
-         func.match(/\((.*)\)\s*\{/)[1],
-         func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*/, '').replace(/^{/, '').replace(/}$/, '')
       );
     } catch(ex){}
   },

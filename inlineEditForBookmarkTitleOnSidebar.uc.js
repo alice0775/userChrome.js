@@ -5,11 +5,12 @@
 // @include       chrome://browser/content/bookmarks/bookmarksPanel.xul
 // @compatibility Firefox 10-
 // @author        Alice0775
+// @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
+// ==/UserScript==
 // @version       2012/02/06 編集終了Enterでブックマークが開かないように
 // @version       2012/02/06
 // @note          ツリーの左端をF2またはダブルクリックでブックマークのタイトルの編集開始
 // @note          ブックマークフォルダはF2でタイトルの編集開始
-// ==/UserScript==
 
 var inlineEditForBookmarkTitleOnSidebar = {
 
@@ -34,8 +35,8 @@ var inlineEditForBookmarkTitleOnSidebar = {
     );
     //Replace function
     SidebarUtils.handleTreeKeyPress = new Function(
-       func.match(/\((.*)\)\s*\{/)[1],
-       func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*/, '').replace(/^{/, '').replace(/}$/, '')
     );
 
     this._BTree.setAttribute('editable', true);
