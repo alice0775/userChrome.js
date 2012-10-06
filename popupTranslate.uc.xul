@@ -18,8 +18,11 @@ display: none;
 // @note                              基本的にメニューでxxx英日を選んでおくこと
 // @include        main
 // @include        chrome://messenger/content/messageWindow.xul
-// @compatibility  Firefox 2.0 3.0 3.5 3.6a1pre, Tb3
+// @compatibility  Firefox 10-16a1, Tb10-16a1
 // @author         Alice0775
+// @version        2012/10/06 07:00 Bug 722872  call .init(null) for nsITransferable instance
+// ==/UserScript==
+// @version        2012/06/28 18:00 タイムアウト
 // @version        2012/01/12 23:30 Bing翻訳変更
 // @version        2012/01/09 00:30 "のエスケープ
 // @version        2011/11/30 20:30 Infoseek動かないので削除
@@ -30,7 +33,6 @@ display: none;
 // @version        2010/08/12 00:00 Excite 文字コード
 // @version        2010/01/11 00:00 isJapanese
 // @version        2009/12/29 00:00 isJapanese
-// ==/UserScript==
 // @version        2009/12/22 20:00 Thunderbird 3 Shift+pが動かなかった(Thanks 音吉)
 // @version        2009/12/17 23:00 Thunderbird 3
 // @version        2009/12/12 23:00 Google翻訳仕様変更
@@ -73,6 +75,7 @@ display: none;
 
       timer: null,
       kXULNS:"http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+      TIMEOUT: 2000,
 
       mMenus: [
         /*
@@ -524,6 +527,9 @@ display: none;
           },
           onerror:function(e) {
             self.show("Error " + e.status + " occurred while receiving the document.");
+          },
+          ontimeout:function() {
+            self.show("Timeout");
           }
         });
       },
@@ -601,6 +607,9 @@ display: none;
           },
           onerror:function(e) {
             self.show("Error " + e.status + " occurred while receiving the document.");
+          },
+          ontimeout:function() {
+            self.show("Timeout");
           }
         });
       },
@@ -626,12 +635,18 @@ display: none;
       },
 
       //from GM_modoki.jsl
+      req: null,
       GM_xmlhttpRequest: function(obj){
         if(typeof(obj) != 'object' || (typeof(obj.url) != 'string' && !(obj.url instanceof String)))
           return;
-        var req = new XMLHttpRequest();
+        if (!this.req)
+          this.req = new XMLHttpRequest();
+        var req = this.req;
+        req.abort();
+        req.timeout = this.TIMEOUT;
+
         req.reqestUrl = obj.url;
-        req.open(obj.method || 'GET',obj.url,true);
+        req.open(obj.method || 'GET',obj.url,true); //async
 
         if(typeof(obj.headers) == 'object'){
           for(var i in obj.headers) {req.setRequestHeader(i,obj.headers[i], false);
@@ -639,7 +654,7 @@ display: none;
           }
         }
 
-        ['onload','onerror','onreadystatechange'].forEach(function(k){
+        ['onload','onerror','onreadystatechange', 'ontimeout'].forEach(function(k){
             if(obj[k] && (typeof(obj[k]) == 'function' || obj[k] instanceof Function))
               req[k] = function(){
                 obj[k]({
@@ -721,6 +736,7 @@ display: none;
         if (!trans) {
           return;
         }
+        trans.init(null);
         var str = Components.classes['@mozilla.org/supports-string;1'].
                   createInstance(Components.interfaces.nsISupportsString);
         str.data = aValue;

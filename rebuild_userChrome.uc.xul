@@ -8,11 +8,12 @@
 // @include        main
 // @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
 // @author         Alice0775
+// @version        2012/09/30 09:00 ubuntu12.04.1 "chromeフォルダを開く" に失敗することがあるのを修正
+// ==/UserScript==
 // @version        2012/02/25 23:00 restart
 // @version        2010/10/25 22:00 Bug 574688 adon bar
 // @version        2010/07/04 00:00 nsDragAndDrop
 // @version        2009/11/14 00:00 Seamonkeyに対応
-// ==/UserScript==
 // @version        2009/08/24 00:00 Namoroka3.6a2pre で右クリックでのスクリプト編集時にコンテキストメニューが表示されるのを修正
 // @version        2009/04/10 00:00 Minefield3.6a1pre での動作改善
 // @version        2009/03/27 00:00 nsIProcess変更
@@ -632,7 +633,7 @@
                   oncommand="userChromejs.restartApp();"/>
         <menuitem label="chromeフォルダを開く"
                   accesskey="h"
-                  oncommand='Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsILocalFile).launch();'/>
+                  oncommand='Components.classes["@mozilla.org/uriloader/external-protocol-service;1"].getService(Components.interfaces.nsIExternalProtocolService).loadUrl(Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService).newFileURI(Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsILocalFile)));'/>
       </menupopup>
     </menu>
 
@@ -661,7 +662,7 @@
                   oncommand="userChromejs.restartApp();"/>
         <menuitem label="chromeフォルダを開く"
                   accesskey="h"
-                  oncommand='Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsILocalFile).launch();'/>
+                  oncommand='Components.classes["@mozilla.org/uriloader/external-protocol-service;1"].getService(Components.interfaces.nsIExternalProtocolService).loadUrl(Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService).newFileURI(Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsILocalFile)));'/>
       </menupopup>
     </menu>
 

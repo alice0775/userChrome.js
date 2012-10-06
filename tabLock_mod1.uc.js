@@ -5,13 +5,14 @@
 // @include        *
 // @compatibility  4.0b8pre 12.0a2
 // @compatibility  4.0b8pre 12.0a2
+// @version        2012/08/12 22:00 init変更
+// ==/UserScript==
 // @version        2012/02/06 07:00  sidebar 修正
 // @version        2012/01/04 22:00  gURLBar.handleCommand 修正
 // @version        2011/07/21 22:00  Bug 658383
 // @version        2011/03/30 22:00  undefined error
 // @version        2011/02/15 22:00  xxx paste and go 
 // @version        2011/02/11 11:00  xxx Bug 633260 bookmark menu does not open (involves app tabs and feeds) 
-// ==/UserScript==
 // @Note           about:configの設定
 //  userChrome.tabLock.ignoreNextPrevLink タブをロックしている状態で, 次のページ, 前のページ などは ロックを無視するかどうか [true]/false
 //  userChrome.tabLock.ignoreHashLink タブをロックしている状態で, href ="#xxx" の場合ロックを無視するかどうか[true]/false
@@ -488,27 +489,28 @@ patch: {
       function init(i){
         if(i < gBrowser.mTabs.length){
           var aTab = gBrowser.mTabs[i];
-          if(aTab.linkedBrowser.docShell.busyFlags
-            || aTab.linkedBrowser.docShell.restoringDocument){
+          if(false && (aTab.linkedBrowser.docShell.busyFlags
+            || aTab.linkedBrowser.docShell.restoringDocument) ){
             setTimeout(init,1000,i);
           }else{
             that.restoreForTab(aTab);
             i++;
-            setTimeout(init,0,i);
+            init(i);
+            //setTimeout(init,0,i);
           }
         }else{
         }
       }
 
       gBrowser.tabContainer.addEventListener('TabMove', tabLock.TabMove, false);
-      gBrowser.tabContainer.addEventListener('SSTabRestored', tabLock.restore,false);
+      gBrowser.tabContainer.addEventListener('SSTabRestoring', tabLock.restore,false);
       window.addEventListener('unload',function(){ tabLock.uninit();},false)
     },
 
     uninit: function(){
       gBrowser.tabContainer.removeEventListener('drop', this.onDrop, true);
       gBrowser.tabContainer.removeEventListener('TabMove', tabLock.TabMove, false);
-      gBrowser.tabContainer.removeEventListener('SSTabRestored', tabLock.restore,false);
+      gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabLock.restore,false);
     // document.documentElement.removeEventListener('SubBrowserFocusMoved', function(){ tabLock.init(); }, false);
     },
 

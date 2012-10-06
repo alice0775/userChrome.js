@@ -5,8 +5,10 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
-// @version        2012/06/01 23:00 regression 04/19
+// @version        2012/10/06 07:00 Bug 722872  call .init(null) for nsITransferable instance
+// @version        2012/07/10 12:00 'テキストをConQueryで検索'にlink追加
 // ==/UserScript==
+// @version        2012/06/01 23:00 regression 04/19
 // @version        2012/05/04 13:00 Bug 741216 対策
 // @version        2012/04/19 00:05 debugなし
 // @version        2012/04/19 00:00 designModeはなにもしないようにした
@@ -401,6 +403,19 @@ var DragNGo = {
 
   openConQueryPopup: function openConQueryPopup(event) {
     if (typeof cqrShowHotmenu !='undefined')
+      if (!this.selection) {
+        var dragService = Cc["@mozilla.org/widget/dragservice;1"]
+                          .getService(Ci.nsIDragService);
+        var dragSession = dragService.getCurrentSession();
+        var sourceNode = dragSession.sourceNode;
+        if (sourceNode instanceof HTMLAnchorElement) {
+          var range = this.focusedWindow.document.createRange()
+          range.selectNodeContents(sourceNode)
+          var sel = this.focusedWindow.getSelection();
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      }
       cqrShowHotmenu(null, event.screenX, event.screenY);
   },
 
@@ -930,6 +945,9 @@ var DragNGo = {
       // Setup a transfer item to retrieve the file data
       var trans = Cc["@mozilla.org/widget/transferable;1"]
                   .createInstance(Ci.nsITransferable);
+      if (!trans)
+        return;
+      trans.init(null);
       flavours.forEach(function (flavour) {
         trans.addDataFlavor(flavour);
       });

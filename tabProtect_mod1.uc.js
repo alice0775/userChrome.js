@@ -6,13 +6,15 @@
 // @author         Alice0775
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  4.0b8pre
+// @version        2012/08/28 22:00 margin調整
+// ==/UserScript==
+// @version        2012/08/12 22:00 init変更
 // @version        2010/12/22 11:00 最近のTree Style Tabは変更多すぎるからもう知らん
 // @version        2010/10/12 11:00 by Alice0775  4.0b8pre
 // @version        2010/03/26 13:00  Minefield/3.7a4pre Bug 554991 -  allow tab context menu to be modified by normal XUL overlays
 // @version        2010/03/15 00:00  Minefield/3.7a4pre Bug 347930 -  Tab strip should be a toolbar instead
 // @version        2010/01/29 16:00 http://piro.sakura.ne.jp/latest/blosxom/mozilla/extension/treestyletab/2009-09-29_debug.htm
 // @version        2009/09/03 22:00 Firegox3.7a1preで動かなくなっていたのを修正(Bug 489925. getElementById should not return anonymous nodes)
-// ==/UserScript==
 // @version        2009/07/21 Multiple Tab Handler 0.4.2009072001
 // @version        2009/06/25 Private browsing Modeに対応 (TMPは未検証)
 // @version        2008/12/30 Multiple Tab Handler
@@ -152,6 +154,8 @@ var tabProtect = {
         width: 0px;
       }
       .tab-icon-protect{
+        margin-top:0px; /*要調整*/
+        margin-left:4px; /*要調整*/
         list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQUlEQVQ4jWNgGAXDADASUvDvOsN/fPJMlLqAhRhFTJqo/H/XKXQBsoFEuQDDVnIMQPcGXJxYA3C5hiwvUOwCZAAAlRcK7m+YgB4AAAAASUVORK5CYII=');
       }
       .tab-icon-protect[hidden='true'] {
@@ -198,20 +202,21 @@ var tabProtect = {
     function init(i){
       if(i < gBrowser.mTabs.length){
         var aTab = gBrowser.mTabs[i];
-        if(aTab.linkedBrowser.docShell.busyFlags
-          || aTab.linkedBrowser.docShell.restoringDocument){
+        if(false && (aTab.linkedBrowser.docShell.busyFlags
+          || aTab.linkedBrowser.docShell.restoringDocument) ){
           setTimeout(init,250,i);
         }else{
           that.restoreForTab(aTab);
           i++;
-          setTimeout(init,0,i);
+          init(i);
+          //setTimeout(init,0,i);
         }
       }else{
       }
     }
 
     gBrowser.tabContainer.addEventListener('TabMove', tabProtect.TabMove, false);
-    gBrowser.tabContainer.addEventListener('SSTabRestored', tabProtect.restore,false);
+    gBrowser.tabContainer.addEventListener('SSTabRestoring', tabProtect.restore,false);
     window.addEventListener('unload',function(){ tabProtect.uninit();},false)
 
     //Multiple Tab Handler
@@ -229,7 +234,7 @@ var tabProtect = {
   uninit: function(){
     gBrowser.tabContainer.removeEventListener('drop', this.onDrop, true);
     gBrowser.tabContainer.removeEventListener('TabMove', tabProtect.TabMove, false);
-    gBrowser.tabContainer.removeEventListener('SSTabRestored', tabProtect.restore,false);
+    gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabProtect.restore,false);
   // document.documentElement.removeEventListener('SubBrowserFocusMoved', function(){ tabProtect.init(); }, false);
   },
 
