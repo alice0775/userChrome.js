@@ -20,6 +20,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 10-16a1, Tb10-16a1
 // @author         Alice0775
+// @version        2012/10/07 09:00 動かないもの削除
 // @version        2012/10/06 07:00 Bug 722872  call .init(null) for nsITransferable instance
 // ==/UserScript==
 // @version        2012/06/28 18:00 タイムアウト
@@ -120,24 +121,8 @@ display: none;
           code:"UTF-8",
           xpath:'.//textarea[@name="after"]',
         },
-/*
-        {
-          Description:"Google 英日",
-          method:'GET',
-          Referer:'http://translate.google.com/translate_t?langpair=en|ja',
-          action:"http://translate.google.com/translate_t?langpair=en|ja&ie=utf-8&oe=utf-8&text=%%SEL%%",
-          code:"UTF-8",
-          xpath:'.//div[@id="result_box"]',
-        },
-        {
-          Description:"Google 日英",
-          method:'GET',
-          Referer:'http://translate.google.com/translate_t?langpair=ja|en',
-          action:"http://translate.google.com/translate_t?langpair=ja|en&ie=utf-8&oe=utf-8&text=%%SEL%%",
-          code:"UTF-8",
-          xpath:'.//div[@id="result_box"]',
-        },
-*/
+
+
         {
           Description:"Google 英日",
           method:'POST',
@@ -156,54 +141,8 @@ display: none;
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
         },
-/*
-       {
-          Description:"Infoseek 英日",
-          method:'GET',
-          Referer:'http://translation.infoseek.co.jp/',
-          action:'http://translation.infoseek.co.jp/?submit='+encodeURI("　翻訳　")+'&ac=Text&lng=en&selector=0&original=%%SEL%%',
-          code:"UTF-8",
-          xpath:'.//textarea[@name="converted"]',
-          prefetchURL:'http://translation.infoseek.co.jp/',      //あらかじめアクセスするURL
-          prefechData:['token']                                  //必要なinput type= hidden の name
-        },
-        {
-          Description:"Infoseek 日英",
-          method:'GET',
-          Referer:'http://translation.infoseek.co.jp/',
-          action:'http://translation.infoseek.co.jp/?submit='+encodeURI("　翻訳　")+'&ac=Text&lng=ja&selector=1&original=%%SEL%%',
-          code:"UTF-8",
-          xpath:'.//textarea[@name="converted"]',
-          prefetchURL:'http://translation.infoseek.co.jp/',      //あらかじめアクセスするURL
-          prefechData:['token']                                  //必要なinput type= hidden の name
-        },
-        {
-          Description:"Live Translate 英日",
-          method:'POST',
-          Referer:'http://www.windowslivetranslator.com/Default.aspx',
-          action:"http://www.windowslivetranslator.com/Default.aspx",
-          post:"__VIEWSTATE=%2FwEPDwULLTEzMTY2NDMxMjFkZA%3D%3D&InputTextVal=%%SEL%%&BrowserLanguagePreference=ja&MaxInputChars=3500&InputURL=http%3A%2F%2F&LangPair%24DDL=en_ja&BtnTransText=%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88%E3%81%AE%E7%BF%BB%E8%A8%B3",
-          code:"UTF-8",
-          xpath:'.//textarea[@name="OutputText"]',
-          prefetchURL:'http://www.windowslivetranslator.com/Default.aspx?MKT=en-US&LangPair%24DDL=en_ja',
-          prefechData:['__EVENTVALIDATION'],
-          cookie:"lp=en_ja"
-        },
 
-        {
-          Description:"Live Translate 日英",
-          method:'POST',
-          Referer:'http://www.windowslivetranslator.com/Default.aspx',
-          action:"http://www.windowslivetranslator.com/Default.aspx",
-          post:"__VIEWSTATE=%2FwEPDwULLTEzMTY2NDMxMjFkZA%3D%3D&InputTextVal=%%SEL%%&BrowserLanguagePreference=ja&MaxInputChars=3500&InputURL=http%3A%2F%2F&LangPair%24DDL=ja_en&BtnTransText=%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88%E3%81%AE%E7%BF%BB%E8%A8%B3",
-          code:"UTF-8",
-          xpath:'.//textarea[@name="OutputText"]',
-          prefetchURL:'http://www.windowslivetranslator.com/Default.aspx?MKT=ja-JP&LangPair%24DDL=ja_en',
-          prefechData:['__EVENTVALIDATION'],
-          cookie:"lp=ja_en"
-        },
 
-*/
         {
           Description:"Yahoo Translate 英日",
           method:"POST",
@@ -225,25 +164,6 @@ display: none;
         },
 
 
-        {
-          Description:"Babelfish Yahoo Translate 英日",
-          method:"POST",
-          Referer:"http://babelfish.yahoo.com/translate_txt",
-          action:"http://babelfish.yahoo.com/translate_txt",
-          post:"ei=UTF-8&doit=done&fr=bf-home&intl=1&tt=urltext&trtext=%%SEL%%&lp=en_ja&btnTrTxt=Translate",
-          code:"UTF-8",
-          xpath:'.//div[@id="result"]/div'
-        },
-
-        {
-          Description:"Babelfish Yahoo Translate 日英",
-          method:"POST",
-          Referer:"http://babelfish.yahoo.com/translate_txt",
-          action:"http://babelfish.yahoo.com/translate_txt",
-          post:"ei=UTF-8&doit=done&fr=bf-home&intl=1&tt=urltext&trtext=%%SEL%%&lp=ja_en&btnTrTxt=Translate",
-          code:"UTF-8",
-          xpath:'.//div[@id="result"]/div'
-        },
 
         {
           Description:"@nifty翻訳 英日",
@@ -263,26 +183,6 @@ display: none;
           post:"SLANG=ja&TLANG=en&XMODE=0&SSRC=%%SEL%%&txtDirection=jaen",
           code:"UTF-8",
           xpath:'.//textarea[@id="txtTransArea2"]'
-        },
-
-        {
-          Description:"Bing翻訳 英日",
-          method:'GET',
-          Referer:"http://www.microsofttranslator.com/",
-          action:"http://api.microsofttranslator.com/V2/Ajax.svc/Translate?appId=46846E697D3BC6FA50998483EF31894654002928&from=%22%22&to=%22ja%22&loc=en&ctr=Japan&text=%%SEL%%",
-          code:"UTF-8",
-          start:'^"',
-          end:'"$',
-        },
-
-        {
-          Description:"Bing翻訳 日英",
-          method:'GET',
-          Referer:"http://www.microsofttranslator.com/",
-          action:"http://api.microsofttranslator.com/V2/Ajax.svc/Translate?appId=46846E697D3BC6FA50998483EF31894654002928&from=%22%22&to=%22en%22&loc=en&ctr=Japan&text=%%SEL%%",
-          code:"UTF-8",
-          start:'^"',
-          end:'"$',
         }
       ],
 

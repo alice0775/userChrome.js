@@ -9,10 +9,11 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
-// @version        2010/04/21 01:00  Firefox3.7a5pre
+// @version        2011/10/06 23:00 Bug 795065 Add privacy status to nsDownload
+// ==/UserScript==
+// @version        2010/04/21 01:00 Firefox3.7a5pre
 // @version        2009/04/10 00:00 Minefield3.6a1pre での動作改善 (メニューのidが"SaveFolder"だとダメ なぜ?)
 // @version        2008/10/17 12:00 コード整理 (DragNgoModoki5.uc.jsも修正)
-// ==/UserScript==
 // Original function of directSaveLink and setLeafName are from Drag de Go.xpi,
 // and author is Yukichi http://bushwhacker.up.seesaa.net/ .
 //
@@ -28,8 +29,8 @@ var saveFolderModoki = {
 //-- config --
   IMAGE_DBLCLICK          : "D:\\ほげほげ", // 画像を右ダブルクリックしたときの保存フォルダ, nullならファイルピッカ起動
   CONTENTDISPOSITION      : true,       // content-disposition 使う[true], 使わないfalse
-  REPLACE_SYSTEM_saveURL  : true,       // CONTENTDISPOSITIONがtrueのとき, システム既定のsaveURLでもcontent-disposition 使う[true], 使わないfalse
-  REPLACE_SYSTEM_fileTitle: true,      // デフォルトのファイル名にtitle属性を 使うtrue, 使わない[false]
+  REPLACE_SYSTEM_saveURL  : false,       // CONTENTDISPOSITIONがtrueのとき, システム既定のsaveURLでもcontent-disposition 使う[true], 使わないfalse
+  REPLACE_SYSTEM_fileTitle: false,      // デフォルトのファイル名にtitle属性を 使うtrue, 使わない[false]
 //-- config --
 
   //リスナー登録
@@ -373,6 +374,11 @@ var saveFolderModoki = {
     // Leave it to WebBrowserPersist to discover the encoding type (or lack thereof):
     persist.persistFlags |= nsIWBP.PERSIST_FLAGS_AUTODETECT_APPLY_CONVERSION;
 
+    try {
+      var isPrivate = PrivateBrowsingUtils.isWindowPrivate(window);
+    } catch (e) {
+      isPrivate = false;
+    }
     // Create download and initiate it (below)
     var tr = Components.classes["@mozilla.org/transfer;1"].createInstance(Components.interfaces.nsITransfer);
 
@@ -403,7 +409,7 @@ var saveFolderModoki = {
 
       const kWrapColumn = 80;
       tr.init((aChosenData ? aChosenData.uri : fileInfo.uri),
-              persistArgs.target, "", null, null, null, persist);
+              persistArgs.target, "", null, null, null, persist, isPrivate);
       try{
         persist.progressListener = new DownloadListener(window, tr);
       } catch(e) {
@@ -413,15 +419,18 @@ var saveFolderModoki = {
                            persistArgs.contentType, encodingFlags, kWrapColumn);
     } else {
       tr.init((aChosenData ? aChosenData.uri : source),
-              persistArgs.target, "", null, null, null, persist);
+              persistArgs.target, "", null, null, null, persist, isPrivate);
       try{
         persist.progressListener = new DownloadListener(window, tr);
       } catch(e) {
         persist.progressListener = tr;
       }
+      let privacyContext = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIWebNavigation)
+                                .QueryInterface(Ci.nsILoadContext);
       persist.saveURI((aChosenData ? aChosenData.uri : source),
                       null, aReferrer, persistArgs.postData, null,
-                      persistArgs.target);
+                      persistArgs.target, privacyContext);
     }
   },
 
