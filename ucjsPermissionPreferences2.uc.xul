@@ -12,15 +12,16 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    add UI for hostperm.1 to Preferences
 // @include        main
-// @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a1pre 15.0a1
+// @compatibility  Firefox 10 17-20.0a1
 // @author         Alice0775
+// @version        2012/11/26 Bug 399528の修正およびerror表示回避
+// ==/UserScript==
 // @version        2012/04/30 コメント外した
 // @version        2011/08/06 objectsubrequest追加
 // @version        2010/08/26 エラー回避
 // @version        2010/08/26 Minefield 4.0b5pre  Bug 546857 (kill-remote-xul) Drop support for XUL on web sites (remote XUL)
 // @version        2009/08/25 Minefield 3.7a1pre  Bug 506985 -  remove java-specific preferences from Firefox UI, hidden prefs
 // @version        2008/03/12 13:30 Gecko/2008031112 Minefield/3.0b5pre 以降用に
-// ==/UserScript==
 // @version        2009/06/26
 // @version        2008/01/19 10:30 cookieのデフォルトの状態が機能していなかった
 // @version        2007/10/07 22:30
@@ -366,14 +367,27 @@ WindowHook.register("chrome://browser/content/preferences/permissions.xul",
       aWindow.document.getElementById("btnBlock").disabled = !aSiteField.value;
       aWindow.document.getElementById("btnAllow").disabled = !aSiteField.value;
     }
+    
+    aWindow.gPermissionManager.uninit = function (aParams)
+    {
+      if (this._type) {
+        // reusing an open dialog, clear the old observer
+        var os = Components.classes["@mozilla.org/observer-service;1"]
+                    .getService(Components.interfaces.nsIObserverService);
+        try {
+          os.removeObserver(this, "perm-changed");
+          //this.uninit();
+        } catch(ex) {}
+      }
+    }
 
     aWindow.gPermissionManager.init = function (aParams)
     {
       if (this._type) {
-        // reusing an open dialog, clear the old observer
-        this.uninit();
+          this.uninit();
       }
       this._type = aParams.permissionType;
+      this._manageCapability = aParams.manageCapability;
 
       var permissionsText = aWindow.document.getElementById("permissionsText");
       while (permissionsText.hasChildNodes())
@@ -387,10 +401,16 @@ WindowHook.register("chrome://browser/content/preferences/permissions.xul",
       aWindow.document.getElementById("btnSession").hidden  = !aParams.sessionVisible;
       aWindow.document.getElementById("btnAllow").hidden    = !aParams.allowVisible;
 
+      var urlFieldVisible = (aParams.blockVisible || aParams.sessionVisible || aParams.allowVisible);
+
       var urlField = aWindow.document.getElementById("url");
       urlField.value = aParams.prefilledHost;
+      urlField.hidden = !urlFieldVisible;
 
       this.onHostInput(urlField);
+
+      var urlLabel = aWindow.document.getElementById("urlLabel");
+      urlLabel.hidden = !urlFieldVisible;
 
       var os = Components.classes["@mozilla.org/observer-service;1"]
                          .getService(Components.interfaces.nsIObserverService);
@@ -405,6 +425,9 @@ WindowHook.register("chrome://browser/content/preferences/permissions.xul",
       this._loadPermissions();
 
       urlField.focus();
+      this._ltrAtom = Components.classes["@mozilla.org/atom-service;1"]
+                                .getService(Components.interfaces.nsIAtomService)
+                                .getAtom("ltr"); 
     }
 
   }

@@ -9,6 +9,7 @@
 // @include       main
 // @compatibility Firefox 2.0 3.0 3.1
 // @author        Alice0775
+// @version       2010/10/11 20:00 ウインドウ残るように
 // @version       2010/03/24 23:00 ウインドウ残らないように
 // ==/UserScript==
 // @version       2011/01/29 00:00 Bug 623435 - Rip out deprecated |RegExp.compile| builtin method
@@ -132,26 +133,22 @@ var ieviewModoki={
     menupopup.appendChild(menuitem);
 
     //既に開いている場合
-    //現在のブラウザ
-    var browser = ieviewModoki.activeBrowser();
     //ブラウザのタブが1
-    if(browser.browsers.length<2){
+    if (gBrowser.browsers.length < 2) {
       //ドキュメントのURI
-      var targethref=browser.currentURI.spec;
+      var targethref = gBrowser.currentURI.spec;
       //自動実行か?
-      for(var iApp=0;iApp<ieviewModoki.mApplication.length;iApp++){
-        if(!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
-        if(!this.mRegExp[iApp]) continue;;
-        if(this.mRegExp[iApp].test(targethref)) {
+      for (var iApp = 0; iApp < ieviewModoki.mApplication.length; iApp++) {
+        if (!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
+        if (!this.mRegExp[iApp]) continue;;
+        if (this.mRegExp[iApp].test(targethref)) {
           //起動
           this.launch(targethref, iApp);
-          if( browser.sessionHistory.count == 1 ){
-            browser.addTab("about_blank");
-            browser.removeTab(browser.mTabs[0]);
+          //blankにしておく
+          gBrowser.contentDocument.location.replace("about:blank");
+          if (gBrowser.visibleTabs.length - gBrowser._numPinnedTabs <= 1) {
+            //ブラウザのの－まるタブが1以下でタブの履歴がない ブラウザ クローズ
             setTimeout(function(){window.close();},0);
-          }else{
-            //blankにしておく
-            browser.contentDocument.location.replace("about:blank");
           }
         }
       }
@@ -167,19 +164,19 @@ var ieviewModoki={
     document.getElementById("appcontent").removeEventListener("click", function(aEvent){ieviewModoki.click(aEvent);}, true);
     window.removeEventListener("DOMContentLoaded", function(aEvent){ieviewModoki.always(aEvent);}, false);
   },
-  keydown: function(aEvent){
-    if( aEvent.keyCode != 13 || aEvent.altKey || aEvent.shiftKey || aEvent.ctrlKey) return;
+  keydown: function(aEvent) {
+    if (aEvent.keyCode != 13 || aEvent.altKey || aEvent.shiftKey || aEvent.ctrlKey) return;
     this.getHref(aEvent);
   },
-  click: function(aEvent){
-    if( aEvent.button != 0 || aEvent.altKey || aEvent.shiftKey || aEvent.ctrlKey) return;
+  click: function(aEvent) {
+    if (aEvent.button != 0 || aEvent.altKey || aEvent.shiftKey || aEvent.ctrlKey) return;
     this.getHref(aEvent);
   },
-  getHref: function(aEvent){
+  getHref: function(aEvent) {
     const ioService = Components.classes['@mozilla.org/network/io-service;1']
                       .getService(Components.interfaces.nsIIOService);
     var target = aEvent.originalTarget;
-    while(target){
+    while (target) {
       if (target instanceof HTMLAnchorElement ||
              target instanceof HTMLImageElement ||
              target instanceof HTMLAreaElement ||
@@ -191,9 +188,9 @@ var ieviewModoki={
       target = target.parentNode;
     }
     var targethref = null;
-    if ( target && target.hasAttribute("href") ) {
+    if (target && target.hasAttribute("href") ) {
        targethref = target.getAttribute("href");
-    } else if ( target && target.hasAttribute("src") ) {
+    } else if (target && target.hasAttribute("src") ) {
        targethref = target.getAttribute("src");
     }
     if ( !targethref ) return;
@@ -201,14 +198,14 @@ var ieviewModoki={
     if (/^\s*chrome:/.test(targethref) || /^\s*javascript:/.test(targethref)) return;
     //相対URL
     var win = target.ownerDocument.defaultView;
-    try{
+    try {
       var baseURI = ioService.newURI(win.document.documentURI, null, null);
       targethref = ioService.newURI(targethref, null, baseURI).spec;
       //自動実行か?
-      for(var iApp=0;iApp<ieviewModoki.mApplication.length;iApp++){
-        if(!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
-        if(!this.mRegExp[iApp]) continue;;
-        if(this.mRegExp[iApp].test(targethref)) {
+      for (var iApp=0; iApp < ieviewModoki.mApplication.length; iApp++){
+        if (!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
+        if (!this.mRegExp[iApp]) continue;;
+        if (this.mRegExp[iApp].test(targethref)) {
           //起動
           aEvent.stopPropagation();
           aEvent.preventDefault();
@@ -216,7 +213,7 @@ var ieviewModoki={
           return false;
         }
       }
-    }catch(e){
+    } catch(e) {
       ieviewModoki.error("Error",e);
     }
   },
@@ -291,40 +288,33 @@ var ieviewModoki={
     if (!(aEvent.originalTarget instanceof HTMLDocument)) return;
     if (!aEvent.originalTarget.defaultView) return;
     if (aEvent.originalTarget.defaultView.frameElement) return;
-    //現在のブラウザ
-    var browser = ieviewModoki.activeBrowser();
 
     //ドキュメントをロードしたブラウザ, ブラウザインデックス
     var targetBrowser = null;
-    var targetBrowserIndex = browser.getBrowserIndexForDocument(aEvent.originalTarget);
+    var targetBrowserIndex = gBrowser.getBrowserIndexForDocument(aEvent.originalTarget);
     if (targetBrowserIndex == -1)
       return;
-    targetBrowser = browser.getBrowserAtIndex(targetBrowserIndex);
+    targetBrowser = gBrowser.getBrowserAtIndex(targetBrowserIndex);
 
 
     //ドキュメントのURI
     var targethref = targetBrowser.currentURI.spec;
 
     //自動実行か?
-    for(var iApp=0;iApp<ieviewModoki.mApplication.length;iApp++) {
-      if(!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
-      if(!this.mRegExp[iApp]) continue;;
-      if(this.mRegExp[iApp].test(targethref)) {
+    for (var iApp = 0; iApp < ieviewModoki.mApplication.length; iApp++) {
+      if (!this.getPref('userChrome.ieview.force.always'+iApp,'bool', true)) continue;
+      if (!this.mRegExp[iApp]) continue;;
+      if (this.mRegExp[iApp].test(targethref)) {
         this.launch(targethref, iApp);
-        //ブラウザのタブが1
-        if(browser.browsers.length<2
-            && targetBrowser.sessionHistory.count == 1 ) {
-          browser.addTab("about_blank");
-          browser.removeTab(browser.mTabs[0]);
-          setTimeout(function(){window.close();},0);
-        } else {
-          //タブの履歴がないならタブ削除
-          if( targetBrowser.sessionHistory.count == 1 ){
-            if (browser.mTabbedMode)
-              browser.removeTab(browser.mTabs[targetBrowserIndex]);
-          }else{
-            //blankにしておく
-            aEvent.originalTarget.location.replace("about:blank");
+        //blankにしておく
+        aEvent.originalTarget.location.replace("about:blank");
+        if ( targetBrowser.sessionHistory.count == 1 ){
+          if (gBrowser.visibleTabs.length - gBrowser._numPinnedTabs <= 1) {
+            //ブラウザのの－まるタブが1以下でタブの履歴がない ブラウザ クローズ
+            //setTimeout(function() {window.close();}, 0);
+          } else {
+            //タブの履歴がないならタブ削除
+            gBrowser.removeTab(gBrowser.mTabs[targetBrowserIndex]);
           }
         }
         //起動
@@ -336,17 +326,17 @@ var ieviewModoki={
   launch: function (href,iApp){
 
     var sel = '';
-    if(href == ''){
+    if (href == ''){
       sel = this._getselection();
     }
     var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
           createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
     //キャラクタコード変換
     var platform = window.navigator.platform.toLowerCase();
-    if(platform.indexOf('win')>-1){
+    if (platform.indexOf('win') > -1) {
       UI.charset = "Shift_JIS";
       sel = UI.ConvertFromUnicode(sel);
-    }else{
+    } else {
       UI.charset = "UTF-8";
       sel = UI.ConvertFromUnicode(sel);
     }
@@ -529,14 +519,14 @@ var ieviewModoki={
         var menuitem = document.createElement("menuitem");
         menuitem.setAttribute("label","このページを"+ieviewModoki.mApplication[i]+"で閲覧");
         menuitem.setAttribute("accesskey","1");
-        menuitem.setAttribute("oncommand","ieviewModoki.launch(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menuitem.setAttribute("oncommand","ieviewModoki.launch(gBrowser.currentURI.spec,"+i+")");
         menupopup.appendChild(menuitem);
 
         menuitem = document.createElement("menuitem");
         menuitem.setAttribute("id","ieviewModoki_pagealways"+i);
         menuitem.setAttribute("label","このページを常に"+ieviewModoki.mApplication[i]+"で閲覧");
         menuitem.setAttribute("accesskey","2");
-        menuitem.setAttribute("oncommand","ieviewModoki.addSite(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menuitem.setAttribute("oncommand","ieviewModoki.addSite(gBrowser.currentURI.spec,"+i+")");
         menupopup.appendChild(menuitem);
       }
 
@@ -650,14 +640,14 @@ var ieviewModoki={
         menuitem.setAttribute("id","ieviewModoki_page"+i);
         menuitem.setAttribute("label","このページを"+ieviewModoki.mApplication[i]+"で閲覧");
         menuitem.setAttribute("accesskey","1");
-        menuitem.setAttribute("oncommand","ieviewModoki.launch(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menuitem.setAttribute("oncommand","ieviewModoki.launch(gBrowser.currentURI.spec,"+i+")");
         menupopup.appendChild(menuitem);
 
         menuitem = document.createElement("menuitem");
         menuitem.setAttribute("id","ieviewModoki_pagealways"+i);
         menuitem.setAttribute("label","このページを常に"+ieviewModoki.mApplication[i]+"で閲覧");
         menuitem.setAttribute("accesskey","2");
-        menuitem.setAttribute("oncommand","ieviewModoki.addSite(ieviewModoki.activeBrowser().currentURI.spec,"+i+")");
+        menuitem.setAttribute("oncommand","ieviewModoki.addSite(gBrowser.currentURI.spec,"+i+")");
         menupopup.appendChild(menuitem);
       }
       if(/* ieviewModoki._getselection()==""
@@ -695,11 +685,6 @@ var ieviewModoki={
 
       firstItem = false;
     }
-  },
-  //ブラウザを得る
-  activeBrowser: function() {
-    return ('SplitBrowser' in window ? SplitBrowser.activeBrowser : null )
-            ||  gBrowser;
   },
   //ウインドウを得る
   _getFocusedWindow: function(){

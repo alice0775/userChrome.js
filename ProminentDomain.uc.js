@@ -5,13 +5,14 @@
 // @include        main
 // @compatibility  Firefox 6.0 7.0
 // @author
+// @version        2012/11/24 23:00 by Alice0775  fixed key navigation
+// ==/UserScript==
 // @version        2012/05/13 23:00 by Alice0775  Bug 754498 - Domain should not be highlighted in the address bar when the URL differs from the page 
 // @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2011/06/24 data:等は無視
 // @version        2011/06/24 Bug 665580
 // @version        2011/06/10
 // @Note
-// ==/UserScript==
 
 var ProminentDomain = {
 
@@ -19,11 +20,11 @@ var ProminentDomain = {
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
                   .getService(Components.interfaces.nsIPrefBranch2);
     try{
-      if (xpPref.getBoolPref("browser.urlbar.formatting.enabled"))
+      if (xpPref.setBoolPref("browser.urlbar.formatting.enabled", false))
         return;
     } catch(ex) {}
     try{
-      if (xpPref.getBoolPref("browser.urlbar.trimURLs"))
+      if (xpPref.setBoolPref("browser.urlbar.trimURLs", false))
         return;
     } catch(ex) {}
 
@@ -37,15 +38,16 @@ var ProminentDomain = {
   			));
 		}
 
-    if (!document.getElementById("textbox-input-box-button")) {
+    if (!(this.label = document.getElementById("textbox-input-box-button"))) {
       var icons = document.getElementById("urlbar-icons");
-      this.label = document.createElementNS("http://www.w3.org/1999/xhtml", "button");
+      this.label = document.createElement("label");
       this.label.setAttribute("id", "textbox-input-box-button");
-      this.label.setAttribute("class", "textbox-input-box");
-      this.label.style.setProperty("-moz-appearance", "textfield", "important");
+      //this.label.setAttribute("class", "textbox-input-box");
+      this.label.style.setProperty("-moz-appearance", "label", "important");
       this.label.style.setProperty("border", "0px", "");
       this.label.style.setProperty("padding", "0px", "");
       this.label.style.setProperty("margin-left", "-3px", "");
+      this.label.style.setProperty("margin-right", "-3px", "");
       this.label.style.setProperty("background-color", "transparent", "");
       this.label.style.setProperty("visibility", "collapse", "");
       this.label.textContent = "";
@@ -55,32 +57,33 @@ var ProminentDomain = {
     this.init();
 
     var self = this;
+    window.addEventListener("unload", this, false);
+    gBrowser.addProgressListener(this);
+    gNavToolbox.addEventListener("aftercustomization", this, false);
 
-    gURLBar.addEventListener("ValueChange", function() {
-      if (!self.hasFocus)
-      {
-        self.prettyView();
-      }
-    }, false);
-    gURLBar.addEventListener("blur", function() {
-      self.hasFocus = false;
-      self.prettyView();
-    }, true);
-    gURLBar.addEventListener("focus", function() {
-      self.hasFocus = true;
-      self.plainView();
-    }, true);
+    // observ placeContent tree view change
+    // create an observer instance
+    this.observer1 = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.type == "attributes" &&
+            mutation.attributeName == "focused") {
+          ProminentDomain.debug("onFocusChange");
+          if (ProminentDomain._timer)
+            clearTimeout(ProminentDomain._timer);
+          if (mutation.target.getAttribute(mutation.attributeName) == "true")
+            ProminentDomain.plainView();
+          else
+            ProminentDomain.prettyView();
+        }
+      });   
+    });
+    // configuration of the observer:
+    var config1 = { attributes: true }
+    // pass in the target node, as well as the observer options
+    this.observer1.observe(gURLBar, config1);
 
-    document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", function(aEvent) {
-      if (aEvent.attrName == "disabled" && !aEvent.newValue)
-      {
-        self.init();
-        self.prettyView();
-        dump("Initialized Prominent Domain");
-      }
-    }, false);
     if (document.focusedElement != gURLBar)
-    gURLBar.value = "";
+      gURLBar.value = "";
     setTimeout(function(self){
       gURLBar.value = gURLBar.value || gBrowser.currentURI.spec;
       self.prettyView();
@@ -102,20 +105,83 @@ var ProminentDomain = {
     this.nStrong.style.marginLeft = this.nStrong.style.marginRight = "0.0em";
     this.nStrong.appendChild(document.createTextNode(""));
 
-    this.nBase = document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").QueryInterface(Components.interfaces.nsIDOMNSEditableElement).editor.rootElement;
-
-    var self = this;
-    document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").
-      addEventListener("overflow", function() {
-        self.label.textContent = "...";
-      }, false);
+    this.nBase = document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").
+                 QueryInterface(Components.interfaces.nsIDOMNSEditableElement).editor.rootElement;
 
     document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").
-      addEventListener("underflow", function() {
-        self.label.textContent = "";
-      }, false);
+             addEventListener("overflow", this, false);
+    document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").
+             addEventListener("underflow", this, false);
   },
-  
+
+  uninit: function(){
+    window.removeEventListener("unload", this, false);
+    gBrowser.removeProgressListener(this);
+    gNavToolbox.removeEventListener("aftercustomization", this, false);
+    document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").
+             removeEventListener("overflow", this, false);
+    document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").
+             removeEventListener("underflow", this, false);
+
+    //stop observing
+    if (this.observer1)
+      this.observer1.disconnect();
+  },
+
+  handleEvent: function(event){
+    switch(event.type) {
+      case "aftercustomization":
+        this.onAftercustomization();
+        break;
+      case "overflow":
+        this.label.textContent = "...";
+        break;
+      case "underflow":
+        this.label.textContent = "";
+        break;
+      case "unload":
+        this.uninit();
+        break;
+    }
+  },
+
+  onAftercustomization: function() {
+      this.init();
+      this.prettyView();
+  },
+
+  QueryInterface: function(aIID) {
+   if (aIID.equals(Components.interfaces.nsIWebProgressListener) ||
+       aIID.equals(Components.interfaces.nsISupportsWeakReference) ||
+       aIID.equals(Components.interfaces.nsISupports))
+     return this;
+   throw Components.results.NS_NOINTERFACE;
+  },
+
+  onStateChange: function(aWebProgress, aRequest, aFlag, aStatus) { },
+ 
+  onLocationChange: function(aProgress, aRequest, aURI) {
+   // This fires when the location bar changes; that is load event is confirmed
+   // or when the user switches tabs. If you use myListener for more than one tab/window,
+   // use aProgress.DOMWindow to obtain the tab/window which triggered the change.
+    if (aProgress.DOMWindow == content) {
+      ProminentDomain.debug("onLocationChange");
+      if (ProminentDomain._timer)
+        clearTimeout(ProminentDomain._timer);
+      ProminentDomain._timer = setTimeout(function(){
+        if (gURLBar.getAttribute("focused") != "true")
+          ProminentDomain.prettyView();
+        else
+          ProminentDomain.plainView();
+      }, 0);
+    }
+  },
+ 
+  // For definitions of the remaining functions see related documentation
+  onProgressChange: function(aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) { },
+  onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) { },
+  onSecurityChange: function(aWebProgress, aRequest, aState) { },
+
   onPrintPreviewExit: function() {
     if ( typeof PrintPreviewListener._toggleAffectedChrome == "function" &&
         !/gNavToolbox\.collapsed/.test(PrintPreviewListener._toggleAffectedChrome))
@@ -125,29 +191,28 @@ var ProminentDomain = {
 
   prettyView: function()
   {
+    this.debug("prettyView");
+    //xxx Bug 754498
+    if(gURLBar.getAttribute("pageproxystate") == "invalid")
+      return;
+
     var aURI = gURLBar.value;
+    if (aURI == "") return; //←追加
+
     if (/^(data:|javascript:|chrome:|view-|about:)/.test(aURI))
       return;
     var ioService = Components.classes['@mozilla.org/network/io-service;1']
                       .getService(Components.interfaces.nsIIOService);
     try {
       //aURI =  ioService.newURI(aURI, null, null).spec;
-      aURI =  losslessDecodeURI(ioService.newURI(aURI, null, null))
+      aURI =  losslessDecodeURI(ioService.newURI(aURI, null, null));
     } catch(ex) {}
-    if (!/^(.+?\/\/(?:[^\/]+@)?)(.+?)((:\d+)?(\/.*)?)$/.test(aURI))
-    {
-      return;
-    }
-    //xxx Bug 754498
-    try {
-      if (ioService.newURI(gURLBar.value, null, null).spec != gBrowser.selectedTab.linkedBrowser.currentURI.spec)
-        return;
-    } catch(ex) {
+    if (!/^(.+?\/\/(?:[^\/]+@)?)(.+?)((:\d+)?(\/.*)?)$/.test(aURI)) {
       return;
     }
     
-    if ("isBlankPageURL" in window ? !isBlankPageURL(aURI) : aURI != "about:blank")
-      gURLBar.removeAttribute("isempty");
+    //if ("isBlankPageURL" in window ? !isBlankPageURL(aURI) : aURI != "about:blank")
+    //  gURLBar.removeAttribute("isempty");
     this.label.style.setProperty("visibility", "visible", "");
 
     while (this.nBase.hasChildNodes())
@@ -171,8 +236,9 @@ var ProminentDomain = {
 
   plainView: function()
   {
-    if (gURLBar.value == "") return; //←追加
+    this.debug("plainView");
     this.label.style.setProperty("visibility", "collapse", "");
+    if (gURLBar.value == "") return; //←追加
 
     this.nBase.replaceChild(document.createTextNode(gURLBar.value), this.nBase.firstChild);
     while (this.nBase.childNodes.length > 1)
@@ -211,6 +277,7 @@ var ProminentDomain = {
   },
 
   debug: function(aMsg){
+    return;
     Components.classes["@mozilla.org/consoleservice;1"]
       .getService(Components.interfaces.nsIConsoleService)
       .logStringMessage(aMsg);
