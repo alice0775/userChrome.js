@@ -6,8 +6,9 @@
 // @compatibility  20.0a1
 // @author         Alice0775
 // @note           no tab related addon installed
-// @version        2012/12/04 01:00
+// @version        2012/12/04 18:40 pinned
 // ==/UserScript==
+// @version        2012/12/04 01:00
 (function(){
 
       gBrowser.tabContainer._onDragOver = function(event) {
@@ -138,6 +139,12 @@
           let newIndex = this._getDropIndex(event);
           if (newIndex > draggedTab._tPos)
             newIndex--;
+          let numPinned = this.tabbrowser._numPinnedTabs;
+          if (newIndex < numPinned && !draggedTab.pinned) {
+            this.tabbrowser.pinTab(draggedTab);
+          } else if (numPinned <= newIndex && draggedTab.pinned) {
+            this.tabbrowser.unpinTab(draggedTab);
+          }
           this.tabbrowser.moveTabTo(draggedTab, newIndex);
         } else if (draggedTab) {
           // swap the dropped tab with a new one we create and then close
