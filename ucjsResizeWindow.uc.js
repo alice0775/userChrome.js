@@ -21,9 +21,12 @@
 // @include        chrome://*/prefs.xul
 // @include        chrome://allowclipboardhelper/content/allowclipboardhelper.xul
 // @include        chrome://refererremover/content/refererremoverPref.xul
+// @include        chrome://scriptish/content/script-options.xul*
 // @exclude        chrome://browser/content/sanitize.xul
 // @compatibility  Firefox 2.0 3.0 3.1 3.2a1pre
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2010/03/29 00:00 exclude chrome://browser/content/sanitize.xul
 // @version        2010/02/12 00:00 Fixed Bug 468810  - Make "Manage search engines" window resizable
 // @version        2010/01/11 00:00 engineManager
@@ -33,7 +36,6 @@
 // @version        2009/01/28 00:00 selectDialog
 // @version        2009/01/27 00:00
 // @note           オプション, ブックマークプロパティ, 検索エンジン管理ダイアログや一部のリストボックスに有効
-// ==/UserScript==
 
 var ucjsResizeWindow = {
   //--config--
@@ -85,20 +87,17 @@ var ucjsResizeWindow = {
       var func = window.openPreferences.toString();
       func = func.replace(
       'var features = "chrome,titlebar,toolbar,centerscreen"',
-      <><![CDATA[
-      var features = "resizable,chrome,titlebar,toolbar,centerscreen"
-      ]]></>
+      'var features = "resizable,chrome,titlebar,toolbar,centerscreen"'
       );
       eval("window.openPreferences = " + func);
       return;
     }
 
     if (location.href =="chrome://browser/content/preferences/preferences.xul") {
-      var style = <><![CDATA[
-      .content-box{
-      height:auto !important;
-      }
-      ]]></>.toString().replace(/\s+/g, " ");
+      var style = " \
+      .content-box{ \
+      height:auto !important; \
+      }".replace(/\s+/g, " ");
       var sspi = document.createProcessingInstruction(
         'xml-stylesheet',
         'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'

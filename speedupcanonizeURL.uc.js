@@ -5,43 +5,37 @@
 // @author         Alice0775
 // @include        main
 // @compatibility  10-
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2012/04/18 21:15 。
 // @version        2012/03/08 21:15 error xxx.xxx.xxx
 // @version        2012/03/08 20:50 error in about: ftp etc
 // @version        2012/03/08
-// ==/UserScript==
 var func = window.gURLBar._canonizeURL.toString();
 func = func.replace(
   'url = getShortcutOrURI(url, postData, mayInheritPrincipal);',
-<><![CDATA[
-  var linkURI = url;
-  try {
-    if (!/^[a-zA-Z-+.]+:/.test(linkURI)) {
-      linkURI = "http://" + linkURI;
-    }
-    linkURI = makeURI(linkURI);
-    if (!this.isValidTld(linkURI)) {
-      if (!/^[a-zA-Z-+.]+:/.test(url))
-        throw new Error();
-    }
-  } catch(ex) {
-    var offset = url.indexOf(" ");
-    if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) {
-      var URIFixup = Components.classes['@mozilla.org/docshell/urifixup;1']
-                     .getService(Components.interfaces.nsIURIFixup);
-      url = URIFixup.createFixupURI(
-                          "?"+url,
-                          URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec;
-
-/*
-      // I'm Feeling Lucky
-      if (/\.google\..+[^/]/.test(url))
-        url = url + "&btnI=1";
-*/
-    }
-  }
-  $&
-]]></>
+  'var linkURI = url; \
+  try { \
+    if (!/^[a-zA-Z-+.]+:/.test(linkURI)) { \
+      linkURI = "http://" + linkURI; \
+    } \
+    linkURI = makeURI(linkURI); \
+    if (!this.isValidTld(linkURI)) { \
+      if (!/^[a-zA-Z-+.]+:/.test(url)) { \
+        throw new Error(); \
+      } \
+    } \
+  } catch(ex) { \
+    var offset = url.indexOf(" "); \
+    if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) { \
+      var URIFixup = Components.classes["@mozilla.org/docshell/urifixup;1"] \
+                     .getService(Components.interfaces.nsIURIFixup); \
+      url = URIFixup.createFixupURI( \
+                          "?"+url, \
+                          URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec; \
+    } \
+  } \
+  $&'
 );
 eval("window.gURLBar._canonizeURL = "+ func);
 

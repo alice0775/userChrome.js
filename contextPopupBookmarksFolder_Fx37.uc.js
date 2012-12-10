@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.7 13 14
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2012/04/11 12:00 Bug 739451 Don't rely on XPConnect-magic for getting the owner window of a places view
 // @version        2012/03/05 12:00 remove deprecated code(PlacesUtils.nodeIsLivemarkItem)
 // @version        2010/04/17 23:00 後処理追加
@@ -30,32 +31,32 @@ var contextPopupBookmarksFolder = {
   PREF: 'userChrome.contextPopupBookmarksFolder.PLACE_QUERY',
 
   init: function() {
-    var overlay =
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-               xmlns:html="http://www.w3.org/1999/xhtml">
-        <menupopup id="contentAreaContextMenu">
-          <menu id="contextPopupBookmarksFolderMenu"
-                insertafter={ this.kINSERTPOINT }
-                label={ this.kPLACE_LABEL } >
-            <menupopup  id="contextPopupBookmarksFolderPopup"
-                        context="placesContext"
-                        openInTabs="children"
-                        oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);"
-                        onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event, this.parentNode._placesView);"
-                        onpopupshowing="if (!document.getElementById('contextPopupBookmarksFolderMenu')._placesView) new PlacesMenu(event, '{ this.kPLACE_QUERY }');"/>
-          </menu>
-        </menupopup>
-
-        <popupset id="mainPopupSet">
-          <menupopup  id="contextPopupBookmarksFolderhotMenuPopup"
-                      context="placesContext"
-                      openInTabs="children"
-                      oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);"
-                      onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event, this.parentNode._placesView);"
-                      onpopupshowing="if (!document.getElementById('contextPopupBookmarksFolderhotMenuPopup')._placesView) new PlacesMenu(event, '{ this.kPLACE_QUERY }');"/>
-        </popupset>
-      </overlay>;
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay.toXMLString());
+    var overlay = ' \
+      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+               xmlns:html="http://www.w3.org/1999/xhtml"> \
+        <menupopup id="contentAreaContextMenu"> \
+          <menu id="contextPopupBookmarksFolderMenu" \
+                insertafter="' + this.kINSERTPOINT + '" \
+                label="' +  this.kPLACE_LABEL + '" > \
+            <menupopup  id="contextPopupBookmarksFolderPopup" \
+                        context="placesContext" \
+                        openInTabs="children" \
+                        oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);" \
+                        onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event, this.parentNode._placesView);" \
+                        onpopupshowing="if (!document.getElementById(\'contextPopupBookmarksFolderMenu\')._placesView) new PlacesMenu(event, \'' + this.kPLACE_QUERY + '\');"/> \
+          </menu> \
+        </menupopup> \
+ \
+        <popupset id="mainPopupSet"> \
+          <menupopup  id="contextPopupBookmarksFolderhotMenuPopup" \
+                      context="placesContext" \
+                      openInTabs="children" \
+                      oncommand="BookmarksEventHandler.onCommand(event, this.parentNode._placesView);" \
+                      onclick="if(event.button==2){event.preventDefault();event.stopPropagation();}else BookmarksEventHandler.onClick(event, this.parentNode._placesView);" \
+                      onpopupshowing="if (!document.getElementById(\'contextPopupBookmarksFolderhotMenuPopup\')._placesView) new PlacesMenu(event, \'' + this.kPLACE_QUERY + '\');"/> \
+        </popupset> \
+      </overlay>';
+    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, contextPopupBookmarksFolder);
   },
 

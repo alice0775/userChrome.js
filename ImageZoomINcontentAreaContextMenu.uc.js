@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        LastMod 2009/02/18 14:00 スタイル幅高さが指定されていても実行できるように
 // @Note           Sub-Script/Overlay Loader v3.0.20mod
 // @Note           コンテンツエリアのコンテキストメニューにImageZoomを表示. ホイール回転でZoom
@@ -24,32 +25,32 @@ var ImageZoomINcontentAreaContextMenu = {
   contexttimer: null,
 
   init: function() {
-    var overlay =
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-               xmlns:html="http://www.w3.org/1999/xhtml">
-        <popup id="contentAreaContextMenu">
-          <menu id="context-ImageZoomMenu"
-                label="Image Zoom"
-                accesskey="I"
-                insertbefore="context-sep-copyimage"
-                hidden="true">
-            <menupopup id="context-ImageZoomMenupopup"
-                       onpopupshowing="event.stopPropagation();">
-              <menuitem label="Zoom In"
-                        accesskey="I;"
-                        oncommand="ImageZoomUtil.zoomBy(1.25);"/>
-              <menuitem label="Zoom Out"
-                        accesskey="O"
-                        oncommand="ImageZoomUtil.zoomBy(0.80);"/>
-              <menuitem label="Reset"
-                        accesskey="R"
-                        oncommand="ImageZoomUtil.reset();"/>
-              <menuseparator/>
-            </menupopup>
-          </menu>
-        </popup>
-      </overlay>;
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay.toXMLString());
+    var overlay = ' \
+      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+               xmlns:html="http://www.w3.org/1999/xhtml"> \
+        <popup id="contentAreaContextMenu"> \
+          <menu id="context-ImageZoomMenu" \
+                label="Image Zoom" \
+                accesskey="I" \
+                insertbefore="context-sep-copyimage" \
+                hidden="true"> \
+            <menupopup id="context-ImageZoomMenupopup" \
+                       onpopupshowing="event.stopPropagation();"> \
+              <menuitem label="Zoom In" \
+                        accesskey="I;" \
+                        oncommand="ImageZoomUtil.zoomBy(1.25);"/> \
+              <menuitem label="Zoom Out" \
+                        accesskey="O" \
+                        oncommand="ImageZoomUtil.zoomBy(0.80);"/> \
+              <menuitem label="Reset" \
+                        accesskey="R" \
+                        oncommand="ImageZoomUtil.reset();"/> \
+              <menuseparator/> \
+            </menupopup> \
+          </menu> \
+        </popup> \
+      </overlay>';
+    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, ImageZoomINcontentAreaContextMenu);
   },
 
@@ -107,7 +108,6 @@ var ImageZoomINcontentAreaContextMenu = {
     if (this.contexttimer)
       clearTimeout(this.contexttimer);
     var popup = this.ImageZoomMenuPopup;
-
      if (gContextMenu && gContextMenu.onImage) {
       popup.parentNode.removeAttribute('hidden');
       this.createImageZoomMenu(popup);
@@ -253,8 +253,10 @@ var ImageZoomUtil = {
     if (!node.hasAttribute("originalWidth")) {
       node.setAttribute("originalWidth", node.width);
       node.setAttribute("originalHeight", node.height);
-      node.style.width = "";
-      node.style.height = "";
+      node.style.removeProperty("width");
+      node.style.removeProperty("height");
+      //node.style.width = "";
+      //node.style.height = "";
     }
     var w0 = node.getAttribute("originalWidth");
     var h0 = node.getAttribute("originalHeight");

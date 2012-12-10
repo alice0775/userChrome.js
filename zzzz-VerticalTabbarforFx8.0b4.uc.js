@@ -6,8 +6,9 @@
 // @compatibility  Firefox 8.0b4
 // @author         Alice0775
 // @note           デフォルトテーマ
-// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
 // @version        2011/12/19 02:00 toolbarbutton
 // @version        2011/10/14 12:00 Bug 690227 - Back out bug 455694 (tab drag/detach animations)
 // @version        2010/06/24 23:00 ウインドサイズがおかしくなるので rendering stop/startは止め
@@ -61,196 +62,196 @@ function zzzz_VerticalTabbar(){
       }
 
       /*タブ縦置きCSS適用*/
-      var style = <![CDATA[
-        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-
-        /*不要なメニュー*/
-        menuitem[command="cmd_ToggleTabsOnTop"],
-        menuitem[command="cmd_ToggleTabsOnTop"] + menuseparator
-        {
-        visibility:collapse;
-        }
-
-        #TabsToolbar
-        {
-        position:fixed;
-        left: 0px;
-        right: 0px;
-        /*top: 80px;
-        bottom: 20px;*/
-        width: {TABBARWIDTH}px;
-        overflow-x: hidden;
-        overflow-y: hidden;
-        }
-
-        /*xxx Bug 574434
-        #navigator-toolbox[tabsontop="true"] > #toolbar-menubar[autohide="true"] ~ #nav-bar
-        {
-         -moz-padding-start: 10em !important;
-        }
-        #navigator-toolbox[tabsontop="true"] > #toolbar-menubar[autohide="true"] ~ #TabsToolbar
-        {
-         -moz-padding-start: 0em !important;
-        }
-*/
-        #tabbrowser-tabs > hbox
-        {
-        position:fixed;
-        left: 0px;
-        right: 0px;
-        /*top: 80px;
-        bottom: 20px;*/
-        width: 5px;
-        overflow-x: hidden;
-        overflow-y: hidden;
-        }
-
-        #tabbrowser-tabs
-        {
-        /*height: 100% !important;*/
-        width: 100% !important;
-        -moz-box-orient: vertical !important;
-        /*should delete orient="horizontal"*/
-        overflow-x:hidden;
-        }
-
-        #tabbrowser-tabs > arrowscrollbox
-        {
-        -moz-box-orient: vertical !important;
-        /*should delete orient="horizontal"*/
-        }
-
-        #tabbrowser-tabs > arrowscrollbox > scrollbox
-        {
-        overflow-y: auto;
-        -moz-box-orient: vertical !important;
-        direction: rtl; /*scroll bar position*/
-        }
-
-        #tabbrowser-tabs > arrowscrollbox > scrollbox > box
-        {
-        -moz-box-orient: vertical !important;
-        direction: ltr; /*scroll bar position*/
-        }
-
-        #tabbrowser-tabs > arrowscrollbox > .scrollbutton-up,
-        #tabbrowser-tabs > arrowscrollbox > .scrollbutton-down
-        {
-        visibility:collapse;
-        }
-
-        .tabbrowser-tab[pinned],
-        .tabbrowser-tab:not([pinned])
-        {
-        min-width: 100% !important;
-        max-width: 100% !important;
-        }
-
-        /*フルスクリーン*/
-        #verticalTabToolBox[moz-collapsed="true"],
-        #vtb_splitter[moz-collapsed="true"]
-        {
-        visibility:collapse;
-        }
-
-
-        /*ポップアップの時*/
-        #main-window[chromehidden~="extrachrome"] #TabsToolbar,
-        #main-window[chromehidden~="extrachrome"] #verticalTabToolBox,
-        #main-window[chromehidden~="extrachrome"] #vtb_splitter
-        {
-        visibility: collapse;
-        }
-
-        /*プリントプレビュー*/
-        #print-preview-toolbar[printpreview="true"] + #navigator-toolbox + #browser  #verticalTabToolBox,
-        #print-preview-toolbar[printpreview="true"] + #navigator-toolbox + #browser  #vtb_splitter
-        {
-        visibility:collapse;
-        }
-
-         /*default theme要調整*/
-        /* Fx3.7a2*/
-        toolbarbutton:not([id="back-button"]):not([id="forward-button"])
-        {
-        margin-top:0px; //?
-        }
-
-        .tabbrowser-tab,
-        .tabbrowser-tab:not([selected="true"])
-        {
-        -moz-appearance: none !important;
-        min-height: 24px;
-        max-height: 24px;
-        margin: 0 !important;
-        padding: 1px 0 2px 0 !important;
-
-        border: 1px solid ThreeDShadow;
-        border-bottom: 1px solid transparent;
-
-        -moz-border-radius-topleft : 0 !important;
-        -moz-border-radius-topright : 0 !important;
-        -moz-border-radius-bottomleft : 0 !important;
-        -moz-border-radius-bottomright : 0 !important;
-
-        /*background-image: url("chrome://browser/skin/tabbrowser/tab-bkgnd.png");*/
-        }
-
-        .tabbrowser-tab:last-child,
-        .tabbrowser-tab:not([selected="true"]):last-child
-        {
-        border-bottom: 1px solid ThreeDShadow;
-        }
-
-        .tabbrowser-tab[selected="true"]
-        {
-        padding: 1px 0 1px 0 !important;
-        /*background-image: url("chrome://browser/skin/tabbrowser/tab-active-bkgnd.png");*/
-        /*background-color: ThreeDHighlight;*/
-        }
-
-        .tabbrowser-tab[pinned]
-        {
-        border-color: ThreeDHighlight;
-        }
-        
-        .tab-throbber[pinned],
-        .tab-icon-image[pinned] {
-          -moz-margin-start: 2px;
-          -moz-margin-end: 3px;
-        }
-
-        .tabbrowser-tab:not([selected="true"]):hover
-        {
-        background-color: ThreeDHighlight;
-        }
-
-        .tabbrowser-tab[selected="true"]:hover
-        {
-        background-color: ThreeDHighlight;
-        }
-
-
-        /*toolbarbutton*/
-        #TabsToolbar > toolbarbutton[collapsed="true"]
-        {
-        display: none;
-        }
-
-        #TabsToolbar toolbarbutton,
-        #TabsToolbar toolbarbutton:hover
-        {
-        height: 20px !important;
-        }
-      ]]>.toString();
+      var style = ' \
+        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+ \
+        /*不要なメニュー*/ \
+        menuitem[command="cmd_ToggleTabsOnTop"], \
+        menuitem[command="cmd_ToggleTabsOnTop"] + menuseparator \
+        { \
+        visibility:collapse; \
+        } \
+ \
+        #TabsToolbar \
+        { \
+        position:fixed; \
+        left: 0px; \
+        right: 0px; \
+        /*top: 80px; \
+        bottom: 20px;*/ \
+        width: {TABBARWIDTH}px; \
+        overflow-x: hidden; \
+        overflow-y: hidden; \
+        } \
+ \
+        /*xxx Bug 574434 \
+        #navigator-toolbox[tabsontop="true"] > #toolbar-menubar[autohide="true"] ~ #nav-bar \
+        { \
+         -moz-padding-start: 10em !important; \
+        } \
+        #navigator-toolbox[tabsontop="true"] > #toolbar-menubar[autohide="true"] ~ #TabsToolbar \
+        { \
+         -moz-padding-start: 0em !important; \
+        } \
+*/ \
+        #tabbrowser-tabs > hbox \
+        { \
+        position:fixed; \
+        left: 0px; \
+        right: 0px; \
+        /*top: 80px; \
+        bottom: 20px;*/ \
+        width: 5px; \
+        overflow-x: hidden; \
+        overflow-y: hidden; \
+        } \
+ \
+        #tabbrowser-tabs \
+        { \
+        /*height: 100% !important;*/ \
+        width: 100% !important; \
+        -moz-box-orient: vertical !important; \
+        /*should delete orient="horizontal"*/ \
+        overflow-x:hidden; \
+        } \
+ \
+        #tabbrowser-tabs > arrowscrollbox \
+        { \
+        -moz-box-orient: vertical !important; \
+        /*should delete orient="horizontal"*/ \
+        } \
+ \
+        #tabbrowser-tabs > arrowscrollbox > scrollbox \
+        { \
+        overflow-y: auto; \
+        -moz-box-orient: vertical !important; \
+        direction: rtl; /*scroll bar position*/ \
+        } \
+ \
+        #tabbrowser-tabs > arrowscrollbox > scrollbox > box \
+        { \
+        -moz-box-orient: vertical !important; \
+        direction: ltr; /*scroll bar position*/ \
+        } \
+ \
+        #tabbrowser-tabs > arrowscrollbox > .scrollbutton-up, \
+        #tabbrowser-tabs > arrowscrollbox > .scrollbutton-down \
+        { \
+        visibility:collapse; \
+        } \
+ \
+        .tabbrowser-tab[pinned], \
+        .tabbrowser-tab:not([pinned]) \
+        { \
+        min-width: 100% !important; \
+        max-width: 100% !important; \
+        } \
+ \
+        /*フルスクリーン*/ \
+        #verticalTabToolBox[moz-collapsed="true"], \
+        #vtb_splitter[moz-collapsed="true"] \
+        { \
+        visibility:collapse; \
+        } \
+ \
+ \
+        /*ポップアップの時*/ \
+        #main-window[chromehidden~="extrachrome"] #TabsToolbar, \
+        #main-window[chromehidden~="extrachrome"] #verticalTabToolBox, \
+        #main-window[chromehidden~="extrachrome"] #vtb_splitter \
+        { \
+        visibility: collapse; \
+        } \
+ \
+        /*プリントプレビュー*/ \
+        #print-preview-toolbar[printpreview="true"] + #navigator-toolbox + #browser  #verticalTabToolBox, \
+        #print-preview-toolbar[printpreview="true"] + #navigator-toolbox + #browser  #vtb_splitter \
+        { \
+        visibility:collapse; \
+        } \
+ \
+         /*default theme要調整*/ \
+        /* Fx3.7a2*/ \
+        toolbarbutton:not([id="back-button"]):not([id="forward-button"]) \
+        { \
+        margin-top:0px; //? \
+        } \
+ \
+        .tabbrowser-tab, \
+        .tabbrowser-tab:not([selected="true"]) \
+        { \
+        -moz-appearance: none !important; \
+        min-height: 24px; \
+        max-height: 24px; \
+        margin: 0 !important; \
+        padding: 1px 0 2px 0 !important; \
+ \
+        border: 1px solid ThreeDShadow; \
+        border-bottom: 1px solid transparent; \
+ \
+        -moz-border-radius-topleft : 0 !important; \
+        -moz-border-radius-topright : 0 !important; \
+        -moz-border-radius-bottomleft : 0 !important; \
+        -moz-border-radius-bottomright : 0 !important; \
+ \
+        /*background-image: url("chrome://browser/skin/tabbrowser/tab-bkgnd.png");*/ \
+        } \
+ \
+        .tabbrowser-tab:last-child, \
+        .tabbrowser-tab:not([selected="true"]):last-child \
+        { \
+        border-bottom: 1px solid ThreeDShadow; \
+        } \
+ \
+        .tabbrowser-tab[selected="true"] \
+        { \
+        padding: 1px 0 1px 0 !important; \
+        /*background-image: url("chrome://browser/skin/tabbrowser/tab-active-bkgnd.png");*/ \
+        /*background-color: ThreeDHighlight;*/ \
+        } \
+ \
+        .tabbrowser-tab[pinned] \
+        { \
+        border-color: ThreeDHighlight; \
+        } \
+         \
+        .tab-throbber[pinned], \
+        .tab-icon-image[pinned] { \
+          -moz-margin-start: 2px; \
+          -moz-margin-end: 3px; \
+        } \
+ \
+        .tabbrowser-tab:not([selected="true"]):hover \
+        { \
+        background-color: ThreeDHighlight; \
+        } \
+ \
+        .tabbrowser-tab[selected="true"]:hover \
+        { \
+        background-color: ThreeDHighlight; \
+        } \
+ \
+ \
+        /*toolbarbutton*/ \
+        #TabsToolbar > toolbarbutton[collapsed="true"] \
+        { \
+        display: none; \
+        } \
+ \
+        #TabsToolbar toolbarbutton, \
+        #TabsToolbar toolbarbutton:hover \
+        { \
+        height: 20px !important; \
+        } \
+      ';
       if (TOOLBARBUTTON_AS_TAB) {
-        style += <![CDATA[
-          #TabsToolbar > toolbarbutton:not([collapsed="true"]),
-          #TabsToolbar > toolbarbutton:not([hidden="true"])
-          {
-          width:100% !important;
-          }
-       ]]>.toString();
+        style += ' \
+          #TabsToolbar > toolbarbutton:not([collapsed="true"]), \
+          #TabsToolbar > toolbarbutton:not([hidden="true"]) \
+          { \
+          width:100% !important; \
+          } \
+       ';
       }
       style = style.replace(/\s+/g, " ")
       .replace("{TABBARWIDTH+TABBARLEFTMERGINE}", TABBARWIDTH + TABBARLEFTMERGINE)
@@ -313,18 +314,18 @@ function zzzz_VerticalTabbar(){
       var func = FullScreen.mouseoverToggle.toString();
       func = func.replace(
       '{',
-      <><![CDATA[
-        $&
-        if (!aShow) {
-          verticalTabToolBox.setAttribute("moz-collapsed", 'true');
-          vtbSplitter.setAttribute("moz-collapsed", 'true');
-          document.getElementById('TabsToolbar').setAttribute("moz-collapsed", 'true');
-        } else {
-          verticalTabToolBox.removeAttribute("moz-collapsed");
-          vtbSplitter.removeAttribute("moz-collapsed");
-          document.getElementById('TabsToolbar').removeAttribute("moz-collapsed");
-        }
-        ]]></>
+      ' \
+        $& \
+        if (!aShow) { \
+          verticalTabToolBox.setAttribute("moz-collapsed", "true"); \
+          vtbSplitter.setAttribute("moz-collapsed", "true"); \
+          document.getElementById("TabsToolbar").setAttribute("moz-collapsed", "true"); \
+        } else { \
+          verticalTabToolBox.removeAttribute("moz-collapsed"); \
+          vtbSplitter.removeAttribute("moz-collapsed"); \
+          document.getElementById("TabsToolbar").removeAttribute("moz-collapsed"); \
+        } \
+        '
       );
       eval("FullScreen.mouseoverToggle = " + func);
 
@@ -339,11 +340,11 @@ function zzzz_VerticalTabbar(){
       );
       func = func.replace(
         'event.screenX <= sourceNode.boxObject.screenX + sourceNode.boxObject.width',
-        <><![CDATA[
-        $& &&
-        event.screenY >= sourceNode.boxObject.screenY &&
-        event.screenY <= sourceNode.boxObject.screenY + sourceNode.boxObject.height
-        ]]></>
+        ' \
+        $& && \
+        event.screenY >= sourceNode.boxObject.screenY && \
+        event.screenY <= sourceNode.boxObject.screenY + sourceNode.boxObject.height \
+        '
       );
       eval("gBrowser.tabContainer._setEffectAllowedForDataTransfer = " + func);
 

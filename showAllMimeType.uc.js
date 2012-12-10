@@ -5,6 +5,7 @@
 // @include        chrome://browser/content/preferences/preferences.xul
 // @compatibility  Fx3.0 3.5 3.6
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2009/07/07 19:00 Fx3.0 3.1 拡張子追加
 // @version        2008/12/02 09:20 Fx3.0 3.1
 // ==/UserScript==
@@ -36,45 +37,45 @@ var addTypeColumn = {
     var func = gApplicationsPane._rebuildView.toString();
     func = func.replace(
       'item.setAttribute("typeDescription", this._describeType(visibleType));',
-      <><![CDATA[
-      if (this._describeType(visibleType).indexOf("("+ visibleType.type+ ")") > -1)
-        item.setAttribute("typeDescription", this._describeType(visibleType));
-      else
-        item.setAttribute("typeDescription", this._describeType(visibleType) + " ("+ visibleType.type+ ")");
-      var exts = this._handledTypes[visibleType.type].wrappedHandlerInfo instanceof Ci.nsIMIMEInfo ?
-                this._handledTypes[visibleType.type].wrappedHandlerInfo.getFileExtensions() :
-                null;
-      var ext =[]
-      while (exts && exts.hasMore()) {
-        ext.push(exts.getNext());
-      }
-      if (ext.length > 0)
-        item.setAttribute("typeDescription", item.getAttribute("typeDescription") + "[" + ext.join(";") + "]");
-      ]]></>
+      ' \
+      if (this._describeType(visibleType).indexOf("("+ visibleType.type+ ")") > -1) \
+        item.setAttribute("typeDescription", this._describeType(visibleType)); \
+      else \
+        item.setAttribute("typeDescription", this._describeType(visibleType) + " ("+ visibleType.type+ ")"); \
+      var exts = this._handledTypes[visibleType.type].wrappedHandlerInfo instanceof Ci.nsIMIMEInfo ? \
+                this._handledTypes[visibleType.type].wrappedHandlerInfo.getFileExtensions() : \
+                null; \
+      var ext =[]; \
+      while (exts && exts.hasMore()) { \
+        ext.push(exts.getNext()); \
+      } \
+      if (ext.length > 0) \
+        item.setAttribute("typeDescription", item.getAttribute("typeDescription") + "[" + ext.join(";") + "]"); \
+      '
     );
     eval("gApplicationsPane._rebuildView = " + func);
 
     func = gApplicationsPane._matchesFilter.toString();
     func = func.replace(
       '{',
-      <><![CDATA[
-       {
-      var exts = this._handledTypes[aType.type].wrappedHandlerInfo instanceof Ci.nsIMIMEInfo ?
-                this._handledTypes[aType.type].wrappedHandlerInfo.getFileExtensions() :
-                null;
-      var ext =[]
-      while (exts && exts.hasMore()) {
-        ext.push(exts.getNext());
-      }
-      ]]></>
+      ' \
+       { \
+      var exts = this._handledTypes[aType.type].wrappedHandlerInfo instanceof Ci.nsIMIMEInfo ? \
+                this._handledTypes[aType.type].wrappedHandlerInfo.getFileExtensions() : \
+                null; \
+      var ext =[]; \
+      while (exts && exts.hasMore()) { \
+        ext.push(exts.getNext()); \
+      } \
+      '
     );
     func = func.replace(
       'this._describePreferredAction(aType).toLowerCase().indexOf(filterValue) != -1;',
-      <><![CDATA[
-       this._describePreferredAction(aType).toLowerCase().indexOf(filterValue) != -1 ||
-       aType.type.toLowerCase().indexOf(filterValue) != -1 ||
-       ext.join(";").toLowerCase().indexOf(filterValue) != -1;
-      ]]></>
+      ' \
+       this._describePreferredAction(aType).toLowerCase().indexOf(filterValue) != -1 || \
+       aType.type.toLowerCase().indexOf(filterValue) != -1 || \
+       ext.join(";").toLowerCase().indexOf(filterValue) != -1; \
+      '
     );
     eval("gApplicationsPane._matchesFilter = " + func);
   },

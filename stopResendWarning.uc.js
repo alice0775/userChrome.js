@@ -5,10 +5,11 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5 3.6a1pre
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2009/02/09 01:00 hashがあるとlocation.replaceが動かない
 // @version        2009/02/09 00:40 restoreScrollPosition
 // @version        2009/05/13 00:40
-// ==/UserScript==
 // @Note          以下の警告を出なくする
 // @Note          このページを表示するにはフォームデータを再度送信する必要があります。フォームデータを再送信すると以前実行した検索、投稿や注文などの処理が繰り返されます。
 // @Note          To display this page, Shiretoko must send information that will repeat any action (such as a search or order confirmation) that was performed earlier.
@@ -45,57 +46,57 @@ var stopResendWarning = {
     var func = window.BrowserReloadWithFlags.toString();
       func = func.replace(
       '{',
-      <><![CDATA[
-      {
-      try {
-        var uri = gBrowser.selectedBrowser.webNavigation.currentURI;
-        if (stopResendWarning.regexp.test(uri.spec)) {
-          var hash = gBrowser.selectedBrowser.contentDocument.location.hash;
-          gBrowser.selectedBrowser.contentDocument.location.replace(uri.spec.replace(hash,''));
-          if ('sRW_restoreScrollPosition' in window )
-            window.sRW_restoreScrollPosition.setScrollEntryRestore(-1, true);
-          return;
-        }
-      } catch (ex) {}
-      ]]></>
+      " \
+      { \
+      try { \
+        var uri = gBrowser.selectedBrowser.webNavigation.currentURI; \
+        if (stopResendWarning.regexp.test(uri.spec)) { \
+          var hash = gBrowser.selectedBrowser.contentDocument.location.hash; \
+          gBrowser.selectedBrowser.contentDocument.location.replace(uri.spec.replace(hash,'')); \
+          if ('sRW_restoreScrollPosition' in window ) \
+            window.sRW_restoreScrollPosition.setScrollEntryRestore(-1, true); \
+          return; \
+        } \
+      } catch (ex) {} \
+      "
       );
     eval("window.BrowserReloadWithFlags = " + func);
 
     func = window.gBrowser.reloadTab.toString();
       func = func.replace(
       '{',
-      <><![CDATA[
-      {
-      try {
-        var uri = aTab.linkedBrowser.webNavigation.currentURI;
-        if (stopResendWarning.regexp.test(uri.spec)) {
-          var hash = aTab.linkedBrowser.contentDocument.location.hash;
-          aTab.linkedBrowser.contentDocument.location.replace(uri.spec.replace(hash,''));
-          if ('sRW_restoreScrollPosition' in window )
-            window.sRW_restoreScrollPosition.setScrollEntryRestore(-1, true);
-          return;
-        }
-      } catch (ex) {}
-      ]]></>
+      " \
+      { \
+      try { \
+        var uri = aTab.linkedBrowser.webNavigation.currentURI; \
+        if (stopResendWarning.regexp.test(uri.spec)) { \
+          var hash = aTab.linkedBrowser.contentDocument.location.hash; \
+          aTab.linkedBrowser.contentDocument.location.replace(uri.spec.replace(hash,'')); \
+          if ('sRW_restoreScrollPosition' in window ) \
+            window.sRW_restoreScrollPosition.setScrollEntryRestore(-1, true); \
+          return; \
+        } \
+      } catch (ex) {} \
+      "
       );
     eval("window.gBrowser.reloadTab = " + func);
 
     func = window.gBrowser.reloadAllTabs.toString();
       func = func.replace(
       'this.getBrowserAtIndex(i).reload();',
-      <><![CDATA[
-      try {
-        var uri = this.getBrowserAtIndex(i).webNavigation.currentURI;
-        if (stopResendWarning.regexp.test(uri.spec)) {
-          var hash = this.getBrowserAtIndex(i).contentDocument.location.hash;
-          this.getBrowserAtIndex(i).contentDocument.location.replace(uri.spec.replace(hash,''));
-          if ('sRW_restoreScrollPosition' in window )
-            window.sRW_restoreScrollPosition.setScrollEntryRestore(-1, true);
-          continue;;
-        }
-      } catch (ex) {}
-      this.getBrowserAtIndex(i).reload();
-      ]]></>
+      " \
+      try { \
+        var uri = this.getBrowserAtIndex(i).webNavigation.currentURI; \
+        if (stopResendWarning.regexp.test(uri.spec)) { \
+          var hash = this.getBrowserAtIndex(i).contentDocument.location.hash; \
+          this.getBrowserAtIndex(i).contentDocument.location.replace(uri.spec.replace(hash,'')); \
+          if ('sRW_restoreScrollPosition' in window ) \
+            window.sRW_restoreScrollPosition.setScrollEntryRestore(-1, true); \
+          continue; \
+        } \
+      } catch (ex) {} \
+      this.getBrowserAtIndex(i).reload(); \
+      "
       );
     eval("window.gBrowser.reloadAllTabs = " + func);
   }

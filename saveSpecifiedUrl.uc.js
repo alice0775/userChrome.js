@@ -5,22 +5,23 @@
 // @include        main
 // @compatibility  Firefox 3.0 more
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2009/12/12
 // ==/UserScript==
 var saveSpecifiedUrl = {
   init: function() {
-    var overlay =
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-               xmlns:html="http://www.w3.org/1999/xhtml">
-        <menupopup id="menu_FilePopup">
-          <menuitem id="menu_saveSpecifiedUrl"
-                    label="Save Specified Url"
-                    accesskey="U"
-                    oncommand="saveSpecifiedUrl.doSaveSpecifiedUrl();"
-                    insertbefore="menu_sendLink"/>
-        </menupopup>
-      </overlay>;
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay.toXMLString());
+    var overlay = ' \
+      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+               xmlns:html="http://www.w3.org/1999/xhtml"> \
+        <menupopup id="menu_FilePopup"> \
+          <menuitem id="menu_saveSpecifiedUrl" \
+                    label="Save Specified Url" \
+                    accesskey="U" \
+                    oncommand="saveSpecifiedUrl.doSaveSpecifiedUrl();" \
+                    insertbefore="menu_sendLink"/> \
+        </menupopup> \
+      </overlay>';
+    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, null);
   },
 

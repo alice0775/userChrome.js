@@ -8,8 +8,9 @@
 // @Note           Keywords Searchを検索バーから行えるようにする
 // @Note           conqueryModoki2がある場合は, 親フォルダにKeywordsを付加していれば, Keywords 串刺し検索が出来る
 // @Note           サーチバーを表示していないとダメ
-// @version        2009/08/02 Tab Mix Plusはもはや対応しない
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2009/08/02 Tab Mix Plusはもはや対応しない
 // @version        2009/06/13 Tab Mix Plus0.3.7.4pre.090516
 // @version        2009/05/08 00:30 キワードサーチのurlがjavascriptの場合はカレントタブに開くように
 // @version        2009/02/18 14:30 Full Screen でも動作するように
@@ -60,38 +61,32 @@
      //Hack Noscript [noscriptBM.js]
       func = func.replace(
       'var url = getShortcutOrURI(shortcut, {});',
-      <><![CDATA[
-        $&
-        if (!url){
-          this.handleRevert();
-          return;
-        }
-      ]]></>
+      '$& \
+        if (!url){ \
+          this.handleRevert(); \
+          return; \
+        }'
       );
     eval("gURLBar.handleCommand = " + func);
   } else {
     var func = handleURLBarCommand.toString();
       func = func.replace(
       'canonizeUrl(aTriggeringEvent, postData);',
-      <><![CDATA[
-        $&
-        if(!gURLBar.value){
-          // Revert the contents of the location bar
-          handleURLBarRevert();
-          return;
-        }
-      ]]></>
+      '$& \
+        if(!gURLBar.value){ \
+          /* Revert the contents of the location bar */  \
+          handleURLBarRevert(); \
+          return; \
+        }'
       );
      //Hack Noscript
       func = func.replace(
       'var url = getShortcutOrURI(shortcut, {});',
-      <><![CDATA[
-        $&
-        if (!url){
-          handleURLBarRevert();
-          return;
-        }
-      ]]></>
+      '$& \
+        if (!url){ \
+          handleURLBarRevert(); \
+          return; \
+        }'
       );
     eval("handleURLBarCommand = " + func);
   }
@@ -99,14 +94,12 @@
   var func = getShortcutOrURI.toString();
     func = func.replace(
     'if (engine) {',
-    <><![CDATA[
-    if (engine && !!param.replace(/^\s+/,'').replace(/\s+$/,'')) {
-      if(engine.name.match(/^{/) && !engine.name.match(/}/)){
-        if ("conqueryModoki" in window)
-          kusizasi(engine.name, param);
-        return "";
-      }
-    ]]></>
+    'if (engine && !!param.replace(/^\s+/,\'\').replace(/\s+$/,\'\')) { \
+      if(engine.name.match(/^{/) && !engine.name.match(/}/)){ \
+        if ("conqueryModoki" in window) \
+          kusizasi(engine.name, param); \
+        return ""; \
+      }'
     );
   eval("getShortcutOrURI = " + func);
 

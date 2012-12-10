@@ -7,10 +7,11 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
-// @version       2008/11/28 Firefox3.1b3pre tboの初期化に時間が掛かるようでsetTimeoutするようにした
+// @version       2012/12/07 //aEvent.preventDefault();
 // @Note          http://space.geocities.yahoo.co.jp/gl/alice0775
 // @Note          I got permission to open this script to the public from Mr.Sephiroth on July 28,2007.
 // ==/UserScript==
+// @version       2008/11/28 Firefox3.1b3pre tboの初期化に時間が掛かるようでsetTimeoutするようにした
 // @version       2007/12/09 21:00
 /* ***** BEGIN LICENSE BLOCK *****
 * Author: Ronny Perinke http://www.sephiroth-j.de
@@ -176,7 +177,7 @@ var acBookMarkTreeFolder = {
       }
     }
     tbo.ensureRowIsVisible(this._BTree.currentIndex);
-    aEvent.preventDefault();
+    //aEvent.preventDefault();
   },
 
   closeAll: function(){

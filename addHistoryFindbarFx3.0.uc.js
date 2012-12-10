@@ -7,8 +7,10 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 10 17
 // @author         Alice0775
-// @version        2012/08/09 09:00 debug消し忘れ
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2012/09/05 12:00 statusが変わったときadjustSize呼ばないようにしてみた
+// @version        2012/08/09 09:00 debug消し忘れ
 // @version        2012/08/07 21:30 xxxx Tree Style Tab 0.14.2012080601
 // @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
 // @version        2012/04/02 23:00 Bug 482057
@@ -111,171 +113,168 @@ var historyFindbar = {
       gFindBar._findField = document.getAnonymousElementByAttribute(gFindBar, "anonid", "findbar-textbox");
     }
 
-    var overlay =
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-               xmlns:html="http://www.w3.org/1999/xhtml">
-        <window id="main-window">
-          <hbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-                pack="end"
-                id="historyfindbar">
-            <hbox id="historyfindbar-box"
-                   align="center"
-                   flex="1"
-                   pack="end"
-                   style="position: fixed; width: auto; height: 29px; left: 0px; top: auto; bottom: 0px;">
-              <textbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-                       type="autocomplete"
-                       id="find-field2"
-                       autocompletesearch="form-history"
-                       autocompletesearchparam="findbar-history"
-                       disableAutocomplete="true"
-                       oninput="historyFindbar.copyToFindfield(event);"
-                       onkeypress="historyFindbar.copyToFindfield(event);"
-                       oncompositionstart="historyFindbar.handleEvent(event);"
-                       oncompositionend="historyFindbar.handleEvent(event);"
-                       onclick="historyFindbar.copyToFindfield(event);"
-                       style="margin-left: 0px;"/>
-            </hbox>
-          </hbox>
-        </window>
-        <window id="viewSource">
-          <hbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-                pack="end"
-                id="historyfindbar">
-            <hbox id="historyfindbar-box"
-                   align="center"
-                   flex="1"
-                   pack="end"
-                   style="position: fixed; width: auto; height: 29px; left: 0px; top: auto; bottom: 0px;">
-              <textbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-                       type="autocomplete"
-                       id="find-field2"
-                       autocompletesearch="form-history"
-                       autocompletesearchparam="findbar-history"
-                       disableAutocomplete="true"
-                       oninput="historyFindbar.copyToFindfield(event);"
-                       onkeypress="historyFindbar..copyToFindfield(event);"
-                       oncompositionstart="historyFindbar.handleEvent(event);"
-                       oncompositionend="historyFindbar.handleEvent(event);"
-                       onclick="historyFindbar.copyToFindfield(event);"
-                       style="margin-left: 0px;"/>
-            </hbox>
-          </hbox>
-        </window>
-
-      </overlay>;
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay.toXMLString());
+    var overlay = ' \
+      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+               xmlns:html="http://www.w3.org/1999/xhtml"> \
+        <window id="main-window"> \
+          <hbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+                pack="end" \
+                id="historyfindbar"> \
+            <hbox id="historyfindbar-box" \
+                   align="center" \
+                   flex="1" \
+                   pack="end" \
+                   style="position: fixed; width: auto; height: 29px; left: 0px; top: auto; bottom: 0px;"> \
+              <textbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+                       type="autocomplete" \
+                       id="find-field2" \
+                       autocompletesearch="form-history" \
+                       autocompletesearchparam="findbar-history" \
+                       disableAutocomplete="true" \
+                       oninput="historyFindbar.copyToFindfield(event);" \
+                       onkeypress="historyFindbar.copyToFindfield(event);" \
+                       oncompositionstart="historyFindbar.handleEvent(event);" \
+                       oncompositionend="historyFindbar.handleEvent(event);" \
+                       onclick="historyFindbar.copyToFindfield(event);" \
+                       style="margin-left: 0px;"/> \
+            </hbox> \
+          </hbox> \
+        </window> \
+        <window id="viewSource"> \
+          <hbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+                pack="end" \
+                id="historyfindbar"> \
+            <hbox id="historyfindbar-box" \
+                   align="center" \
+                   flex="1" \
+                   pack="end" \
+                   style="position: fixed; width: auto; height: 29px; left: 0px; top: auto; bottom: 0px;"> \
+              <textbox xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+                       type="autocomplete" \
+                       id="find-field2" \
+                       autocompletesearch="form-history" \
+                       autocompletesearchparam="findbar-history" \
+                       disableAutocomplete="true" \
+                       oninput="historyFindbar.copyToFindfield(event);" \
+                       onkeypress="historyFindbar..copyToFindfield(event);" \
+                       oncompositionstart="historyFindbar.handleEvent(event);" \
+                       oncompositionend="historyFindbar.handleEvent(event);" \
+                       onclick="historyFindbar.copyToFindfield(event);" \
+                       style="margin-left: 0px;"/> \
+            </hbox> \
+          </hbox> \
+        </window> \
+      </overlay>';
+    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, this);
   },
 
   observe: function(){
     if (!!document.getAnonymousElementByAttribute(gFindBar, "anonid", "find-field-container")){ //less Fx3.5?
-      var style = <><![CDATA[
-        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-        #find-field2{
-          -moz-appearance: none;
-          background-color: #FFFFFF;
-          border:0px;
-        }
-        /*フラッシュ*/
-        #find-field2[flash="true"]{
-          -moz-appearance: none;
-          background-color: yellow;
-        }
-        /*検索語句が見つからない時*/
-        #find-field2[status="notfound"] {
-          -moz-appearance: none;
-          background-color: #FF6666;
-          color: #FFFFFF;
-        }
-        /*折り返した*/
-        #find-field2[status="wrapped"] {
-          -moz-appearance: none;
-          background-color: lime;
-          color: #000000;
-        }
-        /*履歴を出すボタンを表示*/
-        #find-field2 .autocomplete-history-dropmarker {
-          display: -moz-box;
-          -moz-binding: url('chrome://global/content/bindings/autocomplete.xml#history-dropmarker');
-        }
-
-        #find-field2[_moz-xmigemo-disable-ime="true"] {
-          ime-mode: disabled !important;
-        }
-        #find-field2[_moz-xmigemo-inactivate-ime="true"] {
-          ime-mode: inactive !important;
-        }
-        /*折り返さないように*/
-        #FindToolbar *
-        {
-          overflow:hidden !important;
-        }
-        #FindToolbar * description[anonid="find-status"]{
-          padding-top: 0px !important;
-          padding-bottom: 0px !important;
-          margin-top: 0px !important;
-          margin-bottom: 0px !important;
-          line-height: 1em !important;
-          font-size:12px !important;
-          max-height: 2em !important;
-        }
-      ]]></>.toString().replace(/\s+/g, " ");
+      var style = ' \
+        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+        #find-field2{ \
+          -moz-appearance: none; \
+          background-color: #FFFFFF; \
+          border:0px; \
+        } \
+        /*フラッシュ*/ \
+        #find-field2[flash="true"]{ \
+          -moz-appearance: none; \
+          background-color: yellow; \
+        } \
+        /*検索語句が見つからない時*/ \
+        #find-field2[status="notfound"] { \
+          -moz-appearance: none; \
+          background-color: #FF6666; \
+          color: #FFFFFF; \
+        } \
+        /*折り返した*/ \
+        #find-field2[status="wrapped"] { \
+          -moz-appearance: none; \
+          background-color: lime; \
+          color: #000000; \
+        } \
+        /*履歴を出すボタンを表示*/ \
+        #find-field2 .autocomplete-history-dropmarker { \
+          display: -moz-box; \
+          -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#history-dropmarker"); \
+        } \
+ \
+        #find-field2[_moz-xmigemo-disable-ime="true"] { \
+          ime-mode: disabled !important; \
+        } \
+        #find-field2[_moz-xmigemo-inactivate-ime="true"] { \
+          ime-mode: inactive !important; \
+        } \
+        /*折り返さないように*/ \
+        #FindToolbar * \
+        { \
+          overflow:hidden !important; \
+        } \
+        #FindToolbar * description[anonid="find-status"]{ \
+          padding-top: 0px !important; \
+          padding-bottom: 0px !important; \
+          margin-top: 0px !important; \
+          margin-bottom: 0px !important; \
+          line-height: 1em !important; \
+          font-size:12px !important; \
+          max-height: 2em !important; \
+        }'.replace(/\s+/g, " ");
     } else { //more Fx3.6?
-      var style = <><![CDATA[
-        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-        #find-field2{
-          -moz-appearance: none;
-          background-color: #FFFFFF;
-        }
-        /*フラッシュ*/
-        #find-field2[flash="true"]{
-          -moz-appearance: none;
-          background-color: yellow;
-        }
-        /*検索語句が見つからない時*/
-        #find-field2[status="notfound"] {
-          -moz-appearance: none;
-          background-color: #FF6666;
-          color: #FFFFFF;
-        }
-        /*折り返した*/
-        #find-field2[status="wrapped"] {
-          -moz-appearance: none;
-          background-color: lime;
-          color: #000000;
-        }
-       /*履歴を出すボタンを表示*/
-        #find-field2 .autocomplete-history-dropmarker {
-          display: -moz-box;
-          -moz-binding: url('chrome://global/content/bindings/autocomplete.xml#history-dropmarker');
-        }
-
-        #find-field2[_moz-xmigemo-disable-ime="true"] {
-          ime-mode: disabled !important;
-        }
-        #find-field2[_moz-xmigemo-inactivate-ime="true"] {
-          ime-mode: inactive !important;
-        }
-        /*折り返さないように*/
-        #FindToolbar *
-        {
-          overflow:hidden !important;
-        }
-        #FindToolbar * description[anonid="find-status"]{
-          padding-top: 0px !important;
-          padding-bottom: 0px !important;
-          margin-top: 0px !important;
-          margin-bottom: 0px !important;
-          line-height: 1em !important;
-          /*font-size:12px !important;*/
-          max-height: 2em !important;
-        }
-
-        #historyfindbar[hidden] #find-field2 > popupset {
-          display:none;
-        }
-      ]]></>.toString().replace(/\s+/g, " ");
+      var style = ' \
+        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+        #find-field2{ \
+          -moz-appearance: none; \
+          background-color: #FFFFFF; \
+        } \
+        /*フラッシュ*/ \
+        #find-field2[flash="true"]{ \
+          -moz-appearance: none; \
+          background-color: yellow; \
+        } \
+        /*検索語句が見つからない時*/ \
+        #find-field2[status="notfound"] { \
+          -moz-appearance: none; \
+          background-color: #FF6666; \
+          color: #FFFFFF; \
+        } \
+        /*折り返した*/ \
+        #find-field2[status="wrapped"] { \
+          -moz-appearance: none; \
+          background-color: lime; \
+          color: #000000; \
+        } \
+       /*履歴を出すボタンを表示*/ \
+        #find-field2 .autocomplete-history-dropmarker { \
+          display: -moz-box; \
+          -moz-binding: url("chrome://global/content/bindings/autocomplete.xml#history-dropmarker"); \
+        } \
+ \
+        #find-field2[_moz-xmigemo-disable-ime="true"] { \
+          ime-mode: disabled !important; \
+        } \
+        #find-field2[_moz-xmigemo-inactivate-ime="true"] { \
+          ime-mode: inactive !important; \
+        } \
+        /*折り返さないように*/ \
+        #FindToolbar * \
+        { \
+          overflow:hidden !important; \
+        } \
+        #FindToolbar * description[anonid="find-status"]{ \
+          padding-top: 0px !important; \
+          padding-bottom: 0px !important; \
+          margin-top: 0px !important; \
+          margin-bottom: 0px !important; \
+          line-height: 1em !important; \
+          /*font-size:12px !important;*/ \
+          max-height: 2em !important; \
+        } \
+ \
+        #historyfindbar[hidden] #find-field2 > popupset { \
+          display:none; \
+        }'.replace(/\s+/g, " ");
     }
 /*
     var sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
@@ -795,13 +794,13 @@ var historyFindbar = {
           this._findField2.removeAttribute('status');
         }
         //fail safe
-
+/*
         if (this.adjustSizeTimer)
           clearTimeout(this.adjustSizeTimer);
         this.adjustSizeTimer = setTimeout(function(self){
           self.adjustSize();
         }, this.adjustSizeDelay, this);
-
+*/
         break;
     }
   },

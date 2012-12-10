@@ -6,6 +6,8 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  4.0b8pre - 9
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2011/10/16 12:00 エラー
 // @version        2011/09/16 01:00 Bug 487242 - Implement 'unread' attribute for tabbrowser tabs
 // @version        2011/07/23 01:00 16桁の日付
@@ -15,7 +17,6 @@
 // @version        2010/03/15 00:00 Minefield/3.7a4pre Bug 347930 -  Tab strip should be a toolbar instead
 // @version        2010/01/29 16:00 http://piro.sakura.ne.jp/latest/blosxom/mozilla/extension/treestyletab/2009-09-29_debug.htm
 // @version        2010/01/12 13:00 deleteTabValue例外処理
-// ==/UserScript==
 // @version        2009/09/02 13:00 xulドキュメント等読み込んだ場合の例外処理
 // @version        2009/09/01 19:00 コード整理, typo
 // @version        2009/08/22 14:00 タブのコンテキスト"Remove UnRead For All Tabs"を表示
@@ -101,15 +102,13 @@ var unreadTabs = {
       func = gBrowser.treeStyleTab.performDrop.toString();
         func = func.replace(
         'targetBrowser.swapBrowsersAndCloseOther(tab, aTab);',
-        <><![CDATA[
-//window.userChrome_js.debug("swap  " + aTab.label + "  " + aTab.hasAttribute("unreadTab"));
-        if (aTab.hasAttribute("unreadTab")) {
-          tab.setAttribute('unreadTab', true);
-        } else {
-          tab.removeAttribute('unreadTab');
-        }
-        $&
-        ]]></>
+        " \
+        if (aTab.hasAttribute('unreadTab')) { \
+          tab.setAttribute('unreadTab', true); \
+        } else { \
+          tab.removeAttribute('unreadTab'); \
+        } \
+        $&"
         );
       eval("gBrowser.treeStyleTab.performDrop = "+ func);
 
@@ -117,15 +116,13 @@ var unreadTabs = {
       func = gBrowser._onDrop.toString();
         func = func.replace(
         'this.swapBrowsersAndCloseOther(newTab, draggedTab);',
-        <><![CDATA[
-//window.userChrome_js.debug("swap  " + draggedTab.label + "  " + draggedTab.hasAttribute("unreadTab"));
-        if (draggedTab.hasAttribute("unreadTab")) {
-          newTab.setAttribute("unreadTab", true);
-        } else {
-          newTab.removeAttribute("unreadTab");
-        }
-        $&
-        ]]></>
+        " \
+        if (draggedTab.hasAttribute('unreadTab')) { \
+          newTab.setAttribute('unreadTab', true); \
+        } else { \
+          newTab.removeAttribute('unreadTab'); \
+        } \
+        $& "
         );
       eval("gBrowser._onDrop = "+ func);
     }
@@ -138,24 +135,23 @@ var unreadTabs = {
       menupopup.appendChild(menuitem);
     }
 
-    var style = <><![CDATA[
-    @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
-      /*未読のタブの文字色*/
-      .tabbrowser-tab[unreadTab] .tab-text,
-      .alltabs-item[unreadTab]
-      {
-        color: %UNREAD_COLOR%;
-        font-style: %UNREAD_STYLE%;
-      }
-
-      /*読み込み中のタブの文字色*/
-      .tabbrowser-tab[busy] .tab-text,
-      .alltabs-item[busy]
-      {
-        color: %LOADING_COLOR%;
-        font-style: %LOADING_STYLE%;
-      }
-    ]]></>.toString().
+    var style = ' \
+    @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); \
+      /*未読のタブの文字色*/ \
+      .tabbrowser-tab[unreadTab] .tab-text, \
+      .alltabs-item[unreadTab] \
+      { \
+        color: %UNREAD_COLOR%; \
+        font-style: %UNREAD_STYLE%; \
+      } \
+ \
+      /*読み込み中のタブの文字色*/ \
+      .tabbrowser-tab[busy] .tab-text, \
+      .alltabs-item[busy] \
+      { \
+        color: %LOADING_COLOR%; \
+        font-style: %LOADING_STYLE%; \
+      } '.
                   replace(/%UNREAD_STYLE%/g, this.UNREAD_STYLE).
                   replace(/%UNREAD_COLOR%/g, this.UNREAD_COLOR).
                   replace(/%LOADING_STYLE%/g, this.LOADING_STYLE).
@@ -368,14 +364,15 @@ var unreadTabs = {
 
 
 function unreadTabsEventListener(aTab) {
-  this.init(aTab);
+  this.mTab = aTab;
+  this.init();
 }
 
 unreadTabsEventListener.prototype = {
   mTab : null,
-  init : function(aTab) {
+  init : function() {
     //window.userChrome_js.debug('init');
-    this.mTab = aTab;
+    //this.mTab = aTab;
     if (unreadTabs.CONTENT_LOAD)
       this.mTab.linkedBrowser.addEventListener('DOMContentLoaded', this, false);
     if (unreadTabs.READ_SCROLLCLICK) {

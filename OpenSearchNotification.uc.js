@@ -6,15 +6,15 @@
 // @compatibility  Firefox 4.0
 // @author         Alice0775
 // @Note
-// @version        2011/01/31 13:00  Minefield/3.7a4pre Bug 554991 -  allow tab context menu to be modified by normal XUL overlays
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2011/01/31 13:00  Minefield/3.7a4pre Bug 554991 -  allow tab context menu to be modified by normal XUL overlays
 var osglow = {
   init: function() {
-    var style = <![CDATA[
-    .searchbar-engine-button[addengines='true'] .searchbar-dropmarker-image {
-       background-image: -moz-radial-gradient(center 45deg, highlight 0%, rgba(255,255,255,0) 100%) !important;
-    }
-    ]]>.toString();
+    var style = " \
+    .searchbar-engine-button[addengines='true'] .searchbar-dropmarker-image { \
+       background-image: -moz-radial-gradient(center 45deg, highlight 0%, rgba(255,255,255,0) 100%) !important; \
+    }";
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'

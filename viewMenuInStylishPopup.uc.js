@@ -5,12 +5,13 @@
 // @include        main
 // @compatibility  Firefox 3.0, 3.1 4.0
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2011/01/26 Bug 611568 - Remove "File Import..." from the File menu
 // @version        2009/05/04 version 1.0.1beta
 // @version        2009/04/30 version 1.0対応(tnks 音吉) でも0.59で不具合がないなら1.0にしない方がいいよ
 // @version        2008/10/23 Fx3.1で[View]>{Page Style] メニューを表示以後項目が追加されない(Thanks音吉)
 // @Note
-// ==/UserScript==
 // @version        2008/07/05
 
 var viewMenuInStylishPopup = {
@@ -135,30 +136,30 @@ var viewMenuInStylishPopup = {
     <!ENTITY pageStylePersistentOnly.accesskey "b">
     */
 
-    var overlay =
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-               xmlns:html="http://www.w3.org/1999/xhtml">
-            <menupopup id="menu_viewPopup">
-              <menu id="pageStyleMenu" label="Page Style"
-                    accesskey="y" observes="isImage">
-                <menupopup onpopupshowing="stylesheetFillPopup(this);"
-                           oncommand="stylesheetSwitchAll(window.content, event.target.getAttribute('data')); setStyleDisabled(false);">
-                  <menuitem id="menu_pageStyleNoStyle"
-                            label="No Style"
-                            accesskey="n"
-                            oncommand="setStyleDisabled(true); event.stopPropagation();"
-                            type="radio"/>
-                  <menuitem id="menu_pageStylePersistentOnly"
-                            label="Basic Page Style"
-                            accesskey="b"
-                            type="radio"
-                            checked="true"/>
-                  <menuseparator/>
-                </menupopup>
-              </menu>
-            </menupopup>
-      </overlay>;
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay.toXMLString());
+    var overlay = ' \
+      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+               xmlns:html="http://www.w3.org/1999/xhtml"> \
+            <menupopup id="menu_viewPopup"> \
+              <menu id="pageStyleMenu" label="Page Style" \
+                    accesskey="y" observes="isImage"> \
+                <menupopup onpopupshowing="stylesheetFillPopup(this);" \
+                           oncommand="stylesheetSwitchAll(window.content, event.target.getAttribute(\'data\')); setStyleDisabled(false);"> \
+                  <menuitem id="menu_pageStyleNoStyle" \
+                            label="No Style" \
+                            accesskey="n" \
+                            oncommand="setStyleDisabled(true); event.stopPropagation();" \
+                            type="radio"/> \
+                  <menuitem id="menu_pageStylePersistentOnly" \
+                            label="Basic Page Style" \
+                            accesskey="b" \
+                            type="radio" \
+                            checked="true"/> \
+                  <menuseparator/> \
+                </menupopup> \
+              </menu> \
+            </menupopup> \
+      </overlay>';
+    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, viewMenuInStylishPopup);
     this.inserted == true;
   },

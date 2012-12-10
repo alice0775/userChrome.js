@@ -3,10 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @include        main
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2008/02/19 18:00
 // @note           Ctrl+Shift+C または about:config の clipboard.autocopy を [false]で無効 true で 有効 トグル
 // @note           designModeやtextarea等編集可能要素なら何もしない
-// ==/UserScript==
 
 var autoCopy = {
   // --config--
@@ -19,26 +20,26 @@ var autoCopy = {
 
   init: function() {
 
-    var overlay =
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-               xmlns:html="http://www.w3.org/1999/xhtml">
-        <keyset id="mainKeyset">
-          <key id="key_toggleAutoCopy"
-               oncommand="autoCopy.toggle();"
-               key="C"
-               modifiers="accel, shift"/>
-        </keyset>
-        <menupopup id="menu_ToolsPopup">
-              <menuitem insertbefore="menu_preferences"
-                        id="autoCopy"
-                        label="Auto Copy toggle"
-                        type="checkbox"
-                        checked="false"
-                        accesskey="A;"
-                        oncommand="autoCopy.toggle();"/>
-        </menupopup>
-      </overlay>;
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay.toXMLString());
+    var overlay = ' \
+      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+               xmlns:html="http://www.w3.org/1999/xhtml"> \
+        <keyset id="mainKeyset"> \
+          <key id="key_toggleAutoCopy" \
+               oncommand="autoCopy.toggle();" \
+               key="C" \
+               modifiers="accel, shift"/> \
+        </keyset> \
+        <menupopup id="menu_ToolsPopup"> \
+              <menuitem insertbefore="menu_preferences" \
+                        id="autoCopy" \
+                        label="Auto Copy toggle" \
+                        type="checkbox" \
+                        checked="false" \
+                        accesskey="A;" \
+                        oncommand="autoCopy.toggle();"/> \
+        </menupopup> \
+      </overlay>';
+    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, autoCopy);
   },
 

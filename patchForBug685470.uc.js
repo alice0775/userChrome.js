@@ -5,8 +5,9 @@
 // @include        main
 // @compatibility  Firefox 7.0+
 // @author         Alice0775
-// @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
 // @version        2011/10/30 formfox?
 // @version        2011/10/30 due to Bug 658001 - need to clear mouse capture if the capturing frame is inside a hidden deck panel or hidden tab
 // @version        2011/09/17
@@ -56,12 +57,10 @@ var bug685470 = {
       var func = window.__linkformfox__FillInHTMLTooltip.toString();
         func = func.replace(
         /{/,
-        <><![CDATA[
-        $&
-        if ("bug685470" in window && bug685470.noTooltip) {
-          return false;
-        }
-        ]]></>
+        '$& \
+        if ("bug685470" in window && bug685470.noTooltip) { \
+          return false; \
+        }'
       );
       window.__linkformfox__FillInHTMLTooltip = new Function(
          func.match(/\(([^)]*)/)[1],
@@ -72,12 +71,10 @@ var bug685470 = {
       var func = window.FillInHTMLTooltip.toString();
         func = func.replace(
         /{/,
-        <><![CDATA[
-        $&
-        if ("bug685470" in window && bug685470.noTooltip) {
-          return false;
-        }
-        ]]></>
+        '$& \
+        if ("bug685470" in window && bug685470.noTooltip) { \
+          return false; \
+        }'
       );
       window.FillInHTMLTooltip = new Function(
          func.match(/\(([^)]*)/)[1],

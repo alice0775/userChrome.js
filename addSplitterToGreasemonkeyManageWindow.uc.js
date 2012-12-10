@@ -5,18 +5,19 @@
 // @include        chrome://greasemonkey/content/manage.xul
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2008/04/21
 // @Note
-// ==/UserScript==
 setTimeout(function(){
-      var style = <><![CDATA[
-      #col_left,
-      #col_right
-      {
-        min-width: 100px !important;
-        max-width: 1000px !important;
-      }
-      ]]></>.toString().replace(/\s+/g, " ");
+      var style = " \
+      #col_left, \
+      #col_right \
+      { \
+        min-width: 100px !important; \
+        max-width: 1000px !important; \
+      } \
+      ".replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'

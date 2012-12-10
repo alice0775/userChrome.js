@@ -6,8 +6,9 @@
 // @author         Alice0775
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  4.0b8pre
-// @version        2012/08/28 22:00 margin調整
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2012/08/28 22:00 margin調整
 // @version        2012/08/12 22:00 init変更
 // @version        2010/12/22 11:00 最近のTree Style Tabは変更多すぎるからもう知らん
 // @version        2010/10/12 11:00 by Alice0775  4.0b8pre
@@ -46,46 +47,37 @@ var tabProtect = {
       func = gBrowser.treeStyleTab.performDrop.toString();
         func = func.replace(
         'targetBrowser.swapBrowsersAndCloseOther(tab, aTab);',
-        <><![CDATA[
-//window.userChrome_js.debug("swap  " + aTab.label + "  " + aTab.hasAttribute("tabProtect"));
-        if (aTab.hasAttribute("tabProtect")) {
-          tab.setAttribute("tabProtect", true);
-          gBrowser.protectTabIcon(tab);
-        } else {
-          tab.removeAttribute("tabProtect");
-        }
-        $&
-        ]]></>
+        'if (aTab.hasAttribute("tabProtect")) { \
+          tab.setAttribute("tabProtect", true); \
+          gBrowser.protectTabIcon(tab); \
+        } else { \
+          tab.removeAttribute("tabProtect"); \
+        } \
+        $&'
         );
       eval("gBrowser.treeStyleTab.performDrop = "+ func);
     } else if ('_onDrop' in gBrowser){ //Fx3.1b1pre
       func = gBrowser._onDrop.toString();
         func = func.replace(
         'this.swapBrowsersAndCloseOther(newTab, draggedTab);',
-        <><![CDATA[
-//window.userChrome_js.debug("swap  " + draggedTab.label + "  " + draggedTab.hasAttribute("tabProtect"));
-        if (draggedTab.hasAttribute("tabProtect")) {
-          newTab.setAttribute("tabProtect", true);
-          gBrowser.protectTabIcon(newTab);
-        } else {
-          newTab.removeAttribute("tabProtect");
-        }
-        $&
-        ]]></>
+        'if (draggedTab.hasAttribute("tabProtect")) { \
+          newTab.setAttribute("tabProtect", true); \
+          gBrowser.protectTabIcon(newTab); \
+        } else { \
+          newTab.removeAttribute("tabProtect"); \
+        } \
+        $&'
         );
       eval("gBrowser._onDrop = "+ func);
     } else {
       func = gBrowser.swapBrowsersAndCloseOther.toString();
         func = func.replace(
         /}$/,
-        <><![CDATA[
-//window.userChrome_js.debug("swap  " + draggedTab.label + "  " + draggedTab.hasAttribute("tabProtect"));
-        if (aOtherTab.hasAttribute("tabProtect")) {
-          aOurTab.setAttribute("tabProtect", true);
-          gBrowser.protectTabIcon(aOurTab);
-        }
-        $&
-        ]]></>
+        'if (aOtherTab.hasAttribute("tabProtect")) { \
+          aOurTab.setAttribute("tabProtect", true); \
+          gBrowser.protectTabIcon(aOurTab); \
+        } \
+        $&'
         );
       eval("gBrowser.swapBrowsersAndCloseOther = "+ func);
     }
@@ -94,12 +86,10 @@ var tabProtect = {
     var func = gBrowser.removeTab.toString();
     func = func.replace(
     '{',
-    <><![CDATA[
-    {
-     if (aTab.localName != "tab")
-       aTab = this.selectedTab;
-     if (aTab.hasAttribute("tabProtect")) return;
-    ]]></>
+    '{ \
+     if (aTab.localName != "tab") \
+       aTab = this.selectedTab; \
+     if (aTab.hasAttribute("tabProtect")) return;'
     );
     eval("gBrowser.removeTab = " + func);
     //this.debug(gBrowser.removeTab.toString());
@@ -109,33 +99,29 @@ var tabProtect = {
       var func = gPrivateBrowsingUI.toggleMode.toString();
       func = func.replace(
       'this._privateBrowsingService.privateBrowsingEnabled =',
-      <><![CDATA[
-      if (!this.privateBrowsingEnabled) {
-        for (var i= 0; i < gBrowser.mTabs.length; i++) {
-          if ( gBrowser.isProtectTab(gBrowser.mTabs[i])) {
-            gBrowser.mTabs[i].setAttribute('savedProtectTab', true);
-            gBrowser.mTabs[i].removeAttribute("tabProtect");
-          }
-        }
-      }
-      $&
-      ]]></>
+      'if (!this.privateBrowsingEnabled) { \
+        for (var i= 0; i < gBrowser.mTabs.length; i++) { \
+          if ( gBrowser.isProtectTab(gBrowser.mTabs[i])) { \
+            gBrowser.mTabs[i].setAttribute("savedProtectTab", true); \
+            gBrowser.mTabs[i].removeAttribute("tabProtect"); \
+          } \
+        } \
+      } \
+      $&'
       );
       func = func.replace(
       /}&/,
-      <><![CDATA[
-      if (this.privateBrowsingEnabled) {
-        setTimeout(function(){
-          for (var i= 0; i < gBrowser.mTabs.length; i++) {
-            if ( gBrowser.mTabs[i].hasAttribute('savedProtectTab')) {
-              gBrowser.mTabs[i].removeAttribute('savedProtectTab');
-              gBrowser.protectTab(gBrowser.mTabs[i]);
-            }
-          }
-        }, 0);
-      }
-      $&
-      ]]></>
+      "if (this.privateBrowsingEnabled) { \
+        setTimeout(function(){ \
+          for (var i= 0; i < gBrowser.mTabs.length; i++) { \
+            if ( gBrowser.mTabs[i].hasAttribute('savedProtectTab')) { \
+              gBrowser.mTabs[i].removeAttribute('savedProtectTab'); \
+              gBrowser.protectTab(gBrowser.mTabs[i]); \
+            } \
+          } \
+        }, 0); \
+      } \
+      $&"
       );
       eval("gPrivateBrowsingUI.toggleMode = " + func);
     }
@@ -149,42 +135,40 @@ var tabProtect = {
        typeof TreeStyleTabService !='undefined' ||
        typeof MultipleTabService !='undefined' ||
        stack){
-      var style = <><![CDATA[
-      .tab-close-button[hidden='true'] image {
-        width: 0px;
-      }
-      .tab-icon-protect{
-        margin-top:0px; /*要調整*/
-        margin-left:4px; /*要調整*/
-        list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQUlEQVQ4jWNgGAXDADASUvDvOsN/fPJMlLqAhRhFTJqo/H/XKXQBsoFEuQDDVnIMQPcGXJxYA3C5hiwvUOwCZAAAlRcK7m+YgB4AAAAASUVORK5CYII=');
-      }
-      .tab-icon-protect[hidden='true'] {
-        display: none;
-      }
-      ]]></>.toString();
+      var style = " \
+      .tab-close-button[hidden='true'] image { \
+        width: 0px; \
+      } \
+      .tab-icon-protect{ \
+        margin-top:0px; /*要調整*/ \
+        margin-left:4px; /*要調整*/ \
+        list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQUlEQVQ4jWNgGAXDADASUvDvOsN/fPJMlLqAhRhFTJqo/H/XKXQBsoFEuQDDVnIMQPcGXJxYA3C5hiwvUOwCZAAAlRcK7m+YgB4AAAAASUVORK5CYII='); \
+      } \
+      .tab-icon-protect[hidden='true'] { \
+        display: none; \
+      }";
     }else{
-      var style = <><![CDATA[
-      .tab-close-button[hidden='true'] {
-        display: none;
-      }
-      .tabProtect {
-        background-color:#ddddaa;
-      }
-
-      .tabProtect[selected="true"] {
-        background-color:#ddddaa;
-      }
-      .tabProtect[selected="true"]:hover {
-        background-color:#ddddaa;
-     }
-
-      .tabProtect:not([selected="true"]) {
-        background-color:#ddddaa;
-      }
-      .tabProtect:not([selected="true"]):hover {
-        background-color:#ddddaa;
-      }
-      ]]></>.toString();
+      var style = " \
+      .tab-close-button[hidden='true'] { \
+        display: none; \
+      } \
+      .tabProtect { \
+        background-color:#ddddaa; \
+      } \
+ \
+      .tabProtect[selected='true'] { \
+        background-color:#ddddaa; \
+      } \
+      .tabProtect[selected='true']:hover { \
+        background-color:#ddddaa; \
+     } \
+ \
+      .tabProtect:not([selected='true']) { \
+        background-color:#ddddaa; \
+      } \
+      .tabProtect:not([selected='true']):hover { \
+        background-color:#ddddaa; \
+      }";
     }
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',

@@ -6,13 +6,14 @@
 // @include       chrome://browser/content/bookmarks/bookmarksPanel.xul
 // @compatibility Firefox 3.0 3.1
 // @author        Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version       2012/06/28 00:00 Firefox14-
 // @version       2009/09/11 00:00 Minefield 3.7a1pre
 // @version       2009/08/14 19:00 面倒だから中クリックに置き換え
 // @version       2009/01/04 16:00 bookmarksHistoryPanel.uc.xulに対応
 // @version       2008/11/03
 // @Note          http://space.geocities.yahoo.co.jp/gl/alice0775
-// ==/UserScript==
 
 var sidebarBookmarksOpenInTabs = {
   _BTree: null,
@@ -21,20 +22,19 @@ var sidebarBookmarksOpenInTabs = {
     this._BTree = document.getElementById("bookmarks-view");
     this._BTree.addEventListener('click',function(event){sidebarBookmarksOpenInTabs.onClick(event);},true);
 
-    var style = <><![CDATA[
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-      #bookmarks-view .sidebar-placesTreechildren::-moz-tree-cell(container, hover),
-      #bookmarks-view .sidebar-placesTreechildren::-moz-tree-cell(leaf, hover)
-      {
-        background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABa0lEQVQ4ja2TSS9DcRTF3zfpB7CUiKcWhg0LaxILbHQlQjQSukHFFGxYiFASMccQhEYi1PhMMRMxtEFiaEnb19d/3+ZnJTG0lRdOcpbnl3tP7pWk/xZgEkLwYcOAUDjMxK2PvBU3l76gcYAvqFG16iZp6ISsiXOeA9qtIYCqhenbvsfcuYfcsUfRyBkPPtURN6TresHnvYUQNDqvSGlVSG1VaHJe4Vc1ANOP8EdpDpebssFjKkdPaZi5xNJ3iLl+Hdm+TkbTJqNbd6ha+GcngGlKuUO2Lcd1eo0Lz5M/BmDDg2xdjOv06iU8jzEAQggcCxdYuxSqe3ZoHj7A0r6GuXQOuWSWzIp5Jl3XhKKtEK3EoKpR16sgF49htozTMrBLIFaJ36WGNPqn90nO7yYxt4tC2yTe1wC6rhf8GpYkSfK++imvHyMhu5a0/DaeXt6IRCLx7+DrBCGGplbIKbRzdHaDEMLYJf75mYzqHeqLWDxx3b5cAAAAAElFTkSuQmCC")  no-repeat;
-        background-position: center right !important;
-      }
-      #bookmarks-view .sidebar-placesTreechildren::-moz-tree-cell(separator, hover)
-      {
-        background:url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAEklEQVQ4jWNgGAWjYBSMAggAAAQQAAF/TXiOAAAAAElFTkSuQmCC")  no-repeat !important;
-        background-position: center right !important;
-      }
-      ]]></>.toString().replace(/\s+/g, " ");
+    var style = " \
+      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+      #bookmarks-view .sidebar-placesTreechildren::-moz-tree-cell(container, hover), \
+      #bookmarks-view .sidebar-placesTreechildren::-moz-tree-cell(leaf, hover) \
+      { \
+        background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABa0lEQVQ4ja2TSS9DcRTF3zfpB7CUiKcWhg0LaxILbHQlQjQSukHFFGxYiFASMccQhEYi1PhMMRMxtEFiaEnb19d/3+ZnJTG0lRdOcpbnl3tP7pWk/xZgEkLwYcOAUDjMxK2PvBU3l76gcYAvqFG16iZp6ISsiXOeA9qtIYCqhenbvsfcuYfcsUfRyBkPPtURN6TresHnvYUQNDqvSGlVSG1VaHJe4Vc1ANOP8EdpDpebssFjKkdPaZi5xNJ3iLl+Hdm+TkbTJqNbd6ha+GcngGlKuUO2Lcd1eo0Lz5M/BmDDg2xdjOv06iU8jzEAQggcCxdYuxSqe3ZoHj7A0r6GuXQOuWSWzIp5Jl3XhKKtEK3EoKpR16sgF49htozTMrBLIFaJ36WGNPqn90nO7yYxt4tC2yTe1wC6rhf8GpYkSfK++imvHyMhu5a0/DaeXt6IRCLx7+DrBCGGplbIKbRzdHaDEMLYJf75mYzqHeqLWDxx3b5cAAAAAElFTkSuQmCC')  no-repeat; \
+        background-position: center right !important; \
+      } \
+      #bookmarks-view .sidebar-placesTreechildren::-moz-tree-cell(separator, hover) \
+      { \
+        background:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAEklEQVQ4jWNgGAWjYBSMAggAAAQQAAF/TXiOAAAAAElFTkSuQmCC')  no-repeat !important; \
+        background-position: center right !important; \
+      }".replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'

@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.5 3.6a1pre
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2009/08/03
 // @Note           000-windowhook.uc.jsが必要
 // @Note           再度ダイアログを表示したいときはprivacy.sanitize.doNotShowDialogをfalseにする
@@ -42,32 +43,30 @@ if (parseInt(Components.classes["@mozilla.org/xre/app-info;1"]
       var func = aWindow.Sanitizer.getClearRange.toString();
       func = func.replace(
         'default:',
-        <><![CDATA[
-        case 5 :
-          startDate = endDate - 604800000000; // 7*24*60*60*1000000
-          break;
-        case 6 :
-          startDate = endDate - 2592000000000; //  30*24*60*60*1000000
-          break;
-        case 7 :
-          startDate = endDate - 7776000000000; // 90*24*60*60*1000000
-          break;
-        case 8 :
-          startDate = endDate - 23328000000000; // 180*24*60*60*1000000
-          break;
-        $&
-        ]]></>
+        ' \
+        case 5 : \
+          startDate = endDate - 604800000000; /* 7*24*60*60*1000000 */ \
+          break; \
+        case 6 : \
+          startDate = endDate - 2592000000000; /*  30*24*60*60*1000000 */ \
+          break; \
+        case 7 : \
+          startDate = endDate - 7776000000000; /* 90*24*60*60*1000000 */ \
+          break; \
+        case 8 : \
+          startDate = endDate - 23328000000000; /* 180*24*60*60*1000000 */ \
+          break; \
+        $&'
         );
       eval("Sanitizer.getClearRange = "+ func, aWindow);
 
       func = aWindow.gSanitizePromptDialog.sanitize.toString();
       func = func.replace(
         '{',
-        <><![CDATA[
-        $&
-        Sanitizer.prefs.setBoolPref("doNotShowDialog",
-                            document.getElementById("doNotShow").checked);
-        ]]></>
+        ' \
+        $& \
+        Sanitizer.prefs.setBoolPref("doNotShowDialog", \
+                            document.getElementById("doNotShow").checked);'
         );
       eval("gSanitizePromptDialog.sanitize = "+ func, aWindow);
 

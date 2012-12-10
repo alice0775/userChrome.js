@@ -5,8 +5,9 @@
 // @include        *
 // @compatibility  4.0b8pre 12.0a2
 // @compatibility  4.0b8pre 12.0a2
-// @version        2012/08/12 22:00 init変更
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2012/08/12 22:00 init変更
 // @version        2012/02/06 07:00  sidebar 修正
 // @version        2012/01/04 22:00  gURLBar.handleCommand 修正
 // @version        2011/07/21 22:00  Bug 658383
@@ -28,17 +29,15 @@ patch: {
     var func = USc_updatescan._diffItemThisWindow.toString();
     func = func.replace(
       'if (diffURL) {',
-      <><![CDATA[
-      $&
-      var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                         .getService(Components.interfaces.nsIWindowMediator);
-      var mainWindow = wm.getMostRecentWindow("navigator:browser");
-      if (mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) &&
-          !/^\s*(javascript:|data:)/.test(diffURL)) {
-        mainWindow.gBrowser.loadOneTab(diffURL, null, null, null, false, null);
-        return;
-      }
-      ]]></>
+      '$& \
+      var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
+                         .getService(Components.interfaces.nsIWindowMediator); \
+      var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
+      if (mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
+          !/^\s*(javascript:|data:)/.test(diffURL)) { \
+        mainWindow.gBrowser.loadOneTab(diffURL, null, null, null, false, null); \
+        return; \
+      }'
     );
     eval ("USc_updatescan._diffItemThisWindow = " + func);
   }
@@ -51,18 +50,15 @@ patch: {
     if (!/isLockTab/.test(func)) {
       func = func.replace(
         /{/,
-        <><![CDATA[
-        {
-
-          var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                             .getService(Components.interfaces.nsIWindowMediator);
-          var mainWindow = wm.getMostRecentWindow("navigator:browser");
-          if (url && where == "current" && 'isLockTab' in mainWindow.gBrowser &&
-              mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) &&
-              !/^\s*(javascript:|data:)/.test(url)) {
-            where = "tab";
-          }
-        ]]></>
+        '{ \
+          var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
+                             .getService(Components.interfaces.nsIWindowMediator); \
+          var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
+          if (url && where == "current" && "isLockTab" in mainWindow.gBrowser && \
+              mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
+              !/^\s*(javascript:|data:)/.test(url)) { \
+            where = "tab"; \
+          }'
       );
       eval ("openLinkIn = " + func);
     }
@@ -86,38 +82,32 @@ patch: {
         eval("SecondSearchBrowser.prototype.loadForSearch = " +
             SecondSearchBrowser.prototype.loadForSearch.toSource().replace(
          'if (this.browser.localName == "tabbrowser"',
-        <><![CDATA[
-          if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(aURI)){
-            newTab = true;
-            isManual = false;
-          }
-          $&
-        ]]></>
+         'if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(aURI)){ \
+            newTab = true; \
+            isManual = false; \
+          } \
+          $&'
         ));
 
       eval("SecondSearchBrowser.prototype.checkToDoSearch = " +
 
       SecondSearchBrowser.prototype.checkToDoSearch.toSource().replace(
          'switch (aWhere)',
-        <><![CDATA[
-          if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(aURI)){
-            aWhere = 'tab';
-          }
-          $&
-        ]]></>
+         'if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(aURI)){ \
+            aWhere = "tab"; \
+          } \
+          $&'
         ));
       }
 
       func = window.loadURI.toString();
         func = func.replace(
           /(getBrowser\(\)|gBrowser)\.loadURIWithFlags/,
-          <><![CDATA[
-            if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(uri)) {
-              gBrowser.loadOneTab(uri, referrer, null, postData, false, flags);
-              return;
-            }
-            $&
-          ]]></>
+          'if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(uri)) { \
+            gBrowser.loadOneTab(uri, referrer, null, postData, false, flags); \
+              return; \
+           } \
+           $&'
         );
       eval("window.loadURI="+func);
 
@@ -219,70 +209,57 @@ patch: {
       // xxx 
       func = func.replace(
        'altEnter = altEnter && !isTabEmpty(gBrowser.selectedTab);',
-        <><![CDATA[
-        $&
-        altEnter = gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) || altEnter
-        ]]></>
+       '$& \
+        altEnter = gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) || altEnter'
       );
 /*Fx6+ xxx Bug 658383*/
       func = func.replace(
         'where = whereToOpenLink(aTriggeringEvent, false, false);',
-        <><![CDATA[
-        $&
-        if (where == "current" &&
-            gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) ) {
-          where = "tab";
-        }
-        ]]></>
+        '$& \
+        if (where == "current" && \
+            gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) ) { \
+          where = "tab"; \
+        }'
       );
       func = func.replace(
         'if (aTriggeringEvent &&',
-        <><![CDATA[
-        if ((aTriggeringEvent &&
-        ]]></>
+        'if ((aTriggeringEvent &&'
       );
       func = func.replace(
         'aTriggeringEvent.altKey && !isTabEmpty(gBrowser.selectedTab)) {',
-        <><![CDATA[
-        aTriggeringEvent.altKey && !isTabEmpty(gBrowser.selectedTab) ||
-        gBrowser.isLockTab(gBrowser.selectedTab)) && !/^\s*(javascript:|data:)/.test(url) ) {
-        ]]></>
+        'aTriggeringEvent.altKey && !isTabEmpty(gBrowser.selectedTab) || \
+        gBrowser.isLockTab(gBrowser.selectedTab)) && !/^\s*(javascript:|data:)/.test(url) ) {'
       );
 /**/      
       func = func.replace(
         'openUILinkIn(url, where, {allowThirdPartyFixup: true, postData: postData});',
-        <><![CDATA[
-        if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) ) {
-          this.handleRevert();
-          content.focus();
-          where = "tab";
-        }
-        $&
-        ]]></>
+        'if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) ) { \
+          this.handleRevert(); \
+          content.focus(); \
+          where = "tab"; \
+        } \
+        $&'
       );
       func = func.replace(
         'loadURI(url, null, postData, true);',
-        <><![CDATA[
-        if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) ) {
-          this.handleRevert();
-          content.focus();
-          where = "tab";
-          openUILinkIn(url, where, {allowThirdPartyFixup: true, postData: null});
-        } else {
-          $&
-        }
-        ]]></>
+        'if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) ) { \
+          this.handleRevert(); \
+          content.focus(); \
+          where = "tab"; \
+          openUILinkIn(url, where, {allowThirdPartyFixup: true, postData: null}); \
+        } else { \
+          $& \
+        }'
       );
       eval("gURLBar.handleCommand =" + func);
 
       //openUILinkIn whereToOpenLinkを書き換え現在のタブかつロックタブなら 新規タブに
       eval("openUILinkIn ="+openUILinkIn.toSource().replace(
       'switch (where) {',
-      <><![CDATA[
-      if (where == "current" && gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url) )
-          where = "tab";
-      $&
-      ]]></>
+      'if (where == "current" && gBrowser.isLockTab(gBrowser.selectedTab) && \
+           !/^\s*(javascript:|data:)/.test(url) ) \
+          where = "tab"; \
+      $&'
       ));
   //this.debug('openUILinkIn: \n'+openUILinkIn.toString());
 
@@ -291,17 +268,15 @@ patch: {
   //this.debug('gBrowser.loadURI: \n'+gBrowser.loadURI.toString());
       eval("gBrowser.loadURI ="+gBrowser.loadURI.toString().replace(
         '{',
-        <><![CDATA[
-        {
-        if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(aURI)){
-          try{
-            var loadInBackground = gPrefService.getBoolPref("browser.tabs.loadBookmarksInBackground");
-          }catch(ex){
-            var loadInBackground = false;
-          }
-          return gBrowser.loadOneTab(aURI, null, null, null, loadInBackground, false );
-        }
-        ]]></>
+        '{ \
+        if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(aURI)){ \
+          try{ \
+            var loadInBackground = gPrefService.getBoolPref("browser.tabs.loadBookmarksInBackground"); \
+          }catch(ex){ \
+            var loadInBackground = false; \
+          } \
+          return gBrowser.loadOneTab(aURI, null, null, null, loadInBackground, false ); \
+        }'
       ));
   //this.debug('gBrowser.loadURI: \n'+gBrowser.loadURI.toString());
 
@@ -309,17 +284,15 @@ patch: {
   //this.debug('loadURI: \n'+loadURI.toString());
       eval("loadURI ="+loadURI.toString().replace(
         'getWebNavigation',
-        <><![CDATA[
-        if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(uri)){
-          try{
-            var loadInBackground = gPrefService.getBoolPref("browser.tabs.loadBookmarksInBackground");
-          }catch(ex){
-            var loadInBackground = false;
-          }
-          gBrowser.loadOneTab(uri, null, null, postData, loadInBackground, true );
-        }else
-         $&
-        ]]></>
+        'if (gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(uri)){ \
+          try{ \
+            var loadInBackground = gPrefService.getBoolPref("browser.tabs.loadBookmarksInBackground"); \
+          }catch(ex){ \
+            var loadInBackground = false; \
+          } \
+          gBrowser.loadOneTab(uri, null, null, postData, loadInBackground, true ); \
+        }else \
+         $&'
       ));
 
   //this.debug('loadURI: \n'+loadURI.toString());
@@ -327,12 +300,11 @@ patch: {
         var func = openLinkIn.toString();
         func = func.replace(
           'switch (where) {',
-          <><![CDATA[
-          if (where == "current" && gBrowser.isLockTab(gBrowser.selectedTab) && !/^\s*(javascript:|data:)/.test(url)){
-            where = "tab";
-          }
-          $&
-          ]]></>
+          'if (where == "current" && gBrowser.isLockTab(gBrowser.selectedTab) && \
+               !/^\s*(javascript:|data:)/.test(url)){ \
+            where = "tab"; \
+          } \
+          $&'
         );
         eval("openLinkIn =" + func);
       }
@@ -366,39 +338,37 @@ patch: {
       var func = contentAreaClick.toString();
       func = func.replace(
         'let target = linkNode.target;',
-        <><![CDATA[
-        $&
-        if (
-          ( !linkNode.getAttribute("onclick") &&
-            gBrowser.isLockTab(gBrowser.selectedTab) &&
-            !/^\s*(javascript:|data:)/.test((typeof wrapper != 'undefined') ? wrapper.href : href) &&
-             !(
-               gBrowser.isNextLink(linkNode) ||
-               gBrowser.isPrevLink(linkNode) ||
-               gBrowser.isHashLink(linkNode)
-             ) 
-           )
-        ) {
-            try {
-                urlSecurityCheck(href, linkNode.ownerDocument.nodePrincipal);
-            } catch (ex) {
-                event.preventDefault();
-                return true;
-            }
-            let postData = {};
-            let url = getShortcutOrURI(href, postData);
-            if (!url) {
-                return true;
-            }
-            var doc = linkNode.ownerDocument;
-            if ("TreeStyleTabService" in window)
-              TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab,false);
-            openLinkIn(url, 'tab', { referrerURI: doc.documentURIObject,
-                             charset: doc.characterSet });
-            event.preventDefault();
-            return true;
-        }
-        ]]></>
+        '$& \
+        if ( \
+          ( !linkNode.getAttribute("onclick") && \
+            gBrowser.isLockTab(gBrowser.selectedTab) && \
+            !/^\s*(javascript:|data:)/.test((typeof wrapper != "undefined") ? wrapper.href : href) && \
+             !( \
+               gBrowser.isNextLink(linkNode) || \
+               gBrowser.isPrevLink(linkNode) || \
+               gBrowser.isHashLink(linkNode) \
+             )  \
+           ) \
+        ) { \
+            try { \
+                urlSecurityCheck(href, linkNode.ownerDocument.nodePrincipal); \
+            } catch (ex) { \
+                event.preventDefault(); \
+                return true; \
+            } \
+            let postData = {}; \
+            let url = getShortcutOrURI(href, postData); \
+            if (!url) { \
+                return true; \
+            } \
+            var doc = linkNode.ownerDocument; \
+            if ("TreeStyleTabService" in window) \
+              TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab,false); \
+            openLinkIn(url, "tab", { referrerURI: doc.documentURIObject, \
+                             charset: doc.characterSet }); \
+            event.preventDefault(); \
+            return true; \
+        }'
         );
       eval("contentAreaClick ="+func);
   //this.debug('contentAreaClick: \n'+window.contentAreaClick.toString());
@@ -408,14 +378,11 @@ patch: {
       func = gBrowser.swapBrowsersAndCloseOther.toString();
         func = func.replace(
         /}$/,
-        <><![CDATA[
-//window.userChrome_js.debug("swap  " + draggedTab.label + "  " + draggedTab.hasAttribute("tabProtect"));
-        if (aOtherTab.hasAttribute("tabLock")) {
-          aOurTab.setAttribute("tabLock", true);
-          gBrowser.lockTabIcon(aOurTab);
-        }
-        $&
-        ]]></>
+        'if (aOtherTab.hasAttribute("tabLock")) { \
+          aOurTab.setAttribute("tabLock", true); \
+          gBrowser.lockTabIcon(aOurTab); \
+        } \
+        $&'
         );
       eval("gBrowser.swapBrowsersAndCloseOther = "+ func);
       gBrowser.tabContainer.addEventListener('drop', this.onDrop, true);
@@ -437,41 +404,38 @@ patch: {
          typeof TreeStyleTabService !='undefined' ||
          typeof MultipleTabService !='undefined' ||
          stack) {
-        var style = <><![CDATA[
-        .tab-icon-lock{
-          list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjElEQVQ4je3RsQ7CMAyE4S9pURl5/6csGxKJw1AKFBARK+IkD3Fyv86OQouHOhNBqzQcdJSPzCKIEMgkKFTMXcDmMI6LGzuGnvkFoBRQiWtn/x1g5dwBpx4gnalDxAZUcm4jad3HxwTpzaNxmtZef4RMkrNbDQPTtN53AanSniM0S6y8/ES82v76MV0AlREpDobXTpUAAAAASUVORK5CYII=');
-        }
-        .tab-icon-lock[hidden='true'] {
-          display: none !important;
-        }
-        ]]></>.toString().replace(/\s+/g, " ");
+        var style = " \
+        .tab-icon-lock{ \
+          list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjElEQVQ4je3RsQ7CMAyE4S9pURl5/6csGxKJw1AKFBARK+IkD3Fyv86OQouHOhNBqzQcdJSPzCKIEMgkKFTMXcDmMI6LGzuGnvkFoBRQiWtn/x1g5dwBpx4gnalDxAZUcm4jad3HxwTpzaNxmtZef4RMkrNbDQPTtN53AanSniM0S6y8/ES82v76MV0AlREpDobXTpUAAAAASUVORK5CYII='); \
+        } \
+        .tab-icon-lock[hidden='true'] { \
+          display: none !important; \
+        }".replace(/\s+/g, " ");
       } else if(stack) {
-        var style = <><![CDATA[
-          .tabbrowser-tab[fadein] .tab-stack,
-          .tabbrowser-tab[fadein]:hover .tab-stack,
-          .tabbrowser-tab[fadein][selected="true"] .tab-stack,
-          .tabbrowser-tab[fadein][selected="true"]:hover .tab-stack  {
-            border-top: transparent solid 1px;
-          }
-          .tabbrowser-tab[tabLock="true"][fadein] .tab-stack,
-          .tabbrowser-tab[tabLock="true"][fadein]:hover .tab-stack,
-          .tabbrowser-tab[tabLock="true"][fadein][selected="true"] .tab-stack,
-          .tabbrowser-tab[tabLock="true"][fadein][selected="true"]:hover .tab-stack  {
-            border-top: red solid 1px;
-          }
-        ]]></>.toString().replace(/\s+/g, " ");
+        var style = ' \
+          .tabbrowser-tab[fadein] .tab-stack, \
+          .tabbrowser-tab[fadein]:hover .tab-stack, \
+          .tabbrowser-tab[fadein][selected="true"] .tab-stack, \
+          .tabbrowser-tab[fadein][selected="true"]:hover .tab-stack  { \
+            border-top: transparent solid 1px; \
+          } \
+          .tabbrowser-tab[tabLock="true"][fadein] .tab-stack, \
+          .tabbrowser-tab[tabLock="true"][fadein]:hover .tab-stack, \
+          .tabbrowser-tab[tabLock="true"][fadein][selected="true"] .tab-stack, \
+          .tabbrowser-tab[tabLock="true"][fadein][selected="true"]:hover .tab-stack  { \
+            border-top: red solid 1px; \
+          }'.replace(/\s+/g, " ");
       } else {
-        var style = <><![CDATA[
-          .tabbrowser-tab[tabLock="true"],                 /* 2010/03/17*/
-          .tabbrowser-tab[tabLock="true"]:hover,
-          .tabbrowser-tab[tabLock="true"][selected="true"],
-          .tabbrowser-tab[tabLock="true"][selected="true"]:hover  {
-            /*border-top: 2px solid !important;*/
-            -moz-border-top-colors: red !important;
-            -moz-border-right-colors: red !important;
-            -moz-border-left-colors: red !important;
-          }
-        ]]></>.toString().replace(/\s+/g, " ");
+        var style = ' \
+          .tabbrowser-tab[tabLock="true"], \
+          .tabbrowser-tab[tabLock="true"]:hover, \
+          .tabbrowser-tab[tabLock="true"][selected="true"], \
+          .tabbrowser-tab[tabLock="true"][selected="true"]:hover  { \
+            /*border-top: 2px solid !important;*/ \
+            -moz-border-top-colors: red !important; \
+            -moz-border-right-colors: red !important; \
+            -moz-border-left-colors: red !important; \
+          }'.replace(/\s+/g, " ");
       }
       var sspi = document.createProcessingInstruction(
         'xml-stylesheet',

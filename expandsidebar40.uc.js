@@ -8,9 +8,10 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には toggleSidebar(何タラ);
 // @Note
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2012/08/04 09:00 private browsingを考慮
 // @version        2012/08/04 09:00 hiddenではなくcollapsedを使うように
-// ==/UserScript==
 // @version        2012/02/08 14:00 splitter width in full screen
 // @version        2011/05/26 12:00 5.0a2でマウスが要素上通過する時, 移動速度が速すぎるとmouseoverイベントが発火しない? 感度が落ちた?
 // @version        2011/03/24 12:00 ドラッグオーバー遅延を別設定とした
@@ -71,35 +72,34 @@ var ucjs_expand_sidebar = {
     if ("EzSidebarService" in window)
       return;
 
-    var style = <><![CDATA[
-    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-
-    #main-window #sidebar-splitter:-moz-system-metric(windows-default-theme)
-    {
-      -moz-box-align: center;
-      -moz-box-pack: center;
-      cursor: ew-resize;
-      border-width: 0 2px;
-      border-style: solid;
-      -moz-border-left-colors: ThreeDShadow ThreeDHighlight;
-      -moz-border-right-colors: ThreeDDarkShadow ThreeDFace;
-      width: 2px;
-      max-width: 2px;
-      min-width: 0px;
-      background-color: ThreeDFace;
-      margin-left: 0px;
-    }
-    #navigator-toolbox[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter,
-    #main-window[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter
-    {
-      width: 0px;
-      max-width: 1px;
-      min-width: 0px;
-      border-left-width: 0px;
-      border-right-width: 1px;
-      background-color: ThreeDFace;
-    }
-    ]]></>.toString();
+    var style = ' \
+    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+ \
+    #main-window #sidebar-splitter:-moz-system-metric(windows-default-theme) \
+    { \
+      -moz-box-align: center; \
+      -moz-box-pack: center; \
+      cursor: ew-resize; \
+      border-width: 0 2px; \
+      border-style: solid; \
+      -moz-border-left-colors: ThreeDShadow ThreeDHighlight; \
+      -moz-border-right-colors: ThreeDDarkShadow ThreeDFace; \
+      width: 2px; \
+      max-width: 2px; \
+      min-width: 0px; \
+      background-color: ThreeDFace; \
+      margin-left: 0px; \
+    } \
+    #navigator-toolbox[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter, \
+    #main-window[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter \
+    { \
+      width: 0px; \
+      max-width: 1px; \
+      min-width: 0px; \
+      border-left-width: 0px; \
+      border-right-width: 1px; \
+      background-color: ThreeDFace; \
+    } ';
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -142,12 +142,10 @@ var ucjs_expand_sidebar = {
 
     eval("PrintUtils.printPreview = " + PrintUtils.printPreview.toString().replace(
       '{',
-      <><![CDATA[
-      $&
-      if(document.getElementById("sidebar-box") &&
-         !!document.getElementById("sidebar-box").getAttribute("sidebarcommand"))
-        window.toggleSidebar("");
-      ]]></>
+      '$& \
+      if(document.getElementById("sidebar-box") && \
+         !!document.getElementById("sidebar-box").getAttribute("sidebarcommand")) \
+        window.toggleSidebar("");'
     ));
 
     //toggleSidebarの置き換え

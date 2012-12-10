@@ -6,10 +6,19 @@
 // @compatibility  20.0a1
 // @author         Alice0775
 // @note           no tab related addon installed
-// @version        2012/12/04 18:40 pinned
+// @version        2012/12/05 16:00 tst
 // ==/UserScript==
+// @version        2012/12/05 00:40 cleanup
+// @version        2012/12/04 18:40 pinned
 // @version        2012/12/04 01:00
-(function(){
+if (window['piro.sakura.ne.jp'] &&
+    "tabsDragUtils" in window['piro.sakura.ne.jp'] &&
+    "canAnimateDraggedTabs" in window['piro.sakura.ne.jp'].tabsDragUtils) {
+  window['piro.sakura.ne.jp'].tabsDragUtils.canAnimateDraggedTabs = function TDU_canAnimateDraggedTabs(aEvent) {
+    return false;
+  }
+} else {
+  (function(){
 
       gBrowser.tabContainer._onDragOver = function(event) {
         var effects = this._setEffectAllowedForDataTransfer(event);
@@ -42,12 +51,12 @@
             tabStrip.scrollByPixels((ltr ? 1 : -1) * pixelsToScroll);
         }
 
-        if (effects == "move" &&
-            this == event.dataTransfer.mozGetDataAt(TAB_DROP_TYPE, 0).parentNode) {
+        //if (effects == "move" &&
+        //    this == event.dataTransfer.mozGetDataAt(TAB_DROP_TYPE, 0).parentNode) {
           //ind.collapsed = true;
           //this._animateTabMove(event);
           //return;
-        }
+        //}
 
         //this._finishAnimateTabMove();
 
@@ -128,13 +137,13 @@
           if (draggedTab.parentNode != this || event.shiftKey)
             this.selectedItem = newTab;
         } else if (draggedTab && draggedTab.parentNode == this) {
+          //this._finishAnimateTabMove();
           // actually move the dragged tab
           //if ("animDropIndex" in draggedTab._dragData) {
           //  let newIndex = draggedTab._dragData.animDropIndex;
           //  if (newIndex > draggedTab._tPos)
           //    newIndex--;
           //  this.tabbrowser.moveTabTo(draggedTab, newIndex);
-          //this._finishAnimateTabMove();
           //}
           let newIndex = this._getDropIndex(event);
           if (newIndex > draggedTab._tPos)
@@ -210,4 +219,5 @@
       }
       gBrowser.tabContainer.addEventListener("drop", gBrowser.tabContainer._onDrop, true);
 
-})();
+  })();
+}

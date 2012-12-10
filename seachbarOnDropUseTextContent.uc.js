@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.1
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2011/05/01 00:00 TAB_DROP_TYPE change in PlacesUIUtils
 // @version        2010/03/25 00:00   Bug 545714 -  Consolidate browser and nsContentAreaDragDrop.cpp dropped link handlers
 // @version        2009/06/22 00:00  Bug 456106 -  Switch to new drag and drop api in toolkit/browser
@@ -12,7 +14,6 @@
 // @version        2009/05/12 20:00 addHistoryFindbarFx3.0.uc.jsに対応, Second Searchなんで変なの
 // @version        2008/10/28 01:00
 // @Note           SecondSearch や Tab Mox Plusには対応していないかも
-// ==/UserScript==
 var seachbarOnDropUseTextContent = {
   //Fxのバージョン
   get getVer() {
@@ -39,23 +40,20 @@ var seachbarOnDropUseTextContent = {
         var func = searchbar._textbox.searchbarDNDObserver.onDrop.toString();
         func = func.replace(
           'if (data) {',
-          <><![CDATA[
-          data = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, data);
-          $&
-          //Second Searchのある時 苦肉の策...
-          if ("SecondSearch" in window)
-            setTimeout(function(self, data){self.mOuter.value = data;}, 0, this, data);
-        ]]></>
+          'data = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, data); \
+          $& \
+          /*Second Searchのある時 苦肉の策...*/ \
+          if ("SecondSearch" in window) { \
+            setTimeout(function(self, data){self.mOuter.value = data;}, 0, this, data); \
+          }'
         );
         eval("searchbar._textbox.searchbarDNDObserver.onDrop = " + func);
 
         func = searchbar._textbox.searchbarDNDObserver.getSupportedFlavours.toString();
         func = func.replace(
           'flavourSet.appendFlavour("application/x-moz-file", "nsIFile");',
-          <><![CDATA[
-          $&
-          flavourSet.appendFlavour("application/x-moz-tabbrowser-tab");
-        ]]></>
+          '$& \
+          flavourSet.appendFlavour("application/x-moz-tabbrowser-tab");'
         );
         eval("searchbar._textbox.searchbarDNDObserver.getSupportedFlavours = " + func);
       }
@@ -87,12 +85,10 @@ var seachbarOnDropUseTextContent = {
       func = gFindBar._findField.onDrop.toString();
       func = func.replace(
         'this.value = aXferData.data;',
-        <><![CDATA[
-        $&
-        this.value = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, this.value);
-        this.findbar._find(this.value);
-        return;
-      ]]></>
+        '$& \
+        this.value = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, this.value); \
+        this.findbar._find(this.value); \
+        return;'
       );
 
       eval("gFindBar._findField.onDrop = " + func);
@@ -100,10 +96,8 @@ var seachbarOnDropUseTextContent = {
       func = gFindBar._findField.getSupportedFlavours.toString();
       func = func.replace(
         'flavourSet.appendFlavour("text/unicode");',
-        <><![CDATA[
-        $&
-        flavourSet.appendFlavour("application/x-moz-tabbrowser-tab");
-      ]]></>
+        '$& \
+        flavourSet.appendFlavour("application/x-moz-tabbrowser-tab");'
       );
       eval("gFindBar._findField.getSupportedFlavours = " + func);
 
@@ -116,20 +110,16 @@ var seachbarOnDropUseTextContent = {
             var func = historyFindbar.onDrop.toString();
             func = func.replace(
               'if (data) {',
-              <><![CDATA[
-              data = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, data);
-              $&
-            ]]></>
+              'data = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, data); \
+              $&'
             );
             eval("historyFindbar.onDrop = " + func);
 
             var func = historyFindbar.getSupportedFlavours.toString();
             func = func.replace(
               'return flavourSet;',
-              <><![CDATA[
-              flavourSet.appendFlavour("application/x-moz-tabbrowser-tab");
-              $&
-            ]]></>
+              'flavourSet.appendFlavour("application/x-moz-tabbrowser-tab"); \
+              $&'
             );
             eval("historyFindbar.getSupportedFlavours = " + func);
 
@@ -160,20 +150,16 @@ var seachbarOnDropUseTextContent = {
             var func = historyFindbar.onDrop.toString();
             func = func.replace(
               'if (data) {',
-              <><![CDATA[
-              data = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, data);
-              $&
-            ]]></>
+              'data = seachbarOnDropUseTextContent.getLinkText(aEvent, aXferData, aDragSession, data); \
+              $&'
             );
             eval("historyFindbar.onDrop = " + func);
 
             var func = historyFindbar.getSupportedFlavours.toString();
             func = func.replace(
               'return flavourSet;',
-              <><![CDATA[
-              flavourSet.appendFlavour("application/x-moz-tabbrowser-tab");
-              $&
-            ]]></>
+              'flavourSet.appendFlavour("application/x-moz-tabbrowser-tab"); \
+              $&'
             );
             eval("historyFindbar.getSupportedFlavours = " + func);
 

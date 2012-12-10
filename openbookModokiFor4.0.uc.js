@@ -4,8 +4,9 @@
 // @description    Edit Bookmark Panelにリサイザ追加すると共に, フォルダツリーとタグセレクタのエキスパンダ開閉状態を記憶する。および 設定によりdescription, location, loadInSidebar, keywordを表示/非表示
 // @include        main
 // @author         Alice0775
-// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
+// @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
 // @version        2010/12/06 10:30 Bug Bug 597557 - Bookmarks & Identity panels should use an Arrowpanel
 // @version        2010/04/01 00:00 Bug 556342  - Invalid Treeview in bookmark menu via star pane
 // @version        2009/12/22 00:00 namePickerにフォ－カスあるように
@@ -103,12 +104,11 @@ var openbookResizer = {
     //window.removeEventListener('load', this, false);
     window.addEventListener('unload', this, false);
 
-    var style = <><![CDATA[
-      .openbookResizerGripper {
-        list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAApklEQVQokY3QK4uCURCA4QeDLCoIXoIYNFiUFVZBq2JQEEx+UcTmpi1b121eosX/a5lg8jvTzsy8M+8cGGKNusQY44QMlRTgAzOcsUqBitH0FVCWpzeNpmZsytUb4oY9qil6BfRxDaiZp1eO5OBl01u9JX7QxiRFr4XfmNbFZ+gdojbCBbt4a6CDP/wH1McDR9SwwB1b+I4bejG1ER8xxwaluHOJ8RM+9xjk9q2RpwAAAABJRU5ErkJggg==');
-        cursor: sw-resize;
-      }
-    ]]></>.toString();
+    var style = " \
+      .openbookResizerGripper { \
+        list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAAMCAYAAABWdVznAAAApklEQVQokY3QK4uCURCA4QeDLCoIXoIYNFiUFVZBq2JQEEx+UcTmpi1b121eosX/a5lg8jvTzsy8M+8cGGKNusQY44QMlRTgAzOcsUqBitH0FVCWpzeNpmZsytUb4oY9qil6BfRxDaiZp1eO5OBl01u9JX7QxiRFr4XfmNbFZ+gdojbCBbt4a6CDP/wH1McDR9SwwB1b+I4bejG1ER8xxwaluHOJ8RM+9xjk9q2RpwAAAABJRU5ErkJggg=='); \
+        cursor: sw-resize; \
+      }";
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -125,16 +125,14 @@ var openbookResizer = {
     var func = StarUI.showEditBookmarkPopup.toString();
     func = func.replace(
      'this._self._doShowEditBookmarkPanel(this._itemId, this._anchorElement, this._position);',
-      <><![CDATA[
-      if (document.getElementById("editBookmarkPanelGrid")) {
-        $&
-      } else {
-        setTimeout(function(self, aItemId, aAnchorElement, aPosition){
-          self.showEditBookmarkPopup(aItemId, aAnchorElement, aPosition);
-        }, 250, this._self, this._itemId, this._anchorElement, this._position);
-        return;
-      }
-      ]]></>
+     'if (document.getElementById("editBookmarkPanelGrid")) { \
+        $& \
+      } else { \
+        setTimeout(function(self, aItemId, aAnchorElement, aPosition){ \
+          self.showEditBookmarkPopup(aItemId, aAnchorElement, aPosition); \
+        }, 250, this._self, this._itemId, this._anchorElement, this._position); \
+        return; \
+      }'
     );
     eval("StarUI.showEditBookmarkPopup = " + func);
 
@@ -154,52 +152,46 @@ var openbookResizer = {
     );
     func = func.replace(
       /expander.className = "expander-up";*/,
-      <><![CDATA[
-      var currentFolder = this._getFolderIdFromMenuList();
-      var onselect = this._folderTree.getAttribute("onselect");
-      this._folderTree.removeAttribute("onselect");
-      $&
-      ]]></>
+      'var currentFolder = this._getFolderIdFromMenuList(); \
+      var onselect = this._folderTree.getAttribute("onselect"); \
+      this._folderTree.removeAttribute("onselect"); \
+      $&'
     );
     func = func.replace(
       'this._folderTree.focus();',
-      <><![CDATA[
-      $&;
-      setTimeout(function(tree){
-        var start = new Object();
-        var end = new Object();
-        var numRanges = tree.view.selection.getRangeCount();
-        if (numRanges > 0) {
-          tree.view.selection.getRangeAt(0,start,end);
-          var v = start.value
-          tree.treeBoxObject.ensureRowIsVisible(v);
-        }
-        tree.setAttribute("onselect", onselect);
-      }, 0, this._folderTree);
-      ]]></>
+      '$&; \
+      setTimeout(function(tree){ \
+        var start = new Object(); \
+        var end = new Object(); \
+        var numRanges = tree.view.selection.getRangeCount(); \
+        if (numRanges > 0) { \
+          tree.view.selection.getRangeAt(0,start,end); \
+          var v = start.value; \
+          tree.treeBoxObject.ensureRowIsVisible(v); \
+        } \
+        tree.setAttribute("onselect", onselect); \
+      }, 0, this._folderTree);'
     );
     eval("gEditItemOverlay.toggleFolderTreeVisibility = " + func);
-
+    
     // selected tree visible
     func = gEditItemOverlay.onFolderMenuListCommand.toString();
     func = func.replace(
       'this._folderTree.selectItems([container]);',
-      <><![CDATA[
-      var onselect = this._folderTree.getAttribute("onselect");
-      this._folderTree.removeAttribute("onselect");
-      $&;
-      setTimeout(function(tree){
-        var start = new Object();
-        var end = new Object();
-        var numRanges = tree.view.selection.getRangeCount();
-        if (numRanges > 0) {
-          tree.view.selection.getRangeAt(0,start,end);
-          var v = start.value
-          tree.treeBoxObject.ensureRowIsVisible(v);
-        }
-        tree.setAttribute("onselect", onselect);
-      }, 0, this._folderTree);
-      ]]></>
+      'var onselect = this._folderTree.getAttribute("onselect"); \
+      this._folderTree.removeAttribute("onselect"); \
+      $&; \
+      setTimeout(function(tree){ \
+        var start = new Object(); \
+        var end = new Object(); \
+        var numRanges = tree.view.selection.getRangeCount(); \
+        if (numRanges > 0) { \
+          tree.view.selection.getRangeAt(0,start,end); \
+          var v = start.value; \
+          tree.treeBoxObject.ensureRowIsVisible(v); \
+        } \
+        tree.setAttribute("onselect", onselect); \
+      }, 0, this._folderTree);'
     );
 
     eval("gEditItemOverlay.onFolderMenuListCommand = " + func);

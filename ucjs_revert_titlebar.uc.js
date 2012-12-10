@@ -5,9 +5,11 @@
 // @include        main
 // @compatibility  Firefox 4.0b5pre
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
+// @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
 // @version        2011/04/05 07:00
 // @version        2010/08/26 07:00
-// ==/UserScript==
 var ucjs_revert_titlebar = {
   label: null,
   init: function() {
@@ -23,28 +25,28 @@ var ucjs_revert_titlebar = {
     var func = gBrowser.updateTitlebar.toString();
     func = func.replace(/}$/, "ucjs_revert_titlebar.handler();}");
     gBrowser.updateTitlebar = new Function(
-       func.match(/\((.*)\)\s*\{/)[1],
-       func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*/, '').replace(/^{/, '').replace(/}$/, '')
     );
-    var style = <><![CDATA[
-        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-        #revertedtitle {
-          font-weight: bold;
-          color: captiontext;
-          padding-top: 4px;
-        }
-        #revertedtitle:-moz-window-inactive{
-          color: inactivecaptiontext;
-        }
-        #main-window:not([sizemode="normal"])[tabsontop="true"] #revertedtitle{
-          visibility: collapse;
-        }
-        #titlebar,
-        #titlebar * {
-          -moz-user-focus: ignore !important;
-          -moz-user-select: -moz-none !important;
-        }
-    ]]></>.toString().replace(/\s+/g, " ");
+    var style = ' \
+        @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+        #revertedtitle { \
+          font-weight: bold; \
+          color: captiontext; \
+          padding-top: 4px; \
+        } \
+        #revertedtitle:-moz-window-inactive{ \
+          color: inactivecaptiontext; \
+        } \
+        #main-window:not([sizemode="normal"])[tabsontop="true"] #revertedtitle{ \
+          visibility: collapse; \
+        } \
+        #titlebar, \
+        #titlebar * { \
+          -moz-user-focus: ignore !important; \
+          -moz-user-select: -moz-none !important; \
+        } \
+    '.replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
