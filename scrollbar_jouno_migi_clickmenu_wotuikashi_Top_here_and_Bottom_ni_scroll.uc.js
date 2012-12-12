@@ -6,13 +6,14 @@
 // @include        chrome://browser/content/web-panels.xul
 // @compatibility  Firefox 3.0 3.5 3.6 3.7a1pre
 // @author         Alice0775
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// ==/UserScript==
 // @version        2011/10/30 20:00 Bug 684821 - Remove nsIDOMNSHTMLElement
 // @version        2009/06/25 00:30 Minefield3.6a1preに対応させた Bug 486990 -  Context Menu can be disabled by stopping propagation (cancelEvent=true or stopPropagation)
 // @version        2009/06/14 00:30 xmlに対応させた
 // @version        2009/05/17 23:30 Minefield3.6a1preに対応させた
 // @version        2009/05/17 20:30 水平スクロールバー上でホイール回転で横スクロール
 // @Note           need Sub-Script/Overlay Loader v3.0.20mod
-// ==/UserScript==
 // @version        2009/02/05 22:30 DIV等にも対応
 // @version        2008/06/23 00:30 テキストズームだった時の処理
 // @version        2008/06/22 24:00 removeEventListener修正
@@ -29,35 +30,35 @@ var scrollContextMenu = {
 
   init: function(){
     if (!document.getElementById("web-panels-browser")) {
-      var overlay =
-        <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-                 xmlns:html="http://www.w3.org/1999/xhtml">
-          <popupset id="mainPopupSet">
-            <menupopup  id="scrollContextMenuV">
-                  <menuitem
-                    label="Top"
-                    onclick="scrollContextMenu.scrollTop();" />
-                  <menuitem
-                    label="Here"
-                    onclick="scrollContextMenu.scrollHereV(event);" />
-                  <menuitem
-                    label="Bottom"
-                    onclick="scrollContextMenu.scrollBottom();" />
-            </menupopup>
-            <menupopup  id="scrollContextMenuH">
-                  <menuitem
-                    label="Left"
-                    onclick="scrollContextMenu.scrollLeft();" />
-                  <menuitem
-                    label="Here"
-                    onclick="scrollContextMenu.scrollHereH(event);" />
-                  <menuitem
-                    label="Right"
-                    onclick="scrollContextMenu.scrollRight();" />
-            </menupopup>
-          </popupset>
-        </overlay>;
-      overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay.toXMLString());
+      var overlay = ' \
+        <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+                 xmlns:html="http://www.w3.org/1999/xhtml"> \
+          <popupset id="mainPopupSet"> \
+            <menupopup  id="scrollContextMenuV"> \
+                  <menuitem \
+                    label="Top" \
+                    onclick="scrollContextMenu.scrollTop();" /> \
+                  <menuitem \
+                    label="Here" \
+                    onclick="scrollContextMenu.scrollHereV(event);" /> \
+                  <menuitem \
+                    label="Bottom" \
+                    onclick="scrollContextMenu.scrollBottom();" /> \
+            </menupopup> \
+            <menupopup  id="scrollContextMenuH"> \
+                  <menuitem \
+                    label="Left" \
+                    onclick="scrollContextMenu.scrollLeft();" /> \
+                  <menuitem \
+                    label="Here" \
+                    onclick="scrollContextMenu.scrollHereH(event);" /> \
+                  <menuitem \
+                    label="Right" \
+                    onclick="scrollContextMenu.scrollRight();" /> \
+            </menupopup> \
+          </popupset> \
+        </overlay>';
+      overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
       window.userChrome_js.loadOverlay(overlay, null);
       gBrowser.mPanelContainer.addEventListener("mouseup", this, true);
       if (this.MOUSEWHEEL)
