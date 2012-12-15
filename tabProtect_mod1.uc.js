@@ -6,8 +6,9 @@
 // @author         Alice0775
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  4.0b8pre
-// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// @version        2012/12/15 10:30 Bug 818732 - Switch Nightly to per-window private browsing
 // ==/UserScript==
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2012/08/28 22:00 margin調整
 // @version        2012/08/12 22:00 init変更
 // @version        2010/12/22 11:00 最近のTree Style Tabは変更多すぎるからもう知らん
@@ -95,7 +96,7 @@ var tabProtect = {
     //this.debug(gBrowser.removeTab.toString());
 
     //privatebrowsing
-    if ('gPrivateBrowsingUI' in window && !('TM_init' in window)) {
+    if ('gPrivateBrowsingUI' in window && 'toggleMode' in gPrivateBrowsingUI && !('TM_init' in window)) {
       var func = gPrivateBrowsingUI.toggleMode.toString();
       func = func.replace(
       'this._privateBrowsingService.privateBrowsingEnabled =',
