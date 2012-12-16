@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりバージョン
 // @include        main
-// @compatibility  Firefox 8.0b4
+// @compatibility  Firefox 8.0b4-16.0, 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
-// @note           デフォルトテーマ
+// @note           デフォルトテーマ Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
 // @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
