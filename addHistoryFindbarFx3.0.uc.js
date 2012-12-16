@@ -7,8 +7,9 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 10 17
 // @author         Alice0775
-// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// @version        2012/12/16 00:30 Fixed bug in viewSource
 // ==/UserScript==
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2012/09/05 12:00 statusが変わったときadjustSize呼ばないようにしてみた
 // @version        2012/08/09 09:00 debug消し忘れ
 // @version        2012/08/07 21:30 xxxx Tree Style Tab 0.14.2012080601
@@ -156,7 +157,7 @@ var historyFindbar = {
                        autocompletesearchparam="findbar-history" \
                        disableAutocomplete="true" \
                        oninput="historyFindbar.copyToFindfield(event);" \
-                       onkeypress="historyFindbar..copyToFindfield(event);" \
+                       onkeypress="historyFindbar.copyToFindfield(event);" \
                        oncompositionstart="historyFindbar.handleEvent(event);" \
                        oncompositionend="historyFindbar.handleEvent(event);" \
                        onclick="historyFindbar.copyToFindfield(event);" \
