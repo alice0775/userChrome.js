@@ -1,11 +1,13 @@
 // ==UserScript==
-// @name           zzzz-MultiRowTabforFx3.7.uc.js
+// @name           zzzz-MultiRowTabforFx4.0.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    多段タブもどき実験版 CSS入れ替えまくりバージョン
 // @include        main
-// @compatibility  Firefox 4.0-16.0, 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
+// @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2012/12/18 22:00"user strict";
+// @version        2012/12/18 16:00 remove Stop Rendering Library
 // @version        2012/12/17 09:00 use Stop Rendering Library by piro
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2011/04/23 css setTabWidthAutomatically
@@ -13,7 +15,7 @@
 // @version        2011/04/15 tryserver Bug 455694
 // @version        2011/04/13 nightly
 // ==/UserScript==
-
+"user strict";
 
 zzzz_MultiRowTab();
 
@@ -34,6 +36,7 @@ function zzzz_MultiRowTab(){
   // Tree Style tab
   if('TreeStyleTabService' in window) return;
 
+  var timer = timer2 = null;
   if (!gPrefService)
     gPrefService = Components.classes["@mozilla.org/preferences-service;1"]
                                  .getService(Components.interfaces.nsIPrefBranch);
@@ -221,12 +224,27 @@ function zzzz_MultiRowTab(){
     this.MultiRowTabonDragOver(event);
 
     //event.stopPropagation();
-      this.clearDropIndicator();
+    this.clearDropIndicator();
     var newIndex = this._getDropIndex(event);
     if (newIndex == null) {
       return;
     }
-
+    let tab = document.evaluate(
+                'ancestor-or-self::*[local-name()="tab"][1]',
+                event.originalTarget,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+              ).singleNodeValue;
+    if (tab &&
+        (event.type == "drop" || event.type == "dragover") &&
+        this._setEffectAllowedForDataTransfer(event) == "link") {
+      let boxObject = tab.boxObject;
+      if (event.screenX >= boxObject.screenX + boxObject.width * .25 &&
+          event.screenX <= boxObject.screenX + boxObject.width * .75) {
+        return;
+      }
+    }
     if (newIndex < this.childNodes.length) {
       this.childNodes[newIndex].style.setProperty("border-left-color","red","important");
     } else {
@@ -239,14 +257,23 @@ function zzzz_MultiRowTab(){
   gBrowser.tabContainer.addEventListener("dragover", gBrowser.tabContainer._onDragOver, true);
 
   gBrowser.tabContainer._getDragTargetTab = function(event) {
-    var tab = document.evaluate(
+    let tab = document.evaluate(
                 'ancestor-or-self::*[local-name()="tab"][1]',
                 event.originalTarget,
                 null,
                 XPathResult.FIRST_ORDERED_NODE_TYPE,
                 null
               ).singleNodeValue;
-    return tab;
+     if (tab &&
+         (event.type == "drop" || event.type == "dragover") &&
+         this._setEffectAllowedForDataTransfer(event) == "link") {
+       let boxObject = tab.boxObject;
+       if (event.screenX < boxObject.screenX + boxObject.width * .25 ||
+           event.screenX > boxObject.screenX + boxObject.width * .75) {
+         return null;
+       }
+     }
+     return tab;
   };
 
 gBrowser.tabContainer._handleTabDrag = function(event) {
@@ -307,10 +334,9 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 }
 
 
-  gBrowser.tabContainer._getDropIndex = function(aEvent) {
-      var tabs = this.childNodes;
-      var tab = this._getDragTargetTab(aEvent);
-      if (window.getComputedStyle(this, null).direction == "ltr") {
+ gBrowser.tabContainer._getDropIndex = function(aEvent) {
+    var tabs = this.childNodes;
+    if (window.getComputedStyle(this, null).direction == "ltr") {
       for (let i = 0; i < tabs.length; i++){
         if (aEvent.screenY > tabs[i].boxObject.screenY &&
             aEvent.screenY < tabs[i].boxObject.screenY + tabs[i].boxObject.height) {
@@ -389,9 +415,14 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     this.mTabstrip.ensureElementIsVisible(this.selectedItem, false);
     return;
   }
-
+  gBrowser.tabContainer._handleTabSelect = function(aSmoothScroll) {
+      setTabWidthAutomatically();
+      setTimeout(function(self) {
+        self.mTabstrip.ensureElementIsVisible(self.selectedItem, aSmoothScroll);
+      }, 100, this);
+  }
   //タブ幅自動調整
-  var tabbrowsertabs = gBrowser.mTabContainer;
+  var tabbrowsertabs = gBrowser.tabContainer ;
   var arrowscrollbox = gBrowser.tabContainer.mTabstrip;
   var scrollbox = document.getAnonymousElementByAttribute(arrowscrollbox, "class", "arrowscrollbox-scrollbox");
   var newtabbutton = document.getAnonymousElementByAttribute(tabbrowsertabs, "anonid", "newtab-button");
@@ -399,75 +430,73 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
   var tabsclosebutton = gBrowser.tabContainer.mTabstripClosebutton;
 
   window.setTabWidthAutomatically =function(event) {
-   window['piro.sakura.ne.jp'].stopRendering.stop();
 
-    gBrowser.mTabContainer.style.removeProperty("max-height");
+    gBrowser.tabContainer.style.removeProperty("-moz-padding-start");
+    gBrowser.tabContainer.style.removeProperty("-moz-margin-start");
+    gBrowser.tabContainer.style.removeProperty("max-height");
 
-    var allTabs = gBrowser.tabs; 
-    var w1 = w2 =0, n = 0;
-    for (let i=0, len=allTabs.length; i<len; i++) {
-      if (!allTabs.item(i).getAttribute("hidden")) {
-        if (allTabs[i].getAttribute("pinned")) {
-          w1 += allTabs[i].boxObject.width;
+    var w2 = n = 0;
+    
+    var remain = remainForNormal = scrollbox.boxObject.width;
+    var numForNormal = numForPinned = 0
+    for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
+      let aTab = gBrowser.tabs.item(i);
+      if (!aTab.getAttribute("hidden")) {
+        aTab.style.removeProperty("-moz-margin-start");
+        aTab.setAttribute("context", "tabContextMenu");
+        if (aTab.getAttribute("pinned")) {
+          aTab.style.removeProperty("min-width");
+          remainForNormal -= aTab.boxObject.width;
+          numForPinned++;
         } else {
-          w2 +=  TAB_MIN_WIDTH;
-          n++;
+          numForNormal++;
         }
       }
-    }
-
-    if (event &&
-        event.type=="TabOpen") {
-      arrowscrollbox.style.setProperty("height", arrowscrollbox.boxObject.height + "px", "");
     }
 
     if (event &&
         event.type=="TabClose") {
-      w2 -=  TAB_MIN_WIDTH;
-      n--;
+      if (event.target.getAttribute("pinned")) {
+        remainForNormal += event.target.boxObject.width;
+        numForPinned--;
+      } else {
+        numForNormal--;
+      }
     }
 
-    var remain = scrollbox.boxObject.width - w1;
-    //userChrome_js.debug("r= "+remain);
-    //userChrome_js.debug("n= "+n);
-    var flg = false;
-    if (n > 0) {
-      let w = Math.floor(remain / n);
-      if (w > TAB_MIN_WIDTH) {
-        flg = true;
-        w = Math.min(w, TAB_MAX_WIDTH);
-        for (let i=0, len=allTabs.length; i<len; i++) {
-          if (!allTabs[i].getAttribute("pinned") && 
-              !allTabs[i].getAttribute("hidden")) {
-            allTabs[i].style.setProperty("min-width", w+"px", "");
-          }
+
+    //calclation number of rows and width
+    var maxbottom  = m = 0;
+    var numrows = 1;
+    var room = remain;
+
+    let maxnum = Math.ceil(remainForNormal / TAB_MIN_WIDTH);
+    if (remainForNormal >= numForNormal * TAB_MIN_WIDTH)
+      maxnum = numForNormal;
+    let ww = Math.min(Math.floor(remainForNormal / maxnum), TAB_MAX_WIDTH);
+
+    var w;
+    for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
+      let aTab = gBrowser.tabs.item(i);
+      if (event &&
+          event.type == "TabClose" && event.target == aTab)
+        continue;
+
+      if (!aTab.getAttribute("hidden")) {
+        if (!aTab.getAttribute("pinned")) {
+          aTab.style.setProperty("min-width", ww + "px", "");
+          w = ww;
+        } else {
+          w = aTab.boxObject.width;
         }
-      } else {
-        for (let i=0, len=allTabs.length; i<len; i++) {
-          if (!allTabs[i].getAttribute("pinned")) {
-            allTabs[i].style.removeProperty("min-width");
-          }
+        room -= w;
+        if (room < 0) {
+          numrows++;
+          room = remain - w;
         }
       }
     }
 
-    var bottom = m = 0;
-    n = 0;
-    for(let i = 0; i < gBrowser.mTabs.length; i++) {
-      let aTab = gBrowser.mTabs[i];
-      aTab.style.removeProperty("-moz-margin-start");
-      aTab.setAttribute("context", "tabContextMenu");
-      maxbottom = aTab.boxObject.y + aTab.boxObject.height;
-      if (bottom < maxbottom) {
-        bottom = maxbottom
-        n++;
-        m = 1;
-      } else {
-        m = 0;
-      }
-    }
-    
-    gBrowser.tabContainer.style.removeProperty("-moz-margin-start");
     // persona privent unexpected vertical scroll bar
     if (scrollbox.boxObject.height > TABBROWSERTABS_MAXROWS * multirowtabH()) {
       arrowscrollbox.style.setProperty("overflow-y", "auto", "important")
@@ -475,28 +504,47 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       arrowscrollbox.style.setProperty("overflow-y", "hidden", "important");
     }
 
-    if (event && event.type=="resize") {
-      arrowscrollbox.style.setProperty("height", (n) * multirowtabH() + "px", "");
-      setTimeout(function(){arrowscrollbox.style.setProperty("height", scrollbox.boxObject.height + "px", "");}, 250);
-    } else if (event && event.type=="TabClose" && m == 1) {
-      arrowscrollbox.style.setProperty("height", (n - 1) * multirowtabH() + "px", "");
-      setTimeout(function(){arrowscrollbox.style.setProperty("height", scrollbox.boxObject.height + "px", "");}, 250);
-    } else if (!flg) {
-      arrowscrollbox.style.setProperty("height", scrollbox.boxObject.height + "px", "");
-    } else {
-      arrowscrollbox.style.removeProperty("height");
-    }
-    gBrowser.mTabContainer.style.setProperty("max-height", TABBROWSERTABS_MAXROWS * multirowtabH()+"px", "");
+    arrowscrollbox.style.setProperty("height", (numrows) * multirowtabH() + "px", "");
+    //setTimeout(function(){arrowscrollbox.style.setProperty("height", scrollbox.boxObject.height + "px", "");}, 250);
 
-   window['piro.sakura.ne.jp'].stopRendering.start();
+    gBrowser.tabContainer .style.setProperty("max-height", TABBROWSERTABS_MAXROWS * multirowtabH()+"px", "");
   };
-  
-  window.setTabWidthAutomatically2 =function(event) {
-    if (event.target.getAttribute("selected") != "true")
-      setTabWidthAutomatically(event);
-    else
-      setTimeout(function(){setTabWidthAutomatically(event);}, 250);
+
+  //以下はタブ幅自動調整のためのイベント登録
+  window.addEventListener("resize", function(event) {
+    if(event.originalTarget == window) {
+      if (timer)
+        clearTimeout(timer);
+      setTimeout(function(event){setTabWidthAutomatically(event);}, 0, {type:"resize"});
+      timer = setTimeout(function(event){ensureVisibleElement(gBrowser.selectedTab);}, 250);
+   }
+  }, true);
+
+  function ensureVisibleElement(aTab){
+    var selectedTab = gBrowser.selectedTab || aTab
+    try{
+      var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
+               .createInstance(Components.interfaces.inIFlasher);
+      mShell.scrollElementIntoView(selectedTab);
+    }catch(e){}
   }
+
+  //初回起動時ダミーイベント
+  function forceResize() {
+    if (timer)
+      clearTimeout(timer);
+    timer = setTimeout(function(event){
+      setTabWidthAutomatically(event);
+      ensureVisibleElement();
+    }, 500, {type:"resize"});
+  }
+  forceResize();
+
+  gBrowser.tabContainer.addEventListener('TabSelect', ensureVisibleElement, false);
+  gBrowser.tabContainer.addEventListener('TabClose', setTabWidthAutomatically, true);
+  gBrowser.tabContainer.addEventListener('TabOpen', setTabWidthAutomatically, true);
+  gBrowser.tabContainer.addEventListener("TabPinned", setTabWidthAutomatically, false);
+  gBrowser.tabContainer.addEventListener("TabUnpinned", setTabWidthAutomatically, false);
 
   //pref読み込み
   function getPref(aPrefString, aPrefType, aDefault) {
@@ -517,391 +565,4 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     return aDefault;
   }
 
-  //以下はタブ幅自動調整のためのイベント登録
-  setTimeout(function(){setTabWidthAutomatically({type:"resize"});}, 10);
-  window.addEventListener("resize", function(event) {
-    if(event.originalTarget==window)
-      setTabWidthAutomatically(event);
-  }, true);
-
-
-  //初回起動時ダミーイベント
-  setTimeout(function(){
-      var event = document.createEvent("Events");
-      event.initEvent("resize", true, false);
-      window.dispatchEvent(event);
-  }, 800);
-  setTimeout(function(){
-      var event = document.createEvent("Events");
-      event.initEvent("resize", true, false);
-      window.dispatchEvent(event);
-  }, 2000);
-
-  gBrowser.tabContainer.addEventListener('TabClose', setTabWidthAutomatically2,false);
-  gBrowser.tabContainer.addEventListener('TabOpen', setTabWidthAutomatically,false);
-
-  //ここからは, 現在のタブがいつも見えるようにスクロールさせる
-  gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
-  function ensureVisible(event){
-    setTimeout(function(){setTabWidthAutomatically({type:"resize"});}, 250);
-    if (event.target.selected)
-      ensureVisibleElement(event.target);
-  }
-  function ensureVisibleElement(aTab){
-    try{
-      var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
-               .createInstance(Components.interfaces.inIFlasher);
-      mShell.scrollElementIntoView(aTab);
-    }catch(e){}
-  }
-  gBrowser.tabContainer.mTabstrip.ensureElementIsVisible = ensureVisibleElement;
-
-
-  function getVer(){
-    const Cc = Components.classes;
-    const Ci = Components.interfaces;
-    var info = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
-    var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
-    return ver;
-  }
-
 }
-
-
-
-
-
-
-
-
-/*
- Stop Rendering Library
-
- Usage:
-   window['piro.sakura.ne.jp'].stopRendering.stop();
-   // do something
-   window['piro.sakura.ne.jp'].stopRendering.start();
-
- license: The MIT License, Copyright (c) 2009-2011 YUKI "Piro" Hiroshi
-   http://github.com/piroor/fxaddonlibs/blob/master/license.txt
- original:
-   http://github.com/piroor/fxaddonlibs/blob/master/stopRendering.js
-*/
-(function() {
-	const currentRevision = 10;
-
-	if (!('piro.sakura.ne.jp' in window)) window['piro.sakura.ne.jp'] = {};
-
-	var loadedRevision = 'stopRendering' in window['piro.sakura.ne.jp'] ?
-			window['piro.sakura.ne.jp'].stopRendering.revision :
-			0 ;
-	if (loadedRevision && loadedRevision > currentRevision) {
-		return;
-	}
-
-	if (loadedRevision &&
-		'destroy' in window['piro.sakura.ne.jp'].stopRendering)
-		window['piro.sakura.ne.jp'].stopRendering.destroy();
-
-	const Cc = Components.classes;
-	const Ci = Components.interfaces;
-
-	window['piro.sakura.ne.jp'].stopRendering = {
-		revision : currentRevision,
-
-		_stopLevel : 0,
-		_listening : false,
-
-		get baswWindow()
-		{
-			return window.top
-					.QueryInterface(Ci.nsIInterfaceRequestor)
-					.getInterface(Ci.nsIWebNavigation)
-					.QueryInterface(Ci.nsIDocShell)
-					.QueryInterface(Ci.nsIBaseWindow);
-		},
-
-		stop : function()
-		{
-			if (this.useCanvas) {
-				this.showCanvas();
-			}
-			else {
-				this.baswWindow.setPosition(window.top.innerWidth * 3, window.top.innerHeight * 3);
-				if (!this._listening) {
-					window.addEventListener('mousedown', this, true);
-					this._listening = true;
-				}
-			}
-			this._stopLevel++;
-		},
-
-		start : function()
-		{
-			this._stopLevel--;
-			if (this._stopLevel > 0)
-				return;
-
-			if (this._listening) {
-				window.removeEventListener('mousedown', this, true);
-				this._listening = false;
-			}
-
-			this._stopLevel = 0;
-
-			if (this.useCanvas) {
-				this.hideCanvas();
-			}
-			else {
-				this.baswWindow.setPosition(0, 0);
-
-				this._popups.forEach(function(aPopup, aIndex) {
-					if (aPopup.state != 'open') return;
-					var w = aPopup.boxObject.width;
-					var h = aPopup.boxObject.height;
-					var hasWidth = aPopup.hasAttribute('width');
-					var hasHeight = aPopup.hasAttribute('height');
-					aPopup.sizeTo(w, h-1);
-					aPopup.sizeTo(w, h);
-					if (!hasWidth || !hasHeight)
-						window.setTimeout(function() {
-							if (!hasWidth)
-								aPopup.removeAttribute('width');
-							if (!hasHeight)
-								aPopup.removeAttribute('height');
-						}, 0);
-				}, this);
-			}
-		},
-
-		onResize : function(aEvent)
-		{
-			if (aEvent.target != window || !this._stopLevel)
-				return;
-
-			this._stopLevel = 0;
-			this.start();
-		},
-
-
-		handleEvent : function(aEvent)
-		{
-			switch (aEvent.type)
-			{
-				case 'unload':
-					this.destroy();
-					return;
-
-				case 'resize':
-					this.onResize(aEvent);
-					return;
-
-				case 'popupshown':
-					let (index = this._popups.indexOf(aEvent.originalTarget)) {
-						if (index < 0)
-							this._popups.push(aEvent.originalTarget);
-					}
-					return;
-
-				case 'popuphidden':
-					let (index = this._popups.indexOf(aEvent.originalTarget)) {
-						if (index > -1)
-							this._popups.splice(index, 1);
-					}
-					return;
-
-				case 'mousedown':
-					this._stopLevel = 0;
-					this.hideCanvas();
-					aEvent.stopPropagation();
-					aEvent.preventDefault();
-					return;
-
-				case 'DOMContentLoaded':
-					window.removeEventListener('DOMContentLoaded', this, true);
-					this.initCanvas();
-					return;
-			}
-		},
-
-		init : function()
-		{
-			if (this.useCanvas) {
-				window.addEventListener('DOMContentLoaded', this, true);
-			}
-			else {
-				this._popups = [];
-				window.addEventListener('popupshown', this, false);
-				window.addEventListener('popuphidden', this, false);
-			}
-			window.addEventListener('resize', this, false);
-			window.addEventListener('unload', this, false);
-		},
-
-		destroy : function()
-		{
-			if (this.useCanvas) {
-				try {
-					window.removeEventListener('DOMContentLoaded', this, true);
-				}
-				catch(e) {
-				}
-				this.destroyCanvas();
-			}
-			else {
-				this._popups = [];
-				window.removeEventListener('popupshown', this, false);
-				window.removeEventListener('popuphidden', this, false);
-			}
-			window.removeEventListener('resize', this, false);
-			window.removeEventListener('unload', this, false);
-		},
-
-
-		// full screen canvas
-
-		useCanvas : (function() {
-			const XULAppInfo = Cc['@mozilla.org/xre/app-info;1']
-								.getService(Ci.nsIXULAppInfo);
-			const comparator = Cc['@mozilla.org/xpcom/version-comparator;1']
-								.getService(Ci.nsIVersionComparator);
-			return comparator.compare(XULAppInfo.version, '4.0b1') > 0;
-		})(),
-
-		BASE_ID : 'piro.sakura.ne.jp-fullScreenCanvas',
-
-		DRAW_WINDOW_FLAGS : Ci.nsIDOMCanvasRenderingContext2D.DRAWWINDOW_DRAW_VIEW |
-							Ci.nsIDOMCanvasRenderingContext2D.DRAWWINDOW_DRAW_CARET |
-							Ci.nsIDOMCanvasRenderingContext2D.DRAWWINDOW_DO_NOT_FLUSH,
-		DRAW_WINDOW_BGCOLOR : 'transparent',
-
-		showCanvas : function() 
-		{
-			if (this.shown) return;
-
-			var canvas = this.canvas;
-			if (!canvas) return;
-
-			this.shown = true;
-
-			var rootBox = document.documentElement.boxObject;
-			var canvasW = window.innerWidth;
-			var canvasH = window.innerHeight;
-
-			var x = 0,
-				y = 0,
-				w = canvasW,
-				h = canvasH;
-
-			canvas.style.width  = (canvas.width = canvasW)+'px';
-			canvas.style.height = (canvas.height = canvasH)+'px';
-			try {
-				var ctx = canvas.getContext('2d');
-				ctx.clearRect(0, 0, canvasW, canvasH);
-				ctx.save();
-				ctx.translate(x, y);
-				ctx.drawWindow(window, x, y, w, h, this.DRAW_WINDOW_BGCOLOR, this.DRAW_WINDOW_FLAGS);
-				ctx.restore();
-
-				this.browsers.forEach(function(aBrowser) {
-					try {
-						var b = aBrowser;
-						if (b.localName == 'subbrowser') b = b.browser;
-						var frame = b.contentWindow;
-						var box = (b.localName == 'tabbrowser' ? b.mCurrentBrowser : b ).boxObject;
-						var x = box.x;
-						var y = box.y;
-						var bw = box.width;
-						var bh = box.height;
-						var w = frame.innerWidth;
-						var h = frame.innerHeight;
-						ctx.save();
-						ctx.translate(x, y);
-						ctx.scale(bw / w, bh / h);
-						ctx.drawWindow(frame, 0, 0, w, h, this.DRAW_WINDOW_BGCOLOR, this.DRAW_WINDOW_FLAGS);
-						ctx.restore();
-					}
-					catch(e) {
-					}
-				}, this);
-
-				document.documentElement.setAttribute('fullScreenCanvas-state', 'shown');
-			}
-			catch(e) {
-				this.hideCanvas();
-			}
-		},
-		shown : false,
-
-		hideCanvas : function()
-		{
-			if (!this.shown) return;
-
-			document.documentElement.removeAttribute('fullScreenCanvas-state');
-			this.shown = false;
-		},
-
-
-		get browsers()
-		{
-			browsers = [].concat(Array.slice(document.getElementsByTagName('tabbrowser')))
-						.concat(Array.slice(document.getElementsByTagName('browser')));
-			if ('SplitBrowser' in window) browsers = browsers.concat(SplitBrowser.browsers);
-			return browsers;
-		},
-
-		initCanvas : function()
-		{
-			var canvas = document.createElementNS('http://www.w3.org/1999/xhtml', 'canvas');
-			canvas.setAttribute('id', this.BASE_ID+'-canvas');
-			canvas.setAttribute('width', '0');
-			canvas.setAttribute('height', '0');
-			canvas.setAttribute('style', 'width:0;height:0;');
-			this.canvas = canvas;
-
-			var style = document.createProcessingInstruction('xml-stylesheet',
-					'type="text/css" href="data:text/css,'+encodeURIComponent(
-					[
-						':root[fullScreenCanvas-state="shown"] > *:not(#%BASE_ID%-box) {',
-						'	visibility: hidden !important;',
-						'}',
-						'#%BASE_ID%-box {',
-						'	position: fixed;',
-						'	z-index: 65000;',
-						'	top: 0;',
-						'	left: 0;',
-						'	visibility: collapse;',
-						'}',
-						':root[fullScreenCanvas-state="shown"] > #%BASE_ID%-box {',
-						'	visibility: visible;',
-						'}'
-					].join('\n').replace(/%BASE_ID%/g, this.BASE_ID.replace(/\./g, '\\.'))
-					)+'"'
-				);
-			this.style = style;
-
-			var box = document.createElement('box');
-			box.setAttribute('id', this.BASE_ID+'-box');
-			box.setAttribute('onmousedown', 'window["piro.sakura.ne.jp"].stopRendering.handleEvent(event);');
-			this.box = box;
-
-			box.appendChild(canvas);
-			document.insertBefore(style, document.documentElement);
-			document.documentElement.appendChild(box);
-		},
-
-		destroyCanvas : function()
-		{
-			if (!this.canvas)
-				return;
-
-			document.documentElement.removeChild(this.box);
-			this.box = null;
-			this.canvas = null;
-			document.removeChild(this.style);
-			this.style = null;
-		}
-	};
-
-	window['piro.sakura.ne.jp'].stopRendering.init();
-})();
