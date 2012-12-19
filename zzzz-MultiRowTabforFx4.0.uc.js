@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2012/12/19 12:00 wheelscroll
 // @version        2012/12/18 22:00"user strict";
 // @version        2012/12/18 16:00 remove Stop Rendering Library
 // @version        2012/12/17 09:00 use Stop Rendering Library by piro
@@ -93,6 +94,10 @@ function zzzz_MultiRowTab(){
         display: none; \
       } \
       #new-tab-button \
+      { \
+        visibility: visible !important; \
+      } \
+      #alltabs-button \
       { \
         visibility: visible !important; \
       } \
@@ -407,7 +412,38 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       mShell.scrollElementIntoView(tab);
       return true;
     }catch(e){}
-};
+  };
+
+  gBrowser.tabContainer.MultiRowTabsScroll = function(event) {
+    var tab = null
+    let containerTop = gBrowser.tabContainer.boxObject.screenY;
+    let containerBottom = containerTop + gBrowser.tabContainer.boxObject.height;
+    if (event.detail > 0) {
+      for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
+        tab = gBrowser.tabs.item(i);
+        let tabBottom = tab.boxObject.screenY + tab.boxObject.height;
+        if (tabBottom > containerBottom) {
+          break;
+        }
+      }
+    } else {
+      for (let i=gBrowser.tabs.length - 1; i > -1; i--) {
+        tab = gBrowser.tabs.item(i);
+        let tabTop = tab.boxObject.screenY;
+        if (tabTop < containerTop) {
+          break;
+        }
+      }
+    }
+    if (tab)
+    try {
+      var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
+               .createInstance(Components.interfaces.inIFlasher);
+      mShell.scrollElementIntoView(tab);
+    }catch(e){}
+  }
+
+  document.getElementById("TabsToolbar").addEventListener("DOMMouseScroll", gBrowser.tabContainer.MultiRowTabsScroll, true);
 
 
 //ここからはタブ幅自動調整
@@ -500,8 +536,10 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     // persona privent unexpected vertical scroll bar
     if (scrollbox.boxObject.height > TABBROWSERTABS_MAXROWS * multirowtabH()) {
       arrowscrollbox.style.setProperty("overflow-y", "auto", "important")
+      tabbrowsertabs.setAttribute("overflow", true);
     } else {
       arrowscrollbox.style.setProperty("overflow-y", "hidden", "important");
+      tabbrowsertabs.removeAttribute("overflow");
     }
 
     arrowscrollbox.style.setProperty("height", (numrows) * multirowtabH() + "px", "");
