@@ -3,34 +3,34 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    右クリックメニューにTab Context Menu
 // @include        main
-// @compatibility  Firefox 4.0
+// @compatibility  Firefox 10.0 20.0a1
 // @author         Alice0775
+// @version        2012/12/22 11:00 Bug 593645
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2011/05/12 23:00
 // ==/UserScript==
 (function(){
-  const kXULNS =
-           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-  function DOM (xmlns, xml) {
-    var doc = (new DOMParser()).parseFromString(
-            '<root xmlns="' + xmlns + '">' + xml + "</root>",
-            "application/xml"
-    );
-    var imported = document.importNode(doc.documentElement, true);
-    var range = document.createRange();
-    range.selectNodeContents(imported);
-    var fragment = range.extractContents();
-    range.detach();
-    return fragment.childNodes.length > 1 ? fragment : fragment.firstChild;
-  }
+    var overlay = ' \
+      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
+               xmlns:html="http://www.w3.org/1999/xhtml"> \
+        <menupopup id="contentAreaContextMenu"> \
+          <menuitem id="context-tabcontextmenu" \
+                  insertbefore="context-openlink" \
+                  label="Tab Context Menu" \
+                  accesskey="T" \
+                  oncommand="setTimeout(function(self){document.popupNode = gBrowser.selectedTab;document.getElementById(\'tabContextMenu\').openPopup(self,-2,-2,true, false);document.popupNode = null}, 0, this);"> \
+          </menuitem> \
+        </menupopup> \
+      </overlay>';
+    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
+    window.userChrome_js.loadOverlay(overlay, null);
 
-  self.elem = DOM(kXULNS,
-      '<menuitem id="context-tabcontextmenu" \
-                label="Tab Context Menu" \
-                accesskey="T" \
-                oncommand="setTimeout(function(self){document.popupNode = gBrowser.selectedTab;document.getElementById(\'tabContextMenu\').openPopup(self,-2,-2,true);setTimeout(function(){document.popupNode = null}, 250);}, 0, this);"> \
-       </menuitem>'
-  );
-  var ref = document.getElementById('context-openlink');
-  ref.parentNode.insertBefore(self.elem, ref.parentNode.firstChild);
+    var func = TabContextMenu.updateContextMenu.toString();
+    func = func.replace(
+      'aPopupMenu.triggerNode.',
+      '!aPopupMenu.triggerNode?gBrowser.selectedTab:aPopupMenu.triggerNode.');
+    TabContextMenu.updateContextMenu = new Function(
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
+    );
 })();
