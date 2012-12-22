@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 10 17
 // @author         Alice0775
+// @version        2012/12/22 00:30 Private browsing
 // @version        2012/12/16 00:30 Fixed bug in viewSource
 // ==/UserScript==
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -96,6 +97,9 @@ var historyFindbar = {
   },
 
   init :function(){
+    try {
+      Components.utils.import("resource://gre/modules/PrivateBrowsingUtils.jsm");
+    } catch (e) {}
     try {
       gFindBar;
     } catch (e) {}
@@ -698,6 +702,14 @@ var historyFindbar = {
   },
 
   addToHistory: function(value){
+    try {
+      if (PrivateBrowsingUtils.isWindowPrivate(window))
+        return;
+    } catch(ex) {
+      if (document.documentElement.getAttribute("titlemodifier_privatebrowsing") ==
+          document.documentElement.getAttribute("titlemodifier"))
+        return;
+    }
     //データーベースに記入
     if(this.lastInputValue == value) return;
     if(value.replace(/ /g,'')===''){
@@ -719,9 +731,13 @@ var historyFindbar = {
   },
 
   clearHistory: function() {
-      var formHistory = Components.classes["@mozilla.org/satchel/form-history;1"]
-          .getService(Components.interfaces.nsIFormHistory2);
-      formHistory.removeEntriesForName("findbar-history");
+    try {
+      if (PrivateBrowsingUtils.isWindowPrivate(window))
+        return;
+    } catch(ex) {}
+    var formHistory = Components.classes["@mozilla.org/satchel/form-history;1"]
+        .getService(Components.interfaces.nsIFormHistory2);
+    formHistory.removeEntriesForName("findbar-history");
   },
 
   _DOMAttrModified: function(aEvent){
