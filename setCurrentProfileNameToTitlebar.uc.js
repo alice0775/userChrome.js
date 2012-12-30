@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0 3.5 3.6a1
 // @author         Alice0775
+// @version        2012/12/31 00:00 Bug 818800 Remove the global private browsing service
 // @version        2012/08/06 08:00 remove hack privatebrowsingUI
 // ==/UserScript==
 // @version        2010/09/25 23:00 Bug 598221 - Page Title not shown in Title Bar on Session Restore
@@ -79,8 +80,10 @@
 
   if ('gPrivateBrowsingUI' in window &&
        typeof gPrivateBrowsingUI._privateBrowsingService == 'undefined')
-    gPrivateBrowsingUI._privateBrowsingService = Cc["@mozilla.org/privatebrowsing;1"].
+    try {
+      gPrivateBrowsingUI._privateBrowsingService = Cc["@mozilla.org/privatebrowsing;1"].
                                    getService(Ci.nsIPrivateBrowsingService);
+    } catch(e){}
 
   setTimeout(function(){
     setCurrentProfileNameToTitlebar();
