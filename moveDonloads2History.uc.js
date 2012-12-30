@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 20
 // @author         Alice0775
+// @version        2012/12/31 00:00 
 // @version        2012/12/29 00:00 
 // ==/UserScript==
 var moveDonloads2History = {
@@ -31,7 +32,16 @@ var moveDonloads2History = {
   },
 
   timer: null,
-  delayedInit: function(){
+  delayedInit: function() {
+    var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                       .getService(Components.interfaces.nsIWindowMediator);
+    var enumerator = wm.getEnumerator("navigator:browser");
+    while(enumerator.hasMoreElements()) {
+      var win = enumerator.getNext();
+      if (win.moveDonloads2History.timer)
+        clearTimeout(win.moveDonloads2History.timer);
+    }
+
     if (this.timer)
       clearTimeout(this.timer);
     this.timer = setTimeout(function(that){that.init();}, 1000, this);
