@@ -3,11 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    現在のプロファイル名をタイトルバーに表示
 // @include        main
-// @compatibility  Firefox 2.0 3.0 3.5 3.6a1
+// @compatibility  Firefox 19
 // @author         Alice0775
 // @version        2012/12/31 00:00 Bug 818800 Remove the global private browsing service
-// @version        2012/08/06 08:00 remove hack privatebrowsingUI
 // ==/UserScript==
+// @version        2012/08/06 08:00 remove hack privatebrowsingUI
 // @version        2010/09/25 23:00 Bug 598221 - Page Title not shown in Title Bar on Session Restore
 // @version        2009/07/25 18:00 Bug 506437 -  The titlebar of a tear off window is not updated correctly after having detached a tab
 // @version        2008/03/06 15:00
