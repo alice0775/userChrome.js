@@ -5,14 +5,16 @@
 // @include        main
 // @include        chrome://messenger/content/messenger.xul
 // @include        chrome://messenger/content/messageWindow.xul
-// @compatibility  Firefox 2.0 3.0 3.5, Thunderbird 2.0
+// @compatibility  Firefox 10, Thunderbird 10
 // @author         Alice0775
 // @note           Left DblClick        : open link on  new tab
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
-// @version        2012/07/26 15:00 .hoge とか ..huga はスキップ
+// @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
+// @version        checkLoadURIStrWithPrincipal
+// @version        2012/07/26 15:00 .hoge とか ..huga はスキップ
 // @version        2011/11/28 09:00 update TLD リスト
 // @version        2011/11/23 19:00 エラー修正
 // @version        2011/11/05 11:00 textNodeの隣がnullで親の隣がbrなら探索を終わりにしてみる
@@ -304,7 +306,7 @@ function ucjs_textlink(event){
       // .hoge とか ..huga はスキップ
       if (/^\./.test(arrUrl[i]) && !/^[\.]+[/]/.test(arrUrl[i]))
         return;
-debug(arrUrl[i]);
+//debug(arrUrl[i]);
       //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
       var url = arrUrl[i];
       url = additionalFixUpURL(url);
@@ -411,6 +413,8 @@ debug(url);
     //  return node;
     while (node && node.parentNode) {
       try {
+        if (!(node instanceof Ci.nsIDOMNSEditableElement))
+          throw 0;
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
         return node;
       }
@@ -466,7 +470,7 @@ debug(url);
         if(event.shiftKey)
           saveAsURL(uri, doc);
         else
-          openNewTab(uri);
+          openNewTab(uri, doc);
       }catch(e){}
       closeContextMenu();
   }
@@ -482,9 +486,12 @@ debug(url);
       var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
                              .getService(nsIScriptSecurityManager);
       try {
-        secMan.checkLoadURIStr(sourceURL, uri.spec, nsIScriptSecurityManager.STANDARD);
+        if (uri instanceof Components.interfaces.nsIURI)
+         secMan.checkLoadURIWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
+        else
+         secMan.checkLoadURIStrWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
       } catch (e) {
-        throw "Load of " + url + " denied.";
+        throw "Load denied.";
       }
       saveURL( uri.spec, linkText, null, true );
       return;
@@ -500,7 +507,7 @@ debug(url);
              makeURI(doc.location.href, doc.characterSet) );
   }
 
-  function openNewTab(uri){
+  function openNewTab(uri, doc){
     //Thunderbird
     if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
       // Make sure we are allowed to open this URL
@@ -511,9 +518,12 @@ debug(url);
       var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
                              .getService(nsIScriptSecurityManager);
       try {
-        secMan.checkLoadURIStr(sourceURL, uri.spec, nsIScriptSecurityManager.STANDARD);
+        if (uri instanceof Components.interfaces.nsIURI)
+         secMan.checkLoadURIWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
+        else
+         secMan.checkLoadURIStrWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
       } catch (e) {
-        throw "Load of " + url + " denied.";
+        throw "Load denied.";
       }
       var protocolSvc = Components.classes["@mozilla.org/uriloader/external-protocol-service;1"]
                         .getService(Components.interfaces.nsIExternalProtocolService);
@@ -632,6 +642,8 @@ debug(url);
     var node = aRange.commonAncestorContainer.parentNode;
     while (node && node.parentNode){
       try {
+        if (!(node instanceof Components.interfaces.nsIDOMNSEditableElement))
+          throw 0;
         node.QueryInterface(Components.interfaces.nsIDOMNSEditableElement);
         return node;
       }

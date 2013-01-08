@@ -3,10 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ファイル名をD&D
 // @include        main
-// @compatibility  Firefox 10.0
+// @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
-// @version        2013/01/01 15:00 Avoid to overwrite data on dragstart. And Bug 789546
+// @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
+// @version        2013/01/01 15:00 Avoid to overwrite data on dragstart. And Bug 789546
 // @version        2012/10/24 23:00 href=javascript://のリンクテキストの処理変更
 // @version        2012/10/06 23:00 Bug 795065 Add privacy status to nsDownload
 // @version        2012/10/06 07:00 Bug 722872  call .init(null) for nsITransferable instance
@@ -924,6 +925,8 @@ var DragNGo = {
     //  return node;
     while (node) {
       try {
+        if (!(node instanceof Ci.nsIDOMNSEditableElement))
+          throw 0;
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
         if (!node.hasOwnProperty("type") || node.type != "file")
           return node;
@@ -1685,7 +1688,7 @@ var DragNGo = {
   },
 
   debug: function(aMsg){
-    //return;
+    return;
 
     const UI = Cc["@mozilla.org/intl/scriptableunicodeconverter"].
           createInstance(Ci.nsIScriptableUnicodeConverter);

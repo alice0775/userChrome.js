@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @include        main
 // @author         Alice0775
-// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2008/02/19 18:00
 // @note           Ctrl+Shift+C または about:config の clipboard.autocopy を [false]で無効 true で 有効 トグル
 // @note           designModeやtextarea等編集可能要素なら何もしない
@@ -140,6 +141,8 @@ var autoCopy = {
   isParentEditableNode: function(node) {
     while (node && node.parentNode) {
       try {
+        if (!(node instanceof Ci.nsIDOMNSEditableElement))
+          throw 0;
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
         return node;
       }

@@ -5,10 +5,11 @@
 // @include        main
 // @compatibility  Firefox 4.0b9pre
 // @author         Alice0775
+// @version        2013/01/08 02:00 Bug 827546
+// ==/UserScript==
 // @version        2010/12/23 19:00 label, description 上は無視
 // @version        2010/12/23 15:00
 // @Note
-// ==/UserScript==
 var dragMoveTabModalDialog = {
   elem: null,
   x0: 0,
@@ -102,6 +103,8 @@ var dragMoveTabModalDialog = {
     } catch(e) {}
     while (node && node.parentNode) {
       try {
+        if (!(node instanceof Ci.nsIDOMNSEditableElement))
+          throw 0;
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
         return node;
       }

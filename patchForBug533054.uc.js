@@ -7,8 +7,9 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 3.0 3.5 3.6 3.7
 // @author         Alice0775
-// @version        2009/12/05
+// @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
+// @version        2009/12/05
 var bug533054 = {
 
   NUMLINE: 10,
@@ -59,6 +60,8 @@ var bug533054 = {
     //  return node;
     while (node && node.parentNode) {
       try {
+        if (!(node instanceof Ci.nsIDOMNSEditableElement))
+          throw 0;
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
         return node;
       }

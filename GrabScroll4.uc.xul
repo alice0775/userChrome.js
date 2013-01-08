@@ -32,6 +32,8 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2013/01/08 02:00 Bug 827546
+// ==/UserScript==
 // @version        2012/01/30 01:00 pagehide, this.xxx = null;
 // @version        2011/10/30 Bug 684821 - Remove nsIDOMNSHTMLElement 
 // @version        2011/10/18 22:00 オーバーフロウなしのiframeの場合は親ドキュメント
@@ -40,7 +42,6 @@
 // @version        2010/03/19 23:00 Bug 442228 - Implement CSS property to control element resizability
 // @version        2010/02/25 17:00
 // @version        2010/01/16 18:00 viewSource
-// ==/UserScript==
 // @version        2009/08/22 18:00 要素のドラッグなど, カーソル形状がresize|move|all-scroll|crosshairの時は何もしないようにした。
 // @version        2009/08/19 00:30 背の高いdivの場合, カーソル形状変更しない
 // @version        2009/06/14 00:30 xmlに対応させた
@@ -626,6 +627,8 @@ var GrabScroll = {
     } catch(e) {}
     while (node && node.parentNode) {
       try {
+        if (!(node instanceof Ci.nsIDOMNSEditableElement))
+          throw 0;
         node.QueryInterface(Ci.nsIDOMNSEditableElement);
         return node;
       }
