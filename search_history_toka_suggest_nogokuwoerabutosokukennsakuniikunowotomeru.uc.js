@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         2ch
+// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2009/05/14 00:00 isempty
 // @modified       by Alice0775
 // ==/UserScript==
@@ -74,8 +75,7 @@ var searchBar = BrowserSearch.searchBar;
 */
 
   stopSearchByDropdownListOnClicked();
-  document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", function(e) {
-      if (e.attrName == "disabled" && !e.newValue)
-        stopSearchByDropdownListOnClicked();
+  window.addEventListener("aftercustomization", function(e) {
+    stopSearchByDropdownListOnClicked();
   }, false);
 })();

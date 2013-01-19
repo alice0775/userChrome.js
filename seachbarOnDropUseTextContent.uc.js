@@ -5,8 +5,9 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.1
 // @author         Alice0775
-// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
+// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // ==/UserScript==
+// @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2011/05/01 00:00 TAB_DROP_TYPE change in PlacesUIUtils
 // @version        2010/03/25 00:00   Bug 545714 -  Consolidate browser and nsContentAreaDragDrop.cpp dropped link handlers
 // @version        2009/06/22 00:00  Bug 456106 -  Switch to new drag and drop api in toolkit/browser
@@ -25,7 +26,7 @@ var seachbarOnDropUseTextContent = {
   },
 
   init: function(){
-    document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", this, false);
+    window.addEventListener("aftercustomization", this, false);
     window.addEventListener("unload", this, false);
     this.patch();
     this.patchFindbar();
@@ -287,12 +288,10 @@ var seachbarOnDropUseTextContent = {
   handleEvent: function(event){
     switch(event.type){
       case "unload":
-        document.getElementById("cmd_CustomizeToolbars").removeEventListener("DOMAttrModified", this, false);
+        window.removeEventListener("aftercustomization", this, false);
         break;
-      case "DOMAttrModified":
-        if (event.attrName == "disabled" && !event.newValue){
-          this.patch();
-        }
+      case "aftercustomization":
+        this.patch();
         break;
     }
   }

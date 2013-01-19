@@ -5,9 +5,10 @@
 // @include        chrome://browser/content/preferences/preferences.xul
 // @compatibility  Firefox 3.5 3.6a1pre
 // @author         Alice0775
+// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
+// ==/UserScript==
 // @version        2009/09/16 move Clear Recent History from Remember History pane
 // @version        2009/08/29 各項目は常に表示するように
-// ==/UserScript==
 // @version        2009/06/26
 // @note            Bug 500584 -  "Accept cookies from sites","Accept third-party cookies","Exceptions…", It is necessary to always display these options regardless of the option of the preservation of the history.
 
@@ -56,9 +57,23 @@ function moveCookiesGroup() {
     ''
     );
     eval("gPrivacyPane.updateHistoryModePane = " + func);
-
-    document.getElementById("historyCustomPane").addEventListener("DOMAttrModified", function(event){
+    
+    // select the target node
+    var target = document.getElementById("historyCustomPane")
+    // create an observer instance
+    var observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
         initializeHistoryMode();
+      });   
+    });
+    // configuration of the observer:
+    var config = { attributes: true, childList: true, subtree: true };
+    // pass in the target node, as well as the observer options
+    observer.observe(target, config);
+    // later, you can stop observing
+    window.addEventListener("unload", function preferencesUnload(event){
+      window.removeEventListener("unload", preferencesUnload, false);
+      observer.disconnect();
     }, false);
 
     var acceptThirdParty = document.getElementById("acceptThirdParty");

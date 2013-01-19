@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 4.0b7pre
 // @author         Alice0775
+// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2011/06/09 00:00 search-go-label due to Bug 592909 - Streamline the visual appearance of the search field
 // @version        2010/02/01 00:00 toggleで語句を削除しない
 // @version        2010/01/29 00:00 Bug 628654 - Show connecting / waiting / loading status messages in small overlay on top of content at bottom of screen.
@@ -60,7 +61,8 @@ var ucjs_toggleFindBar = {
     if (!document.getElementById("FindToolbar") &&
         typeof gFindBarInitialized != 'undefined' &&
         !gFindBarInitialized) {
-      window.watch('gFindBarInitialized', function() { ucjs_toggleFindBar.init(); });
+      //window.watch('gFindBarInitialized', function() { ucjs_toggleFindBar.init(); });
+      gFindBar;
       return;
     }
 
@@ -93,8 +95,7 @@ var ucjs_toggleFindBar = {
       }
    }
 
-    if(document.getElementById("cmd_CustomizeToolbars"))
-      document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", this, false);
+    window.addEventListener("aftercustomization", this, false);
     window.addEventListener("unload", this, false);
 
     this.addonbar = document.getElementById("addon-bar") ||
@@ -117,8 +118,7 @@ var ucjs_toggleFindBar = {
   },
 
   uninit: function(){
-    if(document.getElementById("cmd_CustomizeToolbars"))
-      document.getElementById("cmd_CustomizeToolbars").removeEventListener("DOMAttrModified", this, false);
+    window.removeEventListener("aftercustomization", this, false);
     if(this.OPENFINDBAR_RCLICK_SEARCHGOBUTTON && this.goButton)
       this.goButton.removeEventListener("click", this, true);
     if(this.OPENFINDBAR_RCLICK_STATUSBAR && this.addonbar)
@@ -134,10 +134,8 @@ var ucjs_toggleFindBar = {
       case "unload":
         this.uninit();
         break;
-      case "DOMAttrModified":
-        if (event.attrName == "disabled" && !event.newValue){
-          this.init();
-        }
+      case "aftercustomization":
+        this.init();
         break;
       case "click":
         var elem = event.target;

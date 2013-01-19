@@ -5,11 +5,12 @@
 // @include        main
 // @compatibility  Firefox 4.0b2pre
 // @author         Alice0775
+// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
+// ==/UserScript==
 // @version        2011/01/04 Bug 583386 - Implement latest Firefox Menu design 
 // @version        2010/05/06 Bug 528884  - Remove places' menu and toolbar bindings
 // @version        2010/03/29 Minefield 3.7a4pre
 // @note           menu.xmlを修正するのが本当だが....
-// ==/UserScript==
 
 var bug419911 = {
   //-- config --
@@ -23,7 +24,6 @@ var bug419911 = {
               'BookmarksMenuToolButtonPopup',
               'UnsortedBookmarksFolderToolButtonPopup',
               'bookmarksMenuPopup-context'],
-  globDndtbTimer: null,
   timer:[],
   count:[],
 
@@ -33,12 +33,7 @@ var bug419911 = {
     window.addEventListener('unload', this, false);
     this.addPrefListener(this.PrefListener);
 
-    document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", this, false);
-    if ('globDndtb' in window){
-      var self = this;
-      document.getElementById("PersonalToolbar").addEventListener("DOMAttrModified",
-                               function(event){self.globDndtb(event);}, true);
-    }
+    window.addEventListener("aftercustomization", this, false);
 
     this.initPref();
     this.delayedStartup();
@@ -48,12 +43,7 @@ var bug419911 = {
     window.removeEventListener('unload', this, false);
     this.removePrefListener(this.PrefListener);
 
-    document.getElementById("cmd_CustomizeToolbars").removeEventListener("DOMAttrModified", this, false);
-    if ('globDndtb' in window){
-      var self = this;
-      document.getElementById("PersonalToolbar").removeEventListener("DOMAttrModified",
-                               function(event){self.globDndtb(event);}, true);
-    }
+    window.removeEventListener("aftercustomization", this, false);
 
     for (var i = 0; i < this.menupopup.length; i++){
       var menupopup = document.getElementById(this.menupopup[i]);
@@ -89,16 +79,6 @@ var bug419911 = {
     }
   },
 
-  //for DragNDrop Toolbars
-  globDndtb: function(event){
-    if (event.target != document.getElementById("PersonalToolbar"))
-      return;
-    if (event.attrName == 'customizable' && event.newValue){
-      if (this.globDndtbTimer)
-        clearTimeout(this.globDndtbTimer);
-      this.globDndtbTimer = setTimeout(function(self){self.delayedStartup(self);}, 100, this);
-    }
-  },
 
   handleEvent: function(event){
     switch (event.type) {
@@ -108,11 +88,9 @@ var bug419911 = {
       case 'popuphiding':
         this.popuphiding(event);
         break;
-      case "DOMAttrModified":
-        if (event.attrName == "disabled" && !event.newValue){
-          //After customize toolbar
-          setTimeout(function(self){self.delayedStartup(self);}, 0, this);
-        }
+      case "aftercustomization":
+        //After customize toolbar
+        setTimeout(function(self){self.delayedStartup(self);}, 0, this);
         break;
       case 'load':
         this.init();

@@ -7,7 +7,6 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 10 17
 // @author         Alice0775
-// @version        2012/12/22 00:30 Private browsing
 // @version        2012/12/16 00:30 Fixed bug in viewSource
 // ==/UserScript==
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -363,7 +362,7 @@ var historyFindbar = {
       this._findField2.addEventListener("dragdrop", function(event){nsDragAndDrop.drop(event, historyFindbar);}, true);
     else
       this._findField2.addEventListener("drop", this, true);
-    this._findField2.addEventListener("undo", this, true);
+    this._findField2.addEventListener("change", this, true);    
     gFindBar._findField.addEventListener("focus", this, false);
     //終了のためESCの監視と, 少なくともF3,F4が押されたとき保存する
     window.addEventListener("keypress", this, true);
@@ -392,7 +391,7 @@ var historyFindbar = {
       this._findField2.removeEventListener("dragdrop", function(event){nsDragAndDrop.drop(event, historyFindbar);}, true);
     else
       this._findField2.removeEventListener("drop", this, true);
-    this._findField2.removeEventListener("undo", this, true);
+    this._findField2.removeEventListener("change", this, true);    
     gFindBar._findField.removeEventListener("focus", this, false);
     window.removeEventListener("keypress", this, true);
     window.removeEventListener("command", this, false);
@@ -494,12 +493,13 @@ var historyFindbar = {
             this.addToHistory(this._findField2.value);
         }
         break;
-      case 'undo':
+      case 'change':
           this._findField2.select();
           this._findField2.focus();
           this.addToHistory(this._findField2.value);
         break;
       case 'click':
+        break;
         //window.userChrome_js.debug("handleEvent  " + aEvent.type);
         if (aEvent.originalTarget.localName != 'toolbarbutton')
           return;

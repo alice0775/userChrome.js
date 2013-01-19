@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2 - 9
 // @author         Alice0775
+// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        LastMod 2011/10/02 18:00 autocomlete ポップアップには無視するように
 // @version        LastMod 2011/08/29 13:00
 // @version        LastMod 2008/05/17 20:00
@@ -113,8 +114,7 @@ ucjs_clearfield.initxul();
     return ver;
   }
   //if(getVer()<3){
-    document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", function(e) {
-      if (e.attrName == "disabled" && !e.newValue)
+    window.addEventListener("aftercustomization",  function(e) {
         ucjs_clearfield.addxultarget("urlbar");
         ucjs_clearfield.addxultarget("searchbar");
     }, false);

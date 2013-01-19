@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0 3.1 3.2
 // @modified by    Alice0775
+// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2009/02/06 sidebarbutton_2.0.6.uc.js 対応
 // @version        LastMod 2007/08/31 17:30
 // @Note
@@ -46,8 +47,8 @@ var ZZZ_SidebarContextMenu ={
     this.sidebarMenu.removeEventListener("DOMMouseScroll", this, false);
     this.sidebarMenuPopup.removeEventListener("DOMMouseScroll", this, true);
     var label = document.getElementById("sidebarMenuButtonlabel");
-    this.sidebarMenu.removeEventListener("DOMAttrModified", this, false);;
-
+    // later, you can stop observing
+    this.observer.disconnect(); 
   },
 
   handleEvent: function(aEvent) {
@@ -71,11 +72,6 @@ var ZZZ_SidebarContextMenu ={
           }
         }
         break;
-      case 'DOMAttrModified':
-        var attrName = aEvent.attrName;
-        if (aEvent.attrName == 'value' && aEvent.newValue != "")
-          this.sidebarMenu.setAttribute("label", aEvent.newValue);
-        break;
     }
   },
 
@@ -88,7 +84,20 @@ var ZZZ_SidebarContextMenu ={
     menu.setAttribute("flex", "1");
     menu.setAttribute("align", "left");
     menu.setAttribute("label", this.sidebarTitle.value);
-    this.sidebarTitle.addEventListener("DOMAttrModified", this, false);;
+  
+    // select the target node
+    var target = this.sidebarTitle;
+    // create an observer instance
+    this.observer = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        if (mutation.attributeName == 'value' && ZZZ_SidebarContextMenu.sidebarTitle.value != "")
+          ZZZ_SidebarContextMenu.sidebarMenu.setAttribute("label", ZZZ_SidebarContextMenu.sidebarTitle.value);
+      });   
+    });
+    // configuration of the observer:
+    var config = { attributes: true };
+    // pass in the target node, as well as the observer options
+    this.observer.observe(target, config);
 
     this.sidebarHeader.insertBefore(menu, this.sidebarTitle);
 

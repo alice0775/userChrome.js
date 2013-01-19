@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 more
 // @author         Alice0775
+// @version        2013/01/19 23:20 Bug 795065 Add privacy status to nsDownload
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2009/12/12
 // ==/UserScript==
@@ -39,7 +40,7 @@ var saveSpecifiedUrl = {
     if (!url)
       return;
 
-    saveURL(url, null, null, true, false, null)
+    saveURL(url, null, null, true, false, null, document)
   }
 }
 
