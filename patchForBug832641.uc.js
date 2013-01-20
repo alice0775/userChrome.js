@@ -5,6 +5,7 @@
 // @author         Alice0775
 // @include        main
 // @compatibility  18+
+// @version        2013/01/20 19:30 Fixed garbage rectangle
 // @version        2013/01/20 19:00
 // ==/UserScript==
 "use strict";
@@ -13,7 +14,7 @@ var bug832641 = {
   init: function(){
     // this style privent slowness
     var style = " \
-      menu:not([_moz-menuactive]) menupopup .popup-internal-box\
+      menu:not([_moz-menuactive]):not([open]) menupopup .popup-internal-box\
       {\
         display:none;\
       }";
