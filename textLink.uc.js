@@ -11,6 +11,7 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2013/01/18 23:00 Bug 795065 Add privacy status to nsDownload
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
 // @version        checkLoadURIStrWithPrincipal
@@ -477,6 +478,10 @@ debug(url);
 
   function saveAsURL(uri, doc){
     var linkText = uri.spec;
+    var aReferrer = doc;
+    if (aReferrer instanceof HTMLDocument) {
+      aReferrer = aReferrer.documentURIObject;
+    }
     //Thunderbird
     if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
       // URL Loading Security Check
@@ -493,7 +498,7 @@ debug(url);
       } catch (e) {
         throw "Load denied.";
       }
-      saveURL( uri.spec, linkText, null, true );
+      saveURL( uri.spec, linkText, null, true, false ,aReferrer , doc);
       return;
     }
 
@@ -503,8 +508,7 @@ debug(url);
     else
       urlSecurityCheck(uri.spec, activeBrowser().currentURI.spec,Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
 
-    saveURL( uri.spec, linkText, null, true, false,
-             makeURI(doc.location.href, doc.characterSet) );
+    saveURL( uri.spec, linkText, null, true, false, aReferrer , doc );
   }
 
   function openNewTab(uri, doc){
