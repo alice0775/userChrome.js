@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5, 3.6
 // @author         Alice0775
+// @version        2013/01/19 20:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2011/11/10 12:30 defolt change R: shift, M:Tab Clipboard
 // @version        2011/03/11 10:30 Bug641090
 // @version        2010/10/11 21:30 Site
@@ -530,10 +531,8 @@
 
     handleEvent: function(aEvent){
       switch (aEvent.type){
-        case "DOMAttrModified":
-          if (aEvent.attrName == "disabled" && !aEvent.newValue){
-            this.init2();
-          }
+        case "aftercustomization":
+          this.init2();
           break;
         case "click":
           this.onButtonClick(aEvent);
@@ -580,7 +579,7 @@
       document.getElementById('contentAreaContextMenu').addEventListener('popuphidden', this, false);
 
       //検索バーの検索エンジンボタン用
-      document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", this, false);
+      window.addEventListener("aftercustomization", this, false);
       this.init2();
     },
 
