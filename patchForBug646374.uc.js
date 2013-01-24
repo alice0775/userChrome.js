@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0+
 // @author         Alice0775
+// @version        2013/01/25 05:00:00
 // @version        2011/05/27 00:00:00
 // ==/UserScript==
 var bug646374 = {
@@ -16,16 +17,20 @@ var bug646374 = {
         if (window.windowState == 3) {
           window.backupSizemode = "normal"
           window.maximize(); 
+          setTimeout(function(){BrowserFullScreen_org();}, 0);
+        } else {
+          BrowserFullScreen_org();
+          window.backupSizemode = ""
         }
-        setTimeout(function(){BrowserFullScreen_org();}, 0);
       } else {
         BrowserFullScreen_org();
-        setTimeout(function(){
-          if (window.backupSizemode == "normal") {
+        if (typeof window.backupSizemode != 'undefined' &&
+            window.backupSizemode == "normal") {
+          setTimeout(function(){
             window.restore();
-            window.backupSizemode == ""
-          }
-        }, 0);
+            window.backupSizemode = ""
+          }, 0);
+        }
       }
     }
     window.addEventListener("unload", this, false);
