@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 9+
 // @author         Alice0775
+// @version        2013/02/04 moji
 // @version        2012/12/08
 // ==/UserScript==
 var contextMenuImageRotate = {
@@ -20,10 +21,10 @@ var contextMenuImageRotate = {
             <menupopup  id="contextMenuImageRotatePopup" \
                         oncommand="contextMenuImageRotate.onCommand(event);" \
                         onclick="if(event.button != 0) {contextMenuImageRotate.doRotate(gContextMenu.target, \'\');this.parentNode.hidePopup();}"> \
-              <menuitem label="  0°" value="rotate(0deg)" /> \
-              <menuitem label=" 90°" value="rotate(90deg)" /> \
-              <menuitem label="180°" value="rotate(180deg)" /> \
-              <menuitem label="270°" value="rotate(270deg)" /> \
+              <menuitem label="  0deg" value="rotate(0deg)" /> \
+              <menuitem label=" 90deg" value="rotate(90deg)" /> \
+              <menuitem label="180deg" value="rotate(180deg)" /> \
+              <menuitem label="270deg" value="rotate(270deg)" /> \
               <menuitem label="Reset" value="" /> \
             </menupopup> \
           </menu> \
