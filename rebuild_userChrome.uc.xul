@@ -28,6 +28,7 @@
 // @version        2007/12/14 19:00 日本語のファイル名のスクリプトの有効/無効が機能していなかったのを修正
 // @version        2007/12/14 17:00 スクリプトの有効/無効/編集を設定できるようにした
 // @Note           使用するエディタを編集しておくこと
+// @Note           Required Sub-Script/Overlay Loader v3.0.38mod( https://github.com/alice0775/userChrome.js/blob/master/userChrome.js )
  -->
 <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
   var userChromejs = {

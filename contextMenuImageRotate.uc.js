@@ -7,6 +7,7 @@
 // @author         Alice0775
 // @version        2013/02/04 moji
 // @version        2012/12/08
+// @Note           Required Sub-Script/Overlay Loader v3.0.38mod( https://github.com/alice0775/userChrome.js/blob/master/userChrome.js )
 // ==/UserScript==
 var contextMenuImageRotate = {
   init: function() {
