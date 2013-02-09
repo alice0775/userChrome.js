@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2013/02/09 23:00 Bug 622423
 // @version        2011/10/06 23:00 Bug 795065 Add privacy status to nsDownload
 // ==/UserScript==
 // @version        2010/04/21 01:00 Firefox3.7a5pre
@@ -68,6 +69,10 @@ var saveFolderModoki = {
   },
 
   getStringBundle: function getStringBundle() {
+    // xxx Bug 622423
+    if (ContentAreaUtils)
+      return ContentAreaUtils.stringBundle;
+    else
       return Components.classes['@mozilla.org/intl/stringbundle;1']
              .getService(Components.interfaces.nsIStringBundleService)
              .createBundle("chrome://global/locale/contentAreaCommands.properties");
@@ -390,9 +395,8 @@ var saveFolderModoki = {
         filesFolder = file.clone();
 
         var nameWithoutExtension = getFileBaseName(filesFolder.leafName);
-        var filesFolderLeafName = this.getStringBundle().formatStringFromName("filesFolder",
-                                                                         [nameWithoutExtension],
-                                                                         1);
+        var filesFolderLeafName = this.getStringBundle()
+                                  .formatStringFromName("filesFolder",[nameWithoutExtension], 1);
 
         filesFolder.leafName = filesFolderLeafName;
       }
