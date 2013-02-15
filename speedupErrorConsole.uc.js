@@ -1,12 +1,13 @@
 // ==UserScript==
-// @name           sppedupErrorConsole.uc.js
+// @name           speedupErrorConsole.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    sppedup Error Console (hide long source code) Bug 840451
 // @include        chrome://global/content/console.xul
 // @include        chrome://console2/content/console2.xul
 // @include        main
-// @compatibility  Firefox 10+
+// @compatibility  Firefox 21+
 // @author         Alice0775
+// @version        2013/02/15 18:00 typo
 // @version        2013/02/11 12:30
 // ==/UserScript==
 (function() {
