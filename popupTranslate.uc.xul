@@ -20,9 +20,11 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 10-16a1, Tb10-16a1
 // @author         Alice0775
+// @version        2013/02/19 09:00 isJapanese簡易判定
 // @version        2012/10/07 09:00 動かないもの削除
-// @version        2012/10/06 07:00 Bug 722872  call .init(null) for nsITransferable instance
+// @version        2012/10/07 07:00 isJapaneseにBing APIを使うように
 // ==/UserScript==
+// @version        2012/10/06 07:00 Bug 722872  call .init(null) for nsITransferable instance
 // @version        2012/06/28 18:00 タイムアウト
 // @version        2012/01/12 23:30 Bing翻訳変更
 // @version        2012/01/09 00:30 "のエスケープ
@@ -76,7 +78,7 @@ display: none;
 
       timer: null,
       kXULNS:"http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
-      TIMEOUT: 2000,
+      TIMEOUT: 20000,
 
       mMenus: [
         /*
@@ -112,6 +114,7 @@ display: none;
           code:"UTF-8",
           xpath:'.//textarea[@name="after"]',
         },
+
         {
           Description:"Excite 日英",
           method:'POST',
@@ -122,7 +125,6 @@ display: none;
           xpath:'.//textarea[@name="after"]',
         },
 
-
         {
           Description:"Google 英日",
           method:'POST',
@@ -132,6 +134,7 @@ display: none;
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
         },
+
         {
           Description:"Google 日英",
           method:'POST',
@@ -141,7 +144,6 @@ display: none;
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
         },
-
 
         {
           Description:"Yahoo Translate 英日",
@@ -163,8 +165,6 @@ display: none;
           xpath:'.//textarea[@id="trn_textText"]',
         },
 
-
-
         {
           Description:"@nifty翻訳 英日",
           method:"POST",
@@ -183,6 +183,26 @@ display: none;
           post:"SLANG=ja&TLANG=en&XMODE=0&SSRC=%%SEL%%&txtDirection=jaen",
           code:"UTF-8",
           xpath:'.//textarea[@id="txtTransArea2"]'
+        },
+
+        {
+          Description:"Bing翻訳 英日",
+          method:'GET',
+          Referer:"http://www.microsofttranslator.com/",
+          action:"http://api.microsofttranslator.com/V2/Ajax.svc/Translate?appId=46846E697D3BC6FA50998483EF31894654002928&from=%22%22&to=%22ja%22&loc=en&ctr=Japan&text=%%SEL%%",
+          code:"UTF-8",
+          start:'^"',
+          end:'"$',
+        },
+
+        {
+          Description:"Bing翻訳 日英",
+          method:'GET',
+          Referer:"http://www.microsofttranslator.com/",
+          action:"http://api.microsofttranslator.com/V2/Ajax.svc/Translate?appId=46846E697D3BC6FA50998483EF31894654002928&from=%22%22&to=%22en%22&loc=en&ctr=Japan&text=%%SEL%%",
+          code:"UTF-8",
+          start:'^"',
+          end:'"$',
         }
       ],
 
@@ -321,11 +341,41 @@ display: none;
       },
 
       isJapanese: function(str) {
+        var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+          createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
         var s = str.replace(/^\s+/, '')
-        if (/[぀-ㄩ㐀-𪛖、。]/.test(s)) {   //"
-          return true
+        //カタカナ ひらがな
+        if (/[\u3040-\u309F\u30A0-\u30FF]/.test(s))
+          return true;
+        //ハングル
+        if(/[\u1100-\u11FF\uAC00-\uD7A3\u3130-\u318F]/.test(s))
+          return false;
+        //アラビック
+        if(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(s))
+          return false;
+        //漢字
+        if (/(?:[\u2E80-\u2FDF\u3005\u3007\u3021-\u3029\u3038-\u303B\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]|[\uD840-\uD87F][\uDC00-\uDFFF])/.test(s)) {
+          try {
+            UI.charset = "Shift_JIS";
+            // Shift_JISで定義済み
+            if (UI.ConvertToUnicode(UI.ConvertFromUnicode(s)) == s)
+              return true;
+          } catch(ex) {}
+          // bing判定
+          return this.isJapanese_old(str);
         }
         return false;
+      },
+
+      isJapanese_old: function(str) {
+        var url = "http://api.microsofttranslator.com/V2/Ajax.svc/Detect?appId=46846E697D3BC6FA50998483EF31894654002928&text=" + str;
+        var req = new XMLHttpRequest();
+        req.open('GET', url, false);
+        req.send(null);
+        if(req.status == 200)
+          return req.responseText == '"ja"';
+        else
+          return false;
       },
 
       selectEngine: function(flag){
