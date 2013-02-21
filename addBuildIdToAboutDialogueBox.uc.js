@@ -5,6 +5,7 @@
 // @include        chrome://browser/content/aboutDialog.xul
 // @compatibility  Firefox 3.0 3.1
 // @author         Alice0775
+// @version        2013/02/21 15:00 Bug 755724 fix2
 // @version        2013/02/11 23:00 Bug 755724
 // @version        2008/11/22 12:00
 // @Note           Help > About画面に にBuilsIDを付加するとともにクリップボードにUA+IDをコピー
@@ -81,8 +82,6 @@ var addBuildid = {
     const fph = ios.getProtocolHandler("file").QueryInterface(Ci.nsIFileProtocolHandler);
     const ds = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
     var file = ds.get("CurWorkD", Ci.nsIFile);
-    if (/browser$/.test(file.path))
-      file.appendRelativePath("..");
     file.append("application.ini");
     var text = this.readFile(file);
     var SourceRepository = text.match(/SourceRepository=(.*)/)[1];
