@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    クッキー関連が隠されいるのを表示
 // @include        chrome://browser/content/preferences/preferences.xul
-// @compatibility  Firefox 10+
+// @compatibility  Firefox 14+
 // @author         Alice0775
+// @version        2013/03/04 00:00 fix bug of check default value, Fx22
 // @version        2013/02/25 12:00 Bug 818340 Block cookies from sites I haven't visited
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // ==/UserScript==
@@ -27,10 +28,47 @@ function moveCookiesGroup() {
      *                  false otherwise
      */
     function _checkDefaultValues(aPrefs) {
+      var val;
       for (let i = 0; i < aPrefs.length; ++i) {
         let pref = document.getElementById(aPrefs[i]);
-        let cntrl = document.getElementById(gPrivacyPane.dependentControls[i]);
-        if (cntrl.value != pref.defaultValue)
+        let id = gPrivacyPane.dependentControls[i];
+        let cntrl = document.getElementById(id);
+
+        switch(cntrl.localName) {
+          case "checkbox":
+            val = cntrl.checked;
+            break;
+          default:
+            val = cntrl.value;
+            break;
+        }
+        if (id == "keepUntil") {
+          // >=Fx22
+          var acceptThirdPartyMenu = document.getElementById("acceptThirdPartyMenu");
+          if (acceptThirdPartyMenu) {
+            var accept = document.getElementById("acceptCookies");
+            if (accept.checked && acceptThirdPartyMenu.selectedIndex == 1)
+              val = 3;
+            else if (accept.checked && acceptThirdPartyMenu.selectedIndex == 0)
+              val = 0;
+            else if (accept.checked && acceptThirdPartyMenu.selectedIndex == 2)
+              val = 1;
+            else
+              val = 2;
+          }
+          // <=Fx21
+          var acceptThirdParty = document.getElementById("acceptThirdParty");
+          if (acceptThirdParty) {
+            var accept = document.getElementById("acceptCookies");
+            if (accept.checked && acceptThirdParty.checked)
+              val = 0;
+            else if (accept.checked && !acceptThirdParty.checked)
+              val = 1;
+            else
+              val = 2;
+          }
+        }
+        if (val != pref.defaultValue)
           return false;
       }
       return true;
@@ -41,13 +79,15 @@ function moveCookiesGroup() {
         document.getElementById(aPref).value;
 
       if (_checkDefaultValues(gPrivacyPane.prefsForDefault)) {
-        if (getVal("browser.privatebrowsing.autostart"))
+        if (getVal("browser.privatebrowsing.autostart")) {
           mode = "dontremember";
-        else
+        } else {
           mode = "remember";
+        }
       }
-      else
+      else {
         mode = "custom";
+      }
 
       document.getElementById("historyMode").value = mode;
     }
@@ -60,23 +100,6 @@ function moveCookiesGroup() {
     );
     eval("gPrivacyPane.updateHistoryModePane = " + func);
     
-    // select the target node
-    var target = document.getElementById("historyCustomPane")
-    // create an observer instance
-    var observer = new MutationObserver(function(mutations) {
-      mutations.forEach(function(mutation) {
-        initializeHistoryMode();
-      });   
-    });
-    // configuration of the observer:
-    var config = { attributes: true, childList: true, subtree: true };
-    // pass in the target node, as well as the observer options
-    observer.observe(target, config);
-    // later, you can stop observing
-    window.addEventListener("unload", function preferencesUnload(event){
-      window.removeEventListener("unload", preferencesUnload, false);
-      observer.disconnect();
-    }, false);
 
     var acceptThirdParty = document.getElementById("acceptThirdParty") ||
                            document.getElementById("acceptThirdPartyRow");
@@ -113,6 +136,40 @@ function moveCookiesGroup() {
     button.setAttribute('onclick', "gPrivacyPane.clearPrivateDataNow(false); return false;");
 
     box1.appendChild(button);
+
+    // select the target node
+    var target1 = document.getElementById("historyCustomPane")
+    // create an observer instance
+    var observer1 = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        initializeHistoryMode();
+      });
+    });
+    // configuration of the observer:
+    var config1 = { attributes: true, childList: true, subtree: true };
+    // pass in the target node, as well as the observer options
+    observer1.observe(target1, config1);
+
+    // select the target node
+    var target2 = document.getElementById("cookiesGroup")
+    // create an observer instance
+    var observer2 = new MutationObserver(function(mutations) {
+      mutations.forEach(function(mutation) {
+        initializeHistoryMode();
+      });
+    });
+    // configuration of the observer:
+    var config2 = { attributes: true, childList: true, subtree: true };
+    // pass in the target node, as well as the observer options
+    observer2.observe(target2, config2);
+
+    // later, you can stop observing
+    window.addEventListener("unload", function preferencesUnload(event){
+      window.removeEventListener("unload", preferencesUnload, false);
+      observer1.disconnect();
+      observer2.disconnect();
+    }, false);
+
   }
   if (document.getElementById("historyPane"))
     document.getElementById("historyPane").selectedIndex = 2;
