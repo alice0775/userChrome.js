@@ -3,14 +3,16 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    クッキー関連が隠されいるのを表示
 // @include        chrome://browser/content/preferences/preferences.xul
-// @compatibility  Firefox 3.5 3.6a1pre
+// @compatibility  Firefox 10+
 // @author         Alice0775
+// @version        2013/02/25 12:00 Bug 818340 Block cookies from sites I haven't visited
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // ==/UserScript==
 // @version        2009/09/16 move Clear Recent History from Remember History pane
 // @version        2009/08/29 各項目は常に表示するように
 // @version        2009/06/26
-// @note            Bug 500584 -  "Accept cookies from sites","Accept third-party cookies","Exceptions…", It is necessary to always display these options regardless of the option of the preservation of the history.
+// @note           Bug 500584 -  "Accept cookies from sites","Accept third-party cookies","Exceptions…", It is necessary to always display these options regardless of the option of the preservation of the history.
+// @note           required ucjsResizeWindow.uc.js to resize the dialog
 
 
 function moveCookiesGroup() {
@@ -76,7 +78,8 @@ function moveCookiesGroup() {
       observer.disconnect();
     }, false);
 
-    var acceptThirdParty = document.getElementById("acceptThirdParty");
+    var acceptThirdParty = document.getElementById("acceptThirdParty") ||
+                           document.getElementById("acceptThirdPartyRow");
     var keepRow = document.getElementById("keepRow");
 
     var locationBarGroup = document.getElementById("locationBarGroup");
