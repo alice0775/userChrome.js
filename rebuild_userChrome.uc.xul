@@ -8,6 +8,7 @@
 // @include        main
 // @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
 // @author         Alice0775
+// @version        2013/03/20 24:00 autocheck=false for script menu
 // @version        2012/11/30 22:00 ubuntu12.04.1 "chromeフォルダを開く" に失敗することがあるのを修正
 // ==/UserScript==
 // @version        2012/09/30 09:00 ubuntu12.04.1 "chromeフォルダを開く" に失敗することがあるのを修正
@@ -332,6 +333,7 @@
             menuitem.setAttribute('oncommand','userChromejs.chgScriptStat(this.script.filename);');
             menuitem.setAttribute('onclick','userChromejs.clickScriptMenu(event)');
             menuitem.setAttribute('type','checkbox');
+            menuitem.setAttribute('autocheck','false');
             menuitem.setAttribute('checked',!userChrome_js.scriptDisable[script.filename] );
             if(script.description)
               menuitem.setAttribute('tooltiptext',script.description);
@@ -351,6 +353,7 @@
             menuitem.setAttribute('oncommand','userChromejs.chgScriptStat(this.script.filename);');
             menuitem.setAttribute('onclick','userChromejs.clickScriptMenu(event)');
             menuitem.setAttribute('type','checkbox');
+            menuitem.setAttribute('autocheck','false');
             menuitem.setAttribute('checked',!userChrome_js.scriptDisable[script.filename] );
             if(script.description)
               menuitem.setAttribute('tooltiptext',script.description);

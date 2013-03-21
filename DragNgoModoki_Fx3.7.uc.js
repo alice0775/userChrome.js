@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2013/03/05 00:00 input type=file change event が発火しないのを修正 Fx7+
+// @version        2013/01/29 00:00 draggable="true"もう一度有効
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
 // @version        2013/01/01 15:00 Avoid to overwrite data on dragstart. And Bug 789546
@@ -100,7 +102,7 @@ var DragNGo = {
     {dir:'U', modifier:'',name:'画像を新しいタブ前面に開く',obj:'image',cmd:function(self,event,info){self.openUrls(info.urls, 'tab', null);}},
     {dir:'D', modifier:'',name:'画像を新しいタブ後面に開く',obj:'image',cmd:function(self,event,info){self.openUrls(info.urls, 'tabshifted', null);}},
     {dir:'L', modifier:'',name:'画像を現在のタブに開く',obj:'image',cmd:function(self,event,info){self.openUrls(info.urls, 'current', null);}},
-
+    {dir:'LD', modifier:'',name:'Google 類似画像検索',obj:'image',cmd:function(self,event,info){var TargetImage=info.urls[0];var URL="http://www.google.com/searchbyimage?image_url="+TargetImage;if(TargetImage)gBrowser.loadOneTab(URL,null,null,null,false,false);}},
   /*=== Web Search ===*/
     {dir:'R', modifier:'',name:'テキストをConQueryで検索',obj:'text',cmd:function(self,event,info){self.openConQueryPopup(event);}},
     {dir:'UL', modifier:'',name:'テキストを現在のタブでgooウェブ検索(Green Label)',obj:'link, text',cmd:function(self,event,info){self.searchWithEngine(info.texts, ['gooウェブ検索(Green Label)'], 'current');}},
@@ -988,24 +990,27 @@ var DragNGo = {
       inputElement = target;
     }
     if (inputElement instanceof HTMLInputElement && inputElement.type == 'file') {
-      if (/drop/.test(event.type)) {
-        if (this.getVer >= 7) {
-          dragSession.canDrop = true;
-        } else {
+      if (this.getVer() >= 7) {
+        if (!/drop/.test(event.type)) {
+          this.setStatusMessage('パスを記入', 0, true);
+        }
+        return true;
+      } else {
+        if (/drop/.test(event.type)) {
           if (inputElement.hasAttribute("multiple") &&
               typeof inputElement.mozSetFileNameArray =="function") {
             this.putMultipleFilePath(inputElement, urls);
           } else {
             this.putFilePath(inputElement, urls[0]);
           }
+          event.preventDefault();
+          return true;
+        } else {
+          this.setStatusMessage('パスを記入', 0, true);
+          dragSession.canDrop = true;
+          event.preventDefault();
+          return true;
         }
-        event.preventDefault();
-        return true;
-      } else {
-        this.setStatusMessage('パスを記入', 0, true);
-        dragSession.canDrop = true;
-        event.preventDefault();
-        return true;
       }
     } else if (this.xpiLinkRegExp.test(urls[0])) {
       if (/drop/.test(event.type)) {
@@ -1248,14 +1253,15 @@ var DragNGo = {
     // do nothing if event.defaultPrevented (maybe hosted d&d by web page)
     if (event.defaultPrevented)
       return;
-    /*
+
+    // xxx 2013/01/29
     if (sourceNode) {
       var xpath = 'ancestor-or-self::*[@draggable="true"]';
       var elm = this.getElementsByXPath(xpath, sourceNode);
       if (elm.length > 0)
         return;
     }
-    */
+    
 
     var isSameBrowser = !(sourceNode &&
                          (gBrowser &&
