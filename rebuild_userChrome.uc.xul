@@ -8,6 +8,9 @@
 // @include        main
 // @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
 // @author         Alice0775
+// @version        2013/03/22 08:02 Added "use strict"
+// @version        2013/03/22 08:01 Fixed commands to work properly, even if menus had been moved into other place
+// @version        2013/03/22 08:00 Fixed dragdrop target
 // @version        2013/03/20 24:00 autocheck=false for script menu
 // @version        2012/11/30 22:00 ubuntu12.04.1 "chromeフォルダを開く" に失敗することがあるのを修正
 // ==/UserScript==
@@ -32,6 +35,7 @@
 // @Note           Required Sub-Script/Overlay Loader v3.0.38mod( https://github.com/alice0775/userChrome.js/blob/master/userChrome.js )
  -->
 <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+  "use strict";
   var userChromejs = {
 // --- config ---
     editor: "C:\\Program Files\\hidemaru\\hidemaru.exe",
@@ -50,14 +54,6 @@
       if (!this._addonbar)
         this._addonbar = document.getElementById('addon-bar');
       return this._addonbar;
-    },
-
-    _dragService: null,
-    get dragService() {
-      if (!this._dragService)
-        this._dragService = Cc["@mozilla.org/widget/dragservice;1"]
-                             .getService(Ci.nsIDragService);
-      return this._dragService;
     },
 
     handleEvent: function(event) {
@@ -175,7 +171,7 @@
             target = target.parentNode;
           }
           if(!target) return;
-          if(evt.screenX < target.boxObject.screenX + target.boxObject.width/3)
+          if(evt.screenX > target.boxObject.screenX + target.boxObject.width/3) return;
 
           //saveFolderModokiが必要
           if(!saveFolderModoki) return;
@@ -275,7 +271,7 @@
       menuitem = document.createElement('menuitem');
       menuitem.setAttribute('label','userCrome.js \u306e \u6709\u52b9/\u7121\u52b9');
       menuitem.setAttribute('oncommand','userChromejs.chgDirStat("*");');
-      menuitem.setAttribute('onclick','userChromejs.clickDirMenuitem(event,true)');
+      menuitem.setAttribute('onclick','if(event.button != 0) {event.stopPropagation();event.preventDefault();userChromejs.clickDirMenuitem(event,true);}');
       menuitem.setAttribute('type','checkbox');
       menuitem.setAttribute('checked', !userChrome_js.dirDisable['*']);
       menuitem.dirName = '*';
@@ -303,7 +299,7 @@
 
         menu = document.createElement('menu');
         menu.setAttribute('label','chrome/' + (dirName=="root"?"":dirName) );
-        menu.setAttribute('onclick','userChromejs.clickDirMenu(event)');
+        menu.setAttribute('onclick','if(event.button != 0) {event.stopPropagation();event.preventDefault();userChromejs.clickDirMenu(event);}');
         if(userChrome_js.dirDisable[dirName])
           menu.setAttribute('style', 'font-style:italic;');
         menu.dirName = dirName;
@@ -314,7 +310,7 @@
         menuitem = document.createElement('menuitem');
         menuitem.setAttribute('label','chrome/' + (dirName=="root"?"":dirName) + ' \u30d5\u30a9\u30eb\u30c0\u306e\u30b9\u30af\u30ea\u30d7\u30c8\u306e\u6709\u52b9/\u7121\u52b9');
         menuitem.setAttribute('oncommand', 'userChromejs.chgDirStat(this.dirName);');
-        menuitem.setAttribute('onclick','userChromejs.clickDirMenuitem(event)');
+        menuitem.setAttribute('onclick','if(event.button != 0) {event.stopPropagation();event.preventDefault();userChromejs.clickDirMenuitem(event);}');
         menuitem.setAttribute('type', 'checkbox');
         menuitem.setAttribute('checked', !userChrome_js.dirDisable[dirName]);
         menuitem.dirName = dirName;
@@ -331,7 +327,7 @@
             menuitem = document.createElement('menuitem');
             menuitem.setAttribute('label',script.filename);
             menuitem.setAttribute('oncommand','userChromejs.chgScriptStat(this.script.filename);');
-            menuitem.setAttribute('onclick','userChromejs.clickScriptMenu(event)');
+            menuitem.setAttribute('onclick','if(event.button != 0) {event.stopPropagation();event.preventDefault();userChromejs.clickScriptMenu(event);}');
             menuitem.setAttribute('type','checkbox');
             menuitem.setAttribute('autocheck','false');
             menuitem.setAttribute('checked',!userChrome_js.scriptDisable[script.filename] );
@@ -351,7 +347,7 @@
             menuitem = document.createElement('menuitem');
             menuitem.setAttribute('label',script.filename);
             menuitem.setAttribute('oncommand','userChromejs.chgScriptStat(this.script.filename);');
-            menuitem.setAttribute('onclick','userChromejs.clickScriptMenu(event)');
+            menuitem.setAttribute('onclick','if(event.button != 0) {event.stopPropagation();event.preventDefault();userChromejs.clickScriptMenu(event);}');
             menuitem.setAttribute('type','checkbox');
             menuitem.setAttribute('autocheck','false');
             menuitem.setAttribute('checked',!userChrome_js.scriptDisable[script.filename] );
@@ -368,8 +364,6 @@
 
     clickDirMenu: function(event){
       if(event.button == 1 || event.button == 2){
-        event.stopPropagation();
-        event.preventDefault();
         userChromejs.chgDirStat(event.target.dirName);
         if(event.target.firstChild && event.target.firstChild.firstChild)
           event.target.firstChild.firstChild.setAttribute('checked',!userChrome_js.dirDisable[event.target.dirName] );
@@ -382,8 +376,6 @@
 
     clickDirMenuitem: function(event,stop){
       if(event.button == 1 || event.button == 2){
-        event.stopPropagation();
-        event.preventDefault();
         userChromejs.chgDirStat(event.target.dirName);
         event.target.setAttribute('checked',!userChrome_js.dirDisable[event.target.dirName] );
         if(!stop && !!userChrome_js.dirDisable[event.target.dirName])
@@ -395,12 +387,9 @@
 
     clickScriptMenu: function(event){
       if(event.button==1){
-        event.stopPropagation();
-        event.preventDefault();
         userChromejs.chgScriptStat(event.target.script.filename);
         event.target.setAttribute('checked',!userChrome_js.scriptDisable[event.target.script.filename] );
       }else if(event.button==2){
-        event.stopPropagation();
         this.launchEditor(event.target.script);
       }
     },
@@ -436,7 +425,6 @@
       s = s.replace(/,,/g,',').replace(/^,/,'');
       userChromejs.setPref("userChrome.disable.directory", "str", s);
       userChrome_js.dirDisable = this.restoreState(s.split(','));
-      return userChrome_js.dirDisable;
     },
 
     chgScriptStat: function(afilename){
@@ -449,7 +437,6 @@
       s = s.replace(/,,/g,',').replace(/^,/,'');
       userChromejs.setPref("userChrome.disable.script", "str", s);
       userChrome_js.scriptDisable = this.restoreState(s.split(','));
-      return userChrome_js.scriptDisable;
     },
 
     restoreState: function (arr){
@@ -583,7 +570,8 @@
       "linkInNewTabForSpecifiedPageToolMenu",
       "ieviewModokiTool",
       "linkloadInBackgroundToolMenu",
-      "SaveFolderToolsMenu"
+      "SaveFolderToolsMenu",
+      "ucjs_copysysinfo-menu"
     ],
 
     interval: 500, //0.5秒間隔
@@ -619,7 +607,7 @@
   userChromejsScriptOptionsMenu.run();
   ]]></script>
 
-  <menupopup id="menu_ToolsPopup">
+  <menupopup id="menu_ToolsPopup" idxxxx="contentAreaContextMenu">
     <menu label="userChrome.jsの設定" accesskey="u"
           insertbefore="menu_preferences" >
       <menupopup id="userChromejs_options"
