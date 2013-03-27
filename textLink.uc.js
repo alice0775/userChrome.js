@@ -11,6 +11,7 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2013/03/28 06:00 should not react by dblclick on yyy ,like <a href="http://xxx.xxx/?xxx">http://xxx.xxx/?xxx</a><br>yyy
 // @version        2013/01/18 23:00 Bug 795065 Add privacy status to nsDownload
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
@@ -151,7 +152,7 @@ function ucjs_textlink(event){
 
   //親ブロック要素の文字列をすべて得る
     const allowedParents = [
-        "a","abbr", "acronym", "address", "applet", "b", "bdo", "big", "blockquote", "body",
+        "a", "abbr", "acronym", "address", "applet", "b", "bdo", "big", "blockquote", "body",
         "caption", "center", "cite", "code", "dd", "del", "dir", "div", "dfn", "dl", "dt", "em",
         "fieldset", "font", "form", "h1", "h2", "h3", "h4", "h5", "h6", "i", "iframe",
         "ins", "kdb", "li", "menu", "noframes", "noscript", "object", "ol", "p", "pre", "q", "samp", "small", "span", "strike",
@@ -177,6 +178,10 @@ function ucjs_textlink(event){
             //debug(candidates.snapshotItem(i).nodeValue + "  " + candidates.snapshotItem(i).nextSibling.localName);
             break;
           }
+//debug("candidates.snapshotItem(i).parentNode.localName "+candidates.snapshotItem(i).parentNode.localName);
+          if (/^a$/i.test(candidates.snapshotItem(i).parentNode.localName) &&
+              candidates.snapshotItem(i).parentNode.hasAttribute("href") )
+            break;
           str1 = candidates.snapshotItem(i).nodeValue + str1;
 //debug("str1 "+str1);
           if (/[ 　]/.test(str1))
