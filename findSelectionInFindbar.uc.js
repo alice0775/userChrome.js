@@ -5,8 +5,10 @@
 // @include        main
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
-// @compatibility  Firefox 12-15
+// @compatibility  Firefox 17+
 // @author         Alice0775
+// @version        2013/03/28 11:00 Improved to work properly without addHistoryFindbarFx3.0.uc.js
+// @version        2013/02/09 19:30 null check
 // @version        2012/05/01 21:30 delete this.xxx;
 // @version        2012/05/01 20:00
 // ==/UserScript==
@@ -30,8 +32,14 @@ var findSelectionInFindbar = {
   },
 
   init: function() {
-    if (!gFindBar)
-      return;
+    try {
+      gFindBar;
+    } catch(e) {}
+    if (typeof gFindBar == 'undefined') {
+      window.gFindBar = document.getElementById("FindToolbar");
+      gFindBar._findField = document.getAnonymousElementByAttribute(gFindBar, "anonid", "findbar-textbox");
+    }
+    
     window.addEventListener("unload", this, false);
     setTimeout((function(){
       var target = this._findField;
@@ -88,16 +96,18 @@ var findSelectionInFindbar = {
          ("gSearchWP" in this.getWin && "Tokenizer" in this.getWin.gSearchWP && "getByOffset" in this.getWin.gSearchWP.Tokenizer)) {
       // gSearchWP
       var match = this.getWin.gSearchWP.Tokenizer.getByOffset( this._findField.value, offset );
-      if ( match ) {
+      if (!!match) {
         term = match.value;
-        this._findField.selectionStart = match.index;
-        this._findField.selectionEnd = match.index + term.length;
+        if (!!term) {
+          this._findField.selectionStart = match.index;
+          this._findField.selectionEnd = match.index + term.length;
+        }
       }
     } else {
       term = this._findField.value.substring( a, b );
     }
 
-    if ( term ) {
+    if (!!term) {
       var findBackwards = event.detail < 0 ? true : false;
       var matchCase = event.altKey || event.ctrlKey;
       this._findFast( term, findBackwards,  matchCase);

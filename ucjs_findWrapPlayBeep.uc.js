@@ -5,8 +5,9 @@
 // @include        main
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
-// @compatibility  Firefox 3.0 3.5 3.6 3.7a1pre
+// @compatibility  Firefox 17+
 // @author         Alice0775
+// @version        2013/03/28 11:00 Improved to work properly without addHistoryFindbarFx3.0.uc.js
 // @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
 // ==/UserScript==
 // @version        2010/01/05 Migemoが無いときの処理
@@ -14,7 +15,13 @@
 // @note           Migemoの場合accessibility.typeaheadfind.enablesound;falseとした方がいいような
 var findWrapPlayBeep = {
   init: function() {
-    gFindBar;
+    try {
+      gFindBar;
+    } catch(e) {}
+    if (typeof gFindBar == 'undefined') {
+      window.gFindBar = document.getElementById("FindToolbar");
+      gFindBar._findField = document.getAnonymousElementByAttribute(gFindBar, "anonid", "findbar-textbox");
+    }
     if (!('_updateStatusUI' in gFindBar))
       return;
     var timer, count = 0;
