@@ -3,8 +3,8 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    tabLock
 // @include        *
-// @compatibility  4.0b8pre 12.0a2
-// @compatibility  4.0b8pre 12.0a2
+// @compatibility  17+
+// @version        2013/04/06 09:00 Bug 748740
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
 // @version        2012/08/12 22:00 init変更
@@ -335,6 +335,13 @@ patch: {
 
       //link click, through the event to window.handleLinkClick.
   //this.debug('contentAreaClick: \n'+window.contentAreaClick.toString());
+      // Firefox22+
+      if (!gBrowser.hasAttribute("onclick")) {
+        Cc["@mozilla.org/eventlistenerservice;1"]
+            .getService(Ci.nsIEventListenerService)
+            .removeSystemEventListener(gBrowser, "click", contentAreaClick, true);
+      }
+      
       var func = contentAreaClick.toString();
       func = func.replace(
         'let target = linkNode.target;',
@@ -372,6 +379,12 @@ patch: {
         );
       eval("contentAreaClick ="+func);
   //this.debug('contentAreaClick: \n'+window.contentAreaClick.toString());
+      // Firefox22+
+      if (!gBrowser.hasAttribute("onclick")) {
+        Cc["@mozilla.org/eventlistenerservice;1"]
+            .getService(Ci.nsIEventListenerService)
+            .addSystemEventListener(gBrowser, "click", contentAreaClick, true);
+      }
 
 
       //D&D on TAB
