@@ -12,8 +12,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    add UI for hostperm.1 to Preferences
 // @include        main
-// @compatibility  Firefox 10 17-20.0a1
+// @compatibility  Firefox 17-23.0a1
 // @author         Alice0775
+// @version        2013/04/11 Bug 851702 Bug 851701
 // @version        2012/11/26 Bug 399528の修正およびerror表示回避
 // ==/UserScript==
 // @version        2012/04/30 コメント外した
@@ -33,9 +34,9 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
     aWindow.resizeBy(0,30);
     //DOMにボタン類を追加
     if (aWindow.document.getElementById("privacyPreferences")) modCookie();
-    if (aWindow.document.getElementById("enableJavaRow")) // < Fx3.6
-      addButton();
-    else if (aWindow.document.getElementById("enableJavaScriptRow")) // >= Fx3.6
+    if (aWindow.document.getElementById("popupPolicyButton") ||
+        aWindow.document.getElementById("enableJavaRow") ||
+        aWindow.document.getElementById("enableJavaScriptRow"))
       addButton();
     //コンテントぺインに切り替わったらaddButonを実行するように
     aWindow.document.getElementById("panePrivacy").addEventListener("paneload", modCookie, false);
@@ -130,7 +131,7 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
       ?{
         cookie:     { permissionstitle:"Cookies", permissionstext:"You can specify which web sites are always, never allowed to use cookies.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, Allow for Session, or Allow.",permissionskey:"c"},
         document:   { permissionstitle:"document filter", permissionstext:"You can specify which web sites are always, never allowed to load document.  Type the exact address of the site you want to manage and then click Block or Allow.",permissionskey:"d"},
-        image:      { permissionstitle:"Exceptions - Images", permissionstext:"You can specify which web sites are allowed to load images. Type the exact address of the site you want to manage and then click Block or Allow.",permissionskey:"i"},
+        image:      { permissionstitle:"Images", permissionstext:"You can specify which web sites are allowed to load images. Type the exact address of the site you want to manage and then click Block or Allow.",permissionskey:"i"},
         object:     { permissionstitle:"object filter", permissionstext:"You can specify which web sites are always, never allowed to load object.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"o"},
         other:      { permissionstitle:"other filter", permissionstext:"You can specify which web sites are always, never allowed to use XBL bindings.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"t"},
         popup:      { permissionstitle:"Allowed Sites - Popups", permissionstext:"You can specify which web sites are allowed to open popup windows. Type the exact address of the site you want to allow and then click Allow.",permissionskey:"p"},
@@ -139,21 +140,21 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
         stylesheet: { permissionstitle:"External CSS filter", permissionstext:"You can specify which web sites are always, never allowed to use External CSS.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"s"},
         subdocument:{ permissionstitle:"Frame filter", permissionstext:"You can specify which web sites are always, never allowed to use frame.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"f"},
         allowXULXBL:{ permissionstitle:"XULXBL filter", permissionstext:"You can specify which web sites are always, never allowed to use XULXBL.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"x"},
-        objectsubrequest:{ permissionstitle:"objectsubrequest filter", permissionstext:"You can specify which web sites are always, never allowed to use objectsubrequest.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"u"}
+        objectsubrequest:{ permissionstitle:"objectsubrequest", permissionstext:"You can specify which web sites are always, never allowed to use objectsubrequest.  Type the exact address of the site you want to manage and then click Block, Not allow for foreign domain, or Allow.",permissionskey:"u"}
       }
       :{
         cookie:     { permissionstitle:"Cookie フィルタ", permissionstext:"Cookie の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[現在のセッションのみ]、[許可] のいずれかをクリックしてください。",permissionskey:"c"},
         document:   { permissionstitle:"document フィルタ", permissionstext:"document の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]または[許可] をクリックしてください。",permissionskey:"d"},
-        image:      { permissionstitle:"例外サイト - 画像の読み込み", permissionstext:"画像の読み込みを許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]または[許可] をクリックしてください。",permissionskey:"i"},
+        image:      { permissionstitle:"画像の読み込み", permissionstext:"画像の読み込みを許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]または[許可] をクリックしてください。",permissionskey:"i"},
         object:     { permissionstitle:"object フィルタ", permissionstext:"object の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"o"},
         other:      { permissionstitle:"other フィルタ", permissionstext:"XBL bindings の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"t"},
-        popup:      { permissionstitle:"許可サイト - ポップアップ", permissionstext:"ポップアップウィンドウを開くことを許可するサイトを指定できます。許可するサイトの正確なアドレスを入力して [許可] をクリックしてください。",permissionskey:"p"},
+        popup:      { permissionstitle:"ポップアップ", permissionstext:"ポップアップウィンドウを開くことを許可するサイトを指定できます。許可するサイトの正確なアドレスを入力して [許可] をクリックしてください。",permissionskey:"p"},
         refresh:    { permissionstitle:"meta refresh tag フィルタ", permissionstext:"meta refresh tag の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"r"},
         script:     { permissionstitle:"外部スクリプト フィルタ", permissionstext:"外部スクリプト の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"j"},
         stylesheet: { permissionstitle:"外部CSS フィルタ", permissionstext:"外部CSS の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"s"},
         subdocument:{ permissionstitle:"フレーム フィルタ", permissionstext:"フレーム の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"f"},
         allowXULXBL:{ permissionstitle:"XULXBL フィルタ", permissionstext:"XULXBL の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"x"},
-        objectsubrequest:{ permissionstitle:"objectsubrequest フィルタ", permissionstext:"objectsubrequest の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"u"}
+        objectsubrequest:{ permissionstitle:"objectsubrequest", permissionstext:"objectsubrequest の使用を許可するかどうかサイトごとに指定できます。個別に設定するサイトの正確なアドレスを入力して [不許可]、[他ドメイン拒否]、[許可] のいずれかをクリックしてください。",permissionskey:"u"}
       }
 
       //prefから読み取り/書き込み
@@ -246,14 +247,18 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
       arrtype[1] = ['stylesheet','objectsubrequest']; //,'refresh'];
       arrtype[2] = ['subdocument','cookie'];
       arrtype[3] = ['document', 'allowXULXBL'];
-      for(var j=0;j<4;j++){
+      if (!aWindow.document.getElementById("enableImagesRow")) {
+        //Nightly23.0a1
+        arrtype[4] = ['image'];
+      }
+      for(var j = 0; j < arrtype.length; j++){
         hbox[j] = aWindow.document.createElement("hbox");
         groupbox.appendChild(hbox[j]);
       }
       //フィルタの数だけラジオボタンやボタンを配置
       var radiogroup,box,radio,label,button,spacer;
-      for(var j=0;j<4;j++){
-        for(var i=0,len=arrtype[j].length;i<len;i++){
+      for(var j = 0; j < arrtype.length; j++){
+        for(var i = 0, len=arrtype[j].length; i < len; i++){
           //ラジオボタンの作成
           box = aWindow.document.createElement("hbox");
           radiogroup = aWindow.document.createElement("radiogroup");
