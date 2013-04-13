@@ -14,6 +14,7 @@
 // @include        main
 // @compatibility  Firefox 17-23.0a1
 // @author         Alice0775
+// @version        2013/04/13 Bug 818340
 // @version        2013/04/11 Bug 851702 Bug 851701
 // @version        2012/11/26 Bug 399528の修正およびerror表示回避
 // ==/UserScript==
@@ -55,6 +56,7 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
          +"  if(cookieBehavior == 0)radiogroup.selectedIndex = 0;"
          +"  else if(cookieBehavior == 1)radiogroup.selectedIndex = 2;"
          +"  else if(cookieBehavior == 2)radiogroup.selectedIndex = 1;"
+         +"  else if(cookieBehavior == 3)radiogroup.selectedIndex = 3;"
          +"}},350);"
          +"$&");
        //alert(func);
@@ -70,6 +72,7 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
            +"  if(cookieBehavior == 0)radiogroup.selectedIndex = 0;"
            +"  else if(cookieBehavior == 1)radiogroup.selectedIndex = 2;"
            +"  else if(cookieBehavior == 2)radiogroup.selectedIndex = 1;"
+           +"  else if(cookieBehavior == 3)radiogroup.selectedIndex = 3;"
            +"}},350);"
            +"$&");
          //alert(func);
@@ -236,7 +239,12 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
       var box = aWindow.document.createElement("hbox");
       groupbox.appendChild(box);
       var label = aWindow.document.createElement("label");
-      label.setAttribute("value", locale.indexOf("ja") == -1 ? "Default:(Allow)(Not allow)(Not allow for foreign domain)":"既定値 : ラジオボタン(許可)(拒否)(他ドメイン拒否)");
+      if (parseInt(Components.classes["@mozilla.org/xre/app-info;1"]
+                 .getService(Components.interfaces.nsIXULAppInfo)
+                 .version.substr(0,3) * 10,10) / 10 <= 21)
+        label.setAttribute("value", locale.indexOf("ja") == -1 ? "Default:(Allow)(Not allow)(Not allow for foreign domain)":"既定値 : ラジオボタン(許可)(拒否)(他ドメイン拒否)");
+      else
+        label.setAttribute("value", locale.indexOf("ja") == -1 ? "Default:(Allow)(Not allow)(Not allow for foreign domain)(Allow only visited)":"既定値 : ラジオボタン(許可)(拒否)(他ドメイン拒否)(訪問済み許可)");
       label.setAttribute("style","margin-top:0px !important;");
 
       groupbox.appendChild(label);
@@ -280,16 +288,27 @@ WindowHook.register("chrome://browser/content/preferences/preferences.xul",
           radio.setAttribute("style","padding-left:0px;padding-right:0px;margin-left:-3px;margin-right:-3px;");
           radio.setAttribute("label", "");
           box.appendChild(radio);
+
+          if(arrtype[j][i] == "cookie" && parseInt(Components.classes["@mozilla.org/xre/app-info;1"]
+                 .getService(Components.interfaces.nsIXULAppInfo)
+                 .version.substr(0,3) * 10,10) / 10 > 21) {
+            radio= aWindow.document.createElement("radio");
+            radio.setAttribute("style","padding-left:0px;padding-right:0px;margin-left:-3px;margin-right:-3px;");
+            radio.setAttribute("label", "");
+            box.appendChild(radio);
+          }
+
           if(arrtype[j][i] == 'document') radio.setAttribute("disabled", "true");
 
           hbox[j].appendChild(radiogroup);
-          if(arrtype[j][i] == "cookie"){
+          if(arrtype[j][i] == "cookie") {
             radiogroup.setAttribute("id", "cookieRadio");
             var val = aWindow.gContentPane.getPref('network.cookie.cookieBehavior','int',1);
             switch(val){
               case 0: val = 0; break;
               case 1: val = 2; break;
               case 2: val = 1; break;
+              case 3: val = 3; break;
             }
             radiogroup.selectedIndex = val;
           }else{
