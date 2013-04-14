@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2013/04/14 22:00 text open with externalEditor (sloppy)
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/03/05 00:00 input type=file change event が発火しないのを修正 Fx7+
 // @version        2013/01/29 00:00 draggable="true"もう一度有効
@@ -131,6 +132,10 @@ var DragNGo = {
 */
     {dir:'RD', modifier:'',name:'画像を名前を受けて保存'  ,obj:'image',cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0], info.nodes[0].ownerDocument, info.nodes[0].ownerDocument);}},
     {dir:'RD', modifier:'',name:'リンクを名前を受けて保存',obj:'link' ,cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0], info.nodes[0].ownerDocument, info.nodes[0].ownerDocument);}},
+
+  /*=== テキストをえでぃたーで開く ===*/
+    {dir:'DL', modifier:'',name:'テキストをエディターで開く',obj:'text',cmd:function(self,event,info){self.editText(null, info.texts[0]);}}, // 引数 null: view_source.editor.pathのエディターを使う
+
 
   /*=== appPathをparamsで開く, paramsはtxtで置き換えcharsetに変換される ===*/
     {dir:'U', modifier:'shift,ctrl',name:'リンクをInternet Explorerで開く',obj:'link',cmd:function(self,event,info){self.launch(info.urls[0], "C:\\Program Files\\Internet Explorer\\iexplore.exe",["%%URL%%"],"Shift_JIS");}},
@@ -599,6 +604,79 @@ var DragNGo = {
                  aSkipPrompt, aReferrer, aSourceDocument) {
     window.saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
                  aSkipPrompt, aReferrer, aSourceDocument)
+  },
+
+  editText: function editText(editor, text) {
+    // Get filename.
+    var file = Components.classes["@mozilla.org/file/directory_service;1"]
+                         .getService(Components.interfaces.nsIProperties)
+                         .get("TmpD", Components.interfaces.nsIFile);
+    file.append("DnD.tmp");
+    file.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0664);
+
+    // Write the data to the file.
+    var ostr = Components.classes['@mozilla.org/network/file-output-stream;1'].
+          createInstance(Components.interfaces.nsIFileOutputStream);
+    ostr.init(file, 2, 0x200, false);
+
+    if(navigator.platform == "Win32") {
+      // Convert Unix newlines to standard network newlines.
+      text = text.replace(/\n/g, "\r\n");
+    }
+    var conv = Components.classes['@mozilla.org/intl/saveascharset;1'].
+          createInstance(Components.interfaces.nsISaveAsCharset);
+    ostr.write(text, text.length);
+
+    ostr.flush();
+    ostr.close();
+
+    // Edit the file.
+    editfile(editor, file.path);
+
+
+    // the external view source editor or null
+    function getExternalViewSourceEditorPath() {
+      try {
+        return Components.classes["@mozilla.org/preferences-service;1"]
+                      .getService(Components.interfaces.nsIPrefBranch)
+                      .getComplexValue("view_source.editor.path",
+                                       Components.interfaces.nsIFile).path;
+      }
+      catch (ex) {
+        Components.utils.reportError(ex);
+      }
+
+      return null;
+    }
+
+    function editfile(editor, filename) {
+      // Figure out what editor to use.
+      editor = editor || getExternalViewSourceEditorPath();
+      if (!editor) {
+        alert("Error_No_Editor");
+        return false;
+      }
+
+      var file = Components.classes["@mozilla.org/file/local;1"].
+          createInstance(Components.interfaces.nsILocalFile);
+      file.initWithPath(editor);
+      if(!file.exists()){
+        alert("Error_invalid_Editor_file");
+        return false;
+      }
+      if(!file.isExecutable()){
+        alert("Error_Editor_not_executable");
+        return false;
+      }
+
+      // Run the editor.
+      var process = Components.classes["@mozilla.org/process/util;1"].
+          createInstance(Components.interfaces.nsIProcess);
+      process.init(file);
+      var args = [filename];
+      process.run(false, args, args.length);  // don't block
+      return true;
+    }
   },
 
   //aURLのcontentTypeをキャッシュから得る
