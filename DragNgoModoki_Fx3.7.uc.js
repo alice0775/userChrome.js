@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2013/04/14 23:40 remove all temp file on exit browser
 // @version        2013/04/14 23:00 text open with externalEditor, char code
 // @version        2013/04/14 22:00 text open with externalEditor (sloppy)
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
@@ -1733,6 +1734,7 @@ var DragNGo = {
   },
 
   init: function() {
+    window.addEventListener('unload', this, false);
     gBrowser.addEventListener('pagehide', this, false);
     gBrowser.addEventListener('dragend', this, false);
     gBrowser.addEventListener('drop', this, false);
@@ -1770,12 +1772,35 @@ var DragNGo = {
   },
 
   uninit: function() {
+    window.removeEventListener('unload', this, false);
     gBrowser.removeEventListener('pagehide', this, false);
     gBrowser.removeEventListener('dragend', this, false);
     gBrowser.removeEventListener('drop', this, false);
     gBrowser.removeEventListener('dragover', this, false);
     gBrowser.removeEventListener('dragenter', this, false);
     gBrowser.removeEventListener('dragstart', this, false);
+
+    // remove all temporaly file
+    var windowType = "navigator:browser";
+    var windowManager = Components.classes['@mozilla.org/appshell/window-mediator;1'].getService();
+    var windowManagerInterface = windowManager.QueryInterface(Components.interfaces.nsIWindowMediator);
+    var enumerator = windowManagerInterface.getEnumerator(windowType);
+    if (enumerator.hasMoreElements()) {
+      return;
+    }
+    var file = Components.classes["@mozilla.org/file/directory_service;1"]
+                     .getService(Components.interfaces.nsIProperties)
+                     .get("TmpD", Components.interfaces.nsIFile);
+    var entries = file.directoryEntries;
+    while (entries.hasMoreElements()){
+      var entry = entries.getNext().QueryInterface(Components.interfaces.nsIFile);
+      if (/DnD(-\d+)?\.tmp$/.test(entry.leafName)){
+        try{
+          entry.remove(false);
+        }catch(e){}
+      }
+    }
+
   },
 
   debug: function(aMsg){
