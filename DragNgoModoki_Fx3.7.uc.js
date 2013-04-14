@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/03/05 00:00 input type=file change event が発火しないのを修正 Fx7+
 // @version        2013/01/29 00:00 draggable="true"もう一度有効
 // @version        2013/01/08 02:00 Bug 827546
@@ -1129,7 +1130,7 @@ var DragNGo = {
     this.directionChain = "";
 
     // 転送データをセットする
-    if (event.originalTarget instanceof HTMLImageElement) {
+    if (event.originalTarget instanceof Ci.nsIImageLoadingContent) {
       if (!event.dataTransfer.mozGetDataAt("application/x-moz-node" ,0))
         event.dataTransfer.mozSetDataAt("application/x-moz-node", event.originalTarget , 0);
       if (!event.dataTransfer.mozGetDataAt("text/x-moz-url" ,0))
@@ -1462,9 +1463,8 @@ var DragNGo = {
           data = self.getElementsByXPath('descendant-or-self::img', sourceNode);
           if (data.length < 1)
             break;
-
           var node = data[data.length - 1];  //
-          if (node instanceof HTMLImageElement) {
+          if (node instanceof Ci.nsIImageLoadingContent) {
             var url = node.getAttribute('src');
             var baseURI = self.ioService.newURI(node.ownerDocument.documentURI, null, null);
             url = self.ioService.newURI(url, null, baseURI).spec;
