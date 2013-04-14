@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
 // @author         Alice0775
+// @version        2013/04/14 23:00 text open with externalEditor, char code
 // @version        2013/04/14 22:00 text open with externalEditor (sloppy)
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/03/05 00:00 input type=file change event が発火しないのを修正 Fx7+
@@ -625,6 +626,12 @@ var DragNGo = {
     }
     var conv = Components.classes['@mozilla.org/intl/saveascharset;1'].
           createInstance(Components.interfaces.nsISaveAsCharset);
+    try{
+      conv.Init('UTF-8', 0, 0);
+      text = conv.Convert(text);
+    }catch(e){
+    }
+
     ostr.write(text, text.length);
 
     ostr.flush();
