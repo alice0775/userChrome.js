@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0
 // @author         Alice0775
+// @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        LastMod 2009/02/18 14:00 スタイル幅高さが指定されていても実行できるように
 // @Note           Sub-Script/Overlay Loader v3.0.20mod
@@ -167,7 +168,7 @@ var ImageZoomINcontentAreaContextMenu = {
   },
 
   showHotMenu: function(node, x, y){
-    if (!(node instanceof HTMLImageElement ||  node.nodeName.match(/img/i)))
+    if (!(node instanceof Ci.nsIImageLoadingContent ||  node.nodeName.match(/img/i)))
       return;
 
     ImageZoomUtil._target = node;
@@ -248,7 +249,7 @@ var ImageZoomUtil = {
 
   getZoomFactor: function() {
     var node = this.target;
-    if (!(node instanceof HTMLImageElement ||  node.nodeName.match(/img/i)))
+    if (!(node instanceof Ci.nsIImageLoadingContent ||  node.nodeName.match(/img/i)))
       return 1;
     if (!node.hasAttribute("originalWidth")) {
       node.setAttribute("originalWidth", node.width);
@@ -269,7 +270,7 @@ var ImageZoomUtil = {
 
   zoomTo: function(zoom, node) {
     node = node || this.target;
-    if (!(node instanceof HTMLImageElement ||  node.nodeName.match(/img/i)))
+    if (!(node instanceof Ci.nsIImageLoadingContent ||  node.nodeName.match(/img/i)))
       return;
     if (!node.hasAttribute("originalWidth")) {
       node.setAttribute("originalWidth", node.width);
@@ -283,7 +284,7 @@ var ImageZoomUtil = {
 
   zoomBy: function(zoom, node) {
     node = node || this.target;
-    if (!(node instanceof HTMLImageElement ||  node.nodeName.match(/img/i)))
+    if (!(node instanceof Ci.nsIImageLoadingContent ||  node.nodeName.match(/img/i)))
       return;
     if (!node.hasAttribute("originalWidth")) {
       node.setAttribute("originalWidth", node.width);
@@ -297,7 +298,7 @@ var ImageZoomUtil = {
 
   reset: function(node) {
     node = node || this.target;
-    if (!(node instanceof HTMLImageElement ||  node.nodeName.match(/img/i)))
+    if (!(node instanceof Ci.nsIImageLoadingContent ||  node.nodeName.match(/img/i)))
       return;
     if (node.hasAttribute("originalWidth")) {
       node.width  = node.getAttribute("originalWidth");

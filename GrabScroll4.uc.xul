@@ -32,6 +32,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
 // @version        2012/01/30 01:00 pagehide, this.xxx = null;
@@ -567,7 +568,7 @@ var GrabScroll = {
   },
 
   isImage: function(event) {
-    if (event.target instanceof HTMLImageElement)
+    if (event.target instanceof Ci.nsIImageLoadingContent)
       return event.target;
     else
       return null;

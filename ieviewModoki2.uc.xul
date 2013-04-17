@@ -9,6 +9,7 @@
 // @include       main
 // @compatibility Firefox 2.0 3.0 3.1
 // @author        Alice0775
+// @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version       2010/10/11 20:00 ウインドウ残るように
 // @version       2010/03/24 23:00 ウインドウ残らないように
 // ==/UserScript==
@@ -178,7 +179,7 @@ var ieviewModoki={
     var target = aEvent.originalTarget;
     while (target) {
       if (target instanceof HTMLAnchorElement ||
-             target instanceof HTMLImageElement ||
+             target instanceof Ci.nsIImageLoadingContent ||
              target instanceof HTMLAreaElement ||
              target instanceof HTMLLinkElement) {
          break;

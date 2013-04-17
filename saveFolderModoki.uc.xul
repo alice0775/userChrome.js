@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/02/09 23:00 Bug 622423
 // @version        2011/10/06 23:00 Bug 795065 Add privacy status to nsDownload
 // ==/UserScript==
@@ -203,7 +204,7 @@ var saveFolderModoki = {
       if(!url) return;
       var text = this.linkText(target, url);
       this.saveLink(url, text, afolder);
-    } else if (target instanceof HTMLImageElement){
+    } else if (target instanceof Ci.nsIImageLoadingContent){
       this.saveImageFolder(target, afolder);
     }
   },
@@ -211,7 +212,7 @@ var saveFolderModoki = {
   //画像の保存
   saveImageFolder: function(target, afolder){
     var url;
-    if (target instanceof HTMLImageElement){
+    if (target instanceof Ci.nsIImageLoadingContent){
       url = target.src;
     }
     if(!url) return;
@@ -676,7 +677,7 @@ var saveFolderModoki = {
   getTargetFromSourceNode: function(target){
     var targets = {link:null, image:null};
     if (target &&
-        target instanceof HTMLImageElement &&
+        target instanceof Ci.nsIImageLoadingContent &&
         target.src){
       targets.image = target;
     }
