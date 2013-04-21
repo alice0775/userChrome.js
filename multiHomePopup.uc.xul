@@ -8,6 +8,7 @@
 // @compatibility  Firefox 4.0b5pre
 // @author         Romain Labolle (ravomavain)
 // @modifier       Alice0775
+// @version        2013/04/21 Bug 713642 asyncFaviconCallers
 // @version        2010/08/25 4.0b5preにおいてアイコンイメージが表示されなくなった
 // @version        2009/12/27
 // ==/UserScript==
@@ -106,6 +107,7 @@ var multiHomePopup = {
           title = home[i];
 
         var menuitem = document.createElement("menuitem");
+        multiHomePopup.getFavicon(home[i], (function(uri){this.setAttribute("image", uri.spec)}).bind(menuitem));
         menuitem.setAttribute("id", "multihome_mneuitem"+i);
         menuitem.setAttribute("class", "menuitem-iconic");
         menuitem.setAttribute("label", title);
@@ -113,7 +115,6 @@ var multiHomePopup = {
         menuitem.setAttribute("url", home[i]);
         menuitem.setAttribute("statustext", home[i]);
         menuitem.setAttribute("onclick", "multiHomePopup.BrowserGoMultiHome(event, \"" + home[i] + "\")");
-        menuitem.setAttribute("image", multiHomePopup.getFavicon(home[i]));
         menupopup.insertBefore(menuitem, menupopup.firstChild);
       }
     }
@@ -204,11 +205,15 @@ var multiHomePopup = {
     }
   },
 
-  getFavicon: function(URL) {
+  getFavicon: function(URL, callback) {
     var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"].getService(Components.interfaces.nsIFaviconService);
     var IOService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
     var URI = IOService.newURI(URL, null, null);
-    return faviconService.getFaviconImageForPage(URI).spec;
+    if (typeof faviconService.getFaviconImageForPage == "undefined") {
+      faviconService.getFaviconURLForPage(URI, callback);
+    } else {
+      callback(faviconService.getFaviconImageForPage(URI));
+    }
   }
 }
 

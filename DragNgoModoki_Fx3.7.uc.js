@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ファイル名をD&D
 // @include        main
-// @compatibility  Firefox 4.0 5.0 6.0 7.0 8 9 10.0a1
+// @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2013/04/19 20:00 treat HTMLCanvasElement as image
 // @version        2013/04/14 23:40 remove all temp file on exit browser
 // @version        2013/04/14 23:00 text open with externalEditor, char code
 // @version        2013/04/14 22:00 text open with externalEditor (sloppy)
@@ -1550,8 +1551,13 @@ var DragNGo = {
           if (data.length < 1)
             break;
           var node = data[data.length - 1];  //
-          if (node instanceof Ci.nsIImageLoadingContent) {
-            var url = node.getAttribute('src');
+          if (node instanceof Ci.nsIImageLoadingContent ||
+              node instanceof HTMLCanvasElement) {
+            if (node instanceof Ci.nsIImageLoadingContent) {
+              var url = node.getAttribute('src');
+            } else if (node instanceof HTMLCanvasElement) {
+              url = nodea.toDataURL();
+            }
             var baseURI = self.ioService.newURI(node.ownerDocument.documentURI, null, null);
             url = self.ioService.newURI(url, null, baseURI).spec;
             if (url && self.dragDropSecurityCheck(event, dragSession, url)) {
