@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2013/04/22 14:00 typo, "use strict" mode
 // @version        2013/04/19 20:00 treat HTMLCanvasElement as image
 // @version        2013/04/14 23:40 remove all temp file on exit browser
 // @version        2013/04/14 23:00 text open with externalEditor, char code
@@ -71,6 +72,7 @@
 // @version        2009/12/15 17:00 Fx3.6 and more
 // @version        2007/08/04 20:00
 // @LICENSE        MPL 1.1/GPL 2.0/LGPL 2.1
+"use strict";
 if (typeof Cc != 'object' ) { var Cc = Components.classes;}
 if (typeof Ci != 'object' ) { var Ci = Components.interfaces;}
 if (typeof Cr != 'object' ) { var Cr = Components.results;}
@@ -615,7 +617,7 @@ var DragNGo = {
                          .getService(Components.interfaces.nsIProperties)
                          .get("TmpD", Components.interfaces.nsIFile);
     file.append("DnD.tmp");
-    file.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, 0664);
+    file.createUnique(Components.interfaces.nsIFile.NORMAL_FILE_TYPE, parseInt("664", 8));
 
     // Write the data to the file.
     var ostr = Components.classes['@mozilla.org/network/file-output-stream;1'].
@@ -706,32 +708,6 @@ var DragNGo = {
     return contentType;
   },
 
-  //appPathをparamsで開く, paramsはtxtで置き換えcharsetに変換される
-  launch: function launch(txt, appPath,params,charset){
-    var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
-          createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
-    UI.charset = charset;
-
-    var appfile = Components.classes['@mozilla.org/file/local;1']
-                    .createInstance(Components.interfaces.nsILocalFile);
-    appfile.initWithPath(decodeURIComponent(escape(appPath)));
-    if (!appfile.exists()){
-      alert("Executable does not exist.");
-      return;
-    }
-    var process = Components.classes['@mozilla.org/process/util;1']
-                  .createInstance(Components.interfaces.nsIProcess);
-
-    var args = new Array();
-    for(var i=0,len=params.length;i<len;i++){
-      if(params[i]){
-        args.push(UI.ConvertFromUnicode(params[i].replace(/%%URL%%/i,txt).replace(/%%SEL%%/i,txt)));
-      }
-    }
-    process.init(appfile);
-    process.run(false, args, args.length, {});
-  },
-
   //ファイルのパスをインプットフィールドに記入
   putMultipleFilePath: function putMultipleFilePath(inputElement, URLs) {
     var self = this;
@@ -760,6 +736,16 @@ var DragNGo = {
 
   //Xpiのインストール
   installXpi: function installXpi(URLs){
+    function buildNextInstall() {
+      if (pos == URLs.length) {
+        if (installs.length > 0) {
+          AddonManager.installAddonsFromWebpage("application/x-xpinstall", window, null, installs);
+        }
+        return;
+      }
+      AddonManager.getInstallForURL(URLs[pos++], function (aInstall) {installs.push(aInstall);buildNextInstall();}, "application/x-xpinstall");
+    }
+
     var self = this;
     if (typeof InstallTrigger != 'undefined') {
       var xpinstallObj = {};
@@ -775,17 +761,6 @@ var DragNGo = {
       // xxx Firefox4.0b5pre
       var pos = 0;
       var installs = [];
-
-      function buildNextInstall() {
-          if (pos == URLs.length) {
-              if (installs.length > 0) {
-                  AddonManager.installAddonsFromWebpage("application/x-xpinstall", window, null, installs);
-              }
-              return;
-          }
-          AddonManager.getInstallForURL(URLs[pos++], function (aInstall) {installs.push(aInstall);buildNextInstall();}, "application/x-xpinstall");
-      }
-
       buildNextInstall();
     }
   },
@@ -1556,7 +1531,7 @@ var DragNGo = {
             if (node instanceof Ci.nsIImageLoadingContent) {
               var url = node.getAttribute('src');
             } else if (node instanceof HTMLCanvasElement) {
-              url = nodea.toDataURL();
+              url = node.toDataURL();
             }
             var baseURI = self.ioService.newURI(node.ownerDocument.documentURI, null, null);
             url = self.ioService.newURI(url, null, baseURI).spec;
