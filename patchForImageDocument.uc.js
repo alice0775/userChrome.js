@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17+
 // @author         Alice0775
+// @version        2013/04/25 fix resize when return to shrinkToFit from normal
 // @version        2013/04/25
 // @Note
 // ==/UserScript==
@@ -13,8 +14,13 @@ var patchForImageDocument = {
 
   handleEvent: function(event) {
     switch (event.type) {
+      case "click":
+        if (event.button != 0)
+          return
+        this.onResize(0);
+        break;
       case "resize":
-        this.onResize();
+        this.onResize(250);
         break;
       case "unload":
         this.uninit();
@@ -25,13 +31,13 @@ var patchForImageDocument = {
   init: function() {
     window.addEventListener("unload", this, false);
     gBrowser.addTabsProgressListener(this.tabProgressListener);
+    gBrowser.mPanelContainer.addEventListener("click", this, true);
     window.addEventListener("resize", this, true);
-    
+     
+    // xxx uc.js initial load
     var doc = content.document;
     if (!doc.mozSyntheticDocument)
       return;
-
-    // xxx uc.js initial load
     if (this.timer)
       clearTimeout(this.timer);
     this.timer = setTimeout(function(doc){patchForImageDocument.adjustImageSize(doc);}, 0, doc);
@@ -41,6 +47,7 @@ var patchForImageDocument = {
     if (this.timer)
       clearTimeout(this.timer);
     window.removeEventListener("resize", this, true);
+    gBrowser.mPanelContainer.removeEventListener("click", this, true);
     gBrowser.removeTabsProgressListener(this.tabProgressListener);
     window.removeEventListener("unload", this, false);
   },
@@ -68,7 +75,7 @@ var patchForImageDocument = {
     }
   },
 
-  onResize: function(event) {
+  onResize: function(aDelay) {
     var doc = content.document;
     if (!doc.mozSyntheticDocument)
       return;
@@ -76,7 +83,7 @@ var patchForImageDocument = {
     // xxx prevent surplus change
     if (this.timer)
       clearTimeout(this.timer);
-    this.timer = setTimeout((function(doc){this.adjustImageSize(doc);}).bind(this), 250, doc);
+    this.timer = setTimeout((function(doc){this.adjustImageSize(doc);}).bind(this), aDelay, doc);
   },
 
   adjustImageSize: function(doc) {
@@ -94,12 +101,14 @@ var patchForImageDocument = {
     var h = img.getAttribute("height");
 
     //userChrome_js.debug("adjustImageSize: " + (width == w) + " " + (height == h));
-    if (width == w) {
+    if (width - w >= 0 && height - h >= width - w) {
       img.removeAttribute("height");
+      img.setAttribute("width", width);
       return;
     }
-    if (height == h) {
+    if (height - h >= 0 && width - w >= height - h) {
       img.removeAttribute("width");
+      img.setAttribute("height", height);
       return;
     }
   }
