@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2013/05/02 01:00 Bug 789546
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/02/09 23:00 Bug 622423
 // @version        2011/10/06 23:00 Bug 795065 Add privacy status to nsDownload
@@ -153,7 +154,7 @@ var saveFolderModoki = {
 
   //画像urlの保存
   saveImageURL: function saveImageURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-                        aSkipPrompt, aReferrer, aFolder){
+                        aSkipPrompt, aReferrer, aFolder, aDoc){
     const imgICache = Components.interfaces.imgICache;
     const nsISupportsCString = Components.interfaces.nsISupportsCString;
     var contentType = null;
@@ -161,18 +162,19 @@ var saveFolderModoki = {
 
     if (!aShouldBypassCache) {
       try {
-        var imageCache = Components.classes["@mozilla.org/image/cache;1"]
-                                   .getService(imgICache);
-        var props =
-          imageCache.findEntryProperties(makeURI(aURL, getCharsetforSave(null)));
-        if (props) {
-          contentType = props.get("type", nsISupportsCString);
-          contentDisposition = props.get("content-disposition",
-                                         nsISupportsCString);
-        }
-      } catch (e) {
-        // Failure to get type and content-disposition off the image is non-fatal
-      }
+         var imageCache = Components.classes["@mozilla.org/image/tools;1"]
+                                    .getService(Components.interfaces.imgITools)
+                                    .getImgCacheForDocument(aDoc);
+         var props =
+           imageCache.findEntryProperties(makeURI(aURL, getCharsetforSave(null)));
+         if (props) {
+           contentType = props.get("type", nsISupportsCString);
+           contentDisposition = props.get("content-disposition",
+                                          nsISupportsCString);
+         }
+       } catch (e) {
+         // Failure to get type and content-disposition off the image is non-fatal
+       }
     }
     if (aFolder){
       this.internalSave(aURL, null, aFileName, contentDisposition, contentType,
@@ -226,7 +228,7 @@ var saveFolderModoki = {
     }
 
     this.saveImageURL(url, text, "SaveImageTitle", aShouldBypassCache,
-                      afolder?true:false, target.ownerDocument.documentURIObject, afolder);
+                      afolder?true:false, target.ownerDocument.documentURIObject, afolder, target.ownerDocument);
 },
 
   //rebuild_userChrome.uc.xulから呼び出される

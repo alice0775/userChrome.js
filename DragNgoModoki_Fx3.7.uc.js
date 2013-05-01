@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2013/05/02 01:00 Bug 789546
 // @version        2013/04/22 14:00 typo, "use strict" mode
 // @version        2013/04/19 20:00 treat HTMLCanvasElement as image
 // @version        2013/04/14 23:40 remove all temp file on exit browser
@@ -592,7 +593,7 @@ var DragNGo = {
     if (aReferrer instanceof HTMLDocument) {
       aReferrer = aReferrer.documentURIObject;
     }
-    var contentType = this.getContentType(aURL);
+    var contentType = this.getContentType(aURL, aSourceDocument);
     if (this.imageLinkRegExp.test(aURL) || /^image\//i.test(contentType)) {
       if (/^data:/.test(aURL)) {
         saveImageURL(aURL, "index.png", null, true, false, aReferrer, aSourceDocument);
@@ -691,20 +692,23 @@ var DragNGo = {
   },
 
   //aURLのcontentTypeをキャッシュから得る
-  getContentType: function(aURL){
+  getContentType: function(aURL, aDoc){
     var contentType = null;
-    //var contentDisposition = null;
+    var contentDisposition = null;
     try {
-      var imageCache = Cc["@mozilla.org/image/cache;1"].getService(imgICache);
-      var props =
-        imageCache.findEntryProperties(makeURI(aURL, getCharsetforSave(null)));
-      if (props) {
-        contentType = props.get("type", nsISupportsCString);
-        //contentDisposition = props.get("content-disposition", nsISupportsCString);
-      }
-    } catch (e) {
-      // Failure to get type and content-disposition off the image is non-fatal
-    }
+       var imageCache = Components.classes["@mozilla.org/image/tools;1"]
+                                  .getService(Components.interfaces.imgITools)
+                                  .getImgCacheForDocument(aDoc);
+       var props =
+         imageCache.findEntryProperties(makeURI(aURL, getCharsetforSave(null)));
+       if (props) {
+         contentType = props.get("type", nsISupportsCString);
+         contentDisposition = props.get("content-disposition",
+                                        nsISupportsCString);
+       }
+     } catch (e) {
+       // Failure to get type and content-disposition off the image is non-fatal
+     }
     return contentType;
   },
 
