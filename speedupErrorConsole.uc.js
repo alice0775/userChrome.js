@@ -5,9 +5,9 @@
 // @include        chrome://global/content/console.xul
 // @include        chrome://console2/content/console2.xul
 // @include        main
-// @compatibility  Firefox 21+
+// @compatibility  Firefox 10+
 // @author         Alice0775
-// @version        2013/02/15 18:00 typo
+// @version        2013/05/30 11:30
 // @version        2013/02/11 12:30
 // ==/UserScript==
 (function() {
@@ -20,8 +20,8 @@
 
     if(/aObject/.test(func)) {
       func = func.replace(
-      'if (aObject.sourceLine) {',
-      '$&if (!aObject.category || aObject.category.indexOf("CSS") < 0 || aObject.columnNumber < 120) {'
+      'row.setAttribute("code", truncatedLineObj.string);',
+      'if (!aObject.category || aObject.category.indexOf("CSS") < 0 || aObject.columnNumber < 120) {$&'
       ).replace(
       'row.mSourceLine = sourceLine;',
       '$&}else{}'

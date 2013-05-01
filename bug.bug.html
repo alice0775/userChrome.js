@@ -1,0 +1,16 @@
+<html>
+<head>
+<script>
+function run(){
+  var f = document.getElementById("f");
+  var src = "http://ftp.mozilla.org/pub/mozilla.org/firefox/"
+  f.currentSrc = src;
+  f.contentWindow.location.replace(src);
+}
+</script>
+</head>
+<body>
+<iframe id="f" src="http://ftp.mozilla.org/pub/mozilla.org/firefox/nightly/" ></iframe>
+<button onclick="run()">click</button>
+</body>
+</html>
