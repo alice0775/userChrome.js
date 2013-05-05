@@ -5,6 +5,7 @@
 // @compatibility Firefox 17+
 // @include       main
 // @author        alice0775
+// @version       2013/05/05 10:25
 // @version       2013/03/22 04:25
 // ==/UserScript==
 
@@ -40,7 +41,7 @@ var pathciForTST_ScrapBook = {
 
   uninit: function() {
     // later, you can stop observing
-    if (!this.observer)
+    if (this.observer)
       this.observer.disconnect();
   },
 
