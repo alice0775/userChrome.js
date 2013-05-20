@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17.0+
 // @author         Alice0775
+// @version        2013/05/19 00:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2013/05/18 23:20 Bug 738818
 // @version        2008/06/24 19:20 修正した
 // @Note
@@ -27,20 +28,17 @@ var searchOnEngineChange = {
     this.popup = document.getAnonymousElementByAttribute(this.searchBar, "anonid", "searchbar-popup");
     this.popup.addEventListener("command", this, false);
 
-    document.getElementById("cmd_CustomizeToolbars").addEventListener("DOMAttrModified", this, false);
+    window.addEventListener("aftercustomization", this, false);
   },
 
   handleEvent: function(event){
    switch (event.type) {
       case "unload":
-        this.popup.removeEventListener("click", this, true);
         this.popup.removeEventListener("command", this, true);
-        document.getElementById("cmd_CustomizeToolbars").removeEventListener("DOMAttrModified", this, false);
+        window.removeEventListener("aftercustomization", this, false);
         break;
-      case "DOMAttrModified":
-        if (event.attrName == "disabled" && !event.newValue){
-          this.init();
-        }
+      case "aftercustomization":
+        this.init();
         break;
       case "command":
         this.doSearch(event);

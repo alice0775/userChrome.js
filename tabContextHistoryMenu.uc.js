@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0, 3.5 3.6a2pre 3.7a1pre
 // @author         Alice0775
+// @version        2013/04/21 Bug 713642 asyncFaviconCallers
 // @version        2010/03/26 13:00  Minefield/3.7a3pre Bug 554991 -  allow tab context menu to be modified by normal XUL overlays
 // @version        2010/03/15 00:00  Minefield/3.7a3pre Bug 347930 -  Tab strip should be a toolbar instead
 // @version        2009/08/22 09:00
@@ -122,12 +123,7 @@ var tabContextHistoryMenu = {
       item.setAttribute("index", j);
 
       if (j != index) {
-        try {
-          let iconURL = Cc["@mozilla.org/browser/favicon-service;1"]
-                           .getService(Ci.nsIFaviconService)
-                           .getFaviconForPage(entry.URI).spec;
-          item.style.listStyleImage = "url(" + iconURL + ")";
-        } catch (ex) {}
+        this.getFavicon(uri, (function(uri){this.style.listStyleImage = "url(" + uri.spec + ")";}).bind(item));
       }
 
       if (j < index) {
@@ -146,6 +142,17 @@ var tabContextHistoryMenu = {
       this.popup.appendChild(item);
     }
     return true;
+  },
+
+  getFavicon: function(URL, callback) {
+    var faviconService = Components.classes["@mozilla.org/browser/favicon-service;1"].getService(Components.interfaces.nsIFaviconService);
+    var IOService = Components.classes["@mozilla.org/network/io-service;1"].getService(Components.interfaces.nsIIOService);
+    var URI = IOService.newURI(URL, null, null);
+    if (typeof faviconService.getFaviconImageForPage == "undefined") {
+      faviconService.getFaviconURLForPage(URI, callback);
+    } else {
+      callback(faviconService.getFaviconImageForPage(URI));
+    }
   },
 
   gotoHistoryIndex: function gotoHistoryIndex(aEvent) {
