@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2013/05/30 01:00 text drag fails on http://blog.livedoor.jp/doku1108/archives/52130085.html
 // @version        2013/05/02 01:00 Bug 789546
 // @version        2013/04/22 14:00 typo, "use strict" mode
 // @version        2013/04/19 20:00 treat HTMLCanvasElement as image
@@ -1529,6 +1530,12 @@ var DragNGo = {
           data = self.getElementsByXPath('descendant-or-self::img', sourceNode);
           if (data.length < 1)
             break;
+
+          if (event.dataTransfer.types.contains(["text/plain"])) {
+            if(!!self.selection && event.dataTransfer.getData(["text/plain"]) == self.selection)
+            break;
+          }
+
           var node = data[data.length - 1];  //
           if (node instanceof Ci.nsIImageLoadingContent ||
               node instanceof HTMLCanvasElement) {
