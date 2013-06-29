@@ -10,7 +10,7 @@
 // ==/UserScript==
 (function () {
   
-  function Bug888567_StarUI_onclick(event) {
+  window.Bug888567_StarUI_onclick = function(event) {
     var StarUI = document.getElementById("star-button");
     if (typeof PlacesStarButton != 'undefined') {
       // Firefox 13-22
