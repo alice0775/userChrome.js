@@ -8,27 +8,27 @@
 // @version        2013/06/29
 // @Note
 // ==/UserScript==
-function Bug888567_StarUI_onclick(event) {
-  var StarUI = document.getElementById("star-button");
-  if (typeof PlacesStarButton != 'undefined') {
-    // Firefox 13-22
-    if (StarUI.getAttribute('starred') != 'true') {
-      PlacesCommandHook.bookmarkCurrentPage(false, PlacesUtils.unfiledBookmarksFolderId);
-      PlacesStarButton._uri = null;
-      PlacesStarButton.updateState();
+(function () {
+  
+  function Bug888567_StarUI_onclick(event) {
+    var StarUI = document.getElementById("star-button");
+    if (typeof PlacesStarButton != 'undefined') {
+      // Firefox 13-22
+      if (StarUI.getAttribute('starred') != 'true') {
+        PlacesStarButton._uri = null;
+        PlacesStarButton.updateState();
+      }
     } else {
-      PlacesStarButton.onClick(event);
-    }
-  } else {
-    // Firefox 23-
-    if (StarUI.getAttribute('starred') != 'true') {
-      PlacesCommandHook.bookmarkCurrentPage(false, PlacesUtils.unfiledBookmarksFolderId);
-      BookmarkingUI._uri = null;
-      BookmarkingUI.updateStarState();
-    } else {
-      BookmarkingUI.onCommand(event);
+      // Firefox 23-
+      if (StarUI.getAttribute('starred') != 'true') {
+        BookmarkingUI._uri = null;
+        BookmarkingUI.updateStarState();
+      }
     }
   }
-}
 
-document.getElementById("star-button").setAttribute("onclick", "Bug888567_StarUI_onclick(event)")
+  var StarUI = document.getElementById("star-button");
+  var Bug888567_StarUI_onclick_org = StarUI.getAttribute("onclick");
+  StarUI.setAttribute("onclick", Bug888567_StarUI_onclick_org+"Bug888567_StarUI_onclick(event)")
+
+})();
