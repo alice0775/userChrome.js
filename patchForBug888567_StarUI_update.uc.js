@@ -28,7 +28,22 @@
   }
 
   var StarUI = document.getElementById("star-button");
-  var Bug888567_StarUI_onclick_org = StarUI.getAttribute("onclick");
-  StarUI.setAttribute("onclick", Bug888567_StarUI_onclick_org+"Bug888567_StarUI_onclick(event)")
+  if (StarUI) {
+    var _org = StarUI.getAttribute("onclick");
+    StarUI.setAttribute("onclick", _org + "Bug888567_StarUI_onclick(event)")
+  }
+
+
+  var CMD = document.getElementById("Browser:AddBookmarkAs");
+  if (CMD) {
+    _org = CMD.getAttribute("oncommand");
+    CMD.setAttribute("oncommand", _org + "Bug888567_StarUI_onclick(event)")
+  }
+
+  CMD = document.getElementById("Browser:BookmarkAllTabs");
+  if (CMD) {
+    _org = CMD.getAttribute("oncommand");
+    CMD.setAttribute("oncommand", _org + "Bug888567_StarUI_onclick(event)")
+  }
 
 })();
