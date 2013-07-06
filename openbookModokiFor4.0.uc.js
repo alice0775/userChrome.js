@@ -4,6 +4,7 @@
 // @description    Edit Bookmark Panelにリサイザ追加すると共に, フォルダツリーとタグセレクタのエキスパンダ開閉状態を記憶する。および 設定によりdescription, location, loadInSidebar, keywordを表示/非表示
 // @include        main
 // @author         Alice0775
+// @version        2013/07/07 02:30 fix onFolderMenuListCommand
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
 // @version        2012/07/24 14:30 Bug 761723 implement toString of function objects by saving source
@@ -155,7 +156,7 @@ var openbookResizer = {
       'var currentFolder = this._getFolderIdFromMenuList(); \
       var onselect = this._folderTree.getAttribute("onselect"); \
       this._folderTree.removeAttribute("onselect"); \
-      $&'
+      $&;'
     );
     func = func.replace(
       'this._folderTree.focus();',
@@ -178,7 +179,7 @@ var openbookResizer = {
     func = gEditItemOverlay.onFolderMenuListCommand.toString();
     func = func.replace(
       'this._folderTree.selectItems([container]);',
-      'var onselect = this._folderTree.getAttribute("onselect"); \
+      '{var onselect = this._folderTree.getAttribute("onselect"); \
       this._folderTree.removeAttribute("onselect"); \
       $&; \
       setTimeout(function(tree){ \
@@ -191,7 +192,7 @@ var openbookResizer = {
           tree.treeBoxObject.ensureRowIsVisible(v); \
         } \
         tree.setAttribute("onselect", onselect); \
-      }, 0, this._folderTree);'
+      }, 0, this._folderTree);}'
     );
 
     eval("gEditItemOverlay.onFolderMenuListCommand = " + func);
