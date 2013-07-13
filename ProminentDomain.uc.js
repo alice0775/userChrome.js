@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 6.0 7.0
 // @author
+// @version        2013/07/12 17:00 by Alice0775  reset horizontal scroll
 // @version        2012/12/05 21:00 by Alice0775  fixed getValidTld 
 // ==/UserScript==
 // @version        2012/11/24 23:00 by Alice0775  fixed key navigation
@@ -71,7 +72,8 @@ var ProminentDomain = {
           ProminentDomain.debug("onFocusChange");
           if (ProminentDomain._timer)
             clearTimeout(ProminentDomain._timer);
-          if (mutation.target.getAttribute(mutation.attributeName) == "true")
+          if (mutation.target.getAttribute(mutation.attributeName) == "true" &&
+              gURLBar.getAttribute("pageproxystate") !="invalid" )
             ProminentDomain.plainView();
           else
             ProminentDomain.prettyView();
@@ -233,6 +235,8 @@ var ProminentDomain = {
       node.firstChild.nodeValue = aPart;
       this.nBase.appendChild(node);
     }, this);
+    document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").selectionStart = 0;
+    document.getAnonymousElementByAttribute(gURLBar, "anonid", "input").selectionEnd = 0;
   },
 
   plainView: function()
