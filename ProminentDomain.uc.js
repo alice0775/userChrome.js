@@ -5,7 +5,7 @@
 // @include        main
 // @compatibility  Firefox 6.0 7.0
 // @author
-// @version        2013/07/12 17:00 by Alice0775  reset horizontal scroll
+// @version        2013/07/12 17:00 by Alice0775  reset horizontal scroll (workaround Bug 893312)
 // @version        2012/12/05 21:00 by Alice0775  fixed getValidTld 
 // ==/UserScript==
 // @version        2012/11/24 23:00 by Alice0775  fixed key navigation

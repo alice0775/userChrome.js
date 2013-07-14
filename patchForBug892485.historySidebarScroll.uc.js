@@ -5,7 +5,9 @@
 // @include       chrome://browser/content/history/history-panel.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2013/07/14 Do nothing if currentIndex is 0.
 // @version       2013/07/12
+// @note          this workaround fails sometimes :(
 // ==/UserScript==
 
 var patchForBug892485 = {
@@ -82,9 +84,11 @@ var patchForBug892485 = {
     let pos = this.lastScrollPosition;
     //top.userChrome_js.debug("after " + this.lastCurrentIndex);
     if (this._BTree.treeBoxObject.view.rowCount >= pos) {
+      let index = this.lastCurrentIndex
+      if (index == 0 )
+        return;
       this.viewbox.scrollToRow(pos);
-      let row = this.lastCurrentIndex
-      this._BTree.treeBoxObject.view.selection.select(row);
+      this._BTree.treeBoxObject.view.selection.select(index);
     }
   },
 
@@ -106,6 +110,8 @@ var patchForBug892485 = {
     let node = tree.selectedNode;
     if (node) {
       if (aEvent.keyCode == KeyEvent.DOM_VK_RETURN) {
+        if (this.getScrollPosition() == 0 || this.getCurrentIndex() == 0)
+          return;
         this.lastScrollPosition = this.getScrollPosition();
         this.lastCurrentIndex = this.getCurrentIndex();
         this._BTree.addEventListener('select', this, true);
@@ -134,6 +140,8 @@ var patchForBug892485 = {
       // Clear all other selection since we're loading a link now. We must
       // do this *before* attempting to load the link since openURL uses
       // selection as an indication of which link to load.
+      if (this.getScrollPosition() == 0 || this.getCurrentIndex() == 0)
+        return;
       this.lastScrollPosition = this.getScrollPosition();
       this.lastCurrentIndex = this.getCurrentIndex();
       this._BTree.addEventListener('select', this, true);
