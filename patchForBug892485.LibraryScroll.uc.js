@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/places/places.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2013/07/16 Fix sortorder == ascending
 // @version       2013/07/16
 // @note          this workaround fails sometimes :(
 // ==/UserScript==
@@ -117,7 +118,7 @@ var patchForBug892485LibraryScroll = {
             (this.getScrollPosition() == 0 || this.getCurrentIndex() == 0))
           return;
         if (this.viewType == "ascending" &&
-            (this.getLastVisibleRow() == this._BTree.treeBoxObject.view.rowCount - 1 ||
+            (this.viewbox.getLastVisibleRow() >= this._BTree.treeBoxObject.view.rowCount - 1 ||
              this.getCurrentIndex() == this._BTree.treeBoxObject.view.rowCount - 1))
           return;
         this.lastScrollPosition = this.getScrollPosition();
@@ -152,7 +153,7 @@ var patchForBug892485LibraryScroll = {
           (this.getScrollPosition() == 0 || this.getCurrentIndex() == 0))
         return;
       if (this.viewType == "ascending" &&
-          (this.getLastVisibleRow() == this._BTree.treeBoxObject.view.rowCount - 1 ||
+          (this.viewbox.getLastVisibleRow() >= this._BTree.treeBoxObject.view.rowCount - 1 ||
            this.getCurrentIndex() == this._BTree.treeBoxObject.view.rowCount - 1))
         return;
       this.lastScrollPosition = this.getScrollPosition();
