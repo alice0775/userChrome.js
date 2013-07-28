@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description
 // @include        main
-// @compatibility  Firefox 2.0 3.0 4.0b8pre
+// @compatibility  Firefox17
 // @author         Alice0775
+// @version        2013/07/28 12:00 drop support Firefox16 and earlier and BHNewTab anymore
 // @version        2010/11/18 00:00 4.0b8pre
 // @version        2009/07/13 00:00 Bug 502171 -  drag and drop from external apps to firefox malfunctions.を回避
 // ==/UserScript==
@@ -50,125 +51,94 @@ var ttp2http = "url = url.match(/(.*)[\\n]?/)[1].replace(/^(ttp|tp|h..p)/i,'http
 
 
 // input to location bar
-/*
-try{
-  eval("BrowserLoadURL = " +
-      BrowserLoadURL
-                    .toString()
-                    .replace(/var url = gURLBar\.value;/,
-                             "var url = gURLBar.value;" + ttp2http)
-                    .replace(/(var url = gIeTab\.getHandledURL\(gURLBar\.value\);)/,
-                             "var url = gURLBar.value;" + ttp2http +
-                             "url = gIeTab.getHandledURL(url);"));
-//debug(BrowserLoadURL.toString());
-}catch(e){}
-*/
-try{
-  window.BrowserLoadURL_orig = BrowserLoadURL;
-  BrowserLoadURL = function(aTriggeringEvent, aPostData){
-    var theURI = document.getElementById("urlbar").value;
-    theURI = theURI.replace(/^(ttp|tp|h..p)/i,'http');
-    gURLBar.value = theURI;
-    BrowserLoadURL_orig(aTriggeringEvent, aPostData);
-  }
-/*
-  eval("BrowserLoadURL = " +
-      BrowserLoadURL
-                    .toString()
-                    .replace(/var theURI = document\.getElementById\("urlbar"\)\.value;/,
-                             'var theURI = document.getElementById("urlbar").value;' + "theURI = theURI.replace(/^(ttp|tp|h..p)/i,'http');"));
-*/
-}catch(e){}
-//try{
+if(gURLBar && "handleCommand" in gURLBar)
    eval("gURLBar.handleCommand = " +
       gURLBar.handleCommand.toString()
                     .replace("var [url, postData] = this._canonizeURL(aTriggeringEvent);",
                              "var [url, postData] = this._canonizeURL(aTriggeringEvent);" + ttp2http)
                     .replace("var url = this.value",
                              "var url = this.value;" + ttp2http + ";if(this.value != url){this.handleRevert();this.value = url;}"));
-//}catch(e){}
 
 
 
 // drag to location bar
-try{ //less Fx3.1b1pre
-  eval("urlbarObserver.onDrop = " +
-      urlbarObserver.onDrop
-                    .toString()
-                    .replace(/aXferData\.flavour\.contentType\)\;/,
-                             "aXferData.flavour.contentType);" + ttp2http));
-}catch(e){}
-try{ //Fx3.1b1pre
+
+if(gURLBar && "onDrop" in gURLBar)
   eval("gURLBar.onDrop = " +
       gURLBar.onDrop.toString().replace(
-              'var url = transferUtils.retrieveURLFromData(aXferData.data, aXferData.flavour.contentType);',
-              "$&" + ttp2http));
-}catch(e){}
-try{ //Fx3.6a1pre
-  eval("gURLBar.onDrop = " +
-      gURLBar.onDrop.toString().replace(
-              'var url = browserDragAndDrop.getDragURLFromDataTransfer(aEvent.dataTransfer)[0];',
-              "$&" + ttp2http));
-}catch(e){}
+              ' url = browserDragAndDrop.getDragURLFromDataTransfer(aEvent.dataTransfer)[0];',
+              "$&" + ttp2http).replace(
+              'let url = browserDragAndDrop.drop(aEvent, { })',
+              '$&;' + ttp2http
+      ));
 
 
 
 
-// drag to Go button
-try{
-  eval("goButtonObserver.onDrop = " +
-      goButtonObserver.onDrop
-                      .toString()
-                      .replace(/getShortcutOrURI\(draggedText\,\spostData\)\;/,
-                               "getShortcutOrURI(draggedText, postData);" +
-                               ttp2http));
-}catch(e){}
+// drag to tab and tab container
+if (gBrowser && !("_onDrop" in gBrowser)) {
+  if (!("TreeStyleTabService" in window)) {
+    gBrowser.tabContainer.addEventListener("drop", function(event){
+     var dt = event.dataTransfer;
+     if (!dt.types.contains(["text/plain"]))
+       return;
+     var url = dt.getData(["text/plain"]);
+     if(/^ttps?/.test(url)) {
+      url = url.match(/(.*)[\\n]?/)[1].replace(/^(ttp|tp|h..p)/i,'http');
+      var tab = document.evaluate(
+                  'ancestor-or-self::*[local-name()="tab"]',
+                  event.originalTarget,
+                  null,
+                  XPathResult.FIRST_ORDERED_NODE_TYPE,
+                  null
+                ).singleNodeValue;
+        if (tab) {
+          // drag to tab
+          gBrowser.tabContainer._tabDropIndicator.collapsed = true;
+          event.stopPropagation();
+          tab.linkedBrowser.loadURI(url, null, null);
+        } else if(event.target == gBrowser.tabContainer) {
+          // drag to tab container
+          gBrowser.tabContainer._tabDropIndicator.collapsed = true;
+          event.stopPropagation();
+          gBrowser.addTab(url);
+        }
+      }
+    }, true);
+  }
 
-
-
-// drag to tab container
-try{
-  eval("TabDNDObserver.onDrop = " +
-      TabDNDObserver.onDrop
-                      .toString()
-                      .replace(/dropData\.flavour\.contentType\)\;/,
-                               "dropData.flavour.contentType);" + ttp2http));
-}catch(e){}
-
-// drag to tab
-if ("onDrop" in gBrowser)
-  try{ //less Fx3.1b1pre
-    eval("gBrowser.onDrop = " +
-        gBrowser.onDrop.toString()
-                       .replace(/aXferData\.flavour\.contentType\)\;/,
-                                "aXferData.flavour.contentType);" + ttp2http));
-  //debug(gBrowser.onDrop.toString());
-  }catch(e){}
-if ("_onDrop" in gBrowser)
-  try{ //Fx3.1b1pre //Fx3.6a1pre
-    eval("gBrowser._onDrop = " +
-        gBrowser._onDrop.toString()
-                .replace(
-                  'url = transferUtils.retrieveURLFromData(urlData, isURLList ? "text/plain" : dataType);',
-                  "$&" + ttp2http));
-  //debug(gBrowser._onDrop.toString());
-  }catch(e){}
-
-/*
-var func = loadURI.toString();
-func  = func.replace("{","{uri = uri.replace(/^(ttp|tp|h..p)/i,'http');");
-eval("loadURI = " + func);
-*/
-
-var func = contentAreaClick.toString();
-func  = func.replace("wrapper = linkNode;","wrapper = linkNode;wrapper.href = wrapper.href.replace(/^(ttp|tp|h..p)/i,'http');");
-eval("contentAreaClick = " + func);
-
-if(/TMP_contentAreaClick/.test(func)){
-  func  = func.replace('if (target.hasAttribute("onclick") &&','linkNode.href = linkNode.href.replace(/^(ttp|tp|h..p)/i,"http");if (target.hasAttribute("onclick") &&');
-  eval("contentAreaClick = " + func);
+  if ("TreeStyleTabService" in window) {
+    setTimeout(function(){
+      document.getElementById("navigator-toolbox").addEventListener("drop", function(event){
+       var dt = event.dataTransfer;
+       if (!dt.types.contains(["text/plain"]))
+         return;
+       var url = dt.getData(["text/plain"]);
+       if(/^ttps?/.test(url)) {
+        url = url.match(/(.*)[\\n]?/)[1].replace(/^(ttp|tp|h..p)/i,'http');
+        var tab = document.evaluate(
+                    'ancestor-or-self::*[local-name()="tab"]',
+                    event.originalTarget,
+                    null,
+                    XPathResult.FIRST_ORDERED_NODE_TYPE,
+                    null
+                  ).singleNodeValue;
+          if (tab) {
+            // drag to tab
+            gBrowser.treeStyleTab.tabbarDNDObserver.clearDropPosition(true);
+            event.stopPropagation();
+            tab.linkedBrowser.loadURI(url, null, null);
+          } else if (event.target == gBrowser.tabContainer) {
+            // drag to tab container
+            gBrowser.treeStyleTab.tabbarDNDObserver.clearDropPosition(true);
+            event.stopPropagation();
+            gBrowser.addTab(url);
+          }
+        }
+      }, true);
+    }, 1000);
+  }
 }
-
 
 function debug(aMsg){
   const Cc = Components.classes;
