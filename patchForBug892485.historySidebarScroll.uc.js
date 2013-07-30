@@ -6,6 +6,7 @@
 // @include       chrome://browser/content/history/history-panel.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2013/07/30 Fix Working with "bookmarks history panel"
 // @version       2013/07/30 Working with "bookmarks history panel"
 // @version       2013/07/30 Working with any sorting mode if existing searchTerm
 // @version       2013/07/14 Do nothing if currentIndex is 0.
@@ -30,7 +31,11 @@ var patchForBug892485 = {
   },
 
   get serchValue() {
-    return document.getElementById("search-box").value;
+    var id = (location.href == "chrome://browser/content/history/history-panel.xul")
+             ? "search-box" : "PanelHistorysearch-box";
+    if (!document.getElementById(id))
+      return null
+    return document.getElementById(id).value;
   },
   
 
