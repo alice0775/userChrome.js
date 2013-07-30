@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/places/places.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2013/07/29 Fix middle click
 // @version       2013/07/16 Fix sortorder == ascending
 // @version       2013/07/16
 // @note          this workaround fails sometimes :(
@@ -34,6 +35,7 @@ var patchForBug892485LibraryScroll = {
       return;
     
     window.addEventListener('command', this, false);
+    this._BTree.addEventListener('click', this, true);
     this._BTree.addEventListener('dblclick', this, true);
     this._BTree.addEventListener('keypress', this, true);
     window.addEventListener('unload', this, false);
@@ -44,6 +46,7 @@ var patchForBug892485LibraryScroll = {
       return;
 
     window.removeEventListener('command', this, false);
+    this._BTree.removeEventListener('click', this, true);
     this._BTree.removeEventListener('dblclick', this, true);
     this._BTree.removeEventListener('keypress', this, true);
     window.removeEventListener('unload', this, false);
@@ -54,6 +57,10 @@ var patchForBug892485LibraryScroll = {
       case "command":
         if (this.viewType)
           this.onCommand(event);
+        break;
+      case "click":
+        if (this.viewType && event.button == 1)
+          this.onClick(event);
         break;
       case "dblclick":
         if (this.viewType)
