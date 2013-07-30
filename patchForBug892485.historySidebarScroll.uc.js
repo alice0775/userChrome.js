@@ -1,10 +1,13 @@
 // ==UserScript==
 // @name          patchForBug892485.historySidebarScroll.uc.js
 // @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description   Prevent scroll History sidebar to top when a history entry added 
+// @description   Prevent scroll History sidebar to top when a history entry added
+// @include       main
 // @include       chrome://browser/content/history/history-panel.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2013/07/30 Working with "bookmarks history panel"
+// @version       2013/07/30 Working with any sorting mode if existing searchTerm
 // @version       2013/07/14 Do nothing if currentIndex is 0.
 // @version       2013/07/12
 // @note          this workaround fails sometimes :(
@@ -25,6 +28,11 @@ var patchForBug892485 = {
   get viewType() {
     return document.getElementById("viewButton").getAttribute('selectedsort');
   },
+
+  get serchValue() {
+    return document.getElementById("search-box").value;
+  },
+  
 
   init: function(){
     if (!this._BTree)
@@ -49,19 +57,19 @@ var patchForBug892485 = {
   handleEvent: function(event) {
     switch(event.type) {
       case "command":
-        if (this.viewType == "lastvisited")
+        if (this.viewType == "lastvisited" || !!this.serchValue)
           this.onCommand(event);
         break;
       case "click":
-        if (this.viewType == "lastvisited")
+        if (this.viewType == "lastvisited" || !!this.serchValue)
           this.onClick(event);
         break;
       case "keypress":
-        if (this.viewType == "lastvisited")
+        if (this.viewType == "lastvisited" || !!this.serchValue)
           this.onKeypress(event);
         break;
       case "select":
-        if (this.viewType == "lastvisited")
+        if (this.viewType == "lastvisited" || !!this.serchValue)
           this.onSelected(event);
         break;
       case "unload":
