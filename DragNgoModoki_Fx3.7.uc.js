@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2013/08/26 14:00 use FormHistory.update and fixed typo
 // @version        2013/05/30 01:00 text drag fails on http://blog.livedoor.jp/doku1108/archives/52130085.html
 // @version        2013/05/02 01:00 Bug 789546
 // @version        2013/04/22 14:00 typo, "use strict" mode
@@ -339,7 +340,7 @@ var DragNGo = {
     }
     // 検索履歴に残す
     if (addHistoryEntry)
-      this.searchbardispatchEvent(text);
+      this.searchBardispatchEvent(text);
     return true;
   },
 
@@ -365,11 +366,24 @@ var DragNGo = {
 
     var event = document.createEvent("UIEvents");
     event.initUIEvent("input", true, true, window, 0);
+    var searchbar = this.searchbar;
     searchbar.dispatchEvent(event);
-    if (searchText) {
-      searchbar._textbox._formHistSvc
-        .addEntry(searchbar._textbox.getAttribute("autocompletesearchparam"),
-                  searchText);
+    if (typeof searchbar.FormHistory == "object") {
+      if (searchText && !PrivateBrowsingUtils.isWindowPrivate(window)) {
+        searchbar.FormHistory.update(
+          { op : "bump",
+            fieldname : searchbar._textbox.getAttribute("autocompletesearchparam"),
+            value : searchText },
+          { handleError : function(aError) {
+              Components.utils.reportError("Saving search to form history failed: " + aError.message);
+          }});
+      }
+    } else {
+      if (searchText) {
+        searchbar._textbox._formHistSvc
+          .addEntry(searchbar._textbox.getAttribute("autocompletesearchparam"),
+                    searchText);
+      }
     }
   },
 
