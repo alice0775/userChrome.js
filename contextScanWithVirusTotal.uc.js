@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 23
 // @author         Alice0775
+// @version        2013/09/03 open child tab if tree style tab installed
 // @version        2012/01/07
 // @Note
 // ==/UserScript==
@@ -97,6 +98,8 @@ var scanWithVirusTotal = {
 
   scan: function() {
     let url = "https://www.virustotal.com/url/submission/?force=1&url=" + escape(this.linkURL);
+    if ("TreeStyleTabService" in window)
+      TreeStyleTabService.readyToOpenChildTab(gBrowser.selectedTab, false);
     openUILinkIn(url, 'tab');
   }
 }
