@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.38mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.40mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod, remove REPLACEDOCUMENTOVERLAY
 // Date 2012/04/19 23:00 starUIをbindを使うように
 // Date 2012/04/19 21:00 starUI元に戻した
 // Date 2012/02/04 00:00 due to bug 726444 Implement the Downloads Panel.
@@ -47,13 +48,13 @@
 // Date 2008/07/13 22:00 サイドバーweb-panelsにchromeウインドウを読み込んだ場合に対応
 // Date 2008/03/23 12:00 80氏のフォルダ規則に対応, 0.8modバージョンにも対応
 //
+
 (function(){
   // -- config --
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
   const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
-  const REPLACEDOCUMENTOVERLAY   = true;  //document.overlayを 置き換える[true], 置き換えないfalse
   const REPLACECACHE = false; //スクリプトの更新日付によりキャッシュを更新する: true , しない:[false]
   //=====================USE_0_63_FOLDER = falseの時===================
   var UCJS      = new Array("UCJSFiles","userContent","userMenu"); //UCJS Loader 仕様を適用 (NoScriptでfile:///を許可しておく)
@@ -100,17 +101,16 @@
     FORCESORTSCRIPT: FORCESORTSCRIPT,
     ALWAYSEXECUTE: ALWAYSEXECUTE,
     AUTOREMOVEBOM: AUTOREMOVEBOM,
-    REPLACEDOCUMENTOVERLAY: REPLACEDOCUMENTOVERLAY,
     INFO: INFO,
     BROWSERCHROME: BROWSERCHROME,
     EXCLUDE_CHROMEHIDDEN: EXCLUDE_CHROMEHIDDEN,
     REPLACECACHE: REPLACECACHE,
     get hackVersion () {
       delete this.hackVersion;
+      return this.hackVersion = "0.8";
       //拡張のバージョン違いを吸収
       this.baseUrl = /^(chrome:\/\/\S+\/content\/)\S+/i.test( Error().fileName).$1;
       if (!/^(chrome:\/\/\S+\/content\/)\S+/i.test( Error().fileName) ){
-        return this.hackVersion = "0.8";
       } else if (Error().fileName.indexOf("chrome://uc_js/content/uc_js.xul") > -1 ||
            "chrome://userchrome_js_cache/content/userChrome.js" == Error().fileName ){  //0.8.0+ or 0.7
         return this.hackVersion = "0.8+";
@@ -480,15 +480,9 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
             return this
           }
         };
-        try{
-          var original_loadOverlay = Components.lookupMethod(doc, 'loadOverlay');
-        } catch(ex){
-          window.userChrome_js.error(url, ex);
-        }
         //if (this.INFO) this.debug("document.loadOverlay: " + url);
         try{
-          if ( typeof original_loadOverlay == "function")
-            original_loadOverlay(url, observer);
+          doc.loadOverlay(url, observer);
         } catch(ex){
           window.userChrome_js.error(url, ex);
         }
@@ -710,8 +704,6 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
 
   //Bug 330458 Cannot dynamically load an overlay using document.loadOverlay
   //until a previous overlay is completely loaded
-  if (that.REPLACEDOCUMENTOVERLAY)
-    doc.loadOverlay = that.loadOverlay;
 
   if (that.INFO) that.debug("load " + href);
 
@@ -735,7 +727,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
         // xxxx bug 726440
         StarUI._overlayLoading = true;
-        document.loadOverlay(
+        that.loadOverlay(
           "chrome://browser/content/places/editBookmarkOverlay.xul",
           (function (aSubject, aTopic, aData) {
             //XXX We just caused localstore.rdf to be re-applied (bug 640158)
