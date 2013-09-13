@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5, 3.6
 // @author         Alice0775
+// @version        2013/09/13 20:00 Bug 738818
 // @version        2013/01/19 20:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2011/11/10 12:30 defolt change R: shift, M:Tab Clipboard
 // @version        2011/03/11 10:30 Bug641090
@@ -786,9 +787,14 @@
     },
 
     engineRevert: function(aEvent){
-      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
-      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
-      searchService.currentEngine = searchService.defaultEngine;
+      let defaultPrefB = Services.prefs.getDefaultBranch("browser.search.");
+      let nsIPLS = Components.interfaces.nsIPrefLocalizedString;
+      let defaultEngine =Services.search.defaultEngine;
+      try {
+        defaultEngineName = defaultPrefB.getComplexValue("defaultenginename", nsIPLS).data;
+        defaultEngine = Services.search.getEngineByName(defaultEngineName);
+      } catch (ex) {}
+      setTimeout(function(){Services.search.currentEngine = defaultEngine;},100);
       return false;
     }
   };
