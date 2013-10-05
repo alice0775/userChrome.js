@@ -11,6 +11,7 @@
 // @compatibility  Firefox 2.0 3.0 3.1
 // @author         Alice0775
 // @Note           quickProxyModoki3.0.uc.xulも合わせてどうぞ
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2009/09/06 00:00 httpsも設定するかどうか USE_PROXY_SSL
 // ==/UserScript==
 // @version        2009/03/16 00:00 初期化時チェック
@@ -110,7 +111,7 @@
 
     _getselection: function() {
         var targetWindow = this._getFocusedWindow();
-        var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+        var sel = targetWindow.getSelection();
         // for textfields
         if (sel && !sel.toString()) {
           var node = document.commandDispatcher.focusedElement;

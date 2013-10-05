@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/08/26 14:00 use FormHistory.update and fixed typo
 // @version        2013/05/30 01:00 text drag fails on http://blog.livedoor.jp/doku1108/archives/52130085.html
 // @version        2013/05/02 01:00 Bug 789546
@@ -246,7 +247,7 @@ var DragNGo = {
   //選択文字列を得る
   get selection() {
     var targetWindow = this.focusedWindow;
-    var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+    var sel = targetWindow.getSelection();
     if (sel && !sel.toString()) {
       var node = document.commandDispatcher.focusedElement;
       if (node &&
@@ -1005,7 +1006,7 @@ var DragNGo = {
   },
 
   isParentEditableNode: function isParentEditableNode(node){
-    //if (Components.lookupMethod(node.ownerDocument, 'designMode').call(node.ownerDocument) == 'on')
+    //if (node.ownerDocument.designMode == 'on')
     //  return node;
     while (node) {
       try {
@@ -1328,7 +1329,7 @@ var DragNGo = {
     }
 
     //designModeなら何もしない
-    if (target.ownerDocument instanceof HTMLDocument && Components.lookupMethod(target.ownerDocument, 'designMode').call(target.ownerDocument) == 'on') {
+    if (target.ownerDocument instanceof HTMLDocument && target.ownerDocument.designMode == 'on') {
       self.setStatusMessage('', 0, false);
       return;
     }

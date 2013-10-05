@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5, 3.6
 // @author         Alice0775
+// @version        2013/09/13 21:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/09/13 20:00 Bug 738818
 // @version        2013/01/19 20:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2011/11/10 12:30 defolt change R: shift, M:Tab Clipboard
@@ -313,7 +314,7 @@
 
     _getselection: function() {  //選択されている文字列を得る
         var targetWindow = this._getFocusedWindow();
-        var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+        var sel = targetWindow.getSelection();
         // for textfields
         if (sel && !sel.toString()) {
           var node = document.commandDispatcher.focusedElement;

@@ -8,7 +8,8 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
-// @version        LastMod 2008/04/24 Fx3 en-US版ページズームに対応
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
+// @version        2008/04/24 Fx3 en-US版ページズームに対応
 // @Note           alt+C コンテンツエリアをフォーカス
 // @Note           alt+shift+M SidebarMixを トグル, alt+shift+ZXCASDでタブ選択
 // @Note           1から0 タブ選択(FAYT をoff, XUL/Migemo自動起動OFFの時)
@@ -49,7 +50,7 @@ function key_keywordSearch(key){
 
   function getselection() {  //選択されている文字列を得る
     var targetWindow = getFocusedWindow();
-    var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+    var sel = targetWindow.getSelection();
     // for textfields
     if (sel && !sel.toString()) {
       var node = document.commandDispatcher.focusedElement;

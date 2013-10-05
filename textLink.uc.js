@@ -11,6 +11,7 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/05/15 06:00 should open like http://graphs.mozilla.org/graph.html#tests=[[205,63,8]]&sel=none&displayrange=90&datatype=running
 // @version        2013/03/28 06:00 should not react by dblclick on yyy ,like <a href="http://xxx.xxx/?xxx">http://xxx.xxx/?xxx</a><br>yyy
 // @version        2013/01/18 23:00 Bug 795065 Add privacy status to nsDownload
@@ -107,7 +108,7 @@ function ucjs_textlink(event){
      && doc.contentType != 'application/xhtml+xml') return;
 
   //designModeなら何もしない
-  if (Components.lookupMethod(doc, 'designMode').call(doc) == 'on') return;
+  if (doc.designMode == 'on') return;
 
   var win = doc.defaultView;
   if(!win)return;
@@ -416,7 +417,7 @@ debug(url);
   }
 
   function isParentEditableNode(node){
-    //if (Components.lookupMethod(node.ownerDocument, 'designMode').call(node.ownerDocument) == 'on')
+    //if (node.ownerDocument.designMode == 'on')
     //  return node;
     while (node && node.parentNode) {
       try {

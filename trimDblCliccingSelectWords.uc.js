@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    テキストをダブル(トリプル)クリックで選択したとき, 最後の半角スペースを取り除く
 // @include        main
-// @compatibility  Firefox 3.0 3.1 3.2
+// @compatibility  Firefox 10
 // @author         Alice0775
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
+// @version        2013/03/06 18:00
 // @version        2008/12/31 18:00
 // @Note           layout.word_select.eat_space_to_next_word が false の時のみ実行
 // ==/UserScript==
@@ -50,7 +52,7 @@ var trimDblCliccingSelectWords = {
   _getFocusedWindow: function () {
       var focusedWindow = document.commandDispatcher.focusedWindow;
       if (!focusedWindow || focusedWindow == window) {
-        return window.content;
+        return window;
       } else {
         return focusedWindow;
       }
@@ -59,7 +61,7 @@ var trimDblCliccingSelectWords = {
   //選択されている文字列を得る
   _getselection: function (notrim) {
     var targetWindow = this._getFocusedWindow();
-    var sel = Components.lookupMethod(targetWindow, "getSelection").call(targetWindow);
+    var sel = targetWindow.getSelection();
     if (sel && !sel.toString()) {
       var node = document.commandDispatcher.focusedElement;
       if (node &&

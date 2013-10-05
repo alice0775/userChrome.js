@@ -4,6 +4,7 @@
 // @include        main
 // @description    alt+選択でテーブルでも複数の文字列を選択できるようにする。 既知の不具合:ちらつく
 // @author         Alice0775
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2009/06/05 18:00 デザインモードなときは無視
 // @version        2008/07/23 18:00
 // @note           selectLinkTextWithAltKey.uc.jsもあると尚良い
@@ -48,7 +49,7 @@ var multiSelection = {
           return;
 
         //designModeなら何もしない
-        if (Components.lookupMethod(doc, 'designMode').call(doc) == 'on')
+        if (doc.designMode == 'on')
           return;
 
         if (this.getPref(this.kCARET, 'bool', false))
@@ -79,7 +80,7 @@ var multiSelection = {
 
     var doc, selectionRange, flg, selRange, selCon;
     var targetWindow = this.getFocusedWindow();
-    var selection = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+    var selection = targetWindow.getSelection();
     for (var i = 0; i < selection.rangeCount; i++){
       selectionRange = selection.getRangeAt(i);
       flg = false;

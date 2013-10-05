@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0b9pre
 // @author         Alice0775
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
 // @version        2010/12/23 19:00 label, description 上は無視
@@ -98,7 +99,7 @@ var dragMoveTabModalDialog = {
 
   isParentEditableNode : function(node){
     try {
-      if (Components.lookupMethod(node.ownerDocument, 'designMode').call(node.ownerDocument) == 'on')
+      if (node.ownerDocument.designMode == 'on')
         return node;
     } catch(e) {}
     while (node && node.parentNode) {

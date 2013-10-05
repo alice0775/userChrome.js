@@ -32,6 +32,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
@@ -119,6 +120,7 @@ var GrabScroll = {
     } else {
       this._window = document.getElementById('content');
     }
+    this._window.setCapture();
     this._window.addEventListener("mousedown", this, true);
     this._window.addEventListener("click", this, true);
     this._window.addEventListener("mouseup", this, true);
@@ -623,7 +625,7 @@ var GrabScroll = {
 
   isParentEditableNode : function(node){
     try {
-      if (Components.lookupMethod(node.ownerDocument, 'designMode').call(node.ownerDocument) == 'on')
+      if (node.ownerDocument.designMode == 'on')
         return node;
     } catch(e) {}
     while (node && node.parentNode) {

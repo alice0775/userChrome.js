@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 ,3.0a7pre WinXP
 // @author         Alice0775
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2008/06/25 23:00 onclick属性のアンカーの場合にも対応
 // @Note           altキーを用いてリンクテキストを選択した際に, 保存ダイアログが開くのを抑止する
@@ -51,7 +52,7 @@ var selectLinkTextWithAltKey = {
   },
   __getSelection: function(){
       var targetWindow = this.__getFocusedWindow();
-      var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+      var sel = targetWindow.getSelection();
       return (sel && sel.toString() != '') ? sel : null;
   }
 

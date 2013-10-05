@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2009/05/14 00:00 isempty
 // ==/UserScript==
 // @version        2008/04/21 12:00 文字数を制限した
@@ -44,7 +45,7 @@ var contextAdvancedSearch = {
   //選択文字列を得る
   _getselection: function() {
     var targetWindow = this._getFocusedWindow();
-    var sel = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+    var sel = targetWindow.getSelection();
     if (sel && !sel.toString()) {
       var node = document.commandDispatcher.focusedElement;
       if (node &&
