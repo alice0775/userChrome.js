@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2013/10/31 00:00 Bug 821687  Status panel should be attached to the content area
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/08/26 14:00 use FormHistory.update and fixed typo
 // @version        2013/05/30 01:00 text drag fails on http://blog.livedoor.jp/doku1108/archives/52130085.html
@@ -835,7 +836,7 @@ var DragNGo = {
         status4ever.value = UI.ConvertToUnicode('');
       }, !timeToClear ? 1500 : timeToClear);
     } else {
-      var statusbar = document.getElementById("statusbar-display");
+      var statusbar =  XULBrowserWindow.statusTextField || document.getElementById("statusbar-display");
       try{
         try {msg = UI.ConvertToUnicode(msg)}catch(e){}
         if(msg!=''){

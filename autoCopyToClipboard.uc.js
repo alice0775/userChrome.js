@@ -5,6 +5,7 @@
 // @author         Alice0775
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2008/02/19 18:00
 // @note           Ctrl+Shift+C または about:config の clipboard.autocopy を [false]で無効 true で 有効 トグル
@@ -111,7 +112,7 @@ var autoCopy = {
        && doc.contentType != 'application/xhtml+xml')
       return;
     // designModeなら何もしない
-    if (Components.lookupMethod(doc, 'designMode').call(doc) == 'on')
+    if (doc.designMode == 'on')
       return;
     // textarea等編集可能要素なら何もしない
     if (this.isParentEditableNode(aEvent.target))
