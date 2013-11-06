@@ -3,7 +3,8 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    tabLock
 // @include        *
-// @compatibility  17+
+// @compatibility  17-25
+// @version        2013/11/06 10:20 Bug 846635 - Use asynchronous getCharsetForURI in getShortcutOrURI in Firefox25 and later
 // @version        2013/04/06 09:00 Bug 748740
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
@@ -364,7 +365,7 @@ patch: {
                 return true; \
             } \
             let postData = {}; \
-            let url = getShortcutOrURI(href, postData); \
+            let url = tabLock.getShortcutOrURI(href, postData); \
             if (!url) { \
                 return true; \
             } \
@@ -498,6 +499,31 @@ patch: {
       // このコードを実行しているアプリケーションの名前を取得する
       var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
       return ver;
+    },
+
+     //acync to sync
+    getShortcutOrURI : function getShortcutOrURI(aURI) {
+      // Firefox 24 and older
+      if ("getShortcutOrURI" in window)
+        return getShortcutOrURI(aURI);
+
+      // Firefox 25 and later
+      var getShortcutOrURIAndPostData = window.getShortcutOrURIAndPostData;
+      var done = false;
+      Task.spawn(function() {
+        var data = yield getShortcutOrURIAndPostData(aURI);
+        aURI = data.url;
+        done = true;
+      });
+
+      // this should be rewritten in asynchronous style...
+      var thread = Cc['@mozilla.org/thread-manager;1'].getService().mainThread;
+      while (!done)
+      {
+        thread.processNextEvent(true);
+      }
+
+      return aURI;
     },
 
     //TAB D&D
