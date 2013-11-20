@@ -1,0 +1,142 @@
+<?xml version="1.0"?>
+
+<overlay id="popupTranslate"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         >
+<!--
+// ==UserScript==
+// @name           clearFormHistory
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    Clear Form History
+// @include        main
+// @include        chrome://messenger/content/messageWindow.xul
+// @compatibility  Firefox 17-
+// @author         Alice0775
+// @version        2013/11/19 14:00 input element without type
+// @version        2011/08/06 16:00 idも
+// @version        2011/06/22 01:00
+// ==/UserScript==
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+    var clearFormHistory = {
+      param: null,
+
+      get menuitem() {
+        delete this.menuitem;
+        return this.menuitem = document.getElementById("contextClearFormHistory");
+      },
+
+      get keywordSearchMenu() {
+        delete this.keywordSearchMenu;
+        return this.keywordSearchMenu = document.getElementById("context-keywordfield");
+      },
+
+      get formHistSvc() {
+        delete this.formHistSvc;
+        return this.formHistSvc = Components.classes["@mozilla.org/satchel/form-history;1"]
+                                  .getService(Components.interfaces.nsIFormHistory2);
+      },
+
+      FormHistory: null,
+
+      init: function() {
+        try {
+          XPCOMUtils.defineLazyModuleGetter(this, "FormHistory",
+                                        "resource://gre/modules/FormHistory.jsm");
+        } catch(e) {}
+        window.addEventListener("unload", this, false);
+        document.getElementById("contentAreaContextMenu").addEventListener("popupshowing", this, false);
+      },
+
+      uninit: function() {
+        window.removeEventListener("unload", this, false);
+        document.getElementById("contentAreaContextMenu").removeEventListener("popupshowing", this, false);
+      },
+
+      handleEvent: function(event) {
+        switch(event.type) {
+          case "unload":
+            this.uninit();
+            break;
+          case "popupshowing":
+            this.onpopupshowing(event);
+            break;
+        }
+      },
+
+      onpopupshowing: function(event) {
+        this.menuitem.setAttribute("hidden", true);
+        var inputField = document.commandDispatcher.focusedElement;
+        if (inputField &&
+           /^input$/i.test(inputField.nodeName) &&
+           (/^(text|search)$/i.test(inputField.type) || !inputField.type) )  {
+          this.param = inputField.name || inputField.id;
+          //var controller = document.commandDispatcher.getControllerForCommand("cmd_paste");
+          var enabled = gContextMenu.onTextInput;//controller.isCommandEnabled("cmd_paste");
+
+          enabled = enabled && this.param && this.isFormHistoryExists(this.param);
+
+          if (enabled)
+            this.menuitem.removeAttribute("hidden");
+            var label_temp = this.menuitem.getAttribute("label_temp");
+            this.menuitem.setAttribute("label", label_temp.replace("%s", this.param));
+        }
+      },
+
+      isFormHistoryExists: function(param) {
+        if (!param)
+          return;
+        if (this.FormHistory) {
+          var count = 0;
+          var done = false;
+          this.FormHistory.count({ fieldname: param },
+                                 { handleResult: function(result) { count = result; },
+                                   handleError: function(error) { throw error; },
+                                   handleCompletion: function(reason) {
+                                     done = true;
+                                   }
+                                 });
+            // this should be rewritten in asynchronous style...
+          var thread = Cc['@mozilla.org/thread-manager;1'].getService().mainThread;
+          while (!done)
+          {
+            thread.processNextEvent(true);
+          }
+          return count != 0;
+        } else if (this.formHistSvc) {
+          return this.formHistSvc.nameExists(param);
+        }
+      },
+
+      doClearFormHistory: function() {
+        if (!this.param)
+          return;
+        if (this.FormHistory) {
+          this.FormHistory.update(
+          { op : "remove",
+            fieldname : this.param
+          }, null);
+        } else if (this.formHistSvc) {
+          this.formHistSvc.removeEntriesForName(this.param);
+        }
+      }
+    }
+    clearFormHistory.init();
+  ]]></script>
+  <commandset id="mainCommandSet">
+    <command id="cmd_clearFormHistory"
+             oncommand="clearFormHistory.doClearFormHistory();" />
+  </commandset>
+  <popupset id="mainPopupSet">
+    <popup id="contentAreaContextMenu">
+      <menuitem id="contextClearFormHistory"
+                command="cmd_clearFormHistory"
+                label_temp="Clear Form History(%s)"
+                label="Clear Form History "
+                accesskey="H" 
+                hidden="true"
+                insertbefore="context-keywordfield" />
+    </popup>
+  </popupset>
+</overlay>
