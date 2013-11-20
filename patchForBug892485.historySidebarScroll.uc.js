@@ -6,6 +6,7 @@
 // @include       chrome://browser/content/history/history-panel.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2013/11/20 Fix selected index is 0 if scroll = 0
 // @version       2013/07/30 Fix Working with "bookmarks history panel"
 // @version       2013/07/30 Working with "bookmarks history panel"
 // @version       2013/07/30 Working with any sorting mode if existing searchTerm
@@ -98,9 +99,9 @@ var patchForBug892485 = {
     //top.userChrome_js.debug("after " + this.lastCurrentIndex);
     if (this._BTree.treeBoxObject.view.rowCount >= pos) {
       let index = this.lastCurrentIndex
-      if (index == 0 )
-        return;
-      this.viewbox.scrollToRow(pos);
+      if (index != 0 ) {
+        this.viewbox.scrollToRow(pos);
+      }
       this._BTree.treeBoxObject.view.selection.select(index);
     }
   },
@@ -153,7 +154,7 @@ var patchForBug892485 = {
       // Clear all other selection since we're loading a link now. We must
       // do this *before* attempting to load the link since openURL uses
       // selection as an indication of which link to load.
-      if (this.getScrollPosition() == 0 || this.getCurrentIndex() == 0)
+      if (this.getScrollPosition() == 0 && this.getCurrentIndex() == 0)
         return;
       this.lastScrollPosition = this.getScrollPosition();
       this.lastCurrentIndex = this.getCurrentIndex();
