@@ -1,17 +1,13 @@
 // ==UserScript==
-// @name           ucjs_clearfield
+// @name           ucjs_clearfield_Fx25.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    テキストエリア等,Findbar, Serachbarコンテキストメニューにクリアを追加
 // @include        main
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
-// @compatibility  Firefox 17,24
+// @compatibility  Firefox 25
 // @author         Alice0775
-// @version        2013/11/21 12:00 viewSource viewPartialSource
-// @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
-// @version        LastMod 2011/10/02 18:00 autocomlete ポップアップには無視するように
-// @version        LastMod 2011/08/29 13:00
-// @version        LastMod 2008/05/17 20:00
+// @version        2013/11/16 12:30 Firefox25
 // @Note
 // ==/UserScript==
 
@@ -55,23 +51,34 @@ var ucjs_clearfield = {
 
 //////////////////////////////XUL elemnts
   initxul: function(){
-    //urlbar,findbar,searchbarコンテキストメニューポップアップイベント追加
+    //urlbar, searchbar
     ucjs_clearfield.addxultarget("urlbar");
+    ucjs_clearfield.addxultarget("searchbar");
 
+    //findbar
     if ('historyFindbar' in window) {
       setTimeout(function() {
         ucjs_clearfield.addxultarget("find-field2");
       }, 2000);
     }
 
-    if('gFindBar' in window && 'onFindAgainCommand' in gFindBar ){ // Fx3
-      document.getAnonymousElementByAttribute(gFindBar, "anonid", "findbar-textbox").id = "findbar-textbox";
-      ucjs_clearfield.addxultarget("findbar-textbox");
-    }else if(typeof gFindBar == "object") { //Bon Echo 2.0a3
-      ucjs_clearfield.addxultarget("find-field");
+    //fx25 for existing findbar
+    let findBars = document.querySelectorAll("findbar");
+    if (findBars.length > 0) {
+      Array.forEach(findBars, function (aFindBar) {
+        ucjs_clearfield.addxultarget(aFindBar._findField);
+      });
+    } else if ("gBrowser" in window && "getFindBar" in gBrowser) {
+      if (gBrowser.selectedTab._findBar)
+        ucjs_clearfield.addxultarget(gBrowser.selectedTab._findBar._findField);
+    }
+    //fx25 for newly created findbar
+    if ("gBrowser" in window && "getFindBar" in gBrowser) {
+      gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
+        ucjs_clearfield.addxultarget(event.target._findBar._findField);
+      });
     }
 
-    ucjs_clearfield.addxultarget("searchbar");
   },
 
   //targetにコンテキストメニューポップアップ追加
@@ -79,26 +86,28 @@ var ucjs_clearfield = {
     var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
       createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
     UI.charset = "UTF-8";
-    if(!document.getElementById(target)) return;
-    document.getElementById(target).addEventListener("popupshowing", function(event){
+    target = (typeof target == "string" ? document.getElementById(target) : target);
+    if(!target) return;
+      target.addEventListener("popupshowing", function(event) {
         if (/autocomplete-result-popupset/.test(event.originalTarget.classNmae))
           return;
-        if(document.getElementById(target).value == "")
+        if (event.target.value == "")
           var cannotCut = "true";
         else
           var cannotCut = "false";
-        var menuitem = document.getElementById("ucjs_clearfield_" + target);
+        var menupopup = event.originalTarget;
+        var menuitem = menupopup.querySelector(".ucjs_clearfield");;
         if (!menuitem) {
-            menuitem = document.createElement("menuitem");
-            menuitem.id = "ucjs_clearfield_" + target;
-            var l = "クリア";
-            try {l = UI.ConvertToUnicode(l)} catch(e){}
-            menuitem.setAttribute("label", l);
-            menuitem.setAttribute("accesskey", "X");
-            menuitem.setAttribute("oncommand", "document.getElementById(\""+target+"\").value = '';");
-            var menupopup = event.originalTarget;
-            var refChild = menupopup.getElementsByAttribute("cmd", "cmd_cut")[0];
-            menupopup.insertBefore(menuitem, refChild);
+          menuitem = document.createElement("menuitem");
+          menuitem.target = event.target
+          var l = "クリア";
+          try {l = UI.ConvertToUnicode(l)} catch(e){}
+          menuitem.setAttribute("label", l);
+          menuitem.setAttribute("accesskey", "X");
+          menuitem.setAttribute("oncommand", "this.target.value = '';");
+          menuitem.classList.add("ucjs_clearfield");
+          var refChild = menupopup.getElementsByAttribute("cmd", "cmd_cut")[0];
+          menupopup.insertBefore(menuitem, refChild);
         }
         menuitem.setAttribute("disabled", cannotCut);
     }, false);
@@ -108,18 +117,10 @@ var ucjs_clearfield = {
 
 ucjs_clearfield.init();
 ucjs_clearfield.initxul();
+
 (function(){
-  function getVer(){
-    const Cc = Components.classes;
-    const Ci = Components.interfaces;
-    var info = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
-    var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
-    return ver;
-  }
-  //if(getVer()<3){
-    window.addEventListener("aftercustomization",  function(e) {
-        ucjs_clearfield.addxultarget("urlbar");
-        ucjs_clearfield.addxultarget("searchbar");
-    }, false);
-  //}
+  window.addEventListener("aftercustomization",  function(e) {
+      ucjs_clearfield.addxultarget("urlbar");
+      ucjs_clearfield.addxultarget("searchbar");
+  }, false);
 })();
