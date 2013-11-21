@@ -3,6 +3,7 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @include        main
 // @author         Alice0775
+// @version        2013/11/22 02:00 Abort "can't access dead object" error
 // @version        2013/01/08 02:00 Bug 827546
 // ==/UserScript==
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
@@ -97,14 +98,19 @@ var autoCopy = {
   keyup: function(aEvent) {
     if (this.timer)
       clearTimeout(this.timer);
-    this.timer = setTimeout(function(aEvent, self){
+    this.timer = setTimeout(function(aEvent, self) {
       self.copyToClipboard(aEvent);
     }, this.YOURKEYINSPEED, aEvent, this);
   },
 
   copyToClipboard: function(aEvent) {
   //ドキュメントとコンテントタイプ
-    var doc = aEvent.target.ownerDocument;
+    try {
+      var doc = aEvent.target.ownerDocument;
+    } catch(e) {
+      // "can't access dead object" error
+      return;
+    }
     if(!doc
        || doc.contentType != 'text/plain'
        && doc.contentType != 'text/html'
