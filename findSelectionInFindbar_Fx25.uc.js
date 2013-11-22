@@ -7,7 +7,8 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
-// @version        2013/05/11 12:00  Bug537013, Bug 893349
+// @version        2013/11/22 19:00 historyFindbar
+// @version        2013/05/11 12:00 Bug537013, Bug 893349
 // @version        2013/03/28 11:00 Improved to work properly without addHistoryFindbarFx3.0.uc.js
 // @version        2013/02/09 19:30 null check
 // @version        2012/05/01 21:30 delete this.xxx;
@@ -21,10 +22,13 @@ var findSelectionInFindbar = {
   },
 
   init: function() {
-    if (this._findField2)
-      this._findField2.addEventListener("DOMMouseScroll", this, false);
+    setTimeout(function(){
+      if (this._findField2) {
+        this._findField2.addEventListener("DOMMouseScroll", this, false);
+      }
+    }.bind(this), 2000);
 
-    //fx25 for existing findbar
+    //fx25 for  existing findbar
     let findBars = document.querySelectorAll("findbar");
     if (findBars.length > 0) {
       Array.forEach(findBars, function (aFindBar) {

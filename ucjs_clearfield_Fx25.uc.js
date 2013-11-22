@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2013/11/22 18:30 historyFindbar
 // @version        2013/11/16 12:30 Firefox25
 // @Note
 // ==/UserScript==
@@ -82,11 +83,11 @@ var ucjs_clearfield = {
   },
 
   //targetにコンテキストメニューポップアップ追加
-  addxultarget: function(target){
+  addxultarget: function(element){
     var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
       createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
     UI.charset = "UTF-8";
-    target = (typeof target == "string" ? document.getElementById(target) : target);
+    var target = (typeof element == "string" ? document.getElementById(element) : element);
     if(!target) return;
       target.addEventListener("popupshowing", function(event) {
         if (/autocomplete-result-popupset/.test(event.originalTarget.classNmae))
@@ -104,7 +105,10 @@ var ucjs_clearfield = {
           try {l = UI.ConvertToUnicode(l)} catch(e){}
           menuitem.setAttribute("label", l);
           menuitem.setAttribute("accesskey", "X");
-          menuitem.setAttribute("oncommand", "this.target.value = '';");
+          if (element == "find-field2")
+            menuitem.setAttribute("oncommand", "this.target.value = '';ucjs_clearfield.dispatchInputEvent(this.target);");
+          else
+            menuitem.setAttribute("oncommand", "this.target.value = '';");
           menuitem.classList.add("ucjs_clearfield");
           var refChild = menupopup.getElementsByAttribute("cmd", "cmd_cut")[0];
           menupopup.insertBefore(menuitem, refChild);
@@ -112,6 +116,12 @@ var ucjs_clearfield = {
         menuitem.setAttribute("disabled", cannotCut);
     }, false);
 
+  },
+
+  dispatchInputEvent: function(target) {
+      var evt = document.createEvent("UIEvents");
+      evt.initUIEvent("input", true, false, window, 0);
+      target.dispatchEvent(evt);
   }
 }
 
