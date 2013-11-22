@@ -5,6 +5,7 @@
 // @include main
 // @compatibility Firefox 26
 // @version 1.0
+// @date 2013-11-26 21:00 null check
 // @date 2013-04-06 22:00
 // @description Display Download Progress In Library
 // ==/UserScript==
@@ -57,6 +58,8 @@ var downloadProgressInCaption = {
 
   xonDownloadChanged: function (aDownload) {
     this.numDls = 0;
+    if (!this._list)
+      return;
     this._list.getAll().then(downloads => {
     for (let download of downloads) {
       if (download.hasProgress && !download.succeeded)
@@ -66,7 +69,8 @@ var downloadProgressInCaption = {
   },
 
   onSummaryChanged: function () {
-
+    if (!this._summary)
+      return;
     if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
       document.title = document.title.replace(/^\d+% of \d+ files? - /,"");
     } else {

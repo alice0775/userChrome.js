@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2013/11/22 21:00 XUL/migemo
 // @version        2013/11/22 17:30 Fix input and click caret position etc..
 // @version        2013/11/16 12:30 Firefox25
 // ==/UserScript==
@@ -306,6 +307,7 @@ var historyFindbar = {
           this.addToHistory(gFindBar._findField.value);
         }
         break;
+      case 'XMigemoFindBarClose':
       case 'findclose':
           // stop observing
           if (gFindBar.historyfindbarObserver)
