@@ -8,8 +8,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Auto context menu on selection
 // @include        main
-// @compatibility  Firefox 2.0 3.0 3.5 3.6 3.7a3pre
+// @compatibility  Firefox 17+
 // @author         Alice0775
+// @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2011/10/04 22:00 Mouse Gesture Redox があるとHTML5 contextmenuが動かないのを修正
 // @version        2010/03/10 09:00 Mouse Gesture Redox があると動かないのを修正
 // @version        2009/07/21 00:00 mousedownタイミング修正
@@ -163,13 +164,14 @@
         if (event.type === "mousedown")
           return;
 
-        var selection = document.commandDispatcher.focusedWindow.getSelection();
+        var selectedString = this.getSelectedString();
         var flg = (new Date().getTime() - this.timer > this.kTIMER);
         if ( Math.abs(this.lastX - event.screenX) + Math.abs(this.lastY - event.screenY) > this.kTOLERANCE)
           var flg = false
-        if (!flg && selection.toString() == "")
+        if (!flg && selectedString == "")
           return;
 
+        var selection = document.commandDispatcher.focusedWindow.getSelection();
         /*
         if (event.type == "mousedown")
           if ((selection.rangeCount > 0) && !selection.getRangeAt(0).collapsed)
@@ -179,7 +181,7 @@
         var link = this.isParentClickableNode(event.target);
         var within = link ? this.isSelectedIn(link) : false;
         var context = false;
-        if (!link && selection.isCollapsed && flg)
+        if (selection || flg)
           context = true;
         else if (link && !within && flg)
           context = true;
@@ -224,10 +226,30 @@
         return win;
       },
 
+      getSelectedString: function() {  //選択されている文字列を得る
+          var targetWindow = this.focusedWindow;
+          var sel = targetWindow.getSelection();
+          // for textfields
+          if (sel && !sel.toString()) {
+            var node = document.commandDispatcher.focusedElement;
+            if (node &&
+                ((typeof node.mozIsTextField == 'function' &&  node.mozIsTextField(true)) ||
+                 node.type == "search" ||
+                 node.type == "text" || node.type == "textarea") &&
+                'selectionStart' in node &&
+                node.selectionStart != node.selectionEnd) {
+                var offsetStart = Math.min(node.selectionStart, node.selectionEnd);
+                var offsetEnd   = Math.max(node.selectionStart, node.selectionEnd);
+                return node.value.substr(offsetStart, offsetEnd-offsetStart);
+            }
+          }
+          return sel ? sel.toString().trim() : "";
+      },
+
       //選択範囲の親要素を得る
       getSelectedNodes: function(){
         var targetWindow = this.focusedWindow;
-        var selection = Components.lookupMethod(targetWindow, 'getSelection').call(targetWindow);
+        var selection = targetWindow.getSelection();
         try{
           var selRange = selection.getRangeAt(0);
         }catch(e){
