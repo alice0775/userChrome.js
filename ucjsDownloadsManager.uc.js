@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2013/12/15 18:30 typo and fix closeWhenDone
 // @version        2013/12/15 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
 // @version        2013/12/02 00:00 
 // @note           Require Sub-Script/Overlay Loader v3.0.40mod and 000-windowhook.uc.js
@@ -88,11 +89,13 @@ var openOrHideDownloadWindow_at_startDownload = {
     if (!this._summary)
       return;
     if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
-      var closeWhenDone = fasle;
+      var closeWhenDone = false;
       try {
         showWhenStarting = Services.prefs.getIntPref("browser.download.manager.closeWhenDone");
       } catch(e) {}
-      ucjs_closeDownloadManager();
+      if (closeWhenDone) {
+        ucjs_closeDownloadManager();
+      }
     } else {
       var showWhenStarting = true;
       try {
