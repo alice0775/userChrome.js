@@ -3,14 +3,14 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Donloads Manager
 // @include        main
-// @include        about:downloads
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2013/12/15 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
 // @version        2013/12/02 00:00 
 // @note           Require Sub-Script/Overlay Loader v3.0.40mod and 000-windowhook.uc.js
 // ==/UserScript== 
 (function(){
-  window.ucjs_openDownloadManager = function ucjs_openDownloadManager() {
+  window.ucjs_openDownloadManager = function ucjs_openDownloadManager(aForceFocus) {
 
     var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
                    .getService(Components.interfaces.nsIWindowMediator);
@@ -19,11 +19,26 @@
     while(enumerator.hasMoreElements()) {
       var win = enumerator.getNext();
       if (win.location == "about:downloads") {
-        win.focus();
+        if (aForceFocus)
+          win.focus();
         return;
       }
     }
     window.open("about:downloads","Download", "width=600,height=300,chrome,toolbar=yes,dialog=no,resizable");
+  }
+  window.ucjs_closeDownloadManager = function ucjs_closeDownloadManager() {
+
+    var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                   .getService(Components.interfaces.nsIWindowMediator);
+
+    var enumerator = mediator.getEnumerator(null);
+    while(enumerator.hasMoreElements()) {
+      var win = enumerator.getNext();
+      if (win.location == "about:downloads") {
+        win.close();
+        return;
+      }
+    }
   }
   var overlay = ' \
     <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
@@ -33,12 +48,65 @@
                 insertbefore="menu_openDownloads" \
                 label="Open Download Manager" \
                 accesskey="D" \
-                oncommand="ucjs_openDownloadManager();" /> \
+                oncommand="ucjs_openDownloadManager(true);" /> \
         </menupopup> \
     </overlay>';
   overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
   window.userChrome_js.loadOverlay(overlay, null);
 })();
+
+var openOrHideDownloadWindow_at_startDownload = {
+  _summary: null,
+
+   init: function() {
+    window.addEventListener("unload", this, false);
+    // Ensure that the DownloadSummary object will be created asynchronously.
+    if (!this._summary) {
+      Downloads.getSummary(Downloads.ALL).then(summary => {
+        this._summary = summary;
+        return this._summary.addView(this);
+      }).then(null, Cu.reportError);
+    }
+  },
+
+  uninit: function() {
+    window.removeEventListener("unload", this, false);
+    if (this._summary) {
+      this._summary.removeView(this);
+    }
+  },
+
+  handleEvent: function(event) {
+    switch (event.type) {
+      case "unload":
+        this.uninit();
+        break;
+    }
+  },
+
+  onSummaryChanged: function () {
+    if (!this._summary)
+      return;
+    if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
+      var closeWhenDone = fasle;
+      try {
+        showWhenStarting = Services.prefs.getIntPref("browser.download.manager.closeWhenDone");
+      } catch(e) {}
+      ucjs_closeDownloadManager();
+    } else {
+      var showWhenStarting = true;
+      try {
+        showWhenStarting = Services.prefs.getIntPref("browser.download.manager.showWhenStarting");
+      } catch(e) {}
+      if (showWhenStarting) {
+        ucjs_openDownloadManager(false);
+      }
+    }
+  }
+}
+openOrHideDownloadWindow_at_startDownload.init();
+
+
 
 WindowHook.register("about:downloads",
   function(aWindow) {
