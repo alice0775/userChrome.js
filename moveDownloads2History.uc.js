@@ -5,9 +5,10 @@
 // @include        main
 // @compatibility  Firefox 20
 // @author         Alice0775
+// @version        2013/12/02 00:00 
 // @version        2012/12/31 00:00 
-// ==/UserScript==
 // @version        2012/12/29 00:00 
+// ==/UserScript==
 var moveDownloads2History = {
   get db()
   {
@@ -26,10 +27,13 @@ var moveDownloads2History = {
 
   moveDownloads2History: function(d) {
     var db = this.db;
-    var sql = "UPDATE moz_historyvisits SET visit_type = 1 WHERE visit_type = 7 AND visit_date < :date";
+    var sql = "UPDATE moz_historyvisits SET visit_type = 1 WHERE visit_type = 7";
+    if (d > 0)
+      sql += " AND visit_date <= :date";
     var statement = db.createStatement(sql);
     try {
-      statement.params.date = (new Date()).getTime()*1000 - d*24*3600*1000000;
+      if (d > 0)
+        statement.params.date = (new Date()).getTime()*1000 - d*24*3600*1000000;
       statement.execute();
     } catch(ex){
     } finally {
@@ -50,13 +54,13 @@ var moveDownloads2History = {
     while(enumerator.hasMoreElements()) {
       var win = enumerator.getNext();
       if (win.moveDownloads2History.timer)
-        clearTimeout(win.moveDownloads2History.timer);
+        win.clearTimeout(win.moveDownloads2History.timer);
     }
 
     if (this.timer)
       clearTimeout(this.timer);
     this.timer = setTimeout(function(that){that.delayedInit(MAXDATE);}, 1000, this);
-/*
+
     var overlay = ' \
       <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
                xmlns:html="http://www.w3.org/1999/xhtml"> \
@@ -70,7 +74,6 @@ var moveDownloads2History = {
       </overlay>';
     overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, null);
-*/
   }
 }
 moveDownloads2History.init();

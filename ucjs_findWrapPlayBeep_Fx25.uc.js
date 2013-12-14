@@ -5,8 +5,10 @@
 // @include        main
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
-// @compatibility  Firefox 23.0a1+
+// @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2013/11/28 23:00 XUL/migemo
+// @version        2013/11/28 12:00 Firefox25
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
 // @version        2013/03/28 11:00 Improved to work properly without addHistoryFindbarFx3.0.uc.js
 // @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
@@ -23,14 +25,12 @@ var findWrapPlayBeep = {
         findWrapPlayBeep.patch(aFindBar);
       };
     } else if ("gBrowser" in window && "getFindBar" in gBrowser) {
-      if (gBrowser.selectedTab._findBar)
-        findWrapPlayBeep.patch(gBrowser.selectedTab._findBar);
-    }
-    //fx25 for newly created findbar
-    if ("gBrowser" in window && "getFindBar" in gBrowser) {
-      gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
-        findWrapPlayBeep.patch(event.target._findBar);
-      });
+      if (gBrowser.selectedTab._findBar) {
+        setTimeout(function(){findWrapPlayBeep.patch(gBrowser.selectedTab._findBar);}, 100);
+        gBrowser.tabContainer.addEventListener("TabFindInitialized", function aaa(event){
+          setTimeout(function(event){findWrapPlayBeep.patch(event.target._findBar);}, 100, event);
+        });
+      }
     }
 
     findWrapPlayBeep.patch2();
@@ -38,7 +38,7 @@ var findWrapPlayBeep = {
 
   patch: function(aFindBar) {
     var func = aFindBar._updateStatusUI.toString();
-    func = func.replace(/(?:case this.nsITypeAheadFind.FIND_WRAPPED:)/, '$& findWrapPlayBeep.playBeep();');
+    func = func.replace(/case this\.nsITypeAheadFind\.FIND_WRAPPED:/, '$& findWrapPlayBeep.playBeep();');
     try{
       aFindBar._updateStatusUI = new Function(
          func.match(/\(([^)]*)/)[1],
@@ -52,7 +52,7 @@ var findWrapPlayBeep = {
     if (!('XMigemoUI' in window))
       return;
     var func = XMigemoUI.onXMigemoFindProgress.toString();
-    func = func.replace('{', '$& if (aEvent.resultFlag & XMigemoFind.WRAPPED) findWrapPlayBeep.playBeep();');
+    func = func.replace('{', '$& if (aEvent.detail.resultFlag & XMigemoFind.WRAPPED) findWrapPlayBeep.playBeep();');
     try{
       XMigemoUI.onXMigemoFindProgress = new Function(
          func.match(/\(([^)]*)/)[1],
