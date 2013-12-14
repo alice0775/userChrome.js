@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2013/12/15 19:30 getBoolPref
 // @version        2013/12/15 18:30 typo and fix closeWhenDone
 // @version        2013/12/15 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
 // @version        2013/12/02 00:00 
@@ -86,12 +87,13 @@ var openOrHideDownloadWindow_at_startDownload = {
   },
 
   onSummaryChanged: function () {
+    Cu.import("resource://gre/modules/Services.jsm");
     if (!this._summary)
       return;
     if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
       var closeWhenDone = false;
       try {
-        showWhenStarting = Services.prefs.getIntPref("browser.download.manager.closeWhenDone");
+        showWhenStarting = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
       } catch(e) {}
       if (closeWhenDone) {
         ucjs_closeDownloadManager();
@@ -99,7 +101,7 @@ var openOrHideDownloadWindow_at_startDownload = {
     } else {
       var showWhenStarting = true;
       try {
-        showWhenStarting = Services.prefs.getIntPref("browser.download.manager.showWhenStarting");
+        showWhenStarting = Services.prefs.getBoolPref("browser.download.manager.showWhenStarting");
       } catch(e) {}
       if (showWhenStarting) {
         ucjs_openDownloadManager(false);
