@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2013/12/15 20:10 Search
 // @version        2013/12/15 19:30 getBoolPref
 // @version        2013/12/15 18:30 typo and fix closeWhenDone
 // @version        2013/12/15 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
@@ -196,6 +197,12 @@ WindowHook.register("about:downloads",
     var ref = aWindow.document.getElementById("downloadCommands");
     var box = aWindow.document.createElement("hbox");
     box.appendChild(button);
+    box.appendChild(aWindow.document.createElement("spacer")).setAttribute("flex", 1);
+    var textbox = aWindow.document.createElement("textbox");
+    textbox.setAttribute("clickSelectsAll", true);
+    textbox.setAttribute("type", "search");
+    textbox.setAttribute("oncommand", "ucjs_doSearch(this.value);");
+    box.appendChild(textbox);
     ref.parentNode.insertBefore(box, ref);
 
     aWindow.ucjs_clearDownloads = function ucjs_clearDownloads() {
@@ -245,6 +252,11 @@ WindowHook.register("about:downloads",
       try {
         Cc["@mozilla.org/download-manager;1"].getService(Ci.nsIDownloadManager).cleanUp();
       } catch(ex){}
+    };
+
+    aWindow.ucjs_doSearch = function ucjs_doSearch(filterString) {
+      var richListBox = aWindow.document.getElementById("downloadsRichListBox");
+      richListBox._placesView.searchTerm = filterString;
     };
   }
 );
