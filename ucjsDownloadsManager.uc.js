@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2013/12/16 08:00 label placeholder size
 // @version        2013/12/15 20:10 Search
 // @version        2013/12/15 19:30 getBoolPref
 // @version        2013/12/15 18:30 typo and fix closeWhenDone
@@ -21,13 +22,13 @@
     var enumerator = mediator.getEnumerator(null);
     while(enumerator.hasMoreElements()) {
       var win = enumerator.getNext();
-      if (win.location == "about:downloads") {
+      if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xul") {
         if (aForceFocus)
           win.focus();
         return;
       }
     }
-    window.open("about:downloads","Download", "width=600,height=300,chrome,toolbar=yes,dialog=no,resizable");
+    window.open("chrome://browser/content/downloads/contentAreaDownloadsView.xul","Download", "width=600,height=300,chrome,toolbar=yes,dialog=no,resizable");
   }
   window.ucjs_closeDownloadManager = function ucjs_closeDownloadManager() {
 
@@ -37,7 +38,7 @@
     var enumerator = mediator.getEnumerator(null);
     while(enumerator.hasMoreElements()) {
       var win = enumerator.getNext();
-      if (win.location == "about:downloads") {
+      if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xul") {
         win.close();
         return;
       }
@@ -114,7 +115,7 @@ openOrHideDownloadWindow_at_startDownload.init();
 
 
 
-WindowHook.register("about:downloads",
+WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView.xul",
   function(aWindow) {
     const originalTitle = aWindow.document.title;
 
@@ -123,6 +124,30 @@ WindowHook.register("about:downloads",
       _list: null,
 
        init: function() {
+        Cu.import("resource://gre/modules/Services.jsm");
+        try {
+          var height = Services.prefs.getIntPref("browser.download.manager.size.height");
+          var width = Services.prefs.getIntPref("browser.download.manager.size.width");
+          var screenX = Services.prefs.getIntPref("browser.download.manager.size.screenX");
+          var screenY = Services.prefs.getIntPref("browser.download.manager.size.screenY");
+          aWindow.moveTo(screenX, screenY);
+          aWindow.resizeTo(width, height);
+        } catch(r){}
+        var style = ' \
+          @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+          *|*:root { \
+            padding: 5px 5px 0 5px; \
+          } \
+         '.replace(/\s+/g, " ");
+        var sspi = aWindow.document.createProcessingInstruction(
+          'xml-stylesheet',
+          'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
+        );
+        aWindow.document.insertBefore(sspi, aWindow.document.documentElement);
+        sspi.getAttribute = function(name) {
+          return aWindow.document.documentElement.getAttribute(name);
+        };
+
         aWindow.addEventListener("unload", this, false);
         // Ensure that the DownloadSummary object will be created asynchronously.
         if (!this._summary) {
@@ -141,6 +166,13 @@ WindowHook.register("about:downloads",
       },
 
       uninit: function() {
+        Cu.import("resource://gre/modules/Services.jsm");
+        if (aWindow.document.getElementById("contentAreaDownloadsView").getAttribute("sizemode") == "normal") {
+          Services.prefs.setIntPref("browser.download.manager.size.height", aWindow.outerHeight);
+          Services.prefs.setIntPref("browser.download.manager.size.width", aWindow.outerWidth);
+          Services.prefs.setIntPref("browser.download.manager.size.screenX", aWindow.screenX);
+          Services.prefs.setIntPref("browser.download.manager.size.screenY", aWindow.screenY);
+        }
         aWindow.removeEventListener("unload", this, false);
         if (this._summary) {
           this._summary.removeView(this);
@@ -191,8 +223,8 @@ WindowHook.register("about:downloads",
 
 
     var button = aWindow.document.createElement("button");
-    button.setAttribute("label", "Clear");
-    button.setAttribute("accesskey", "Clear");
+    button.setAttribute("label", "Clear List");
+    button.setAttribute("accesskey", "C");
     button.setAttribute("oncommand", "ucjs_clearDownloads();");
     var ref = aWindow.document.getElementById("downloadCommands");
     var box = aWindow.document.createElement("hbox");
@@ -201,6 +233,7 @@ WindowHook.register("about:downloads",
     var textbox = aWindow.document.createElement("textbox");
     textbox.setAttribute("clickSelectsAll", true);
     textbox.setAttribute("type", "search");
+    textbox.setAttribute("placeholder", "Search...");
     textbox.setAttribute("oncommand", "ucjs_doSearch(this.value);");
     box.appendChild(textbox);
     ref.parentNode.insertBefore(box, ref);
