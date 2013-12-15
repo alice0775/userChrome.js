@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 02:00 defineLazyModuleGetter for Firefox26
 // @version        2013/12/15 22:00 typo and correct version date
 // @version        2013/12/15 08:00 label placeholder size
 // @version        2013/12/14 20:10 Search
@@ -63,7 +64,9 @@
 var openOrHideDownloadWindow_at_startDownload = {
   _summary: null,
 
-   init: function() {
+  init: function() {
+    XPCOMUtils.defineLazyModuleGetter(window, "Downloads",
+              "resource://gre/modules/Downloads.jsm");
     window.addEventListener("unload", this, false);
     // Ensure that the DownloadSummary object will be created asynchronously.
     if (!this._summary) {

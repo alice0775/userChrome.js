@@ -5,6 +5,7 @@
 // @include main
 // @compatibility Firefox 26
 // @version 1.0
+// @version        2013/12/16 02:00 defineLazyModuleGetter for Firefox26
 // @date 2013-11-26 21:00 null check
 // @date 2013-04-06 22:00
 // @description Display Download Progress In Library
@@ -15,6 +16,8 @@ var downloadProgressInCaption = {
   _list: null,
 
    init: function() {
+    XPCOMUtils.defineLazyModuleGetter(window, "Downloads",
+              "resource://gre/modules/Downloads.jsm");
     gBrowser.tabContainer.addEventListener("TabSelect", this, false);
     window.addEventListener("unload", this, false);
     // Ensure that the DownloadSummary object will be created asynchronously.
