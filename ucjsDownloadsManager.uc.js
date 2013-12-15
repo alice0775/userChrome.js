@@ -3,13 +3,14 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Donloads Manager
 // @include        main
-// @compatibility  Firefox 24+
+// @compatibility  Firefox 26+
 // @author         Alice0775
-// @version        2013/12/16 08:00 label placeholder size
-// @version        2013/12/15 20:10 Search
-// @version        2013/12/15 19:30 getBoolPref
-// @version        2013/12/15 18:30 typo and fix closeWhenDone
-// @version        2013/12/15 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
+// @version        2013/12/15 22:00 typo and correct version date
+// @version        2013/12/15 08:00 label placeholder size
+// @version        2013/12/14 20:10 Search
+// @version        2013/12/14 19:30 getBoolPref
+// @version        2013/12/14 18:30 typo and fix closeWhenDone
+// @version        2013/12/14 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
 // @version        2013/12/02 00:00 
 // @note           Require Sub-Script/Overlay Loader v3.0.40mod and 000-windowhook.uc.js
 // ==/UserScript== 
@@ -95,7 +96,7 @@ var openOrHideDownloadWindow_at_startDownload = {
     if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
       var closeWhenDone = false;
       try {
-        showWhenStarting = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
+        closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
       } catch(e) {}
       if (closeWhenDone) {
         ucjs_closeDownloadManager();
