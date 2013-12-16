@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 23:10 open only download added
 // @version        2013/12/16 02:00 defineLazyModuleGetter for Firefox26
 // @version        2013/12/15 22:00 typo and correct version date
 // @version        2013/12/15 08:00 label placeholder size
@@ -15,6 +16,8 @@
 // @version        2013/12/02 00:00 
 // @note           Require Sub-Script/Overlay Loader v3.0.40mod and 000-windowhook.uc.js
 // ==/UserScript== 
+// state 0 inprogress, 1 finished, 2 faild, 3 calceled, 4 paused, 5 queued, 6 blocked parental, 7 scanning
+//       8 dirty, 9 blocked policy
 (function(){
   window.ucjs_openDownloadManager = function ucjs_openDownloadManager(aForceFocus) {
 
@@ -63,6 +66,7 @@
 
 var openOrHideDownloadWindow_at_startDownload = {
   _summary: null,
+  _list: null,
 
   init: function() {
     XPCOMUtils.defineLazyModuleGetter(window, "Downloads",
@@ -75,12 +79,22 @@ var openOrHideDownloadWindow_at_startDownload = {
         return this._summary.addView(this);
       }).then(null, Cu.reportError);
     }
+
+    if (!this._list) {
+      Downloads.getList(Downloads.ALL).then(list => {
+        this._list = list;
+        return this._list.addView(this);
+      }).then(null, Cu.reportError);
+    }
   },
 
   uninit: function() {
     window.removeEventListener("unload", this, false);
     if (this._summary) {
       this._summary.removeView(this);
+    }
+    if (this._list) {
+      this._list.removeView(this);
     }
   },
 
@@ -89,6 +103,27 @@ var openOrHideDownloadWindow_at_startDownload = {
       case "unload":
         this.uninit();
         break;
+    }
+  },
+
+  onDownloadAdded: function (aDownload) {
+    Cu.import("resource://gre/modules/Services.jsm");
+    var showWhenStarting = true;
+    try {
+      showWhenStarting = Services.prefs.getBoolPref("browser.download.manager.showWhenStarting");
+    } catch(e) {}
+    this.numDls = 0;
+    if (showWhenStarting) {
+      if (this._list) {
+        this._list.getAll().then(downloads => {
+        for (let download of downloads) {
+          if (!download.stopped)
+            this.numDls++;
+        }
+        }).then(null, Cu.reportError);
+        if (this.numDls > 0)
+          ucjs_openDownloadManager(false);
+      }
     }
   },
 
@@ -103,14 +138,6 @@ var openOrHideDownloadWindow_at_startDownload = {
       } catch(e) {}
       if (closeWhenDone) {
         ucjs_closeDownloadManager();
-      }
-    } else {
-      var showWhenStarting = true;
-      try {
-        showWhenStarting = Services.prefs.getBoolPref("browser.download.manager.showWhenStarting");
-      } catch(e) {}
-      if (showWhenStarting) {
-        ucjs_openDownloadManager(false);
       }
     }
   }
@@ -264,8 +291,9 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
         var richListBox = aWindow.document.getElementById("downloadsRichListBox");
         richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
         // mmm
-        while (richListBox.itemCount > 0) {
-          richListBox.removeItemAt(richListBox.itemCount - 1);
+        for (var i = richListBox.itemCount - 1; i >= 0; i--) {
+          if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
+            richListBox.removeItemAt(i);
         }
         // Clear Library
         var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
@@ -278,8 +306,9 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
             richListBox = win.document.getElementById("downloadsRichListBox");
             richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
             // mmm
-            while (richListBox.itemCount > 0) {
-              richListBox.removeItemAt(richListBox.itemCount - 1);
+            for (var i = richListBox.itemCount - 1; i >= 0; i--) {
+              if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
+                richListBox.removeItemAt(i);
             }
             return;
           }

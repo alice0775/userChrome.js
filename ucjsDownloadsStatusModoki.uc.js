@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 23:10 open only download started
 // @version        2013/12/16 21:20 modify css Windows7 Aero
 // @version        2013/12/16 21:00 modify css
 // @version        2013/12/16 19:30 add autocheck false
@@ -14,6 +15,8 @@
 // ==/UserScript== 
 var ucjsDownloadsStatusModoki = {
   _summary: null,
+  _list: null,
+
   get downloadsStatusModokiBar() {
     delete downloadsStatusModokiBar;
     return this.downloadsStatusModokiBar = document.getElementById("downloadsStatusModokiBar");
@@ -76,6 +79,12 @@ var ucjsDownloadsStatusModoki = {
         return this._summary.addView(this);
       }).then(null, Cu.reportError);
     }
+    if (!this._list) {
+      Downloads.getList(Downloads.ALL).then(list => {
+        this._list = list;
+        return this._list.addView(this);
+      }).then(null, Cu.reportError);
+    }
 
     window.addEventListener("unload", this, false);
   },
@@ -84,6 +93,9 @@ var ucjsDownloadsStatusModoki = {
     window.removeEventListener("unload", this, false);
     if (this._summary) {
       this._summary.removeView(this);
+    }
+    if (this._list) {
+      this._list.removeView(this);
     }
   },
 
@@ -111,6 +123,17 @@ var ucjsDownloadsStatusModoki = {
     this.toggleMenuitem.setAttribute("checked", false);
   },
 
+  onDownloadAdded: function (aDownload) {
+    Cu.import("resource://gre/modules/Services.jsm");
+    var showWhenStarting = true;
+    try {
+      showWhenStarting = Services.prefs.getBoolPref("userChrome.downloadsStatusModoki.showWhenStarting");
+    } catch(e) {}
+    if (showWhenStarting) {
+      this.openDownloadsStatusModoki(false);
+    }
+  },
+
   onSummaryChanged: function () {
     Cu.import("resource://gre/modules/Services.jsm");
     if (!this._summary)
@@ -122,14 +145,6 @@ var ucjsDownloadsStatusModoki = {
       } catch(e) {}
       if (closeWhenDone) {
         this.hideDownloadsStatusModoki();
-      }
-    } else {
-      var showWhenStarting = true;
-      try {
-        showWhenStarting = Services.prefs.getBoolPref("userChrome.downloadsStatusModoki.showWhenStarting");
-      } catch(e) {}
-      if (showWhenStarting) {
-        this.openDownloadsStatusModoki(false);
       }
     }
   },
@@ -288,8 +303,9 @@ var ucjsDownloadsStatusModoki = {
         var richListBox = doc.getElementById("downloadsRichListBox");
         richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
         // mmm
-        while (richListBox.itemCount > 0) {
-          richListBox.removeItemAt(richListBox.itemCount - 1);
+        for (var i = richListBox.itemCount - 1; i >= 0; i--) {
+          if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
+            richListBox.removeItemAt(i);
         }
         // Clear Library
         var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
@@ -302,8 +318,9 @@ var ucjsDownloadsStatusModoki = {
             richListBox = win.document.getElementById("downloadsRichListBox");
             richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
             // mmm
-            while (richListBox.itemCount > 0) {
-              richListBox.removeItemAt(richListBox.itemCount - 1);
+            for (var i = richListBox.itemCount - 1; i >= 0; i--) {
+              if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
+                richListBox.removeItemAt(i);
             }
             break;
           }
