@@ -3,12 +3,13 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TMPをインストールしていない場合, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include        main
-// @compatibility  Nightly8.0a1
+// @compatibility  Firefox26
 // @author         Alice0775
+// @version        2013/12/16 09:00 Remove e4x
 // @version        2011/08/20 21:00 Nightly8.0a1
 // @version        2008/06/28 16:00 focus ring でないようにした
 // @version        2008/06/23 02:00
-// @Note
+// @Note           Require zzzz-removeTabMoveAnimation.uc.js for Firefox20+
 // ==/UserScript==
 var dontSelectTab = {
   init: function(){
@@ -32,11 +33,11 @@ var dontSelectTab = {
         this.sy = event.screenY;
         if ("_getAdjustedCoords" in gBrowser.tabContainer) {
           var panel = tab.getAttribute("linkedpanel");
-          var style = <><![CDATA[
-            .tab-drag-preview {
-            background-image: -moz-element(#panel) !important;
-            }
-            ]]></>.toString().replace("panel", panel).replace(/\s/g,"");;
+          var style ='\
+            .tab-drag-preview {\
+            background-image: -moz-element(#panel) !important;\
+            }\
+            '.toString().replace("panel", panel).replace(/\s/g,"");;
           if (this.sspi)
             document.removeChild(this.sspi);
           this.sspi = document.createProcessingInstruction(
