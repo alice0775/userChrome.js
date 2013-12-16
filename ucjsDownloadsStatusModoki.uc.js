@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 21:00 modify css
 // @version        2013/12/16 19:30 add autocheck false
 // @version        2013/12/16 18:31 fix pref name
 // @version        2013/12/16 18:30
@@ -30,8 +31,8 @@ var ucjsDownloadsStatusModoki = {
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
       #ucjsDownloadsStatusModoki { \
         width: 100%; \
-        max-height: 99px; \
-        height: 33px; \
+        max-height: 100px; \
+        height: 34px; \
       } \
      '.replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
@@ -142,7 +143,7 @@ var ucjsDownloadsStatusModoki = {
     var style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
       #contentAreaDownloadsView { \
-        -moz-box-orient: horizontal !important; \
+        -moz-box-orient: horizontal; \
       } \
  \
        *|*:root { \
@@ -150,7 +151,8 @@ var ucjsDownloadsStatusModoki = {
       } \
  \
       #downloadsRichListBox { \
-        background-color: -moz-dialog !important; \
+        max-height:34px; \
+        background-color: -moz-dialog; \
       } \
  \
       #downloadsRichListBox .scrollbox-innerbox { \
@@ -158,24 +160,29 @@ var ucjsDownloadsStatusModoki = {
       } \
  \
       richlistitem { \
-        max-width:180px !important; \
+        min-width:200px; \
+        max-width:200px; \
         max-height:33px; \
         font-size: 13px; \
       } \
  \
       richlistitem vbox { \
-        display: -moz-stack !important; \
       } \
  \
       .downloadTypeIcon { \
-        display: none; \
+        height:24px; \
+        width: 24px; \
+        -moz-margin-end: 0px; \
+        -moz-margin-start: 1px; \
       } \
  \
       .downloadTarget { \
+        margin-top:2px; \
+        padding-bottom:16px; \
       } \
  \
       .downloadProgress { \
-        margin-top:16px !important; \
+        margin-top:-16px; \
       } \
  \
       .progress-bar { \
@@ -184,16 +191,19 @@ var ucjsDownloadsStatusModoki = {
       } \
  \
       .progress-remainder { \
-        background-color: rgba(0,0,0,0.1) !important; \
       } \
  \
       .downloadDetails { \
-        padding-top:15px; \
+        margin-top:-17px; \
+      } \
+ \
+      richlistitem[selected] .downloadDetails { \
+      opacity: 1; \
       } \
  \
       .downloadButton { \
-        padding: 0 !important; \
-        margin: 0 !important; \
+        padding: 0; \
+        margin: 0; \
       } \
  \
      .button-box { \
@@ -207,6 +217,10 @@ var ucjsDownloadsStatusModoki = {
         list-style-image: url("chrome://global/skin/icons/close.png"); \
         -moz-appearance: none; \
         -moz-image-region: rect(0, 16px, 16px, 0); \
+      } \
+ \
+      #ucjsDownloadsStatusModoki-closebutton:hover { \
+        -moz-image-region: rect(0px, 32px, 16px, 16px); \
       } \
      '.replace(/\s+/g, " ");
     var sspi = doc.createProcessingInstruction(
