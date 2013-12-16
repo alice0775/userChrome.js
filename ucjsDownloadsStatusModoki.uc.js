@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 18:31 fix pref name
 // @version        2013/12/16 18:30
 // @note
 // ==/UserScript== 
@@ -289,7 +290,7 @@ var ucjsDownloadsStatusModoki = {
       // close toolbar
       var closeWhenDone = false;
       try {
-        closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
+        closeWhenDone = Services.prefs.getBoolPref("userChrome.downloadsStatusModoki.closeWhenDone");
       } catch(e) {}
       if (closeWhenDone) {
         top.ucjsDownloadsStatusModoki.hideDownloadsStatusModoki();
