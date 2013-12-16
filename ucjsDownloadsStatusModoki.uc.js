@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 23:24 open only download added
 // @version        2013/12/16 23:10 open only download started
 // @version        2013/12/16 21:20 modify css Windows7 Aero
 // @version        2013/12/16 21:00 modify css
@@ -130,7 +131,16 @@ var ucjsDownloadsStatusModoki = {
       showWhenStarting = Services.prefs.getBoolPref("userChrome.downloadsStatusModoki.showWhenStarting");
     } catch(e) {}
     if (showWhenStarting) {
-      this.openDownloadsStatusModoki(false);
+      if (this._list) {
+        this._list.getAll().then(downloads => {
+        for (let download of downloads) {
+          if (!download.stopped)
+            this.numDls++;
+        }
+        }).then(null, Cu.reportError);
+        if (this.numDls > 0)
+          this.openDownloadsStatusModoki(false);
+      }
     }
   },
 
