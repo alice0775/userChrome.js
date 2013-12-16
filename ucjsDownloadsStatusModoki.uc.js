@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 19:30 add autocheck false
 // @version        2013/12/16 18:31 fix pref name
 // @version        2013/12/16 18:30
 // @note
@@ -58,6 +59,7 @@ var ucjsDownloadsStatusModoki = {
     var menuitem = document.createElement("menuitem");
     menuitem.setAttribute("id", "toggle_downloadsStatusModokiBar");
     menuitem.setAttribute("type", "checkbox");
+    menuitem.setAttribute("autocheck", false);
     menuitem.setAttribute("label", "Downloads Status Modoki Bar");
     menuitem.setAttribute("checked", false);
     menuitem.setAttribute("accesskey", "D");
@@ -94,17 +96,17 @@ var ucjsDownloadsStatusModoki = {
   toggleDownloadsStatusModokiBar: function() {
     var collapsed = this.downloadsStatusModokiBar.collapsed;
     this.downloadsStatusModokiBar.collapsed = !collapsed;
-    this.toggleMenuitem.checked = !collapsed;
+    this.toggleMenuitem.setAttribute("checked", collapsed);
   },
 
   openDownloadsStatusModoki: function() {
     this.downloadsStatusModokiBar.collapsed = false;
-    this.toggleMenuitem.checked = true;
+    this.toggleMenuitem.setAttribute("checked", true);
   },
 
   hideDownloadsStatusModoki: function() {
     this.downloadsStatusModokiBar.collapsed = true;
-    this.toggleMenuitem.checked = false;
+    this.toggleMenuitem.setAttribute("checked", false);
   },
 
   onSummaryChanged: function () {
