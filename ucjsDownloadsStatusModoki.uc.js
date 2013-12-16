@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 21:20 modify css Windows7 Aero
 // @version        2013/12/16 21:00 modify css
 // @version        2013/12/16 19:30 add autocheck false
 // @version        2013/12/16 18:31 fix pref name
@@ -181,6 +182,11 @@ var ucjsDownloadsStatusModoki = {
         padding-bottom:16px; \
       } \
  \
+      .downloadTarget:-moz-system-metric(windows-default-theme) { \
+        margin-top:2px; \
+        padding-bottom:10px; \
+      } \
+ \
       .downloadProgress { \
         margin-top:-16px; \
       } \
@@ -210,6 +216,10 @@ var ucjsDownloadsStatusModoki = {
         -moz-padding-start: 0px; \
         -moz-padding-end: 1px; \
       } \
+ \
+     #downloadFilter { \
+       width: 150px; \
+     } \
  \
      #ucjsDownloadsStatusModoki-closebutton { \
         border: none; \
@@ -242,6 +252,7 @@ var ucjsDownloadsStatusModoki = {
     box.appendChild(button);
     box.appendChild(doc.createElement("spacer")).setAttribute("flex", 1);
     var textbox = doc.createElement("textbox");
+    textbox.setAttribute("id", "downloadFilter");
     textbox.setAttribute("clickSelectsAll", true);
     textbox.setAttribute("type", "search");
     textbox.setAttribute("placeholder", "Search...");
