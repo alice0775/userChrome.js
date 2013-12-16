@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/16 23:28 fixed initialize numDls
 // @version        2013/12/16 23:24 open only download added
 // @version        2013/12/16 23:10 open only download started
 // @version        2013/12/16 21:20 modify css Windows7 Aero
@@ -130,6 +131,7 @@ var ucjsDownloadsStatusModoki = {
     try {
       showWhenStarting = Services.prefs.getBoolPref("userChrome.downloadsStatusModoki.showWhenStarting");
     } catch(e) {}
+    this.numDls = 0;
     if (showWhenStarting) {
       if (this._list) {
         this._list.getAll().then(downloads => {
