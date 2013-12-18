@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26
 // @author         Alice0775
+// @version        2013/12/18 11:00 defineLazyModuleGetter for Firefox26
 // @version        2013/12/18 Firefox26
 // @version        2009/11/28
 // ==/UserScript==
@@ -19,6 +20,9 @@ var downloadPlaySound = {
 
   _list: null,
   init: function sampleDownload_init() {
+    XPCOMUtils.defineLazyModuleGetter(window, "Downloads",
+              "resource://gre/modules/Downloads.jsm");
+
     //window.removeEventListener("load", this, false);
     window.addEventListener("unload", this, false);
 
