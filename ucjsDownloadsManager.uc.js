@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/18 23:10 
 // @version        2013/12/16 23:10 open only download added
 // @version        2013/12/16 02:00 defineLazyModuleGetter for Firefox26
 // @version        2013/12/15 22:00 typo and correct version date
@@ -238,6 +239,16 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
           return;
         if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
           aWindow.document.title = originalTitle;
+
+          Cu.import("resource://gre/modules/Services.jsm");
+          var closeWhenDone = false;
+          try {
+            closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
+          } catch(e) {}
+          if (closeWhenDone) {
+            aWindow.close();
+          }
+
         } else {
           // Update window title
           this.xonDownloadChanged();
