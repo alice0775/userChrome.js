@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
 // @version        2013/12/16 23:28 fixed initialize numDls
 // @version        2013/12/16 23:24 open only download added
 // @version        2013/12/16 23:10 open only download started
@@ -293,55 +294,47 @@ var ucjsDownloadsStatusModoki = {
     ref.parentNode.insertBefore(vbox, ref);
 
     win.ucjsDownloadsStatusModoki_clearDownloads = function ucjs_clearDownloads() {
+      var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
+
       Cu.import("resource://gre/modules/Services.jsm");
-      function moveDownloads2History(d) {
-        if ( REMEMBERHISTOTY = true /* custmizable true or false */) {
-          var db = Components.classes["@mozilla.org/browser/nav-history-service;1"].
-                    getService(Components.interfaces.nsPIPlacesDatabase).DBConnection;
-          var sql = "UPDATE moz_historyvisits SET visit_type = 1 WHERE visit_type = 7";
-          if (d > 0)
-            sql += ' AND visit_date <= :date';
-          var statement = db.createStatement(sql);
-          try {
-            if (d > 0)
-              statement.params.date = (new Date()).getTime()*1000 - d*24*3600*1000000;
-            statement.execute();
-          } catch(ex){
-          } finally {
-            statement.reset();
+      var places = [];
+      function addPlace(aURI, aTitle, aVisitDate) {
+        places.push({
+          uri: aURI,
+          title: aTitle,
+          visits: [{
+            visitDate: aVisitDate,
+            transitionType: Ci.nsINavHistoryService.TRANSITION_LINK
+          }]
+        });
+      }
+      function moveDownloads2History() {
+        var richListBox = doc.getElementById("downloadsRichListBox");
+
+        if (DO_NOT_DELETE_HISTORY) {
+          var cont = richListBox._placesView.result.root;
+          cont.containerOpen = true;
+          for (let i = cont.childCount - 1; i > -1; i--) {
+              let node = cont.getChild(i);
+              let aURI = makeURI(node.uri);
+              let aTitle = node.title;
+              let aVisitDate = node.time;
+              addPlace(aURI, aTitle, aVisitDate)
           }
         }
+
         // Clear List
-        var richListBox = doc.getElementById("downloadsRichListBox");
         richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
-        // mmm
-        for (var i = richListBox.itemCount - 1; i >= 0; i--) {
-          if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
-            richListBox.removeItemAt(i);
-        }
-        // Clear Library
-        var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                       .getService(Components.interfaces.nsIWindowMediator);
-        var enumerator = mediator.getEnumerator(null);
-        while(enumerator.hasMoreElements()) {
-          let win = enumerator.getNext();
-          if (win.location == "chrome://browser/content/places/places.xul" &&
-              !win.document.getElementById("clearDownloadsButton").hidden) {
-            richListBox = win.document.getElementById("downloadsRichListBox");
-            richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
-            // mmm
-            for (var i = richListBox.itemCount - 1; i >= 0; i--) {
-              if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
-                richListBox.removeItemAt(i);
-            }
-            break;
+
+        if (DO_NOT_DELETE_HISTORY) {
+          if (places.length > 0) {
+            var asyncHistory = Components.classes["@mozilla.org/browser/history;1"]
+                     .getService(Components.interfaces.mozIAsyncHistory);
+              asyncHistory.updatePlaces(places);
           }
         }
       }
-      moveDownloads2History(0);
-      try {
-        Cc["@mozilla.org/download-manager;1"].getService(Ci.nsIDownloadManager).cleanUp();
-      } catch(ex){}
+      moveDownloads2History();
 
       // close toolbar
       var closeWhenDone = false;

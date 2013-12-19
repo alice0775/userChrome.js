@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
+// @version        2013/12/19 17:00 fix do not close the Manager if there is main window
 // @version        2013/12/18 23:10 
 // @version        2013/12/16 23:10 open only download added
 // @version        2013/12/16 02:00 defineLazyModuleGetter for Firefox26
@@ -240,6 +242,13 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
         if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
           aWindow.document.title = originalTitle;
 
+          var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                         .getService(Components.interfaces.nsIWindowMediator);
+          var enumerator = mediator.getEnumerator("navigator:browser");
+          while(enumerator.hasMoreElements()) {
+            return;
+          }
+
           Cu.import("resource://gre/modules/Services.jsm");
           var closeWhenDone = false;
           try {
@@ -281,47 +290,42 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
     ref.parentNode.insertBefore(box, ref);
 
     aWindow.ucjs_clearDownloads = function ucjs_clearDownloads() {
+      var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
+
+      var places = [];
+      function addPlace(aURI, aTitle, aVisitDate) {
+        places.push({
+          uri: aURI,
+          title: aTitle,
+          visits: [{
+            visitDate: aVisitDate,
+            transitionType: Ci.nsINavHistoryService.TRANSITION_LINK
+          }]
+        });
+      }
       function moveDownloads2History(d) {
-        if ( REMEMBERHISTOTY = true /* custmizable true or false */) {
-          var db = Components.classes["@mozilla.org/browser/nav-history-service;1"].
-                    getService(Components.interfaces.nsPIPlacesDatabase).DBConnection;
-          var sql = "UPDATE moz_historyvisits SET visit_type = 1 WHERE visit_type = 7";
-          if (d > 0)
-            sql += ' AND visit_date <= :date';
-          var statement = db.createStatement(sql);
-          try {
-            if (d > 0)
-              statement.params.date = (new Date()).getTime()*1000 - d*24*3600*1000000;
-            statement.execute();
-          } catch(ex){
-          } finally {
-            statement.reset();
+        var richListBox = aWindow.document.getElementById("downloadsRichListBox");
+
+        if (DO_NOT_DELETE_HISTORY) {
+          var cont = richListBox._placesView.result.root;
+          cont.containerOpen = true;
+          for (let i = cont.childCount - 1; i > -1; i--) {
+              let node = cont.getChild(i);
+              let aURI = makeURI(node.uri);
+              let aTitle = node.title;
+              let aVisitDate = node.time;
+              addPlace(aURI, aTitle, aVisitDate)
           }
         }
+
         // Clear List
-        var richListBox = aWindow.document.getElementById("downloadsRichListBox");
         richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
-        // mmm
-        for (var i = richListBox.itemCount - 1; i >= 0; i--) {
-          if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
-            richListBox.removeItemAt(i);
-        }
-        // Clear Library
-        var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                       .getService(Components.interfaces.nsIWindowMediator);
-        var enumerator = mediator.getEnumerator(null);
-        while(enumerator.hasMoreElements()) {
-          var win = enumerator.getNext();
-          if (win.location == "chrome://browser/content/places/places.xul" &&
-              !win.document.getElementById("clearDownloadsButton").hidden) {
-            richListBox = win.document.getElementById("downloadsRichListBox");
-            richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
-            // mmm
-            for (var i = richListBox.itemCount - 1; i >= 0; i--) {
-              if (!/0|4/.test(richListBox.getItemAtIndex(i).getAttribute('state')))
-                richListBox.removeItemAt(i);
-            }
-            return;
+
+        if (DO_NOT_DELETE_HISTORY) {
+          if (places.length > 0) {
+            var asyncHistory = Components.classes["@mozilla.org/browser/history;1"]
+                     .getService(Components.interfaces.mozIAsyncHistory);
+              asyncHistory.updatePlaces(places);
           }
         }
       }
