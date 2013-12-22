@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2013/12/22 13:00 chromehidden
 // @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
 // @version        2013/12/16 23:28 fixed initialize numDls
 // @version        2013/12/16 23:24 open only download added
@@ -31,6 +32,9 @@ var ucjsDownloadsStatusModoki = {
   },
 
   init: function() {
+    if (document.documentElement.getAttribute("chromehidden") !="" )
+      return;
+
     XPCOMUtils.defineLazyModuleGetter(window, "Downloads",
               "resource://gre/modules/Downloads.jsm");
 

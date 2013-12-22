@@ -330,9 +330,6 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
         }
       }
       moveDownloads2History(0);
-      try {
-        Cc["@mozilla.org/download-manager;1"].getService(Ci.nsIDownloadManager).cleanUp();
-      } catch(ex){}
     };
 
     aWindow.ucjs_doSearch = function ucjs_doSearch(filterString) {
