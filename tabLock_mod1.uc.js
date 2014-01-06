@@ -4,6 +4,7 @@
 // @description    tabLock
 // @include        *
 // @compatibility  17-25
+// @version        2013/12/21 23:00 exclude "prevent" word
 // @version        2013/11/06 10:20 Bug 846635 - Use asynchronous getCharsetForURI in getShortcutOrURI in Firefox25 and later
 // @version        2013/04/06 09:00 Bug 748740
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -840,6 +841,9 @@ patch: {
        || link.match(/^[<\s\(]?prev(ious)?(\s|(\s?\d+\s?))(search)?\s?(pages?|results?)?/i) )
 
       {
+        if (/Prevent/i.test(link)) {
+          return false;
+        }
         return true;
       }
     }
@@ -856,6 +860,9 @@ patch: {
     if (x.snapshotLength){
       next = x.snapshotItem(x.snapshotLength-1);
       //this._openURL(next.href,win,-1);
+      if (/prevent/i.test(next.textContent)) {
+        return false;
+      }
       if (aNode.href == next.href)
         return true;;
     }
