@@ -3,15 +3,16 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Workaround Bug 888567 	Bookmark star icon doesn't work properly on link-opened tab
 // @include        main
-// @compatibility  Firefox 13.0
+// @compatibility  Firefox 13.0-30
 // @author         Alice0775
+// @version        2014/02/27
 // @version        2013/06/29
 // @Note
 // ==/UserScript==
 (function () {
   
   window.Bug888567_StarUI_onclick = function(event) {
-    var StarUI = document.getElementById("star-button");
+    var StarUI = document.getElementById("star-button") || document.getElementById("bookmarks-menu-button");
     if (typeof PlacesStarButton != 'undefined') {
       // Firefox 13-22
       if (StarUI.getAttribute('starred') != 'true') {
@@ -27,10 +28,15 @@
     }
   }
 
-  var StarUI = document.getElementById("star-button");
+  var StarUI = document.getElementById("star-button") || document.getElementById("bookmarks-menu-button");
   if (StarUI) {
-    var _org = StarUI.getAttribute("onclick");
-    StarUI.setAttribute("onclick", _org + "Bug888567_StarUI_onclick(event)")
+    if (StarUI.hasAttribute("oncommand")) {
+      var _org = StarUI.getAttribute("oncommand");
+      StarUI.setAttribute("oncommand", _org + "Bug888567_StarUI_onclick({})")
+    } else {
+      var _org = StarUI.getAttribute("onclick");
+      StarUI.setAttribute("onclick", _org + "Bug888567_StarUI_onclick(event)")
+    }
   }
 
 

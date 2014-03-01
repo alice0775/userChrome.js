@@ -6,6 +6,7 @@
 // @compatibility  Firefox 2.0 3.0
 // @author         Original Author: pile0nades
 // @modifier       Alice0775
+// @version        2014/02/25 textarea, orion Firefox24, codemirror Firefox27+,(orion,codemirrorの時はcolorpicker無し)
 // @version        2009/04/30 version 1.0対応(tnks 音吉) でも0.59で不具合がないなら1.0にしない方がいいよ
 // @version        2007/05/25
 // @Note
@@ -62,7 +63,7 @@ WindowHook.register("chrome://stylish/content/edit.xul",
     if (aWindow.document.getElementById("internal-code")) { //ver 1.0 のとき color picker と importantを入れる
 
  //Color picker///////////////////////////////////////////////////////////////////////////////////
-      if('rainbowpickerToolbar' in window){
+      if('rainbowpickerToolbar' in window) {
         var menuitem = aWindow.document.createElement("menuitem");
         button.setAttribute("label", "Color Picker");
         checkbox.parentNode.insertBefore(button, checkbox);
@@ -72,21 +73,21 @@ WindowHook.register("chrome://stylish/content/edit.xul",
           }
           aWindow.openColorPicker();
         }, false);
-      } else {
+      } else if (aWindow.prefs.getIntPref("editor") == 1) {
         var picker   = aWindow.document.createElement("colorpicker");
 
         var getColor = function(){
                 if (arguments.callee.caller.name != 'onchange') return;  //why is this necessary?
-                var box    = aWindow.document.getElementById("internal-code").mInputField;
-                var text   = box.value.toString()
-                var s      = box.selectionStart;
-                var e      = box.selectionEnd;
-                box.value  = text.substring(0,s)   +
-                                   this.color.toString()  +
-                                   text.substring(e,text.length);
-                box.setSelectionRange(s + 7, s + 7);  // 7 = "#AABBCC".length
-                box.focus();
-
+                  var box    = aWindow.document.getElementById("internal-code").mInputField;
+                  
+                  var text   = box.value.toString()
+                  var s      = box.selectionStart;
+                  var e      = box.selectionEnd;
+                  box.value  = text.substring(0,s)   +
+                                     this.color.toString()  +
+                                     text.substring(e,text.length);
+                  box.setSelectionRange(s + 7, s + 7);  // 7 = "#AABBCC".length
+                  box.focus();
         }
         picker.getColor = getColor;
         picker.setAttribute("label", "Color Picker");
@@ -103,12 +104,18 @@ WindowHook.register("chrome://stylish/content/edit.xul",
 
       // add click event to button
       button.addEventListener("click", function() {
-        var codeElement = aWindow.document.getElementById("code");
-        if (!codeElement)
-          codeElement = aWindow.document.getElementById("internal-code");
-        var box = codeElement.mInputField;
-        var scroll = [box.scrollTop, box.scrollLeft];
-        var code = codeElement.value;
+        if (aWindow.sourceEditorType == "orion" || aWindow.sourceEditorType == "sourceeditor") {
+          var codeElement = aWindow.document.getElementById("sourceeditor");
+          var code = aWindow.sourceEditor.getText();
+        } else {
+          var codeElement = aWindow.document.getElementById("code");
+          if (!codeElement)
+            codeElement = aWindow.document.getElementById("internal-code");
+          var box = codeElement.mInputField;
+          var scroll = [box.scrollTop, box.scrollLeft];
+          var code = codeElement.value;
+        }
+        
         code = code.replace(/\s*?!\s*?important/gi, "")    // remove existing !important's to simplify things
         //change ;base64 to __base64__ so we don't match it on the ; when we split declarations
         code = code.replace(/;base64/g, "__base64__");
@@ -137,10 +144,14 @@ WindowHook.register("chrome://stylish/content/edit.xul",
         });
         //put ;base64 back
         code = code.replace(/__base64__/g, ";base64");
-        codeElement.value = code;
+        if (aWindow.sourceEditorType == "orion" || aWindow.sourceEditorType == "sourceeditor") {
+          aWindow.sourceEditor.setText(code);
+        } else {
+          codeElement.value = code;
 
-        box.scrollTop = scroll[0];
-        box.scrollLeft = scroll[1];
+          box.scrollTop = scroll[0];
+          box.scrollLeft = scroll[1];
+        }
      }, false);
    }
 
@@ -154,13 +165,19 @@ WindowHook.register("chrome://stylish/content/edit.xul",
 
     // add click event to button
     button.addEventListener("click", function() {
-      var textarea = aWindow.document.getElementById("code");
-      if (!textarea)
-        textarea = aWindow.document.getElementById("internal-code");
-      try{
+      if (aWindow.sourceEditorType == "orion" || aWindow.sourceEditorType == "sourceeditor") {
+        var textarea = aWindow.document.getElementById("sourceeditor");
         editinit();
         edittarget(textarea);
-      }catch(e){}
+      } else {
+        var textarea = aWindow.document.getElementById("code");
+        if (!textarea)
+          textarea = aWindow.document.getElementById("internal-code");
+        try{
+          editinit();
+          edittarget(textarea);
+        }catch(e){}
+      }
     }, false);
 
 ////Extarnal Edittor functions///////////////////////////////////////////////////////////////////////
@@ -248,10 +265,14 @@ WindowHook.register("chrome://stylish/content/edit.xul",
 
         textBoxText = sstream.read(sstream.available());
         encode = target.getAttribute("encode");
-        if(textBoxText.length)
-          target.value = utf.convertStringToUTF8(textBoxText, encode, true);
-        else
-          target.value = "";
+        if (aWindow.sourceEditorType == "orion" || aWindow.sourceEditorType == "sourceeditor") {
+          aWindow.sourceEditor.setText(textBoxText);
+        } else {
+          if(textBoxText.length)
+            target.value = utf.convertStringToUTF8(textBoxText, encode, true);
+          else
+            target.value = "";
+        }
 
         sstream.close();
         istr.close();
@@ -288,8 +309,11 @@ WindowHook.register("chrome://stylish/content/edit.xul",
     }
 
     function edittarget(target){
-
-      var textBoxText = target.value;
+  		if (aWindow.sourceEditorType == "orion" || aWindow.sourceEditorType == "sourceeditor") {
+  			var textBoxText = aWindow.sourceEditor.getText();
+  		} else {
+        var textBoxText = target.value;
+      }
       // Get filename.
       var file = Components.classes["@mozilla.org/file/local;1"].
                  createInstance(Components.interfaces.nsILocalFile);

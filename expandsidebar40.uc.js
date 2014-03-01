@@ -3,11 +3,12 @@
 // @description    サイドバーの自動開閉
 // @namespace      http://forums.mozillazine.org/viewtopic.php?p=2592073#2592073
 // @include        chrome://browser/content/browser.xul
-// @compatibility  Firefox 3.0 3.5 3.6a1pre
+// @compatibility  Firefox 3.0-30
 // @author         Alice0775
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には toggleSidebar(何タラ);
 // @Note
+// @version        2013/02/26 00:00 fix close delay 
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
 // @version        2012/08/04 09:00 private browsingを考慮
@@ -565,7 +566,7 @@ var ucjs_expand_sidebar = {
         this._open_Timeout = null;
 
         if (this._close_Timeout)
-          clearTimeout(this._close_Timeout);
+          return;
         this._close_Timeout = setTimeout(function(self){
           toggleSidebar();
         }, this._CLOSE_DELAY, this);

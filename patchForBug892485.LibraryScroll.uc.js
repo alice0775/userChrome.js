@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/places/places.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2014/03/01 Fix scroll position
 // @version       2013/11/20 Fix selected index is 0 if scroll = 0
 // @version       2013/07/29 Fix middle click
 // @version       2013/07/16 Fix sortorder == ascending
@@ -39,6 +40,7 @@ var patchForBug892485LibraryScroll = {
     this._BTree.addEventListener('click', this, true);
     this._BTree.addEventListener('dblclick', this, true);
     this._BTree.addEventListener('keypress', this, true);
+    this._BTree.addEventListener('scroll', this, true);
     window.addEventListener('unload', this, false);
   },
 
@@ -50,11 +52,17 @@ var patchForBug892485LibraryScroll = {
     this._BTree.removeEventListener('click', this, true);
     this._BTree.removeEventListener('dblclick', this, true);
     this._BTree.removeEventListener('keypress', this, true);
+    this._BTree.removeEventListener('scroll', this, true);
     window.removeEventListener('unload', this, false);
   },
 
   handleEvent: function(event) {
     switch(event.type) {
+      case "scroll":
+        if (this.viewType)
+          this.lastScrollPosition = this.getScrollPosition();
+          this.lastCurrentIndex = this.getCurrentIndex();
+        break;
       case "command":
         if (this.viewType)
           this.onCommand(event);

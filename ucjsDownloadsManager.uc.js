@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2014/03/01 12:00 Bug 978291
 // @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
 // @version        2013/12/19 17:00 fix do not close the Manager if there is main window
 // @version        2013/12/18 23:10 
@@ -171,6 +172,9 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
           @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
           *|*:root { \
             padding: 5px 5px 0 5px; \
+          } \
+          #downloadsRichListBox:empty + #downloadsListEmptyDescription { \
+            pointer-events: none; \
           } \
          '.replace(/\s+/g, " ");
         var sspi = aWindow.document.createProcessingInstruction(

@@ -6,6 +6,7 @@
 // @include       chrome://browser/content/history/history-panel.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2014/03/01 Fix scroll position
 // @version       2013/11/20 Fix selected index is 0 if scroll = 0
 // @version       2013/07/30 Fix Working with "bookmarks history panel"
 // @version       2013/07/30 Working with "bookmarks history panel"
@@ -47,6 +48,7 @@ var patchForBug892485 = {
     window.addEventListener('command', this, false);
     this._BTree.addEventListener('click', this, true);
     this._BTree.addEventListener('keypress', this, true);
+    this._BTree.addEventListener('scroll', this, true);
     window.addEventListener('unload', this, false);
   },
 
@@ -57,11 +59,17 @@ var patchForBug892485 = {
     window.removeEventListener('command', this, false);
     this._BTree.removeEventListener('click', this, true);
     this._BTree.removeEventListener('keypress', this, true);
+    this._BTree.removeEventListener('scroll', this, true);
     window.removeEventListener('unload', this, false);
   },
 
   handleEvent: function(event) {
     switch(event.type) {
+      case "scroll":
+        if (this.viewType == "lastvisited" || !!this.serchValue)
+          this.lastScrollPosition = this.getScrollPosition();
+          this.lastCurrentIndex = this.getCurrentIndex();
+        break;
       case "command":
         if (this.viewType == "lastvisited" || !!this.serchValue)
           this.onCommand(event);
