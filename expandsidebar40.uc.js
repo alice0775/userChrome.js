@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には toggleSidebar(何タラ);
 // @Note
+// @version        2013/03/03 00:00 fix It close too soon when it opened from a button or menu
 // @version        2013/02/26 00:00 fix close delay 
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
@@ -158,6 +159,7 @@ var ucjs_expand_sidebar = {
           .replace(/var sidebarBroadcaster = document\.getElementById\(commandID\);/, " $& if (!!commandID){ ucjs_expand_sidebar._lastcommand = commandID;ucjs_expand_sidebar._loadKeepItSizes(commandID);}")
           .replace(/sidebar\.setAttribute\("src", url\);/g, 'if (sidebar.getAttribute("src") != url) {$&}')
           .replace(/sidebarBox\.setAttribute\("src", url\);/g, 'if (sidebarBox.getAttribute("src") != url) {$&}');
+    func = func.replace(/}$/, ';ucjs_expand_sidebar._opend=true;}');
     eval('window.toggleSidebar=' + func);
     //this.debug(toggleSidebar.toString());
 
@@ -565,7 +567,7 @@ var ucjs_expand_sidebar = {
           clearTimeout(this._open_Timeout);
         this._open_Timeout = null;
 
-        if (this._close_Timeout)
+        if (this._close_Timeout || this._opend)
           return;
         this._close_Timeout = setTimeout(function(self){
           toggleSidebar();
@@ -574,6 +576,7 @@ var ucjs_expand_sidebar = {
         if (this._close_Timeout)
           clearTimeout(this._close_Timeout);
         this._close_Timeout = null;
+        this._opend = false;
       }
     }
   },
