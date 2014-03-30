@@ -13,6 +13,7 @@
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 17-
 // @author         Alice0775
+// @version        2014/03/31 00:00 add fail safe setTimeout
 // @version        2013/11/19 14:00 input element without type
 // @version        2011/08/06 16:00 idも
 // @version        2011/06/22 01:00
@@ -97,7 +98,8 @@
                                      done = true;
                                    }
                                  });
-            // this should be rewritten in asynchronous style...
+          // this should be rewritten in asynchronous style...
+          setTimeout(function(){done = true;}, 1000);  
           var thread = Cc['@mozilla.org/thread-manager;1'].getService().mainThread;
           while (!done)
           {

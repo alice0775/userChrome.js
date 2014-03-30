@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
 // @version        2013/12/22 13:00 chromehidden
 // @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
 // @version        2013/12/16 23:28 fixed initialize numDls
@@ -140,13 +141,13 @@ var ucjsDownloadsStatusModoki = {
     if (showWhenStarting) {
       if (this._list) {
         this._list.getAll().then(downloads => {
-        for (let download of downloads) {
-          if (!download.stopped)
-            this.numDls++;
-        }
+          for (let download of downloads) {
+            if (!download.stopped)
+              this.numDls++;
+          }
+          if (this.numDls > 0)
+            this.openDownloadsStatusModoki(false);
         }).then(null, Cu.reportError);
-        if (this.numDls > 0)
-          this.openDownloadsStatusModoki(false);
       }
     }
   },

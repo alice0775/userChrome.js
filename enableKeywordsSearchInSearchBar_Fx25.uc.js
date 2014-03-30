@@ -8,6 +8,7 @@
 // @Note           Keywords Searchを検索バーから行えるようにする
 // @Note           conqueryModoki2がある場合は, 親フォルダにKeywordsを付加していれば, Keywords 串刺し検索が出来る
 // @Note           サーチバーを表示していないとダメ
+// @version        2014/03/31 00:00 add fail safe setTimeout
 // @version        2013/11/21 12:30 Firefox25 分離
 // @version        2013/07/18 18:30 Bug 846635 - Use asynchronous getCharsetForURI in getShortcutOrURI in Firefox25
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -188,6 +189,7 @@
     });
 
     // this should be rewritten in asynchronous style...
+    setTimeout(function(){done = true;}, 1000);
     var thread = Cc['@mozilla.org/thread-manager;1'].getService().mainThread;
     while (!done)
     {

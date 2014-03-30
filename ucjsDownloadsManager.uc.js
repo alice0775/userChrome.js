@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
 // @version        2014/03/01 12:00 Bug 978291
 // @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
 // @version        2013/12/19 17:00 fix do not close the Manager if there is main window
@@ -120,13 +121,13 @@ var openOrHideDownloadWindow_at_startDownload = {
     if (showWhenStarting) {
       if (this._list) {
         this._list.getAll().then(downloads => {
-        for (let download of downloads) {
-          if (!download.stopped)
-            this.numDls++;
-        }
+          for (let download of downloads) {
+            if (!download.stopped)
+              this.numDls++;
+          }
+          if (this.numDls > 0)
+            ucjs_openDownloadManager(false);
         }).then(null, Cu.reportError);
-        if (this.numDls > 0)
-          ucjs_openDownloadManager(false);
       }
     }
   },
