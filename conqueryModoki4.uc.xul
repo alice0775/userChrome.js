@@ -7,8 +7,9 @@
 // @description    コンテキストメニューにQuery To...とサブメニューに検索エンジンリストを追加, 階層化した場合は串刺し検索
 // @description    選択したエンジンで検索, その後エンジンを元に戻す
 // @include        main
-// @compatibility  Firefox 3.0 3.5, 3.6
+// @compatibility  Firefox 24-31
 // @author         Alice0775
+// @version        2014/04/18 23:30 Fixed rebuildPopup
 // @version        2013/09/13 21:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/09/13 20:00 Bug 738818
 // @version        2013/01/19 20:00 Bug 831008 Disable Mutation Events in chrome/XUL
@@ -600,24 +601,19 @@
         //search.xmlの置き換え
         searchbar.rebuildPopup=function(){
           var popup = searchbar._popup;
+          //Clear the popup, down to the first separator
+          var popup_org = [];
+          do {
+            var menuitem = popup.lastChild.cloneNode(true);
+            popup_org.push(menuitem);
+            popup.removeChild(popup.lastChild);
+          } while (popup.lastChild && menuitem.localName != "menuseparator")
+          while (popup.lastChild)
+            popup.removeChild(popup.lastChild);
 
-          // Clear the popup, down to the first separator
-          var popup_org = []; //元のメニューをバックアップ
-          var len= popup.childNodes.length;
-          for (var i = len - 1; i > -1; i--) {
-            if (popup.childNodes[i] && popup.childNodes[i].localName != "menuseparator") continue;
-            var ref = i; // 検索バーの管理の直前のセパレータ位置
-            for (var j = ref; j < len; j++) {
-              popup_org[j-ref] = popup.childNodes[j].cloneNode(true);
-            }
-            while (popup.firstChild) { //メニューを全部消す
-              popup.removeChild(popup.firstChild);
-            }
-            break;
-          }
           conqueryModoki.makemenu(popup, true); //検索バー用ポップアップメニュー作成
           //メニューに検索バーの管理と直前のセパレータを追加
-          for (var i = 0; i < popup_org.length; i++) {
+          for (var i = popup_org.length - 1; i > -1; i--) {
             popup.appendChild(popup_org[i]);
           }
           if (conqueryModoki.getVer() > 2) { //trunc Gecko/2007070706 Minefield/3.0a7pre でこれがいる
