@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 24-31
 // @author         Alice0775
+// @version        2014/04/18 23:50 Fixed rebuildPopup
 // @version        2014/04/18 23:30 Fixed rebuildPopup
 // @version        2013/09/13 21:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/09/13 20:00 Bug 738818
@@ -604,6 +605,8 @@
           //Clear the popup, down to the first separator
           var popup_org = [];
           do {
+            if (!popup.lastChild)
+              return;
             var menuitem = popup.lastChild.cloneNode(true);
             popup_org.push(menuitem);
             popup.removeChild(popup.lastChild);
