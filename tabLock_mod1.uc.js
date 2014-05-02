@@ -4,7 +4,8 @@
 // @description    tabLock
 // @include        *
 // @compatibility  17-25
-// @version        2013/12/21 23:00 exclude "prevent" word
+// @version        2014/02/21 23:00  Multiple Tab Handler #66 
+// @version        2013/12/21 23:00 exclude "prevent"
 // @version        2013/11/06 10:20 Bug 846635 - Use asynchronous getCharsetForURI in getShortcutOrURI in Firefox25 and later
 // @version        2013/04/06 09:00 Bug 748740
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -403,9 +404,16 @@ patch: {
       gBrowser.tabContainer.addEventListener('drop', this.onDrop, true);
 
 
-
-
-
+      // #66
+      if ("MultipleTabService" in window) {
+        func = MultipleTabService.toggleTabsLocked.toString();
+        func = func.replace(
+        /this\._isTabLocked\(aTab\)\)/,
+        'this._isTabLocked(tab))'
+        );
+      eval("MultipleTabService.toggleTabsLocked = "+ func);
+        
+      }
 
 
       this.tabContextMenu();
@@ -518,6 +526,7 @@ patch: {
       });
 
       // this should be rewritten in asynchronous style...
+      setTimeout(function(){done = true;}, 1000);
       var thread = Cc['@mozilla.org/thread-manager;1'].getService().mainThread;
       while (!done)
       {

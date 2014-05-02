@@ -18,8 +18,9 @@ display: none;
 // @note                              基本的にメニューでxxx英日を選んでおくこと
 // @include        main
 // @include        chrome://messenger/content/messageWindow.xul
-// @compatibility  Firefox 10-16a1, Tb10-16a1
+// @compatibility  Firefox 10-32a1, Tb10-32a1
 // @author         Alice0775
+// @version        2014/05/03 00:00 Google翻訳仕様変更のため
 // @version        2013/02/19 09:00 isJapanese簡易判定
 // @version        2012/10/07 09:00 動かないもの削除
 // @version        2012/10/07 07:00 isJapaneseにBing APIを使うように
@@ -128,8 +129,8 @@ display: none;
         {
           Description:"Google 英日",
           method:'POST',
-          Referer:'http://translate.google.com/?tab=yT#en',
-          action:"http://translate.google.com/",
+          Referer:'https://translate.google.com/?tab=yT#en',
+          action:"https://translate.google.com/",
           post:"client=t&hl=ja&sl=auto&tl=ja&multires=1&prev=btn&ssel=0&tsel=0&uptl=ja&sc=1&text=%%SEL%%",
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
@@ -138,8 +139,8 @@ display: none;
         {
           Description:"Google 日英",
           method:'POST',
-          Referer:'http://translate.google.com/?tab=yT#ja',
-          action:"http://translate.google.com/",
+          Referer:'https://translate.google.com/?tab=yT#ja',
+          action:"https://translate.google.com/",
           post:"client=t&hl=ja&sl=ja&tl=en&multires=1&prev=btn&ssel=0&tsel=0&sc=1&text=%%SEL%%",
           code:"UTF-8",
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',

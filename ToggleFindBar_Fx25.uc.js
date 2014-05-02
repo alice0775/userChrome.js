@@ -7,6 +7,8 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/04/25 00:00 ctr changed id
+// @version        2013/11/19 08:00 ctr
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2011/06/09 00:00 search-go-label due to Bug 592909 - Streamline the visual appearance of the search field
@@ -95,9 +97,11 @@ var ucjs_toggleFindBar = {
     window.addEventListener("aftercustomization", this, false);
     window.addEventListener("unload", this, false);
 
-    this.addonbar = document.getElementById("addon-bar") ||
-                            document.getElementById("statusbar-line-col") ||
-                            document.getElementById("viewSource-main-menubar");
+    this.addonbar = document.getElementById("ctraddon_addon-bar") ||
+                    document.getElementById("ctr_addon-bar") ||
+                    document.getElementById("addon-bar") ||
+                    document.getElementById("statusbar-line-col") ||
+                    document.getElementById("viewSource-main-menubar");
     this.statusbarDisplay = document.getElementById("statusbar-display");
     if (this.OPENFINDBAR_RCLICK_STATUSBAR && this.addonbar)
       this.addonbar.addEventListener("click", this, false);
@@ -140,6 +144,8 @@ var ucjs_toggleFindBar = {
           case this.goButton:
             this.goButtonClick(event);
             break;
+          case document.getElementById("ctraddon_flexible_space_ab"):
+          case document.getElementById("ctr_flexible_space_ab"):
           case document.getElementById("status4evar-status-text"):
           case this.statusbarDisplay:
             event.stopPropagation();
