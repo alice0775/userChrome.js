@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/05 08:00 workaround newtab position, reduce left/rught padding
 // @version        2014/05/03 12:00 Firefox29 with DEFAULT THEME
 // @version        2012/12/19 12:00 wheelscroll
 // @version        2012/12/18 22:00"user strict";
@@ -140,6 +141,16 @@ function zzzz_MultiRowTab(){
           transition: all .1s !important; \
  \
           height:24px; \
+      } \
+ \
+      #TabsToolbar  .tab-content { \
+          -moz-padding-end: 3px; \
+          -moz-padding-start: 3px; \
+      } \
+ \
+      /*workaround newtab position*/ \
+      #TabsToolbar .tabbrowser-tab:not([image]) .tab-icon-image { \
+        display: -moz-box; \
       } \
  \
       #TabsToolbar .tabbrowser-tab[first-tab][last-tab], \
