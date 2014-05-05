@@ -6,6 +6,8 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/05 20:50 workaround tabbar + 1px if version < Firefox30
+// @version        2014/05/05 20:45 reserve SCROLLBARWIDTH in tabbar mmm
 // @version        2014/05/05 08:00 workaround newtab position, reduce left/rught padding
 // @version        2014/05/03 12:00 Firefox29 with DEFAULT THEME
 // @version        2012/12/19 12:00 wheelscroll
@@ -25,9 +27,12 @@ zzzz_MultiRowTab();
 
 function zzzz_MultiRowTab(){
   // -- config --
-  var SCROLLBARWIDTH = 25;
+  var SCROLLBARWIDTH = 20;
   var TABBROWSERTABS_MAXROWS = 3;
   var TAB_HEIGHT = 24;
+  var TAB_BARHEIGHT_WORKAROUND = (Components.classes["@mozilla.org/xre/app-info;1"]
+		                 .getService(Components.interfaces.nsIXULAppInfo)
+		                 .version.split(".")[0] < 30) ? 1 : 0;
 
   var TAB_MIN_WIDTH = 100;
   var TAB_MAX_WIDTH = 250;
@@ -119,7 +124,7 @@ function zzzz_MultiRowTab(){
       } \
  \
       #TabsToolbar .tabbrowser-tabs{ \
-          min-height:24px; \
+          min-height:{TAB_HEIGHT}px; \
  \
       } \
  \
@@ -140,7 +145,7 @@ function zzzz_MultiRowTab(){
           background-clip: padding-box !important; \
           transition: all .1s !important; \
  \
-          height:24px; \
+          height:{TAB_HEIGHT}px; \
       } \
  \
       #TabsToolbar  .tab-content { \
@@ -217,7 +222,7 @@ function zzzz_MultiRowTab(){
         if (!tabs[i].hasAttribute("hidden")) {
           var style = window.getComputedStyle(tabs[i], null);
           H = tabs[i].boxObject.height +
-              parseInt(style.marginTop, 10) + parseInt(style.marginBottom , 10);
+              parseInt(style.marginTop, 10) + parseInt(style.marginBottom , 10)
           break;
         }
       }
@@ -515,7 +520,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 
     var w2 = n = 0;
     
-    var remain = remainForNormal = scrollInnerbox.scrollWidth;
+    var remain = remainForNormal = scrollInnerbox.scrollWidth - SCROLLBARWIDTH; //mmm
     
     var numForNormal = numForPinned = 0
     for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
@@ -585,7 +590,8 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       tabbrowsertabs.removeAttribute("overflow");
     }
 
-    arrowscrollbox.style.setProperty("height", (numrows) * multirowtabH() + "px", "");
+    arrowscrollbox.style.setProperty("height", (numrows) * multirowtabH() +
+              TAB_BARHEIGHT_WORKAROUND + "px", "");
     //setTimeout(function(){arrowscrollbox.style.setProperty("height", scrollbox.boxObject.height + "px", "");}, 250);
 
     gBrowser.tabContainer .style.setProperty("max-height", TABBROWSERTABS_MAXROWS * multirowtabH()+"px", "");
