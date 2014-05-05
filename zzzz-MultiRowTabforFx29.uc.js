@@ -6,6 +6,8 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/05 23:00 remove unnecessary css transition
+// ==/UserScript==
 // @version        2014/05/05 20:50 workaround tabbar + 1px if version < Firefox30
 // @version        2014/05/05 20:45 reserve SCROLLBARWIDTH in tabbar mmm
 // @version        2014/05/05 08:00 workaround newtab position, reduce left/rught padding
@@ -19,7 +21,6 @@
 // @version        2011/04/21 dtopIndicator
 // @version        2011/04/15 tryserver Bug 455694
 // @version        2011/04/13 nightly
-// ==/UserScript==
 "user strict";
 
 zzzz_MultiRowTab();
@@ -143,7 +144,6 @@ function zzzz_MultiRowTab(){
           text-shadow: 0 0 4px rgba(255,255,255,.75) !important; \
           background: rgba(255,255,255,.27) !important; \
           background-clip: padding-box !important; \
-          transition: all .1s !important; \
  \
           height:{TAB_HEIGHT}px; \
       } \
