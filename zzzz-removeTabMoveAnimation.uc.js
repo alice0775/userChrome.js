@@ -1,11 +1,12 @@
 // ==UserScript==
-// @name           zzzz-removeTabMoveAnimation.uc.js
+// @name           zzzz-removeTabMoveAnimation_Fx29.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    remove tab move animation
 // @include        main
-// @compatibility  17.0-28.0a1 (UX)
+// @compatibility  29
 // @author         Alice0775
 // @note           no tab related addon installed
+// @version        2014/05/05 09:00 Fx29
 // @version        2013/11/19 19:00 getShortcutOrURI
 // @version        2012/12/05 16:00 tst
 // ==/UserScript==
@@ -20,31 +21,6 @@ if (window['piro.sakura.ne.jp'] &&
   }
 } else {
   (function(){
-  
-    gBrowser.tabContainer.getShortcutOrURI = function getShortcutOrURI(aURI) {
-      // Firefox 24 and older
-      if ("getShortcutOrURI" in window)
-        return getShortcutOrURI(aURI);
-
-      // Firefox 25 and later
-      var getShortcutOrURIAndPostData = window.getShortcutOrURIAndPostData;
-      var done = false;
-      Task.spawn(function() {
-        var data = yield getShortcutOrURIAndPostData(aURI);
-        aURI = data.url;
-        done = true;
-      });
-
-      // this should be rewritten in asynchronous style...
-      var thread = Cc['@mozilla.org/thread-manager;1'].getService().mainThread;
-      while (!done)
-      {
-        thread.processNextEvent(true);
-      }
-
-      return aURI;
-    } 
-
       gBrowser.tabContainer._onDragOver = function(event) {
         var effects = this._setEffectAllowedForDataTransfer(event);
         var ind = this._tabDropIndicator;
@@ -224,14 +200,22 @@ if (window['piro.sakura.ne.jp'] &&
           if (!tab || dropEffect == "copy") {
             // We're adding a new tab.
             let newIndex = this._getDropIndex(event);
-            let newTab = this.tabbrowser.loadOneTab(this.getShortcutOrURI(url), {inBackground: bgLoad});
-            this.tabbrowser.moveTabTo(newTab, newIndex);
+            getShortcutOrURIAndPostData(url, data => {
+              if (data.url) {
+                let newTab = this.tabbrowser.loadOneTab(data.url, {inBackground: bgLoad});
+                this.tabbrowser.moveTabTo(newTab, newIndex);
+              }
+            });
           } else {
             // Load in an existing tab.
             try {
-              this.tabbrowser.getBrowserForTab(tab).loadURI(this.getShortcutOrURI(url));
-              if (!bgLoad)
-                this.selectedItem = tab;
+              getShortcutOrURIAndPostData(url, data => {
+                if (data.url) {
+                  this.tabbrowser.getBrowserForTab(tab).loadURI(data.url);
+                  if (!bgLoad)
+                    this.selectedItem = tab;
+                }
+              });
             } catch(ex) {
               // Just ignore invalid urls
             }

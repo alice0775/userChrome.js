@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりバージョン
 // @include        main
-// @compatibility  Firefox 17-28.0a1(UX)
+// @compatibility  Firefox 17-32.0a1(UX)
 // @author         Alice0775
-// @note           デフォルトテーマ, zzzz-removeTabMoveAnimation.uc.js が必要
+// @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/05 09:00 modufied padding-bottom for selcted tab
 // @version        2013/11/19 12:30 Australis 
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
@@ -206,7 +207,7 @@ function zzzz_VerticalTabbar(){
  \
         .tabbrowser-tab[selected="true"] \
         { \
-        padding: 1px 0 1px 0 !important; \
+        padding: 1px 0 2px 0 !important; \
         /*background-image: url("chrome://browser/skin/tabbrowser/tab-active-bkgnd.png");*/ \
         /*background-color: ThreeDHighlight;*/ \
         } \
