@@ -6,6 +6,8 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/06 07:05 workaround after exit customze height of tabbar after exit customze mode
+// @version        2014/05/06 07:00 workaround initial height of tabbar
 // @version        2014/05/05 23:00 remove unnecessary css transition
 // ==/UserScript==
 // @version        2014/05/05 20:50 workaround tabbar + 1px if version < Firefox30
@@ -617,21 +619,22 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
   }
 
   //初回起動時ダミーイベント
-  function forceResize() {
-    if (timer)
-      clearTimeout(timer);
-    timer = setTimeout(function(event){
+  function forceResize(delay) {
+    if (timer2)
+      clearTimeout(timer2);
+    timer2 = setTimeout(function(event){
       setTabWidthAutomatically(event);
       ensureVisibleElement();
-    }, 500, {type:"resize"});
+    }, delay, {type:"resize"});
   }
-  forceResize();
+  forceResize(100);
 
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisibleElement, false);
   gBrowser.tabContainer.addEventListener('TabClose', setTabWidthAutomatically, true);
   gBrowser.tabContainer.addEventListener('TabOpen', setTabWidthAutomatically, true);
   gBrowser.tabContainer.addEventListener("TabPinned", setTabWidthAutomatically, false);
   gBrowser.tabContainer.addEventListener("TabUnpinned", setTabWidthAutomatically, false);
+  window.addEventListener("aftercustomization", function(){forceResize(0);}, false);
 
   //pref読み込み
   function getPref(aPrefString, aPrefType, aDefault) {
