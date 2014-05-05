@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/06 07:10 change timing tabclose 
 // @version        2014/05/06 07:05 workaround after exit customze height of tabbar after exit customze mode
 // @version        2014/05/06 07:00 workaround initial height of tabbar
 // @version        2014/05/05 23:00 remove unnecessary css transition
@@ -630,7 +631,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
   forceResize(100);
 
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisibleElement, false);
-  gBrowser.tabContainer.addEventListener('TabClose', setTabWidthAutomatically, true);
+  gBrowser.tabContainer.addEventListener('TabClose', setTabWidthAutomatically, false);
   gBrowser.tabContainer.addEventListener('TabOpen', setTabWidthAutomatically, true);
   gBrowser.tabContainer.addEventListener("TabPinned", setTabWidthAutomatically, false);
   gBrowser.tabContainer.addEventListener("TabUnpinned", setTabWidthAutomatically, false);
