@@ -6,6 +6,8 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/06 23:00 remove SCROLLBARWIDTH
+// @version        2014/05/06 23:00 Changed to use AGENT_SHEET to overide CTR css ONLY
 // @version        2014/05/06 22:20 workaround delay to adust height for CTR
 // @version        2014/05/06 22:00 Changed to use AGENT_SHEET to overide CTR css :(
 // @version        2014/05/06 07:10 change timing tabclose 
@@ -33,7 +35,6 @@ zzzz_MultiRowTab();
 
 function zzzz_MultiRowTab(){
   // -- config --
-  var SCROLLBARWIDTH = 20;
   var TABBROWSERTABS_MAXROWS = 3;
   var TAB_HEIGHT = 24;
 
@@ -202,7 +203,20 @@ function zzzz_MultiRowTab(){
     } \
   ';
 
-  style += ' \
+  style = style.replace(/\s+/g, " ")
+     .replace(new RegExp("{TAB_HEIGHT}", "g"), TAB_HEIGHT)
+     .replace(new RegExp("{TAB_MIN_WIDTH}", "g"), TAB_MIN_WIDTH)
+     .replace(new RegExp("{TAB_MAX_WIDTH}", "g"), TAB_MAX_WIDTH);
+  var sspi = document.createProcessingInstruction(
+    'xml-stylesheet',
+    'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
+  );
+  document.insertBefore(sspi, document.documentElement);
+  sspi.getAttribute = function(name) {
+    return document.documentElement.getAttribute(name);
+  };
+
+  style = ' \
     /* Tabs CTR*/ \
   	#TabsToolbar .tabbrowser-tabs:not([multibar]) .tabs-newtab-button, \
   	#TabsToolbar .tabbrowser-tabs:not([multibar]) .tabbrowser-tab { \
@@ -526,7 +540,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 
     var w2 = n = 0;
     
-    var remain = remainForNormal = scrollInnerbox.scrollWidth - SCROLLBARWIDTH; //mmm
+    var remain = remainForNormal = scrollInnerbox.scrollWidth; //mmm
     
     var numForNormal = numForPinned = 0
     for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
@@ -557,12 +571,11 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 
     //calclation number of rows and width
     var maxbottom  = m = 0;
-    var room = remain;
 
     let maxnum = Math.ceil(remainForNormal / TAB_MIN_WIDTH);
     if (remainForNormal >= numForNormal * TAB_MIN_WIDTH)
       maxnum = numForNormal;
-    let ww = Math.min(Math.floor(remainForNormal / maxnum), TAB_MAX_WIDTH);
+    let ww = Math.min(Math.floor((remainForNormal)/ maxnum), TAB_MAX_WIDTH);
 
     var w;
     for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
@@ -574,13 +587,6 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       if (!aTab.getAttribute("hidden")) {
         if (!aTab.getAttribute("pinned")) {
           aTab.style.setProperty("min-width", ww + "px", "");
-          w = ww;
-        } else {
-          w = aTab.boxObject.width;
-        }
-        room -= w;
-        if (room < 0) {
-          room = remain - w;
         }
       }
     }
@@ -638,6 +644,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     }, delay, {type:"resize"});
   }
   forceResize(0);
+  forceResize(800);
 
 
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisibleElement, false);
@@ -646,24 +653,4 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
   gBrowser.tabContainer.addEventListener("TabPinned", setTabWidthAutomatically, false);
   gBrowser.tabContainer.addEventListener("TabUnpinned", setTabWidthAutomatically, false);
   window.addEventListener("aftercustomization", function(){forceResize(0);}, false);
-
-  //pref読み込み
-  function getPref(aPrefString, aPrefType, aDefault) {
-    var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
-                  .getService(Components.interfaces.nsIPrefService);
-    try{
-      switch (aPrefType){
-        case "str":
-          return xpPref.getCharPref(aPrefString).toString(); break;
-        case "int":
-          return xpPref.getIntPref(aPrefString); break;
-        case "bool":
-        default:
-          return xpPref.getBoolPref(aPrefString); break;
-      }
-    }catch(e){
-    }
-    return aDefault;
-  }
-
 }
