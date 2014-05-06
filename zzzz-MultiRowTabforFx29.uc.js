@@ -6,6 +6,8 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/06 22:20 workaround delay to adust height for CTR
+// @version        2014/05/06 22:00 Changed to use AGENT_SHEET to overide CTR css :(
 // @version        2014/05/06 07:10 change timing tabclose 
 // @version        2014/05/06 07:05 workaround after exit customze height of tabbar after exit customze mode
 // @version        2014/05/06 07:00 workaround initial height of tabbar
@@ -34,9 +36,6 @@ function zzzz_MultiRowTab(){
   var SCROLLBARWIDTH = 20;
   var TABBROWSERTABS_MAXROWS = 3;
   var TAB_HEIGHT = 24;
-  var TAB_BARHEIGHT_WORKAROUND = (Components.classes["@mozilla.org/xre/app-info;1"]
-		                 .getService(Components.interfaces.nsIXULAppInfo)
-		                 .version.split(".")[0] < 30) ? 1 : 0;
 
   var TAB_MIN_WIDTH = 100;
   var TAB_MAX_WIDTH = 250;
@@ -55,167 +54,172 @@ function zzzz_MultiRowTab(){
   gPrefService.setBoolPref("browser.tabs.autoHide", false);
   gPrefService.setBoolPref("browser.tabs.animate", false);
 
-    /*タブが多い時に多段で表示するCSS適用 インラインを使用しないバージョン*/
-    var style = ' \
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
-      .tabbrowser-tabs \
-      { \
-        max-height: {TAB_HEIGHT}px; \
-        min-height: 0px; \
-        background-repeat: repeat !important; \
-        overflow-x: hidden; \
-        overflow-y: hidden; \
-      } \
-       \
-      .tabbrowser-tabs > .tabbrowser-tab:not([pinned]) { \
-        min-width: {TAB_MIN_WIDTH}px; \
-      } \
-       \
-      .tabbrowser-tabs > .tabbrowser-tab:not([pinned])[fadein] { \
-        max-width: {TAB_MAX_WIDTH}px; \
-      }\
-      .tabbrowser-tabs[positionpinnedtabs] > .tabbrowser-tab[pinned] { \
-        display: -moz-box!important; \
-        position: static !important; \
-      } \
-      .tabbrowser-tabs .tabbrowser-arrowscrollbox \
-      { \
-        /*height: 78px;*/ \
-        overflow: auto; \
-      } \
-      .tabbrowser-tabs .tabbrowser-arrowscrollbox > scrollbox \
-      { \
-        overflow: visible; \
-      } \
-      .tabbrowser-tabs .tabbrowser-arrowscrollbox > scrollbox > box \
-      { \
-        display: block; \
-        overflow: visible; \
-      } \
-       \
-      /* hide the scroll arrows and alltabs button */ \
-      .tabbrowser-tabs .scrollbutton-up, \
-      .tabbrowser-tabs .scrollbutton-down \
-      { \
-        display: none; \
-      } \
-       \
-      .tabbrowser-tabs .tabbrowser-arrowscrollbox > .tabs-newtab-button \
-      { \
-        display: none; \
-      } \
-      #new-tab-button \
-      { \
-        visibility: visible !important; \
-      } \
-      #alltabs-button \
-      { \
-        visibility: visible !important; \
-      } \
-       \
-      .closing-tabs-spacer { \
-        height: 0px !important; \
-        width: 0px !important; \
-        display: none !important; \
-      } \
-       \
-       \
-       \
-      /* Tabs デフォテーマ*/ \
-      #TabsToolbar { \
-          background: transparent !important; \
-          margin-bottom: 0 !important; \
-      } \
- \
-      #TabsToolbar .tabbrowser-tabs{ \
-          min-height:{TAB_HEIGHT}px; \
- \
-      } \
- \
-      #TabsToolbar .arrowscrollbox-scrollbox { \
-          padding: 0 !important; \
-      } \
- \
-      #TabsToolbar .tabbrowser-tab { \
-          -moz-border-top-colors: none !important; \
-          -moz-border-left-colors: none !important; \
-          -moz-border-right-colors: none !important; \
-          -moz-border-bottom-colors: none !important; \
-          border-style: solid !important; \
-          border-color: rgba(0,0,0,.2) !important; \
-          border-width: 1px 1px 0 1px !important; \
-          text-shadow: 0 0 4px rgba(255,255,255,.75) !important; \
-          background: rgba(255,255,255,.27) !important; \
-          background-clip: padding-box !important; \
- \
-          height:{TAB_HEIGHT}px; \
-      } \
- \
-      #TabsToolbar  .tab-content { \
-          -moz-padding-end: 3px; \
-          -moz-padding-start: 3px; \
-      } \
- \
-      /*workaround newtab position*/ \
-      #TabsToolbar .tabbrowser-tab:not([image]) .tab-icon-image { \
-        display: -moz-box; \
-      } \
- \
-      #TabsToolbar .tabbrowser-tab[first-tab][last-tab], \
-      #TabsToolbar .tabbrowser-tab[last-visible-tab] { \
-          border-right-width: 1px !important; \
-      } \
- \
-      #TabsToolbar .tabbrowser-tab[afterselected] { \
-         border-left-color: rgba(0,0,0,.25) !important; \
-      } \
- \
-      #TabsToolbar .tabbrowser-tab[selected] { \
-          background: #EAF2FA !important; \
-          background-clip: padding-box !important; \
-          border-color: rgba(0,0,0,.25) !important; \
-      } \
- \
-      #TabsToolbar .tabs-newtab-button:hover, \
-      #TabsToolbar .tabbrowser-tab:hover:not([selected]) { \
-          border-color: rgba(0,0,0,.2) !important; \
-          background-color: rgba(255,255,255,.55) !important; \
-      } \
- \
-      #TabsToolbar .tab-background { \
-          margin: 0 !important; \
-          background: transparent !important; \
-      } \
- \
-      #TabsToolbar .tab-background-start, \
-      #TabsToolbar .tab-background-end { \
-          display: none !important; \
-      } \
- \
-      #TabsToolbar .tab-background-middle { \
-          margin: 0 !important; \
-          background: transparent !important; \
-      } \
- \
-      #TabsToolbar .tabbrowser-tab:after, \
-      #TabsToolbar .tabbrowser-tab:before { \
-          display: none !important; \
-      } \
- \
-    '.replace(/\s+/g, " ")
-       .replace(new RegExp("{TABBROWSERTABS_MAXHEIGHT}", "g"), TABBROWSERTABS_MAXROWS*multirowtabH())
-       .replace(new RegExp("{TAB_HEIGHT}", "g"), TAB_HEIGHT)
-       .replace(new RegExp("{TAB_MIN_WIDTH}", "g"), TAB_MIN_WIDTH)
-       .replace(new RegExp("{TAB_MAX_WIDTH}", "g"), TAB_MAX_WIDTH);
+  /*タブが多い時に多段で表示するCSS適用 インラインを使用しないバージョン*/
+  var style = ' \
+    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+    .tabbrowser-tabs \
+    { \
+      max-height: {TAB_HEIGHT}px; \
+      min-height: 0px !important; \
+      background-repeat: repeat !important; \
+      overflow-x: hidden; \
+      overflow-y: hidden; \
+    } \
+     \
+    .tabbrowser-tabs > .tabbrowser-tab:not([pinned]) { \
+      min-width: {TAB_MIN_WIDTH}px; \
+    } \
+     \
+    .tabbrowser-tabs > .tabbrowser-tab:not([pinned])[fadein] { \
+      max-width: {TAB_MAX_WIDTH}px; \
+    }\
+    .tabbrowser-tabs[positionpinnedtabs] > .tabbrowser-tab[pinned] { \
+      display: -moz-box!important; \
+      position: static !important; \
+    } \
+    .tabbrowser-tabs .tabbrowser-arrowscrollbox \
+    { \
+      /*height: 78px;*/ \
+      overflow: auto; \
+    } \
+    .tabbrowser-tabs .tabbrowser-arrowscrollbox > scrollbox \
+    { \
+      overflow: visible; \
+    } \
+    .tabbrowser-tabs .tabbrowser-arrowscrollbox > scrollbox > box \
+    { \
+      display: block; \
+      overflow: visible; \
+    } \
+     \
+    /* hide the scroll arrows and alltabs button */ \
+    .tabbrowser-tabs .scrollbutton-up, \
+    .tabbrowser-tabs .scrollbutton-down \
+    { \
+      display: none; \
+    } \
+     \
+    .tabbrowser-tabs .tabbrowser-arrowscrollbox > .tabs-newtab-button \
+    { \
+      display: none; \
+    } \
+    #new-tab-button \
+    { \
+      visibility: visible !important; \
+    } \
+    #alltabs-button \
+    { \
+      visibility: visible !important; \
+    } \
+     \
+    .closing-tabs-spacer { \
+      height: 0px !important; \
+      width: 0px !important; \
+      display: none !important; \
+    } \
+    ';
 
-  var sspi = document.createProcessingInstruction(
-    'xml-stylesheet',
-    'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
-  );
-  document.insertBefore(sspi, document.documentElement);
-  sspi.getAttribute = function(name) {
-    return document.documentElement.getAttribute(name);
-  };
+  style += ' \
+    /* Tabs デフォテーマ*/ \
+    #TabsToolbar { \
+        background: transparent !important; \
+        margin-bottom: 0 !important; \
+    } \
+\
+    #TabsToolbar .tabbrowser-tabs{ \
+        min-height:{TAB_HEIGHT}px; \
+\
+    } \
+\
+    #TabsToolbar .arrowscrollbox-scrollbox { \
+        padding: 0 !important; \
+    } \
+\
+    #TabsToolbar .tabbrowser-tab { \
+        -moz-border-top-colors: none !important; \
+        -moz-border-left-colors: none !important; \
+        -moz-border-right-colors: none !important; \
+        -moz-border-bottom-colors: none !important; \
+        border-style: solid !important; \
+        border-color: rgba(0,0,0,.2) !important; \
+        border-width: 1px 1px 0 1px !important; \
+        text-shadow: 0 0 4px rgba(255,255,255,.75) !important; \
+        background: rgba(255,255,255,.27) !important; \
+        background-clip: padding-box !important; \
+\
+        height:{TAB_HEIGHT}px; \
+    } \
+ \
+    #TabsToolbar .tab-content:not([pinned]) { \
+        -moz-padding-end: 3px !important;; \
+        -moz-padding-start: 3px !important;; \
+    } \
+\
+    /*workaround newtab position*/ \
+    #TabsToolbar .tabbrowser-tab:not([image]) .tab-icon-image { \
+      display: -moz-box !important; \
+    } \
+\
+    #TabsToolbar .tabbrowser-tab[first-tab][last-tab], \
+    #TabsToolbar .tabbrowser-tab[last-visible-tab] { \
+        border-right-width: 1px !important; \
+    } \
+\
+    #TabsToolbar .tabbrowser-tab[afterselected] { \
+       border-left-color: rgba(0,0,0,.25) !important; \
+    } \
+\
+    #TabsToolbar .tabbrowser-tab[selected] { \
+        background: #EAF2FA !important; \
+        background-clip: padding-box !important; \
+        border-color: rgba(0,0,0,.25) !important; \
+    } \
+\
+    #TabsToolbar .tabs-newtab-button:hover, \
+    #TabsToolbar .tabbrowser-tab:hover:not([selected]) { \
+        border-color: rgba(0,0,0,.2) !important; \
+        background-color: rgba(255,255,255,.55) !important; \
+    } \
+\
+    #TabsToolbar .tab-background { \
+        margin: 0 !important; \
+        background: transparent !important; \
+    } \
+\
+    #TabsToolbar .tab-background-start, \
+    #TabsToolbar .tab-background-end { \
+        display: none !important; \
+    } \
+\
+    #TabsToolbar .tab-background-middle { \
+        margin: 0 !important; \
+        background: transparent !important; \
+    } \
+\
+    #TabsToolbar .tabbrowser-tab:after, \
+    #TabsToolbar .tabbrowser-tab:before { \
+        display: none !important; \
+    } \
+  ';
+
+  style += ' \
+    /* Tabs CTR*/ \
+  	#TabsToolbar .tabbrowser-tabs:not([multibar]) .tabs-newtab-button, \
+  	#TabsToolbar .tabbrowser-tabs:not([multibar]) .tabbrowser-tab { \
+  	  margin-bottom: 0 !important; \
+    } \
+  ';
+  style = style.replace(/\s+/g, " ")
+     .replace(new RegExp("{TAB_HEIGHT}", "g"), TAB_HEIGHT)
+     .replace(new RegExp("{TAB_MIN_WIDTH}", "g"), TAB_MIN_WIDTH)
+     .replace(new RegExp("{TAB_MAX_WIDTH}", "g"), TAB_MAX_WIDTH);
+
+  var sss = Components.classes["@mozilla.org/content/style-sheet-service;1"]
+                      .getService(Components.interfaces.nsIStyleSheetService);
+  var ios = Components.classes["@mozilla.org/network/io-service;1"]
+                      .getService(Components.interfaces.nsIIOService);
+  var uri = ios.newURI("data:text/css," + encodeURIComponent(style), null, null);
+  sss.loadAndRegisterSheet(uri, sss.AGENT_SHEET);
 
   function multirowtabH() {
     var H;
@@ -519,7 +523,6 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 
     gBrowser.tabContainer.style.removeProperty("-moz-padding-start");
     gBrowser.tabContainer.style.removeProperty("-moz-margin-start");
-    gBrowser.tabContainer.style.removeProperty("max-height");
 
     var w2 = n = 0;
     
@@ -554,7 +557,6 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 
     //calclation number of rows and width
     var maxbottom  = m = 0;
-    var numrows = 1;
     var room = remain;
 
     let maxnum = Math.ceil(remainForNormal / TAB_MIN_WIDTH);
@@ -578,26 +580,33 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
         }
         room -= w;
         if (room < 0) {
-          numrows++;
           room = remain - w;
         }
       }
     }
 
-    // persona privent unexpected vertical scroll bar
-    if (scrollbox.boxObject.height > TABBROWSERTABS_MAXROWS * multirowtabH()) {
-      arrowscrollbox.style.setProperty("overflow-y", "auto", "important")
-      tabbrowsertabs.setAttribute("overflow", true);
-    } else {
-      arrowscrollbox.style.setProperty("overflow-y", "hidden", "important");
-      tabbrowsertabs.removeAttribute("overflow");
-    }
+    //delay to adust height for CTR
+    setTimeout(function(){
+      var y = 0, numrows = 0;
+      for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
+        let aTab = gBrowser.tabs.item(i);
+        if (!aTab.getAttribute("hidden")) {
+          if (y + 5 < aTab.boxObject.screenY) {
+            y = aTab.boxObject.screenY;
+            numrows++;
+          }
+        }
+      }
 
-    arrowscrollbox.style.setProperty("height", (numrows) * multirowtabH() +
-              TAB_BARHEIGHT_WORKAROUND + "px", "");
-    //setTimeout(function(){arrowscrollbox.style.setProperty("height", scrollbox.boxObject.height + "px", "");}, 250);
-
-    gBrowser.tabContainer .style.setProperty("max-height", TABBROWSERTABS_MAXROWS * multirowtabH()+"px", "");
+      var er = scrollbox.scrollHeight % multirowtabH();
+      if (numrows > 1) {
+        arrowscrollbox.style.setProperty("height", (numrows) * multirowtabH() +
+                er + "px", "");
+      } else {
+        arrowscrollbox.style.removeProperty("height");
+      }
+      gBrowser.tabContainer .style.setProperty("max-height", TABBROWSERTABS_MAXROWS * multirowtabH()+ er + "px", "");
+    }, 150);
   };
 
   //以下はタブ幅自動調整のためのイベント登録
@@ -628,7 +637,8 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       ensureVisibleElement();
     }, delay, {type:"resize"});
   }
-  forceResize(100);
+  forceResize(0);
+
 
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisibleElement, false);
   gBrowser.tabContainer.addEventListener('TabClose', setTabWidthAutomatically, false);
