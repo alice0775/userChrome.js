@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/07 19:50 Fixwd TABBROWSERTABS_MAXROWS
 // @version        2014/05/07 08:00 impliment DISABLE_AUTOWIDTH and enabled it default
 // @version        2014/05/06 23:00 remove SCROLLBARWIDTH
 // @version        2014/05/06 23:00 Changed to use AGENT_SHEET to overide CTR css ONLY
@@ -611,7 +612,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       var er = scrollbox.scrollHeight % multirowtabH();
       if (numrows > 1) {
         arrowscrollbox.style.setProperty("height", (numrows) * multirowtabH() + er + "px", "");
-        gBrowser.tabContainer.style.setProperty("max-height", (numrows) * multirowtabH() + er + "px", "");
+        gBrowser.tabContainer.style.setProperty("max-height", (TABBROWSERTABS_MAXROWS) * multirowtabH() + er + "px", "");
       } else {
         arrowscrollbox.style.removeProperty("height");
         gBrowser.tabContainer.style.removeProperty("max-height");
