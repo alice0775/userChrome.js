@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/09 15:30 do not collapse tabbar
 // @version        2014/05/09 15:30 make clicable tab at left side of screen when maxmized
 // @version        2014/05/09 14:50 remove debug
 // @version        2014/05/09 14:30 tweeks scrollbar, splitter width
@@ -81,6 +82,11 @@ function zzzz_VerticalTabbar(){
         { \
         visibility:collapse; \
         } \
+ \
+        #verticalTabToolBox \
+        { \
+        border-top-width:0px; \
+        }\
  \
         /*workaround: hidden when customize mode*/ \
         #TabsToolbar[customizing="true"] \
@@ -693,30 +699,22 @@ function zzzz_VerticalTabbar(){
     verticalTabToolBox.style.width = TABBARWIDTH + TABBARLEFTMERGINE + "px";
     window.addEventListener('resize', VerticalTabbarOnresized, false);
 
-    var skipResize = null;
-    var resizeTimer = null;
     function VerticalTabbarOnresized() {
-      if (resizeTimer)
-        clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(function() {
-        resized();
-        skipResize = null;
-      }, 250);
-      setTimeout(function() {
-        skipResize = null;
-      }, 100);
-      if (!!skipResize)
-        return;
-
+      if (!window.fullScreen) {
+        tabsToolbar.removeAttribute("moz-collapsed");
+        vtbSplitter.removeAttribute("moz-collapsed");
+        verticalTabToolBox.removeAttribute("moz-collapsed");
+      }
+         
       resized();
       
       function resized() {
-        skipResize = true;
         tabbrowsertabs.setAttribute('overflow', true);
 
         //幅調整
-        tabsToolbar.collapsed = vtbSplitter.getAttribute('state') == 'collapsed';
-        tabsToolbar.style.width = verticalTabToolBox.boxObject.width - TABBARLEFTMERGINE + "px";
+        tabsToolbar.style.width =  vtbSplitter.getAttribute('state') == 'collapsed' 
+                                   ? "0px" 
+                                   : verticalTabToolBox.boxObject.width - TABBARLEFTMERGINE + "px";
         //高さ調整
         var toolbuttonH = 0;
         if (!TOOLBARBUTTON_AS_TAB) {
