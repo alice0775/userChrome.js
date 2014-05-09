@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/09 14:50 remove debug
 // @version        2014/05/08 10:00 Fix height of when open in foreground new tab
 // @version        2014/05/07 19:50 Fixwd TABBROWSERTABS_MAXROWS
 // @version        2014/05/07 08:00 impliment DISABLE_AUTOWIDTH and enabled it default
@@ -547,7 +548,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     var w2 = n = 0;
     
     var remain = remainForNormal = scrollInnerbox.scrollWidth; //mmm
-    userChrome_js.debug(remain);
+    //userChrome_js.debug(remain);
     var numForNormal = numForPinned = 0
     for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
       let aTab = gBrowser.tabs.item(i);

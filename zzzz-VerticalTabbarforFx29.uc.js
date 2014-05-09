@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/09 14:50 remove debug
 // @version        2014/05/09 14:30 tweeks scrollbar, splitter width
 // @version        2014/05/09 14:20 scroll tabbar by mouse wheel
 // @version        2014/05/09 14:20 fix unexpected scroll to top by mouse move
@@ -771,7 +772,7 @@ function zzzz_VerticalTabbar(){
         return;
       var arrowscrollbox = gBrowser.tabContainer.mTabstrip;
       var scrollbox = document.getAnonymousElementByAttribute(arrowscrollbox, "class", "arrowscrollbox-scrollbox");
-      userChrome_js.debug(scrollbox.scrollTop);
+      //userChrome_js.debug(scrollbox.scrollTop);
       scrollbox.scrollTop += (event.detail > 0 ? 1 : -1) * 50;
     });
 
