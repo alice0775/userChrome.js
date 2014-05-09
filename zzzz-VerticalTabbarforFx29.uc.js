@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/09 15:30 make clicable tab at left side of screen when maxmized
 // @version        2014/05/09 14:50 remove debug
 // @version        2014/05/09 14:30 tweeks scrollbar, splitter width
 // @version        2014/05/09 14:20 scroll tabbar by mouse wheel
@@ -112,6 +113,7 @@ function zzzz_VerticalTabbar(){
 */ \
         #tabbrowser-tabs > hbox \
         { \
+        pointer-events:none; \
         position:fixed; \
         left: 0px; \
         right: 0px; \
@@ -263,6 +265,11 @@ function zzzz_VerticalTabbar(){
         background-color: ThreeDHighlight; \
         } \
  \
+        #TabsToolbar .tab-content:not([pinned]), \
+        #TabsToolbar .tab-content[pinned] { \
+        -moz-padding-end: 3px !important;; \
+        -moz-padding-start: 3px !important;; \
+        } \
  \
         /*toolbarbutton*/ \
 	      #TabsToolbar > toolbarbutton[collapsed="true"] \
