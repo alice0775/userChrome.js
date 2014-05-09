@@ -170,7 +170,16 @@ function zzzz_VerticalTabbar(){
         visibility:collapse; \
         } \
  \
-         /*default theme要調整*/ \
+        /* splitter */ \
+        #vtb_splitter { \
+        min-width:4px !important; \
+        } \
+ \
+        #vtb_splitter > grippy { \
+        min-width:2px !important; \
+        } \
+ \
+        /*default theme要調整*/ \
         /* Fx3.7a2*/ \
         toolbarbutton:not([id="back-button"]):not([id="forward-button"]) \
         { \
@@ -189,10 +198,10 @@ function zzzz_VerticalTabbar(){
         border: 1px solid ThreeDShadow; \
         border-bottom: 1px solid transparent; \
  \
-        -moz-border-radius-topleft : 0 !important; \
-        -moz-border-radius-topright : 0 !important; \
-        -moz-border-radius-bottomleft : 0 !important; \
-        -moz-border-radius-bottomright : 0 !important; \
+        border-radius-topleft : 0 !important; \
+        border-radius-topright : 0 !important; \
+        border-radius-bottomleft : 0 !important; \
+        border-radius-bottomright : 0 !important; \
  \
         /*background-image: url("chrome://browser/skin/tabbrowser/tab-bkgnd.png");*/ \
         } \

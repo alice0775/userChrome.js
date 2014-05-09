@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/08 10:00 Fix height of when open in foreground new tab
 // @version        2014/05/07 19:50 Fixwd TABBROWSERTABS_MAXROWS
 // @version        2014/05/07 08:00 impliment DISABLE_AUTOWIDTH and enabled it default
 // @version        2014/05/06 23:00 remove SCROLLBARWIDTH
@@ -546,7 +547,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     var w2 = n = 0;
     
     var remain = remainForNormal = scrollInnerbox.scrollWidth; //mmm
-    
+    userChrome_js.debug(remain);
     var numForNormal = numForPinned = 0
     for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
       let aTab = gBrowser.tabs.item(i);
@@ -578,8 +579,6 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     var maxbottom  = m = 0;
 
     let maxnum = Math.ceil(remainForNormal / TAB_MIN_WIDTH);
-    if (remainForNormal >= numForNormal * TAB_MIN_WIDTH)
-      maxnum = numForNormal;
     let ww = Math.min(Math.floor((remainForNormal)/ maxnum), TAB_MAX_WIDTH);
 
     var w;
@@ -597,7 +596,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     }
 
     //delay to adust height for CTR
-    setTimeout(function(){
+    setTimeout(function() {
       var y = 0, numrows = 0;
       for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
         let aTab = gBrowser.tabs.item(i);
@@ -618,7 +617,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
         gBrowser.tabContainer.style.removeProperty("max-height");
       }
 
-    }, 250);
+    }, 0);
   };
 
   //以下はタブ幅自動調整のためのイベント登録
@@ -627,7 +626,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       if (timer)
         clearTimeout(timer);
       setTimeout(function(event){setTabWidthAutomatically(event);}, 0, {type:"resize"});
-      timer = setTimeout(function(event){ensureVisibleElement(gBrowser.selectedTab);}, 250);
+      timer = setTimeout(function(event){ensureVisibleElement(gBrowser.selectedTab);}, 0);
    }
   }, true);
 
@@ -636,7 +635,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     try{
       var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
                .createInstance(Components.interfaces.inIFlasher);
-      mShell.scrollElementIntoView(selectedTab);
+      setTimeout(function(){mShell.scrollElementIntoView(selectedTab);}, 0);
     }catch(e){}
   }
 
