@@ -6,6 +6,8 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/10 13:00 remove fog in titlebar, fixed if no titlebar displayed
+// @version        2014/05/09 15:30 use sizemodechange event
 // @version        2014/05/09 15:30 do not collapse tabbar
 // @version        2014/05/09 15:30 make clicable tab at left side of screen when maxmized
 // @version        2014/05/09 14:50 remove debug
@@ -94,6 +96,7 @@ function zzzz_VerticalTabbar(){
           visibility:collapse !important; \
         }\
  \
+        #main-window[tabsintitlebar] #TabsToolbar:not(:-moz-lwtheme), \
         #TabsToolbar:not(:-moz-lwtheme), \
         #TabsToolbar \
         { \
@@ -107,16 +110,6 @@ function zzzz_VerticalTabbar(){
         overflow-y: hidden; \
         } \
  \
-        /*xxx Bug 574434 \
-        #navigator-toolbox[tabsontop="true"] > #toolbar-menubar[autohide="true"] ~ #nav-bar \
-        { \
-         -moz-padding-start: 10em !important; \
-        } \
-        #navigator-toolbox[tabsontop="true"] > #toolbar-menubar[autohide="true"] ~ #TabsToolbar \
-        { \
-         -moz-padding-start: 0em !important; \
-        } \
-*/ \
         #tabbrowser-tabs > hbox \
         { \
         pointer-events:none; \
@@ -210,6 +203,11 @@ function zzzz_VerticalTabbar(){
         toolbarbutton:not([id="back-button"]):not([id="forward-button"]) \
         { \
         /*margin-top:0px; //? */\
+        } \
+ \
+        #TabsToolbar:not(:-moz-lwtheme)::after \
+        { \
+          display:none !important; \
         } \
  \
         .tabbrowser-tab, \
@@ -698,13 +696,18 @@ function zzzz_VerticalTabbar(){
     //ここからは, ツールバーの表示非表示によるタブーバーの位置, 大きさの調整
     verticalTabToolBox.style.width = TABBARWIDTH + TABBARLEFTMERGINE + "px";
     window.addEventListener('resize', VerticalTabbarOnresized, false);
+    window.addEventListener('sizemodechange', windowSizemodechange, false);
+    window.addEventListener("aftercustomization", VerticalTabbarOnresized, false);
 
-    function VerticalTabbarOnresized() {
+    function windowSizemodechange() {
       if (!window.fullScreen) {
         tabsToolbar.removeAttribute("moz-collapsed");
         vtbSplitter.removeAttribute("moz-collapsed");
         verticalTabToolBox.removeAttribute("moz-collapsed");
       }
+    }
+
+    function VerticalTabbarOnresized() {
          
       resized();
       
