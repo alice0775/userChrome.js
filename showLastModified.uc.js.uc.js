@@ -5,22 +5,11 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/11 12:30 removed unnecessary codes
 // @version        2014/05/11 11:30
 // @note           For Firefox29+, required CTR or S4E extention to display add-on bar
 // ==/UserScript==
 var showLastModified = {
-  init: function() {
-    var overlay = ' \
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" > \
-        <toolbar id="ctraddon_addon-bar"> \
-          <toolbarbutton label="showLastModified" id="showLastModifiedLabel" class="toolbarbutton-1" \
-                         removable="false" cui-areatype="toolbar"/> \
-        </toolbar> \
-      </overlay>';
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-    window.userChrome_js.loadOverlay(overlay, this);
-  },
-
   init: function(){
     var toolbarBtn = document.createElement("toolbarbutton");
     toolbarBtn.setAttribute("id", "showLastModifiedLabel");
