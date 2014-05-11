@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/11 14:30 use progress Listener instead of dom events
 // @version        2014/05/11 12:30 removed unnecessary codes
 // @version        2014/05/11 11:30
 // @note           For Firefox29+, required CTR or S4E extention to display add-on bar
@@ -21,19 +22,9 @@ var showLastModified = {
                  document.getElementById("addon-bar");
     refItem.insertBefore(toolbarBtn, refItem.lastChild);
 
-    gBrowser.tabContainer.addEventListener("TabSelect", this, false);
-    gBrowser.addEventListener("DOMContentLoaded", this, false);
+    gBrowser.addProgressListener(this);
     window.addEventListener("unload", this, false);
-    this.delayedInit();
-  },
 
-  uninit: function() {
-    gBrowser.tabContainer.removeEventListener("TabSelect", this, false);
-    gBrowser.removeEventListener("DOMContentLoaded", this, false);
-    window.removeEventListener("unload", this, false);
-  },
-
-  delayedInit: function() {
     var style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
         #showLastModifiedLabel .toolbarbutton-icon { \
@@ -55,6 +46,31 @@ var showLastModified = {
     };
   },
 
+  uninit: function() {
+    gBrowser.removeProgressListener(this);
+    window.removeEventListener("unload", this, false);
+  },
+
+  // nsIWebProgressListener
+  QueryInterface: XPCOMUtils.generateQI(["nsIWebProgressListener",
+                                         "nsISupportsWeakReference"]),
+
+  onLocationChange: function(aProgress, aRequest, aURI) {
+    var domWin = aProgress.DOMWindow;
+    var doc = domWin.document;  
+    if (doc instanceof Components.interfaces.nsIDOMHTMLDocument) {
+      var nLastModified = new Date(doc.lastModified);
+      this.showLabel(nLastModified);
+      return;
+    }
+    this.showLabel(undefined);
+  },
+
+  onStateChange: function() {},
+  onProgressChange: function() {},
+  onStatusChange: function() {},
+  onSecurityChange: function() {},
+    
   handleEvent: function(event) {
     switch(event.type) {
       case 'DOMContentLoaded':
@@ -67,28 +83,6 @@ var showLastModified = {
         this.uninit();
         break;
     }
-  },
-
-  onDOMContentLoaded: function(event) {
-    if (event.originalTarget instanceof Components.interfaces.nsIDOMHTMLDocument) {
-      var win = event.originalTarget.defaultView;
-      if (win.frameElement)
-        return;
-      var nLastModified = new Date(win.document.lastModified);
-      this.showLabel(nLastModified);
-      return;
-    }
-    this.showLabel(undefined);
-  },
-
-  onTabSelect: function(event) {
-    var doc = gBrowser.selectedBrowser.contentDocument;
-    if (doc instanceof Components.interfaces.nsIDOMHTMLDocument) {
-      var nLastModified = new Date(doc.lastModified);
-      this.showLabel(nLastModified);
-      return;
-    }
-    this.showLabel(undefined);
   },
 
   showLabel: function(lastModified) {
