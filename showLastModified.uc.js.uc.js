@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/11 14:40 clean up
 // @version        2014/05/11 14:30 use progress Listener instead of dom events
 // @version        2014/05/11 12:30 removed unnecessary codes
 // @version        2014/05/11 11:30
@@ -73,12 +74,6 @@ var showLastModified = {
     
   handleEvent: function(event) {
     switch(event.type) {
-      case 'DOMContentLoaded':
-        this.onDOMContentLoaded(event);
-        break;
-      case 'TabSelect':
-        this.onTabSelect(event);
-        break;
       case 'unload':
         this.uninit();
         break;
