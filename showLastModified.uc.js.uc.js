@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/12 06:50 make working without CTR/S4E
 // @version        2014/05/12 06:40 make movable toolbarbutton
 // @version        2014/05/11 14:40 clean up
 // @version        2014/05/11 14:30 use progress Listener instead of dom events
@@ -22,12 +23,9 @@ var showLastModified = {
     toolbarBtn.setAttribute("removable", "true");
     var refItem= document.getElementById("ctraddon_addon-bar") ||
                  document.getElementById("status4evar-status-bar") ||
+                 document.getElementById("nav-bar-customization-target") ||
                  document.getElementById("addon-bar");
     this.initToolbar(toolbarBtn, toolbarBtn.id,  refItem.lastChild);
-
-    this.onLocationChange(null, null, null);
-    gBrowser.addProgressListener(this);
-    window.addEventListener("unload", this, false);
 
     var style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
@@ -54,6 +52,10 @@ var showLastModified = {
     sspi.getAttribute = function(name) {
       return document.documentElement.getAttribute(name);
     };
+
+    setTimeout(function(){this.onLocationChange({DOMWindow:content}, null, null);}.bind(this), 0);
+    gBrowser.addProgressListener(this);
+    window.addEventListener("unload", this, false);
   },
 
   initToolbar: function(elm, id, ref) {
