@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2015/05/12 23:30 Remove unnecessary listener
 // @version        2015/05/12 08:30 Working on Firefox29+
 // ==/UserScript==
 var revertSidebarToggleButton = {
@@ -116,20 +117,6 @@ var revertSidebarToggleButton = {
       {
       }
     };
-    
-    window.addEventListener("unload", this, true);
-  },
-
-  unini: function() {
-    window.removeEventListener("unload", this, true);
-  },
-
-  handleEvent: function(event) {
-    switch(event.type) {
-      case "unload":
-        this.uninit(event);
-        break;
-    }
   }
 };
 
