@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/12 12:40 specify mode, iconsize
 // @version        2014/05/12 12:30
 // ==/UserScript==
 (function(){
@@ -41,6 +42,8 @@
   let addonbar = document.createElement("toolbar");
   addonbar.setAttribute("id", "ucjs-addon-bar");
   addonbar.setAttribute("customizable", "true");
+  addonbar.setAttribute("mode", "icons");
+  addonbar.setAttribute("iconsize", "small");
 
   let toolbarspring = document.createElement("spacer");
   toolbarspring.setAttribute("flex", "1");
