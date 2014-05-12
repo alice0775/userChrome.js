@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/12 15:30 mousethrough
 // @version        2014/05/12 15:00 import CustomizableUI.jsm
 // @version        2014/05/12 15:00 error?
 // @version        2014/05/12 09:30 use CustomizableUI to create toolbarbutton
@@ -33,6 +34,7 @@ var showLastModified = {
             class: "toolbarbutton-1 chromeclass-toolbar-additional",
             label: "",
             tooltiptext: "showLastModified",
+            mousethrough: 'always'
           };
           for (var p in props) {
             toolbaritem.setAttribute(p, props[p]);

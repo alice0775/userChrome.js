@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/12 15:30 defaultCollapsed is only allowed for default toolbars
 // @version        2014/05/12 14:00 clean up
 // @version        2014/05/12 14:00 wrapped status-bar, regidter before create toolbar
 // @version        2014/05/12 13:00 toolbar style, load CustomizableUI.jsm
@@ -33,7 +34,6 @@
   CustomizableUI.registerArea("ucjs-addon-bar", {
     type: CustomizableUI.TYPE_TOOLBAR,
     defaultPlacements: ["spring_revertAddonBarStatusBar", "ucjs-status-bar"],
-    defaultCollapsed: false,
   }, true);
 
   //create toolbar
