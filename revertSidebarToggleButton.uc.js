@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2015/05/13 07:35 fix darktheme
 // @version        2015/05/13 07:30 darktheme
 // @version        2015/05/12 23:30 Remove unnecessary listener
 // @version        2015/05/12 08:30 Working on Firefox29+
@@ -76,7 +77,7 @@ var revertSidebarToggleButton = {
         list-style-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAADBUlEQVQ4jZ2TXWhTZxjH2xXr9GKw0YuZWTfsplatrYlxSZM03x+nyTlJ2pOYz9mYprW1rd2iVnFfMMs6mVbQFkXRsahjZQWZ0DuvpHjjHJatzs8rQx2csbKJF8r47eYo6aBE9sB78/L+f+/zf/g/FRVlCqgEKsu9W0y8HNAscpa+LETz+fBh7RqttbB6U/PvdY0m6hpN1DUYH9br7eOFwsRaYEU5CxqzO7xrrc76l94mYhGi2AIJbIE4Fl8ErdXPu5tb5jxSIgloFu1Eb/V/usnkxdIaJZEbnBo7fT5ffPRIunPnfvux8XNDbemeabMQYcP7LhxirOM57MUMgeU7B/fbmsy+p85gio8+GRkFtiqKsm6j0XNrs6X1CrAGMGYHDlxwBJM0GD3zR0+dawCWlII0ert03hlKE8n0XwU2AlUXf7i8botNRGsV/1YHvWR+fl4nJrtmbYE4Bnd4BFixAGRwtc/5IllOnr2YAl4DqiYuTa13BtM4pNTjEhs1Hw8fG/LKWZo98nX1g8oK4JUbs7Nv26QUXrnzGbBaFVRNXJpa727rwN2eeVIsFmtVG9XfXJhs8UWytATify4ATU9fr/PKOxCinf+ogkoVVivEcr945B0YnKGvn+foqyPjBmFbDldb5o8XIFWw0h/rngvEu0nmBsLA6+r9G4qiONK9+yYbza1PO7rzbqBGjGUGAvFupFTPzf+CNImu/GRoez/NvvZrpQkGlgG6M4WJPoeYGCkWi7VmITojpfvI9O8/DrxZCnr1x6krQjDd98QbyaK3i+OqxRqgGlgKvHP79oOtBnf4eyGWI/jBLmVm5pYRqFqwi8Cqz0ZODLdlBnGFt9NoEn52hxLpw6NjTfsOHjK4pGROZw/e80U7CWV2Pzt+prAbeGtBIEtg9cOjpw7JmQ8f+xM7MQnb0NpEdHYJiz9OINmD3JVXxs5+twd4r9zS1t+4+as8cPDLbxO9QzNyZ16JZPNzyd4DP+39YvTkb3cfSGUhJbBlQBNgBpyAAzABG4Dql4L83/oXzWAYtvzCGMUAAAAASUVORK5CYII="); \
       } \
  \
-      #history-button:-moz-lwtheme-brighttext { \
+      #history-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
         list-style-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAACW0lEQVQ4jbWUMUjccBTGfwqSwcHhbrrBDOIY6H5bKRkOocMNBUG4QYSjq4MKgqNgoFAIlIgVUTsUCdiD4qEODShIKCIFuSLIHahXhxOCOWwC8XW4f+QsWkuhHwRCXv4/8n3vvcB/VA8wBEwAb4B36loAxoCceueP6gNGC4XCuu/7x+12uy1KQRBce553ZBjGMlAEeh+D9AMTjuPsRlEUySMKwzCcn5//DIw/BOsFSq7r7qcHfN8/npqa2tR1fckwjOW5ublKrVY7TeuWZW0Br363OVQqlT4mSXIrIrK6uvoFeK1pmtNqta5OTk4awAwwub29/VVE5Obm5mc+n18BMt2gcd/3j0VEarXaKTAJDBiGsSwiEkVRBLwFMpqmOefn5z9ERCqVyoHK604LQRBci4iUy+UN4BnQ/wAI4LllWVsiIo1G40J9aadT2Wx2UUQkSZJbOq3u7QbFcRxrmuYoGxnTNNdSe3RGpAPSdX0pBakDfSrEmdRGtVr1gRKQKxQK6yIi7Xa73Q26Z216enoTyKvn+Ww2u+h53lGSJLfK9ojjOLsPWQMo7e3tfRMRqdfrZ6qYU7UcUCqXyxuVSuVA0zSn2Wxeioi4rrsPvOwGDZqmuRbHcSwi4nnekbL4QuUyCBR1XV86PDz8ng7m8PDwe2CgG9QDjNm2vZMOXLPZvLQsa8s0zbVisfjBtu2dVqt1lWapIrjX+rvQgXHbtneeWpHZ2dlPKvhH960XGM3n8yvVatVvNBoXYRiGQRBc1+v1M9d19/9mabttZujs0Qyd9i6o+xGVyZO/kX/WL49ZvQA8/5e1AAAAAElFTkSuQmCC"); \
       } \
  \
@@ -84,7 +85,7 @@ var revertSidebarToggleButton = {
         list-style-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAADQklEQVQ4jZ2US28TVxiG3f+QDW5JlYrGG0pbVWAoJvcqdhw7TvAY23OJJ449t0ziyYydcRxfGAI4yCotUhdVxIIlQmxYwAI2CKSoYhEkJKRs0gXSGQuHCV0QKauXTWKXCqmCV3oW5xzpWZzv0+ty/SsAvvgUXP8NgC4A7s+k61DiDkbZqZ4TZ/76+vjpvZ7vzuwd+8GH/+ObE2fR8/3Pm6HY9HkAbhcA97c/9r/yjZ53RifZ1hQr7fQFEwjGZj5gjOIxRvHtcyCaQl+AguengVZbdGoo/E+MV5t0ViPp+aI9nsiCEfQ28dkclHytqeRrzfhsDoygg84uIsarOD0yibbIF7zgMKJOGFEnswslezwpgJUMsJIBRtQRpgW8eLl198XLrbthWgAj6u33gVCyI+ofTzicXCCcXCDCYtkOMxIYyUAio2EqNQdBL28DEAAIgl7enkrNIZHRwEgGhibojmggRDsptUhSapFIRtUOMzLEfO3tnXsPnmw8e/5o583uTQDnAJzbebN7c+PZ80d37j14IuZrbwcnmI5ocIJx0gslkl4oETlv2WFGhmxUt/b29wsAOABeAMcO8ALg9vb3C7JR3RoKswDwpQuAeyQy7WS0CsloFaKYq3aEUxFKCvD5qYfNZtMLoBvAVwd0N5tNr89PPQwlBQxPTgPAURcA9y/RlCMYFhEMi8yv1O1oWgMnL6EvGAfFiiUAvQdL2wWgl2LFUl8wDk5ewig10xH5qVlHNleJbK6Sxeo1O57NQypcQoRVsH7rtgWgu9VqeVqtlgdA9/qt21aEVSAVLmEsnumIAvGso5bqRC3ViXHxVzshmVBX1hBNa3j8dIO2rlw/23uyf7P3ZP9moXJ58PHTDTqa1qCurCGYFDt/NJbI7uYqDZKrNEhh9YbNzC0jV22AVkwEKP7+qZHIu1FqBv5YGt6RyXcBir9PKyZy1QbGabkztWBC/FstX7MXreukWP/D5ubL0K3fIJtXQEtL4OaWoRSvQileBacug5aXIJmXMV9uIMQoO4eiI2s31vMXpMI2r1VbvHbxdVq3kNYt8FoNqVwVvFbDx+6SkunUf//TBHDksAE8AIYB+D+RYQCej/XSZxfbe0aP+PckvphDAAAAAElFTkSuQmCC"); \
       } \
  \
-      #bookmarks-button:-moz-lwtheme-brighttext { \
+      #bookmarks-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
         list-style-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAABN0lEQVQ4ja2UsYrDMAyGf7J1rp/ImQreMuQB7kHcbl6avQk3mUL3QJbQoQ/Q2WNGkSXQQYuX3OKAKaFJuQgEtpE+rN+SgQ0tAZACOAK4BP+J1p/8GHITAMi01jUR9WMwAJdxhRFRr7WuAWQAUDAzxwFrQeM4jszMAArMJc2dDcPwGobhNQcLZa4Daa1rrXX9LxAR9QBOAE6xlqtAzMxt2z7LsrxLKW14nVRKacuyvLdt+5y0/Qgiol4IUQXAPmqXPYBUCFFNt1sszTnXBdguAu2EEJVzrovifxc1stY+oqZLAKTW2sdb/DLIGNMAOETdfDDGNF+DlFLXPM9vRNQTUZ/n+U0pdX2PXwQ55zrvvZ/23nsf6xODzhuMyBkAMmNME8PWgpiZg4bZ9I1kYfC+/UaKkJtgK/sD9xDi/R8WvNEAAAAASUVORK5CYII="); \
       } \
     ';

@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2015/05/13 07:35 fix darktheme
 // @version        2015/05/13 07:30 darktheme
 // @version        2015/05/12 23:30 Remove unnecessary listener
 // @version        2015/05/12 08:30 Working on Firefox29+
@@ -71,7 +72,7 @@ var revertStopReloadButton = {
           -moz-image-region: rect(0px, 90px, 18px, 72px); \
         } \
          \
-        #reload-button:-moz-lwtheme-brighttext { \
+        #reload-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
           list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
           -moz-image-region: rect(0px, 90px, 18px, 72px); \
         } \
@@ -81,7 +82,7 @@ var revertStopReloadButton = {
           -moz-image-region: rect(0px, 108px, 18px, 90px); \
         } \
          \
-        #stop-button:-moz-lwtheme-brighttext { \
+        #stop-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
           list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
           -moz-image-region: rect(0px, 108px, 18px, 90px); \
         } \

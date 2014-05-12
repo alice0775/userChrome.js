@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2015/05/13 07:35 fix darktheme
 // @version        2015/05/12 08:30 Working on Firefox29+
 // @note           not support combined Stop Reload Button / large icons
 // ==/UserScript==
@@ -76,7 +77,7 @@ var revertBackForwardButton = {
           -moz-image-region: rect(0px, 54px, 18px, 36px); \
         } \
          \
-        #ucjs_back-button:-moz-lwtheme-brighttext { \
+        #ucjs_back-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
           list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
           -moz-image-region: rect(0px, 54px, 18px, 36px); \
         } \
@@ -86,7 +87,7 @@ var revertBackForwardButton = {
           -moz-image-region: rect(0px, 72px, 18px, 54px); \
         } \
          \
-        #ucjs_forward-button:-moz-lwtheme-brighttext { \
+        #ucjs_forward-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
           list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
           -moz-image-region: rect(0px, 72px, 18px, 54px); \
         } \
