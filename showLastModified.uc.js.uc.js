@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/12 09:30 use CustomizableUI to create toolbarbutton
 // @version        2014/05/12 06:50 make working without CTR/S4E
 // @version        2014/05/12 06:40 make movable toolbarbutton
 // @version        2014/05/11 14:40 clean up
@@ -15,24 +16,34 @@
 // ==/UserScript==
 var showLastModified = {
   init: function(){
-    var toolbarBtn = document.createElement("toolbarbutton");
-    toolbarBtn.setAttribute("id", "showLastModifiedLabel");
-    toolbarBtn.setAttribute("label", "showLastModified");
-    toolbarBtn.setAttribute("tooltiptext", "Last Modified");
-    toolbarBtn.setAttribute("class", "toolbarbutton-1");
-    toolbarBtn.setAttribute("removable", "true");
-    var refItem= document.getElementById("ctraddon_addon-bar") ||
-                 document.getElementById("status4evar-status-bar") ||
-                 document.getElementById("nav-bar-customization-target") ||
-                 document.getElementById("addon-bar");
-    this.initToolbar(toolbarBtn, toolbarBtn.id,  refItem.lastChild);
+    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+      id: 'showLastModifiedLabel',
+      type: 'custom',
+      defaultArea: CustomizableUI.AREA_NAVBAR,
+      onBuild: function(aDocument) {
+        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+        var props = {
+          id: 'showLastModifiedLabel',
+          removable: 'true',
+          overflows: true,
+          class: "toolbarbutton-1 chromeclass-toolbar-additional",
+          label: "showLastModified",
+          tooltiptext: "showLastModified",
+        };
+        for (var p in props) {
+          toolbaritem.setAttribute(p, props[p]);
+        }
+        setTimeout(function(){this.onLocationChange({DOMWindow:content}, null, null);}.bind(showLastModified), 0);
+        return toolbaritem;
+      }
+    });
 
     var style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
         #showLastModifiedLabel { \
           list-style-image: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAPCAYAAAA71pVKAAAAH0lEQVQokWNgZGT8Ty5mYGRk/E8OGNU8qnnYayYXAwA2tdnr9ZQgYgAAAABJRU5ErkJggg=="); \
         } \
-        #main-window:not([customizing]) #showLastModifiedLabel .toolbarbutton-icon { \
+        #main-window:not([customizing]) #showLastModifiedLabel:not([cui-areatype="menu-panel"]) .toolbarbutton-icon { \
           display:none !important; \
         } \
         \
@@ -53,25 +64,8 @@ var showLastModified = {
       return document.documentElement.getAttribute(name);
     };
 
-    setTimeout(function(){this.onLocationChange({DOMWindow:content}, null, null);}.bind(this), 0);
     gBrowser.addProgressListener(this);
     window.addEventListener("unload", this, false);
-  },
-
-  initToolbar: function(elm, id, ref) {
-    var toolbars = document.querySelectorAll("toolbar");
-    Array.slice(toolbars).forEach(function(toolbar) {
-      var currentset = toolbar.getAttribute("currentset").split(",");
-      var i = currentset.indexOf(id);
-      if (i < 0) 
-        ref.parentNode.insertBefore(elm, ref);
-      else if (i > currentset.length || !currentset[i + 1])
-        ref.parentNode.appendChild(elm);
-      else {
-        ref = document.getElementById(currentset[i + 1]);
-        ref.parentNode.insertBefore(elm, ref);
-      }
-    });
   },
     
   uninit: function() {
