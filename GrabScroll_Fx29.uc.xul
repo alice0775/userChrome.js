@@ -19,8 +19,6 @@
 // @namespace      http://pc11.2ch.net/test/read.cgi/software/1168635399/
 // @description    This script allow scroll with drag screen. If you want to do select text, press alt Key
 // @include        main
-// @include        chrome://global/content/viewSource.xul
-// @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 29+
 // @author         Original DragImage.uc.js
 // @Modifier       Alice0775
@@ -112,6 +110,7 @@ var GrabScroll = {
   _window: null,
 
   initGrabScroll: function() {
+    Components.utils.import("resource:///modules/CustomizableUI.jsm");
     CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
       id: 'GrabScroll-image',
       type: 'custom',
