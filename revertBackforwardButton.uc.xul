@@ -1,0 +1,288 @@
+<?xml version="1.0"?>
+<overlay id="revertBackForwardButton"
+     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
+// ==UserScript==
+// @name           revertBackForwardButton.uc.xul
+// @namespace      http://blogs.yahoo.co.jp/alice0775 
+// @description    Revert Back Forward Button
+// @include        main
+// @compatibility  Firefox 29+
+// @author         Alice0775
+// @version        2015/05/12 08:30 Working on Firefox29+
+// @note           not support combined Stop Reload Button / large icons
+// ==/UserScript==
+ -->
+ <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+var revertBackForwardButton = {
+  // -- config --
+  HIDE_URLBAR_BACK_FORWARD_BUTTON: true,
+  REDUCE_PADDING: true,
+  // -- config --
+
+  init: function() {
+    Components.utils.import("resource:///modules/CustomizableUI.jsm");
+    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+      id: 'ucjs_back-button',
+      type: 'custom',
+      defaultArea: CustomizableUI.AREA_NAVBAR,
+      onBuild: function(aDocument) {
+        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+        var props = {
+          id: "ucjs_back-button",
+          class: "toolbarbutton-1",
+          label: "Back",
+          command: "Browser:BackOrBackDuplicate",
+          onclick: "checkForMiddleClick(this, event);",
+          oncommand: "BrowserBack(event);",
+          tooltiptext: "Back",
+          context: "ucjs_back_forward-button_menupopup"
+        };
+        for (var p in props) {
+          toolbaritem.setAttribute(p, props[p]);
+        }
+        
+        return toolbaritem;
+      }
+    });
+    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+      id: 'ucjs_forward-button',
+      type: 'custom',
+      defaultArea: CustomizableUI.AREA_NAVBAR,
+      onBuild: function(aDocument) {
+        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+        var props = {
+          id: "ucjs_forward-button",
+          class: "toolbarbutton-1",
+          label: "Forward",
+          command: "Browser:ForwardOrForwardDuplicate",
+          onclick: "checkForMiddleClick(this, event);",
+          oncommand: "BrowserForward(event);",
+          tooltiptext: "Forward",
+          context: "ucjs_back_forward-button_menupopup"
+        };
+        for (var p in props) {
+          toolbaritem.setAttribute(p, props[p]);
+        }
+        
+        return toolbaritem;
+      }
+    });
+
+    var style = ' \
+      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
+        #ucjs_back-button { \
+          list-style-image: url("chrome://browser/skin/Toolbar.png"); \
+          -moz-image-region: rect(0px, 54px, 18px, 36px); \
+        } \
+         \
+        #ucjs_back-button:-moz-lwtheme-brighttext { \
+          list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
+          -moz-image-region: rect(0px, 54px, 18px, 36px); \
+        } \
+         \
+        #ucjs_forward-button { \
+          list-style-image: url("chrome://browser/skin/Toolbar.png"); \
+          -moz-image-region: rect(0px, 72px, 18px, 54px); \
+        } \
+         \
+        #ucjs_forward-button:-moz-lwtheme-brighttext { \
+          list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
+          -moz-image-region: rect(0px, 72px, 18px, 54px); \
+        } \
+         \
+        #ucjs_back-button > .toolbarbutton-menu-dropmarker, \
+        #ucjs_forward-button > .toolbarbutton-menu-dropmarker { \
+          display: none; \
+        } \
+         \
+        #ucjs_back-button { \
+          padding-right: 0 !important; \
+        } \
+         \
+        #ucjs_forward-button { \
+          padding-left:  0 !important; \
+        } \
+         \
+        #ucjs_back-button .toolbarbutton-icon, \
+        #ucjs_back-button .toolbarbutton-text, \
+        #ucjs_forward-button .toolbarbutton-icon, \
+        #ucjs_forward-button .toolbarbutton-text { \
+          -moz-padding-end: 5px !important; \
+        } \
+         \
+        #ucjs_back-button[reduce_padding] .toolbarbutton-icon, \
+        #ucjs_forward-button[reduce_padding] .toolbarbutton-icon { \
+          padding-left:  3px; \
+          padding-right: 3px; \
+        } \
+         \
+         \
+        window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar { \
+          -moz-border-start: 1px !important; \
+          margin: 0 3px !important; \
+          padding: 0 !important; \
+          border: 1px solid ThreeDShadow !important; \
+        } \
+         \
+        window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar:-moz-locale-dir(ltr) { \
+          border-top-left-radius: 2px !important; \
+          border-bottom-left-radius: 2px !important; \
+        } \
+         \
+        window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar:-moz-locale-dir(rtl) { \
+          border-top-right-radius: 2px !important; \
+          border-bottom-right-radius: 2px !important; \
+        } \
+         \
+        window:not([chromehidden~="toolbar"]) #urlbar-wrapper { \
+          clip-path: none !important; \
+          -moz-margin-start: 0x !important; \
+        } \
+         \
+        #urlbar-container[hide_urlbar_back_forward_button] #back-button, \
+        #urlbar-container[hide_urlbar_back_forward_button] #forward-button { \
+          display: none; \
+        } \
+    ';
+    style = style.replace(/\s+/g, " ");
+    var sspi = document.createProcessingInstruction(
+      'xml-stylesheet',
+      'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
+    );
+    document.insertBefore(sspi, document.documentElement);
+    sspi.getAttribute = function(name) {
+      return document.documentElement.getAttribute(name);
+    };
+
+    if (this.HIDE_URLBAR_BACK_FORWARD_BUTTON) {
+      document.getElementById("urlbar-container").setAttribute("hide_urlbar_back_forward_button", true);
+    }
+
+    if (this.REDUCE_PADDING) {
+      document.getElementById("ucjs_back-button").setAttribute("reduce_padding", true);
+      document.getElementById("ucjs_forward-button").setAttribute("reduce_padding", true);
+    }
+
+    window.addEventListener("aftercustomization", this, false);
+    this.SetClickAndHoldHandlers();
+  },
+
+  handleEvent: function(event) {
+    switch(event.type) {
+      case "aftercustomization":
+        this.UpdateBackForwardCommands(gBrowser.webNavigation);
+        break;
+    }
+  },
+  
+  UpdateBackForwardCommands: function ucjs_UpdateBackForwardCommands(aWebNavigation) {
+    if (aWebNavigation.canGoBack) {
+        document.getElementById("ucjs_back-button").removeAttribute("disabled");
+    } else {
+        document.getElementById("ucjs_back-button").setAttribute("disabled", true);
+    }
+
+    if (aWebNavigation.canGoForward) {
+        document.getElementById("ucjs_forward-button").removeAttribute("disabled");
+    } else {
+        document.getElementById("ucjs_forward-button").setAttribute("disabled", true);
+    }
+  },
+
+  /**
+   * Click-and-Hold implementation for the Back and Forward buttons
+   * XXXmano: should this live in toolbarbutton.xml?
+   */
+  SetClickAndHoldHandlers: function SetClickAndHoldHandlers() {
+    var timer;
+
+    function openMenu(aButton) {
+      cancelHold(aButton);
+      aButton.firstChild.hidden = false;
+      aButton.open = true;
+    }
+
+    function mousedownHandler(aEvent) {
+      if (aEvent.button != 0 ||
+          aEvent.currentTarget.open ||
+          aEvent.currentTarget.disabled)
+        return;
+
+      // Prevent the menupopup from opening immediately
+      aEvent.currentTarget.firstChild.hidden = true;
+
+      aEvent.currentTarget.addEventListener("mouseout", mouseoutHandler, false);
+      aEvent.currentTarget.addEventListener("mouseup", mouseupHandler, false);
+      timer = setTimeout(openMenu, 500, aEvent.currentTarget);
+    }
+
+    function mouseoutHandler(aEvent) {
+      let buttonRect = aEvent.currentTarget.getBoundingClientRect();
+      if (aEvent.clientX >= buttonRect.left &&
+          aEvent.clientX <= buttonRect.right &&
+          aEvent.clientY >= buttonRect.bottom)
+        openMenu(aEvent.currentTarget);
+      else
+        cancelHold(aEvent.currentTarget);
+    }
+
+    function mouseupHandler(aEvent) {
+      cancelHold(aEvent.currentTarget);
+    }
+
+    function cancelHold(aButton) {
+      clearTimeout(timer);
+      aButton.removeEventListener("mouseout", mouseoutHandler, false);
+      aButton.removeEventListener("mouseup", mouseupHandler, false);
+    }
+
+    function clickHandler(aEvent) {
+      if (aEvent.button == 0 &&
+          aEvent.target == aEvent.currentTarget &&
+          !aEvent.currentTarget.open &&
+          !aEvent.currentTarget.disabled) {
+        let cmdEvent = document.createEvent("xulcommandevent");
+        cmdEvent.initCommandEvent("command", true, true, window, 0,
+                                  aEvent.ctrlKey, aEvent.altKey, aEvent.shiftKey,
+                                  aEvent.metaKey, null);
+        aEvent.currentTarget.dispatchEvent(cmdEvent);
+      }
+    }
+
+    function _addClickAndHoldListenersOnElement(aElm) {
+      aElm.addEventListener("mousedown", mousedownHandler, true);
+      aElm.addEventListener("click", clickHandler, true);
+    }
+
+    // Bug 414797: Clone the back/forward buttons' context menu into both buttons.
+    let popup = document.getElementById("backForwardMenu").cloneNode(true);
+    popup.removeAttribute("id");
+    // Prevent the back/forward buttons' context attributes from being inherited.
+    popup.setAttribute("context", "");
+
+    let backButton = document.getElementById("ucjs_back-button");
+    backButton.setAttribute("type", "menu");
+    backButton.appendChild(popup);
+    _addClickAndHoldListenersOnElement(backButton);
+
+    let forwardButton = document.getElementById("ucjs_forward-button");
+    popup = popup.cloneNode(true);
+    forwardButton.setAttribute("type", "menu");
+    forwardButton.appendChild(popup);
+    _addClickAndHoldListenersOnElement(forwardButton);
+  }
+
+};
+
+revertBackForwardButton.init();
+  ]]></script>
+  <popupset id="mainPopupSet">
+    <menupopup id="ucjs_back_forward-button_menupopup"
+               onpopupshowing="return FillHistoryMenu(event.target);"
+               oncommand="gotoHistoryIndex(event); event.stopPropagation();"
+               onclick="checkForMiddleClick(this, event);"
+               position="after_start"
+               context="" />
+  </popupset>
+</overlay>
