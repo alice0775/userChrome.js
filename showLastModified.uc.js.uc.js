@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/12 15:00 error?
 // @version        2014/05/12 09:30 use CustomizableUI to create toolbarbutton
 // @version        2014/05/12 06:50 make working without CTR/S4E
 // @version        2014/05/12 06:40 make movable toolbarbutton
@@ -16,27 +17,30 @@
 // ==/UserScript==
 var showLastModified = {
   init: function(){
-    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
-      id: 'showLastModifiedLabel',
-      type: 'custom',
-      defaultArea: CustomizableUI.AREA_NAVBAR,
-      onBuild: function(aDocument) {
-        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-        var props = {
-          id: 'showLastModifiedLabel',
-          removable: 'true',
-          overflows: true,
-          class: "toolbarbutton-1 chromeclass-toolbar-additional",
-          label: "showLastModified",
-          tooltiptext: "showLastModified",
-        };
-        for (var p in props) {
-          toolbaritem.setAttribute(p, props[p]);
+      try {
+        CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+        id: 'showLastModifiedLabel',
+        type: 'custom',
+        defaultArea: CustomizableUI.AREA_NAVBAR,
+        onBuild: function(aDocument) {
+          var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+          var props = {
+            id: 'showLastModifiedLabel',
+            removable: 'true',
+            overflows: true,
+            class: "toolbarbutton-1 chromeclass-toolbar-additional",
+            label: "",
+            tooltiptext: "showLastModified",
+          };
+          for (var p in props) {
+            toolbaritem.setAttribute(p, props[p]);
+          }
+          setTimeout(function(){this.onLocationChange({DOMWindow:content}, null, null);}.bind(showLastModified), 0);
+          return toolbaritem;
         }
-        setTimeout(function(){this.onLocationChange({DOMWindow:content}, null, null);}.bind(showLastModified), 0);
-        return toolbaritem;
-      }
-    });
+      });
+    }catch(ee) {
+    }
 
     var style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
@@ -66,6 +70,7 @@ var showLastModified = {
 
     gBrowser.addProgressListener(this);
     window.addEventListener("unload", this, false);
+    setTimeout(function(){this.onLocationChange({DOMWindow:content}, null, null);}.bind(showLastModified), 250);
   },
     
   uninit: function() {
@@ -111,9 +116,10 @@ var showLastModified = {
     var value = "";
     if (lastModified != undefined)
       value = lastModified.toLocaleString();
-    document.getElementById("showLastModifiedLabel").setAttribute("label", value);
+    if (document.getElementById("showLastModifiedLabel"))
+      document.getElementById("showLastModifiedLabel").setAttribute("label", value);
   }
 };
 
-
 showLastModified.init();
+
