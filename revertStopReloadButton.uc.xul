@@ -1,20 +1,27 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+        %23main-window:not([tabsintitlebar]) %23reload-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23reload-button {
           list-style-image: url('chrome://browser/skin/Toolbar.png');
           -moz-image-region: rect(0px, 90px, 18px, 72px);
         }
         
+        %23toolbar-menubar > %23reload-button:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme),
+        %23main-window[tabsintitlebar] %23toolbar-menubar > %23reload-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23reload-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext {
           list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
           -moz-image-region: rect(0px, 90px, 18px, 72px);
         }
         
+        
+        %23main-window:not([tabsintitlebar]) %23stop-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23stop-button {
           list-style-image: url('chrome://browser/skin/Toolbar.png');
           -moz-image-region: rect(0px, 108px, 18px, 90px);
         }
         
+        %23toolbar-menubar > %23stop-button:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme),
+        %23main-window[tabsintitlebar] %23toolbar-menubar > %23stop-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23stop-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext         {
           list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
           -moz-image-region: rect(0px, 108px, 18px, 90px);
@@ -42,6 +49,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/15 01:30 fix color
 // @version        2014/05/13 10:30 fix second window
 // @version        2014/05/13 09:50 remove config
 // @version        2014/05/13 09:30 fix second window

@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/14 00:50 fix text color when browser.tabs.drawInTitlebar=true
 // @version        2014/05/10 13:00 remove fog in titlebar, fixed if no titlebar displayed
 // @version        2014/05/09 15:30 use sizemodechange event
 // @version        2014/05/09 15:30 do not collapse tabbar
@@ -241,6 +242,10 @@ function zzzz_VerticalTabbar(){
         padding: 0 0 0 0 !important; \
         /*background-image: url("chrome://browser/skin/tabbrowser/tab-active-bkgnd.png");*/ \
         /*background-color: ThreeDHighlight;*/ \
+        } \
+ \
+        .tabbrowser-tab:not(:-moz-lwtheme) { \
+          color: black; \
         } \
  \
         .tabbrowser-tab[pinned] \

@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/14 00:50 beforecustomization insted aftercustomization
 // @version        2014/05/14 00:00 fix style of #bookmarks-menu-button and BookmarkingUI._currentAreaType
 // @version        2014/05/13 23:30 fix style of |type=menu-button|
 // @version        2014/05/13 21:30 add to view menu
@@ -107,20 +108,20 @@ var addToolbarInsideLocationBar = {
     let toolbar = document.getElementById("ucjs-Locationbar-toolbar");
     switch(event.type) {
       case "beforecustomization":
-        window.addEventListener("aftercustomization", this, false);
+        window.addEventListener("customizationending", this, false);
 
         let ref = document.getElementById("nav-bar-customization-target");
         toolbar.setAttribute("tooltiptext", "Toolbar inside LocationBar");
         ref.parentNode.insertBefore(toolbar, ref);
         break;
-      case "aftercustomization":
-        window.removeEventListener("aftercustomization", this, false);
+      case "customizationending":
+        window.removeEventListener("customizationending", this, false);
 
         ref = document.getElementById("urlbar-icons");
         ref.appendChild(toolbar);
         toolbar.removeAttribute("tooltiptext");
         toolbar.removeAttribute("hide");
-        BookmarkingUI._updateCustomizationState();
+        //BookmarkingUI._updateCustomizationState();
         break;
     }
   },

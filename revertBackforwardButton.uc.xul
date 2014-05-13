@@ -1,20 +1,26 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+        %23main-window:not([tabsintitlebar]) %23ucjs_back-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23ucjs_back-button {
           list-style-image: url('chrome://browser/skin/Toolbar.png');
           -moz-image-region: rect(0px, 54px, 18px, 36px);
         }
         
+        %23toolbar-menubar > %23ucjs_back-button:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme),
+        %23main-window[tabsintitlebar] %23toolbar-menubar > %23ucjs_back-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23ucjs_back-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext {
           list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
           -moz-image-region: rect(0px, 54px, 18px, 36px);
         }
         
+        %23main-window:not([tabsintitlebar]) %23ucjs_forward-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23ucjs_forward-button {
           list-style-image: url('chrome://browser/skin/Toolbar.png');
           -moz-image-region: rect(0px, 72px, 18px, 54px);
         }
         
+        %23toolbar-menubar > %23ucjs_forward-button:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme),
+        %23main-window[tabsintitlebar] %23toolbar-menubar > %23ucjs_forward-button:-moz-system-metric(windows-classic):not(:-moz-lwtheme),
         %23ucjs_forward-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext {
           list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
           -moz-image-region: rect(0px, 72px, 18px, 54px);
@@ -84,6 +90,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/15 01:30 fix color
 // @version        2014/05/13 10:30 fix second window
 // @version        2014/05/13 09:50 remove config
 // @version        2014/05/13 09:30 fix second window
