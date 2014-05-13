@@ -7,6 +7,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 10:30 fix second window
 // @version        2014/05/12 10:00 Working on Firefox29+
 // @version        2012/01/31 11:00 by Alice0775  12.0a1 about:newtab
 // @version        2010/02/05 00:00 ウインドウが閉じてしまわないように
@@ -39,30 +40,32 @@
       optionDelay: 800,
       //-- config --
       _init: function(){
-        CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
-          id: 'quickproxy-status',
-          type: 'custom',
-          defaultArea: CustomizableUI.AREA_NAVBAR,
-          onBuild: function(aDocument) {
-            var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-            var props = {
-              id: 'quickproxy-status',
-              align: 'center',
-              removable: 'true',
-              overflows: true,
-              class: "quickproxy-status-off toolbarbutton-1 chromeclass-toolbar-additional",
-              label: "QuickProxy",
-              status: "false",
-              tooltiptext: "QuickProxy",
-              onclick: "quickProxy._click(event);event.preventDefault();",
-            };
-            for (var p in props) {
-              toolbaritem.setAttribute(p, props[p]);
+         try {
+          CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+            id: 'quickproxy-status',
+            type: 'custom',
+            defaultArea: CustomizableUI.AREA_NAVBAR,
+            onBuild: function(aDocument) {
+              var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+              var props = {
+                id: 'quickproxy-status',
+                align: 'center',
+                removable: 'true',
+                overflows: true,
+                class: "quickproxy-status-off toolbarbutton-1 chromeclass-toolbar-additional",
+                label: "QuickProxy",
+                status: "false",
+                tooltiptext: "QuickProxy",
+                onclick: "quickProxy._click(event);event.preventDefault();",
+              };
+              for (var p in props) {
+                toolbaritem.setAttribute(p, props[p]);
+              }
+
+              return toolbaritem;
             }
-            
-            return toolbaritem;
-          }
-        });
+          });
+        } catch(ee) {}
 
         quickProxy.addPrefListener(quickProxy.buttonPrefListener); // 登録処理
         window.addEventListener('unload',function(){

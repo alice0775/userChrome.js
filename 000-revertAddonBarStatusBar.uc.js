@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 10:30 fix second window
 // @version        2014/05/12 15:30 defaultCollapsed is only allowed for default toolbars
 // @version        2014/05/12 14:00 clean up
 // @version        2014/05/12 14:00 wrapped status-bar, regidter before create toolbar
@@ -45,11 +46,12 @@
   bottombox.appendChild(addonbar);
 
   //register toolbar.id
-  CustomizableUI.registerArea("ucjs-addon-bar", {
-    type: CustomizableUI.TYPE_TOOLBAR,
-    defaultPlacements: ["spring_revertAddonBarStatusBar", "ucjs-status-bar"]
-  }, true);
-
+  try {
+    CustomizableUI.registerArea("ucjs-addon-bar", {
+      type: CustomizableUI.TYPE_TOOLBAR,
+      defaultPlacements: ["spring_revertAddonBarStatusBar", "ucjs-status-bar"]
+    }, true);
+  } catch(ee) {}
 
   let style = ' \
     @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \

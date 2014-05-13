@@ -27,74 +27,80 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 10:30 fix second window
 // @version        2014/05/13 09:30 fix second window
-// @version        2015/05/13 07:35 fix darktheme
-// @version        2015/05/13 07:30 darktheme
-// @version        2015/05/12 23:30 Remove unnecessary listener
-// @version        2015/05/12 08:30 Working on Firefox29+
+// @version        2014/05/13 07:35 fix darktheme
+// @version        2014/05/13 07:30 darktheme
+// @version        2014/05/12 23:30 Remove unnecessary listener
+// @version        2014/05/12 08:30 Working on Firefox29+
 // ==/UserScript==
  -->
  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
 var revertSidebarToggleButton = {
   init: function() {
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
-    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
-      id: 'bookmarks-button',
-      type: 'custom',
-      defaultArea: CustomizableUI.AREA_NAVBAR,
-      onBuild: function(aDocument) {
-        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-        var props = {
-          id: "bookmarks-button",
-          class: "toolbarbutton-1 chromeclass-toolbar-additional",
-          observes: "viewBookmarksSidebar",
-          tooltiptext: "Display your bookmarks",
-          ondrop: "bookmarksButtonObserver.onDrop(event)",
-          ondragover: "bookmarksButtonObserver.onDragOver(event)",
-          ondragenter: "bookmarksButtonObserver.onDragOver(event)",
-          ondragexit: "bookmarksButtonObserver.onDragExit(event)",
-          oncommand: "toggleSidebar('viewBookmarksSidebar');",
-          sidebarurl: "chrome://browser/content/bookmarks/bookmarksPanel.xul",
-          group: "sidebar",
-          type: "checkbox",
-          label: "Bookmarks",
-          autoCheck: "false",
-          removable: "true"
-        };
-        for (var p in props) {
-          toolbaritem.setAttribute(p, props[p]);
+    try {
+      CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+        id: 'bookmarks-button',
+        type: 'custom',
+        defaultArea: CustomizableUI.AREA_NAVBAR,
+        onBuild: function(aDocument) {
+          var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+          var props = {
+            id: "bookmarks-button",
+            class: "toolbarbutton-1 chromeclass-toolbar-additional",
+            observes: "viewBookmarksSidebar",
+            tooltiptext: "Display your bookmarks",
+            ondrop: "bookmarksButtonObserver.onDrop(event)",
+            ondragover: "bookmarksButtonObserver.onDragOver(event)",
+            ondragenter: "bookmarksButtonObserver.onDragOver(event)",
+            ondragexit: "bookmarksButtonObserver.onDragExit(event)",
+            oncommand: "toggleSidebar('viewBookmarksSidebar');",
+            sidebarurl: "chrome://browser/content/bookmarks/bookmarksPanel.xul",
+            group: "sidebar",
+            type: "checkbox",
+            label: "Bookmarks",
+            autoCheck: "false",
+            removable: "true"
+          };
+          for (var p in props) {
+            toolbaritem.setAttribute(p, props[p]);
+          }
+          
+          return toolbaritem;
         }
-        
-        return toolbaritem;
-      }
-    });
-    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
-      id: 'history-button',
-      type: 'custom',
-      defaultArea: CustomizableUI.AREA_NAVBAR,
-      onBuild: function(aDocument) {
-        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-        var props = {
-          id: "history-button",
-          class: "toolbarbutton-1 chromeclass-toolbar-additional",
-          observes: "viewHistorySidebar",
-          label: "History",
-          tooltiptext: "Display pages you've viewed recently",
-          oncommand: "toggleSidebar('viewHistorySidebar');",
-          sidebarurl: "chrome://browser/content/history/history-panel.xul",
-          group: "sidebar",
-          type: "checkbox",
-          sidebartitle: "History",
-          autoCheck: "false",
-          removable: "true"
-        };
-        for (var p in props) {
-          toolbaritem.setAttribute(p, props[p]);
+      });
+    } catch(ee) {}
+
+    try {
+      CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+        id: 'history-button',
+        type: 'custom',
+        defaultArea: CustomizableUI.AREA_NAVBAR,
+        onBuild: function(aDocument) {
+          var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+          var props = {
+            id: "history-button",
+            class: "toolbarbutton-1 chromeclass-toolbar-additional",
+            observes: "viewHistorySidebar",
+            label: "History",
+            tooltiptext: "Display pages you've viewed recently",
+            oncommand: "toggleSidebar('viewHistorySidebar');",
+            sidebarurl: "chrome://browser/content/history/history-panel.xul",
+            group: "sidebar",
+            type: "checkbox",
+            sidebartitle: "History",
+            autoCheck: "false",
+            removable: "true"
+          };
+          for (var p in props) {
+            toolbaritem.setAttribute(p, props[p]);
+          }
+          
+          return toolbaritem;
         }
-        
-        return toolbaritem;
-      }
-    });
+      });
+    } catch(ee) {}
 
     window.bookmarksButtonObserver = {
       onDrop: function (aEvent)

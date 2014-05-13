@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 10:30 cosmetic
 // @version        2014/05/13 09:30 fix second window
 // @version        2014/05/13
 // @note           USAGE: View > Toolbars > Cutomize..., then, the "Toolbar Inside LocationBara"(red dotted) appeas at lefy side of nav bar. and you can drag and drop toolbarbutton on to the toolbar. The toolbarbutton will display inside locatonbar after exit customize mode.
@@ -29,12 +30,12 @@ var addToolbarInsideLocationBar = {
     ref.appendChild(toolbar);
 
     //register toolbar.id
-try {
+    try {
       CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
       type: CustomizableUI.TYPE_TOOLBAR,
       defaultPlacements: ["feed-button"]
     }, true);
-} catch(e) {}
+    } catch(e) {}
 
     let style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \

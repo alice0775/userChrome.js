@@ -26,7 +26,8 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
-// @version        2015/05/12 08:30 Working on Firefox29+
+// @version        2014/05/13 10:30 fix second window
+// @version        2014/05/12 08:30 Working on Firefox29+
 // ==/UserScript==
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
@@ -111,32 +112,33 @@ var GrabScroll = {
 
   initGrabScroll: function() {
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
-    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
-      id: 'GrabScroll-image',
-      type: 'custom',
-      defaultArea: CustomizableUI.AREA_NAVBAR,
-      onBuild: function(aDocument) {
-        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-        var props = {
-          id: 'GrabScroll-image',
-          align: 'center',
-          removable: 'true',
-          overflows: true,
-          class: "toolbarbutton-1 chromeclass-toolbar-additional",
-          label: "GrabScroll",
-          status: "false",
-          tooltiptext: "GrabScroll",
-          oncommand: "GrabScroll.toggle();",
-        };
-        for (var p in props) {
-          toolbaritem.setAttribute(p, props[p]);
-        }
-        
-        return toolbaritem;
-      }
-    });
+    try {
+      CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+        id: 'GrabScroll-image',
+        type: 'custom',
+        defaultArea: CustomizableUI.AREA_NAVBAR,
+        onBuild: function(aDocument) {
+          var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+          var props = {
+            id: 'GrabScroll-image',
+            align: 'center',
+            removable: 'true',
+            overflows: true,
+            class: "toolbarbutton-1 chromeclass-toolbar-additional",
+            label: "GrabScroll",
+            status: "false",
+            tooltiptext: "GrabScroll",
+            oncommand: "GrabScroll.toggle();",
+          };
+          for (var p in props) {
+            toolbaritem.setAttribute(p, props[p]);
+          }
 
-    
+          return toolbaritem;
+        }
+      });
+    } catch(ee) {}
+
     if (GrabScroll.activeBrowser().mPanelContainer) {
       this._window = GrabScroll.activeBrowser().mPanelContainer;
     } else {
