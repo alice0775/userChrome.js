@@ -40,8 +40,8 @@
           -moz-padding-end: 5px !important;
         }
         
-        %23ucjs_back-button[reduce_padding] .toolbarbutton-icon,
-        %23ucjs_forward-button[reduce_padding] .toolbarbutton-icon {
+        %23ucjs_back-button .toolbarbutton-icon,
+        %23ucjs_forward-button  .toolbarbutton-icon {
           padding-left:  3px;
           padding-right: 3px;
         }
@@ -69,8 +69,8 @@
           -moz-margin-start: 0x !important;
         }
         
-        %23urlbar-container[hide_urlbar_back_forward_button] %23back-button,
-        %23urlbar-container[hide_urlbar_back_forward_button] %23forward-button {
+        %23urlbar-container %23back-button,
+        %23urlbar-container %23forward-button {
           display: none;
         }
 " type="text/css"?>
@@ -84,6 +84,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 09:50 remove config
 // @version        2014/05/13 09:30 fix second window
 // @version        2015/05/13 07:35 fix darktheme
 // @version        2015/05/12 08:30 Working on Firefox29+
@@ -92,10 +93,6 @@
  -->
  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
 var revertBackForwardButton = {
-  // -- config --
-  HIDE_URLBAR_BACK_FORWARD_BUTTON: true,
-  REDUCE_PADDING: true,
-  // -- config --
 
   init: function() {
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
@@ -141,22 +138,14 @@ var revertBackForwardButton = {
         for (var p in props) {
           toolbaritem.setAttribute(p, props[p]);
         }
-        
+
         return toolbaritem;
       }
     });
 
-    if (this.HIDE_URLBAR_BACK_FORWARD_BUTTON) {
-      document.getElementById("urlbar-container").setAttribute("hide_urlbar_back_forward_button", true);
-    }
+    window.addEventListener("aftercustomization", revertBackForwardButton, false);
+    revertBackForwardButton.SetClickAndHoldHandlers();
 
-    if (this.REDUCE_PADDING) {
-      document.getElementById("ucjs_back-button").setAttribute("reduce_padding", true);
-      document.getElementById("ucjs_forward-button").setAttribute("reduce_padding", true);
-    }
-
-    window.addEventListener("aftercustomization", this, false);
-    this.SetClickAndHoldHandlers();
   },
 
   handleEvent: function(event) {

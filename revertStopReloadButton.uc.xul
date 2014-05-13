@@ -20,14 +20,14 @@
           -moz-image-region: rect(0px, 108px, 18px, 90px);
         }
         
-        %23nav-bar %23reload-button[reduce_padding] .toolbarbutton-icon,
-        %23nav-bar %23stop-button[reduce_padding] .toolbarbutton-icon {
+        %23nav-bar %23reload-button .toolbarbutton-icon,
+        %23nav-bar %23stop-button .toolbarbutton-icon {
           padding-left:  3px;
           padding-right: 3px;
         }
         
-        %23urlbar[hide_urlbar_stop_reload_button] %23urlbar-reload-button,
-        %23urlbar[hide_urlbar_stop_reload_button] %23urlbar-stop-button {
+        %23urlbar %23urlbar-reload-button,
+        %23urlbar %23urlbar-stop-button {
           display: none;
         }
 " type="text/css"?>
@@ -42,6 +42,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 09:50 remove config
 // @version        2014/05/13 09:30 fix second window
 // @version        2015/05/13 07:35 fix darktheme
 // @version        2015/05/13 07:30 darktheme
@@ -52,10 +53,6 @@
  -->
  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
 var revertStopReloadButton = {
-  // -- config --
-  HIDE_URLBAR_STOP_RELOAD_BUTTON: true,
-  REDUCE_PADDING: true,
-  // -- config --
 
   init: function() {
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
@@ -104,15 +101,6 @@ var revertStopReloadButton = {
         return toolbaritem;
       }
     });
-
-    if (this.HIDE_URLBAR_STOP_RELOAD_BUTTON) {
-      document.getElementById("urlbar").setAttribute("hide_urlbar_stop_reload_button", true);
-    }
-
-    if (this.REDUCE_PADDING) {
-      document.getElementById("reload-button").setAttribute("reduce_padding", true);
-      document.getElementById("stop-button").setAttribute("reduce_padding", true);
-    }
   }
 };
 
