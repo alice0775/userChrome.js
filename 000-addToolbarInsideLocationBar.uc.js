@@ -5,12 +5,12 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 13:30 see note below
 // @version        2014/05/13 10:30 cosmetic
 // @version        2014/05/13 09:30 fix second window
 // @version        2014/05/13
-// @note           USAGE: View > Toolbars > Cutomize..., then, the "Toolbar Inside LocationBara"(red dotted) appeas at lefy side of nav bar. and you can drag and drop toolbarbutton on to the toolbar. The toolbarbutton will display inside locatonbar after exit customize mode.
-// @note           使い方: ツールバーのカスタマイズに入ると, "Toolbar Inside LocationBara"(赤点線)がナビゲーションバーの左端に表示されるので, そこにツールボタンをドラッグ&ドロップする。カスタマイズ終了後，ツールボタンがロケーションバーのに表示される。
-
+// @note           USAGE: View > Toolbars > Cutomize..., then, the "Toolbar Inside LocationBara"(red dotted) appeas at lefy side of nav bar. and you can drag and drop toolbarbutton on to the toolbar. The toolbarbutton will display inside locatonbar after exit customize mode. If you want to drag an item to the other toolbar, you should place the item on palette once, then move it to the other toolbar. i.e, this toolbar > palette > other toolbar
+// @note           使い方: ツールバーのカスタマイズに入ると, "Toolbar Inside LocationBara"(赤点線)がナビゲーションバーの左端に表示されるので, そこにツールボタンをドラッグ&ドロップする。カスタマイズ終了後，ツールボタンがロケーションバーのに表示される。このツールバーから別のツールバーにボタンを移動する場合は，一旦パレット領域に置いてください。すなわち このツールバー > パレット > 別のツールバー
 // ==/UserScript==
 var addToolbarInsideLocationBar = {
   init: function() {
@@ -22,7 +22,6 @@ var addToolbarInsideLocationBar = {
     toolbar.setAttribute("customizable", "true");
     toolbar.setAttribute("mode", "icons");
     toolbar.setAttribute("iconsize", "small");
-    toolbar.setAttribute("removable", "false");
     toolbar.setAttribute("hide", "true");
     toolbar.setAttribute("context", "toolbar-context-menu");
 

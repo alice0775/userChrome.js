@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 13:30 see note below
 // @version        2014/05/13 10:30 fix second window
 // @version        2014/05/12 15:30 defaultCollapsed is only allowed for default toolbars
 // @version        2014/05/12 14:00 clean up
@@ -12,6 +13,8 @@
 // @version        2014/05/12 13:00 toolbar style, load CustomizableUI.jsm
 // @version        2014/05/12 12:40 specify mode, iconsize
 // @version        2014/05/12 12:30
+// @note           If you want to drag an item to the other toolbar, you should place the item on palette once, then move it to the other toolbar. i.e, this toolbar > palette > other toolbar
+// @note           このツールバーから別のツールバーにボタンを移動する場合は，一旦パレット領域に置いてください。すなわち このツールバー > パレット > 別のツールバー
 // ==/UserScript==
 (function(){
   if (document.getElementById("ctraddon_addon-bar") || document.getElementById("ctr_addon-bar"))
@@ -38,7 +41,6 @@
   addonbar.setAttribute("customizable", "true");
   addonbar.setAttribute("mode", "icons");
   addonbar.setAttribute("iconsize", "small");
-  addonbar.setAttribute("removable", "false");
   addonbar.setAttribute("context", "toolbar-context-menu");
 
   var bottombox = document.getElementById("browser-bottombox");
