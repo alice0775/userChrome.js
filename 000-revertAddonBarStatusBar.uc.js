@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/14 00:00 fix BookmarkingUI._currentAreaType
 // @version        2014/05/13 21:30 add to view menu
 // @version        2014/05/13 13:30 see note below
 // @version        2014/05/13 10:30 fix second window
@@ -91,4 +92,6 @@
   sspi.getAttribute = function(name) {
     return document.documentElement.getAttribute(name);
   };
+
+  BookmarkingUI._updateCustomizationState();
 })();
