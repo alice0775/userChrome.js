@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/14 00:00 fix style of #bookmarks-menu-button and BookmarkingUI._currentAreaType
 // @version        2014/05/13 23:30 fix style of |type=menu-button|
 // @version        2014/05/13 21:30 add to view menu
 // @version        2014/05/13 13:30 see note below
@@ -67,14 +68,24 @@ var addToolbarInsideLocationBar = {
         padding: 0 !important; \
       } \
  \
+      #nav-bar .toolbarbutton-1[type=menu]:not(#back-button):not(#forward-button):not(#feed-button):not(#social-provider-button):not(#PanelUI-menu-button) { \
+        padding-left: 0; \
+        padding-right: 0; \
+      } \
+ \
       #ucjs-Locationbar-toolbar .toolbarbutton-1:not([type=menu-button]), \
       #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button, \
       #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker { \
-        padding: 0 !important; \
+        padding: 0; \
       } \
  \
-      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon { \
-        padding: 5px 2px 4px 2px !important; \
+      #ucjs-Locationbar-toolbar .toolbarbutton-1:not(#bookmarks-menu-button) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon { \
+        padding: 5px 2px 4px 2px; \
+      } \
+ \
+      #ucjs-Locationbar-toolbar #bookmarks-menu-button[cui-areatype="toolbar"]:not(.bookmark-item):not([overflowedItem=true]) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon { \
+        padding-top: 0; \
+        padding-bottom: 0; \
       } \
       '.replace(/\s+/g, " ");
 
@@ -89,6 +100,7 @@ var addToolbarInsideLocationBar = {
 
     window.addEventListener("beforecustomization", this, true);
     toolbar.removeAttribute("hide");
+    BookmarkingUI._updateCustomizationState();
   },
 
   handleEvent: function(event) {
@@ -108,6 +120,7 @@ var addToolbarInsideLocationBar = {
         ref.appendChild(toolbar);
         toolbar.removeAttribute("tooltiptext");
         toolbar.removeAttribute("hide");
+        BookmarkingUI._updateCustomizationState();
         break;
     }
   },
