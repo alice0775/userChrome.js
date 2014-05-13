@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 23:30 fix style of |type=menu-button|
 // @version        2014/05/13 21:30 add to view menu
 // @version        2014/05/13 13:30 see note below
 // @version        2014/05/13 10:30 cosmetic
@@ -50,22 +51,30 @@ var addToolbarInsideLocationBar = {
         padding: 0px 2px; \
         border: none; \
       } \
-      #ucjs-Locationbar-toolbar > toolbarbutton { \
-        -moz-appearance: none; \
-        padding: 0 0 !important; \
-      } \
       #ucjs-Locationbar-toolbar[hide] > toolbarbutton { \
         -moz-appearance: none; \
         padding: 0 0 !important; \
         visibility: collapsed; \
       } \
-      #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{ \
-        padding: 0 0 !important; \
-      } \
-\
+ \
       #main-window[customizing] #ucjs-Locationbar-toolbar { \
         min-width :30px; \
         border: 1px dotted rgba(255,0,0,0.6) ; \
+      } \
+ \
+      /*default theme*/ \
+      #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{ \
+        padding: 0 !important; \
+      } \
+ \
+      #ucjs-Locationbar-toolbar .toolbarbutton-1:not([type=menu-button]), \
+      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button, \
+      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker { \
+        padding: 0 !important; \
+      } \
+ \
+      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon { \
+        padding: 5px 2px 4px 2px !important; \
       } \
       '.replace(/\s+/g, " ");
 
