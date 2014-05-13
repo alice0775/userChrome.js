@@ -15,10 +15,13 @@ var addToolbarInsideLocationBar = {
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
 
     //register toolbar.id
-    CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
+try {
+      CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
       type: CustomizableUI.TYPE_TOOLBAR,
       defaultPlacements: ["feed-button"],
+      defaultCollapsed: "false"
     }, true);
+} catch(e) {}
 
     //create toolbar
     let toolbar = document.createElement("toolbar");
@@ -49,7 +52,8 @@ var addToolbarInsideLocationBar = {
       #ucjs-Locationbar-toolbar[hide] > toolbarbutton { \
         -moz-appearance: none; \
         padding: 0 0 !important; \
-        display: none; \
+        min-width: 0; \
+        max-width: 1px; \
       } \
       #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{ \
         padding: 0 0 !important; \
