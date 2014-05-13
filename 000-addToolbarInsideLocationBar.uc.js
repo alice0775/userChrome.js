@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 21:30 add to view menu
 // @version        2014/05/13 13:30 see note below
 // @version        2014/05/13 10:30 cosmetic
 // @version        2014/05/13 09:30 fix second window
@@ -14,27 +15,31 @@
 // ==/UserScript==
 var addToolbarInsideLocationBar = {
   init: function() {
+    const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
 
     //create toolbar
-    let toolbar = document.createElement("toolbar");
+    let toolbar = document.createElementNS(kNSXUL, "toolbar");
     toolbar.setAttribute("id", "ucjs-Locationbar-toolbar");
     toolbar.setAttribute("customizable", "true");
     toolbar.setAttribute("mode", "icons");
     toolbar.setAttribute("iconsize", "small");
     toolbar.setAttribute("hide", "true");
     toolbar.setAttribute("context", "toolbar-context-menu");
-
-    let ref = document.getElementById("urlbar-icons");
-    ref.appendChild(toolbar);
+    toolbar.setAttribute("class", "toolbar-primary chromeclass-toolbar customization-target");
+    toolbar.setAttribute("toolbarname", "UCJS Toolbar Inside LocationBar");
+    toolbar.setAttribute("toolboxid", "navigator-toolbox");
 
     //register toolbar.id
     try {
       CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
-      type: CustomizableUI.TYPE_TOOLBAR,
-      defaultPlacements: ["feed-button"]
-    }, true);
+        type: CustomizableUI.TYPE_TOOLBAR,
+        defaultPlacements: ["feed-button"]
+      });
     } catch(e) {}
+
+    let ref = document.getElementById("urlbar-icons");
+    ref.appendChild(toolbar);
 
     let style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
