@@ -16,25 +16,20 @@
   if (document.getElementById("ctraddon_addon-bar") || document.getElementById("ctr_addon-bar"))
     return;
 
+
   Components.utils.import("resource:///modules/CustomizableUI.jsm");
 
-  // sprong and wrapper
+  // spring and wrapper
   let toolbarspring = document.createElement("spacer");
   toolbarspring.setAttribute("flex", "1");
   toolbarspring.setAttribute("id", "spring_revertAddonBarStatusBar");
   toolbarspring.setAttribute("removable", "true");
-
   let palette = document.getElementById("navigator-toolbox").palette;
   palette.appendChild(toolbarspring);
+
   let dmy = document.createElement("toolbaritem");
   dmy.setAttribute("id", "ucjs-status-bar");
   palette.appendChild(dmy);
-
-  //register toolbar.id
-  CustomizableUI.registerArea("ucjs-addon-bar", {
-    type: CustomizableUI.TYPE_TOOLBAR,
-    defaultPlacements: ["spring_revertAddonBarStatusBar", "ucjs-status-bar"],
-  }, true);
 
   //create toolbar
   let addonbar = document.createElement("toolbar");
@@ -48,6 +43,13 @@
   var bottombox = document.getElementById("browser-bottombox");
   dmy.appendChild(document.getElementById("status-bar"));
   bottombox.appendChild(addonbar);
+
+  //register toolbar.id
+  CustomizableUI.registerArea("ucjs-addon-bar", {
+    type: CustomizableUI.TYPE_TOOLBAR,
+    defaultPlacements: ["spring_revertAddonBarStatusBar", "ucjs-status-bar"]
+  }, true);
+
 
   let style = ' \
     @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \

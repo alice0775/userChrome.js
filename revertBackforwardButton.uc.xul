@@ -1,4 +1,79 @@
 <?xml version="1.0"?>
+<?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+        %23ucjs_back-button {
+          list-style-image: url('chrome://browser/skin/Toolbar.png');
+          -moz-image-region: rect(0px, 54px, 18px, 36px);
+        }
+        
+        %23ucjs_back-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext {
+          list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
+          -moz-image-region: rect(0px, 54px, 18px, 36px);
+        }
+        
+        %23ucjs_forward-button {
+          list-style-image: url('chrome://browser/skin/Toolbar.png');
+          -moz-image-region: rect(0px, 72px, 18px, 54px);
+        }
+        
+        %23ucjs_forward-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext {
+          list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
+          -moz-image-region: rect(0px, 72px, 18px, 54px);
+        }
+        
+        %23ucjs_back-button > .toolbarbutton-menu-dropmarker,
+        %23ucjs_forward-button > .toolbarbutton-menu-dropmarker {
+          display: none;
+        }
+        
+        %23ucjs_back-button {
+          padding-right: 0 !important;
+        }
+        
+        %23ucjs_forward-button {
+          padding-left:  0 !important;
+        }
+        
+        %23ucjs_back-button .toolbarbutton-icon,
+        %23ucjs_back-button .toolbarbutton-text,
+        %23ucjs_forward-button .toolbarbutton-icon,
+        %23ucjs_forward-button .toolbarbutton-text {
+          -moz-padding-end: 5px !important;
+        }
+        
+        %23ucjs_back-button[reduce_padding] .toolbarbutton-icon,
+        %23ucjs_forward-button[reduce_padding] .toolbarbutton-icon {
+          padding-left:  3px;
+          padding-right: 3px;
+        }
+        
+        
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar {
+          -moz-border-start: 1px !important;
+          margin: 0 3px !important;
+          padding: 0 !important;
+          border: 1px solid ThreeDShadow !important;
+        }
+        
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-locale-dir(ltr) {
+          border-top-left-radius: 2px !important;
+          border-bottom-left-radius: 2px !important;
+        }
+        
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-locale-dir(rtl) {
+          border-top-right-radius: 2px !important;
+          border-bottom-right-radius: 2px !important;
+        }
+        
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper {
+          clip-path: none !important;
+          -moz-margin-start: 0x !important;
+        }
+        
+        %23urlbar-container[hide_urlbar_back_forward_button] %23back-button,
+        %23urlbar-container[hide_urlbar_back_forward_button] %23forward-button {
+          display: none;
+        }
+" type="text/css"?>
 <overlay id="revertBackForwardButton"
      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
 <!--
@@ -9,6 +84,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 09:30 fix second window
 // @version        2015/05/13 07:35 fix darktheme
 // @version        2015/05/12 08:30 Working on Firefox29+
 // @note           not support combined Stop Reload Button / large icons
@@ -69,92 +145,6 @@ var revertBackForwardButton = {
         return toolbaritem;
       }
     });
-
-    var style = ' \
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
-        #ucjs_back-button { \
-          list-style-image: url("chrome://browser/skin/Toolbar.png"); \
-          -moz-image-region: rect(0px, 54px, 18px, 36px); \
-        } \
-         \
-        #ucjs_back-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
-          list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
-          -moz-image-region: rect(0px, 54px, 18px, 36px); \
-        } \
-         \
-        #ucjs_forward-button { \
-          list-style-image: url("chrome://browser/skin/Toolbar.png"); \
-          -moz-image-region: rect(0px, 72px, 18px, 54px); \
-        } \
-         \
-        #ucjs_forward-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
-          list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
-          -moz-image-region: rect(0px, 72px, 18px, 54px); \
-        } \
-         \
-        #ucjs_back-button > .toolbarbutton-menu-dropmarker, \
-        #ucjs_forward-button > .toolbarbutton-menu-dropmarker { \
-          display: none; \
-        } \
-         \
-        #ucjs_back-button { \
-          padding-right: 0 !important; \
-        } \
-         \
-        #ucjs_forward-button { \
-          padding-left:  0 !important; \
-        } \
-         \
-        #ucjs_back-button .toolbarbutton-icon, \
-        #ucjs_back-button .toolbarbutton-text, \
-        #ucjs_forward-button .toolbarbutton-icon, \
-        #ucjs_forward-button .toolbarbutton-text { \
-          -moz-padding-end: 5px !important; \
-        } \
-         \
-        #ucjs_back-button[reduce_padding] .toolbarbutton-icon, \
-        #ucjs_forward-button[reduce_padding] .toolbarbutton-icon { \
-          padding-left:  3px; \
-          padding-right: 3px; \
-        } \
-         \
-         \
-        window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar { \
-          -moz-border-start: 1px !important; \
-          margin: 0 3px !important; \
-          padding: 0 !important; \
-          border: 1px solid ThreeDShadow !important; \
-        } \
-         \
-        window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar:-moz-locale-dir(ltr) { \
-          border-top-left-radius: 2px !important; \
-          border-bottom-left-radius: 2px !important; \
-        } \
-         \
-        window:not([chromehidden~="toolbar"]) #urlbar-wrapper > #urlbar:-moz-locale-dir(rtl) { \
-          border-top-right-radius: 2px !important; \
-          border-bottom-right-radius: 2px !important; \
-        } \
-         \
-        window:not([chromehidden~="toolbar"]) #urlbar-wrapper { \
-          clip-path: none !important; \
-          -moz-margin-start: 0x !important; \
-        } \
-         \
-        #urlbar-container[hide_urlbar_back_forward_button] #back-button, \
-        #urlbar-container[hide_urlbar_back_forward_button] #forward-button { \
-          display: none; \
-        } \
-    ';
-    style = style.replace(/\s+/g, " ");
-    var sspi = document.createProcessingInstruction(
-      'xml-stylesheet',
-      'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
-    );
-    document.insertBefore(sspi, document.documentElement);
-    sspi.getAttribute = function(name) {
-      return document.documentElement.getAttribute(name);
-    };
 
     if (this.HIDE_URLBAR_BACK_FORWARD_BUTTON) {
       document.getElementById("urlbar-container").setAttribute("hide_urlbar_back_forward_button", true);

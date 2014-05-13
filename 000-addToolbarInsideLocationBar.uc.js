@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 09:30 fix second window
 // @version        2014/05/13
 // @note           USAGE: View > Toolbars > Cutomize..., then, the "Toolbar Inside LocationBara"(red dotted) appeas at lefy side of nav bar. and you can drag and drop toolbarbutton on to the toolbar. The toolbarbutton will display inside locatonbar after exit customize mode.
 // @note           使い方: ツールバーのカスタマイズに入ると, "Toolbar Inside LocationBara"(赤点線)がナビゲーションバーの左端に表示されるので, そこにツールボタンをドラッグ&ドロップする。カスタマイズ終了後，ツールボタンがロケーションバーのに表示される。
@@ -13,15 +14,6 @@
 var addToolbarInsideLocationBar = {
   init: function() {
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
-
-    //register toolbar.id
-try {
-      CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
-      type: CustomizableUI.TYPE_TOOLBAR,
-      defaultPlacements: ["feed-button"],
-      defaultCollapsed: "false"
-    }, true);
-} catch(e) {}
 
     //create toolbar
     let toolbar = document.createElement("toolbar");
@@ -35,6 +27,14 @@ try {
 
     let ref = document.getElementById("urlbar-icons");
     ref.appendChild(toolbar);
+
+    //register toolbar.id
+try {
+      CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
+      type: CustomizableUI.TYPE_TOOLBAR,
+      defaultPlacements: ["feed-button"]
+    }, true);
+} catch(e) {}
 
     let style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
@@ -52,8 +52,7 @@ try {
       #ucjs-Locationbar-toolbar[hide] > toolbarbutton { \
         -moz-appearance: none; \
         padding: 0 0 !important; \
-        min-width: 0; \
-        max-width: 1px; \
+        visibility: collapsed; \
       } \
       #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{ \
         padding: 0 0 !important; \
@@ -75,20 +74,22 @@ try {
     };
 
     window.addEventListener("beforecustomization", this, true);
-    window.addEventListener("aftercustomization", this, false);
-    setTimeout(function(){toolbar.removeAttribute("hide");}, 250);
-
+    toolbar.removeAttribute("hide");
   },
 
   handleEvent: function(event) {
     let toolbar = document.getElementById("ucjs-Locationbar-toolbar");
     switch(event.type) {
       case "beforecustomization":
+        window.addEventListener("aftercustomization", this, false);
+
         let ref = document.getElementById("nav-bar-customization-target");
         toolbar.setAttribute("tooltiptext", "Toolbar inside LocationBar");
         ref.parentNode.insertBefore(toolbar, ref);
         break;
       case "aftercustomization":
+        window.removeEventListener("aftercustomization", this, false);
+
         ref = document.getElementById("urlbar-icons");
         ref.appendChild(toolbar);
         toolbar.removeAttribute("tooltiptext");

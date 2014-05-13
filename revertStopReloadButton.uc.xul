@@ -1,16 +1,56 @@
+<?xml version="1.0"?>
+<?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+        %23reload-button {
+          list-style-image: url('chrome://browser/skin/Toolbar.png');
+          -moz-image-region: rect(0px, 90px, 18px, 72px);
+        }
+        
+        %23reload-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext {
+          list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
+          -moz-image-region: rect(0px, 90px, 18px, 72px);
+        }
+        
+        %23stop-button {
+          list-style-image: url('chrome://browser/skin/Toolbar.png');
+          -moz-image-region: rect(0px, 108px, 18px, 90px);
+        }
+        
+        %23stop-button:not(:-moz-any(:not([cui-areatype='toolbar']), [overflowedItem=true])):-moz-lwtheme-brighttext         {
+          list-style-image: url('chrome://browser/skin/Toolbar-inverted.png');
+          -moz-image-region: rect(0px, 108px, 18px, 90px);
+        }
+        
+        %23nav-bar %23reload-button[reduce_padding] .toolbarbutton-icon,
+        %23nav-bar %23stop-button[reduce_padding] .toolbarbutton-icon {
+          padding-left:  3px;
+          padding-right: 3px;
+        }
+        
+        %23urlbar[hide_urlbar_stop_reload_button] %23urlbar-reload-button,
+        %23urlbar[hide_urlbar_stop_reload_button] %23urlbar-stop-button {
+          display: none;
+        }
+" type="text/css"?>
+
+<overlay id="revertStopReloadButton"
+     xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
+<!--
 // ==UserScript==
-// @name           revertStopReloadButton.uc.js
+// @name           revertStopReloadButton.uc.xul
 // @namespace      http://blogs.yahoo.co.jp/alice0775 
 // @description    Revert Stop Reload Button
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/13 09:30 fix second window
 // @version        2015/05/13 07:35 fix darktheme
 // @version        2015/05/13 07:30 darktheme
 // @version        2015/05/12 23:30 Remove unnecessary listener
 // @version        2015/05/12 08:30 Working on Firefox29+
 // @note           not support combined Stop Reload Button / large icons
 // ==/UserScript==
+ -->
+ <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
 var revertStopReloadButton = {
   // -- config --
   HIDE_URLBAR_STOP_RELOAD_BUTTON: true,
@@ -65,49 +105,6 @@ var revertStopReloadButton = {
       }
     });
 
-    var style = ' \
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
-        #reload-button { \
-          list-style-image: url("chrome://browser/skin/Toolbar.png"); \
-          -moz-image-region: rect(0px, 90px, 18px, 72px); \
-        } \
-         \
-        #reload-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
-          list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
-          -moz-image-region: rect(0px, 90px, 18px, 72px); \
-        } \
-         \
-        #stop-button { \
-          list-style-image: url("chrome://browser/skin/Toolbar.png"); \
-          -moz-image-region: rect(0px, 108px, 18px, 90px); \
-        } \
-         \
-        #stop-button:not(:-moz-any(:not([cui-areatype="toolbar"]), [overflowedItem=true])):-moz-lwtheme-brighttext { \
-          list-style-image: url("chrome://browser/skin/Toolbar-inverted.png"); \
-          -moz-image-region: rect(0px, 108px, 18px, 90px); \
-        } \
-         \
-        #nav-bar #reload-button[reduce_padding] .toolbarbutton-icon, \
-        #nav-bar #stop-button[reduce_padding] .toolbarbutton-icon { \
-          padding-left:  3px; \
-          padding-right: 3px; \
-        } \
-         \
-        #urlbar[hide_urlbar_stop_reload_button] #urlbar-reload-button, \
-        #urlbar[hide_urlbar_stop_reload_button] #urlbar-stop-button { \
-          display: none; \
-        } \
-    ';
-    style = style.replace(/\s+/g, " ");
-    var sspi = document.createProcessingInstruction(
-      'xml-stylesheet',
-      'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
-    );
-    document.insertBefore(sspi, document.documentElement);
-    sspi.getAttribute = function(name) {
-      return document.documentElement.getAttribute(name);
-    };
-
     if (this.HIDE_URLBAR_STOP_RELOAD_BUTTON) {
       document.getElementById("urlbar").setAttribute("hide_urlbar_stop_reload_button", true);
     }
@@ -120,3 +117,5 @@ var revertStopReloadButton = {
 };
 
 revertStopReloadButton.init();
+  ]]></script>
+</overlay>
