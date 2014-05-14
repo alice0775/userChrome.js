@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/14 09:50 fix color  if tabsintitlebar is enabled
 // @version        2014/05/14 09:00 fix color
 // @version        2014/05/14 07:00 fix double click if tabsintitlebar is enabled
 // @version        2014/05/14 07:00 fix tabsintitlebar (window control in fullscreen/ margin top of tabbar)
@@ -265,6 +266,10 @@ function zzzz_VerticalTabbar(){
         border-radius-bottomright : 0 !important; \
         } \
  \
+        #main-window[tabsintitlebar] .tabbrowser-tab:not([selected="true"]):-moz-system-metric(windows-classic):not(:-moz-lwtheme) { \
+        color: -moz-dialogtext; \
+        } \
+ \
         .tabbrowser-tab:last-child, \
         .tabbrowser-tab:not([selected="true"]):last-child \
         { \
@@ -382,7 +387,7 @@ function zzzz_VerticalTabbar(){
           background-image: url(chrome://browser/skin/tabbrowser/tab-background-middle.png); \
           background-position: left bottom; \
           background-repeat: no-repeat; \
-          background-size: 100%  100%; \
+          background-size: 100% 100%; \
  \
         } \
         .tabbrowser-tabs .tabbrowser-tab { \
