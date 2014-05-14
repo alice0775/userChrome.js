@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/14 14:20 typ csso
 // @version        2014/05/14 00:50 beforecustomization insted aftercustomization
 // @version        2014/05/14 00:00 fix style of #bookmarks-menu-button and BookmarkingUI._currentAreaType
 // @version        2014/05/13 23:30 fix style of |type=menu-button|
@@ -56,7 +57,7 @@ var addToolbarInsideLocationBar = {
       #ucjs-Locationbar-toolbar[hide] > toolbarbutton { \
         -moz-appearance: none; \
         padding: 0 0 !important; \
-        visibility: collapsed; \
+        visibility: collapse; \
       } \
  \
       #main-window[customizing] #ucjs-Locationbar-toolbar { \

@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/14 15:30 fix color  if tabsintitlebar and menubar is enabled
 // @version        2014/05/14 09:50 fix color  if tabsintitlebar is enabled
 // @version        2014/05/14 09:00 fix color
 // @version        2014/05/14 07:00 fix double click if tabsintitlebar is enabled
@@ -73,12 +74,16 @@ function zzzz_VerticalTabbar(){
       if (!gPrefService)
         gPrefService = Components.classes["@mozilla.org/preferences-service;1"]
                                      .getService(Components.interfaces.nsIPrefBranch);
+      var kTABBAR_WIDTH = "userChrome.verticaltabbar.width";
       // -- config --
       var TABBARWIDTH = 130;
       var TABBARLEFTMERGINE = 1;
       gPrefService.setIntPref("browser.tabs.tabMaxWidth", 250);
       gPrefService.setIntPref("browser.tabs.tabMinWidth", 100);
       gPrefService.setIntPref("browser.tabs.tabClipWidth", 140);
+      // close button
+      var HIDE_CLOSE_BUTTON_IN_BACKGROUND_TAB = false;
+      var HIDE_CLOSE_BUTTON_IN_FOREGROUND_TAB = false;
       // -- config --
       var TOOLBARBUTTON_AS_TAB = false;
       // xxx Bug 380960 - Implement closing tabs animation
@@ -221,7 +226,7 @@ function zzzz_VerticalTabbar(){
         #main-window[tabsintitlebar][sizemode="normal"] > #tab-view-deck { \
          margin-top:  1px; \
         } \
-        #main-window[tabsintitlebar] #nav-bar, \
+        #main-window[tabsintitlebar] #toolbar-menubar[autohide="true"] ~ #nav-bar, \
         #main-window[sizemode="fullscreen"] #nav-bar { \
          margin-right:80px; \
         } \
@@ -291,11 +296,15 @@ function zzzz_VerticalTabbar(){
           -moz-margin-start: 2px; \
           -moz-margin-end: 3px; \
         } \
+        .tab-throbber:not([pinned]), \
+        .tab-icon-image:not([pinned]) { \
+          -moz-margin-end: 3px; \
+        } \
  \
         #TabsToolbar .tab-content:not([pinned]), \
         #TabsToolbar .tab-content[pinned] { \
-        -moz-padding-end: 3px !important;; \
-        -moz-padding-start: 3px !important;; \
+        -moz-padding-end: 3px !important; \
+        -moz-padding-start: 3px !important; \
         } \
  \
         /*toolbarbutton*/ \
@@ -331,16 +340,6 @@ function zzzz_VerticalTabbar(){
         } \
       ';
 
-      if (TOOLBARBUTTON_AS_TAB) {
-        style += ' \
-          #TabsToolbar > toolbarbutton:not([collapsed="true"]), \
-          #TabsToolbar > toolbarbutton:not([hidden="true"]) \
-          { \
-          width:100% !important; \
-          } \
-       ';
-      }
-
       /* Remove exstra padding with vertical tabs */
       style += ' \
 \
@@ -356,12 +355,12 @@ function zzzz_VerticalTabbar(){
           -moz-padding-start: 0px; \
         } \
  \
-        .tab-background-start[selected=true]::after, \
-        .tab-background-start[selected=true]::before, \
+        .tab-background-start[selected="true"]::after, \
+        .tab-background-start[selected="true"]::before, \
         .tab-background-start, \
         .tab-background-end, \
-        .tab-background-end[selected=true]::after, \
-        .tab-background-end[selected=true]::before { \
+        .tab-background-end[selected="true"]::after, \
+        .tab-background-end[selected="true"]::before { \
           min-height: 0px; \
           width: 0px; \
         } \
@@ -376,14 +375,14 @@ function zzzz_VerticalTabbar(){
       /* Don't show the tab curve with vertical tabs */
       style += ' \
  \
-        .tabbrowser-tabs .tab-background-end[selected=true]::after, \
-        .tabbrowser-tabs .tab-background-end[selected=true]::before, \
-        .tabbrowser-tabs .tab-background-start[selected=true]::after, \
-        .tabbrowser-tabs .tab-background-start[selected=true]::before { \
+        .tabbrowser-tabs .tab-background-end[selected="true"]::after, \
+        .tabbrowser-tabs .tab-background-end[selected="true"]::before, \
+        .tabbrowser-tabs .tab-background-start[selected="true"]::after, \
+        .tabbrowser-tabs .tab-background-start[selected="true"]::before { \
           content: none; \
         } \
  \
-        .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) { \
+        .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected="true"]) { \
           background-image: url(chrome://browser/skin/tabbrowser/tab-background-middle.png); \
           background-position: left bottom; \
           background-repeat: no-repeat; \
@@ -399,6 +398,32 @@ function zzzz_VerticalTabbar(){
           -moz-border-end: none; \
         } \
        ';
+
+      if (HIDE_CLOSE_BUTTON_IN_FOREGROUND_TAB) {
+        style += ' \
+          .tabbrowser-tab[selected="true"] .tab-close-button \
+          { \
+          display: none !important; \
+          } \
+       ';
+      }
+      if (HIDE_CLOSE_BUTTON_IN_BACKGROUND_TAB) {
+        style += ' \
+          .tabbrowser-tab:not([selected="true"]) .tab-close-button \
+          { \
+          display: none !important; \
+          } \
+       ';
+      }
+      if (TOOLBARBUTTON_AS_TAB) {
+        style += ' \
+          #TabsToolbar > toolbarbutton:not([collapsed="true"]), \
+          #TabsToolbar > toolbarbutton:not([hidden="true"]) \
+          { \
+          width:100% !important; \
+          } \
+       ';
+      }
 
       style = style.replace(/\s+/g, " ")
       .replace("{TABBARWIDTH+TABBARLEFTMERGINE}", TABBARWIDTH + TABBARLEFTMERGINE)
@@ -742,9 +767,14 @@ function zzzz_VerticalTabbar(){
         tabbrowsertabs.setAttribute('overflow', true);
 
         //幅調整
-        tabsToolbar.style.width =  vtbSplitter.getAttribute('state') == 'collapsed' 
-                                   ? "0px" 
-                                   : verticalTabToolBox.boxObject.width - TABBARLEFTMERGINE + "px";
+        if (vtbSplitter.getAttribute('state') == 'collapsed')
+          var w = 0;
+        else {
+          gPrefService.setIntPref(kTABBAR_WIDTH, verticalTabToolBox.boxObject.width);
+          w = verticalTabToolBox.boxObject.width - TABBARLEFTMERGINE;
+        }
+        tabsToolbar.style.width =  w + "px";
+        
         //高さ調整
         var toolbuttonH = 0;
         if (!TOOLBARBUTTON_AS_TAB) {
@@ -774,11 +804,16 @@ function zzzz_VerticalTabbar(){
         indicatorbox.style.left = sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
         indicatorbox.style.top = -5 + gBrowser.boxObject.y + "px";
         indicatorbox.style.bottom = browserbottombox.boxObject.height + "px";
+        gBrowser.tabContainer.adjustTabstrip();
 
         //選択タブが見えるように
         ensureVisibleElement(gBrowser.selectedTab);
       }
     }
+
+    try {
+      verticalTabToolBox.style.width = gPrefService.getIntPref(kTABBAR_WIDTH) + "px";
+    } catch(e) {}
     VerticalTabbarOnresized();
     setTimeout(function(){VerticalTabbarOnresized();}, 250);
     //window['piro.sakura.ne.jp'].stopRendering.start();
