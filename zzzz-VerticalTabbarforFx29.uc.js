@@ -6,6 +6,9 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/14 09:00 fix color
+// @version        2014/05/14 07:00 fix double click if tabsintitlebar is enabled
+// @version        2014/05/14 07:00 fix tabsintitlebar (window control in fullscreen/ margin top of tabbar)
 // @version        2014/05/14 00:50 fix text color when browser.tabs.drawInTitlebar=true
 // @version        2014/05/10 13:00 remove fog in titlebar, fixed if no titlebar displayed
 // @version        2014/05/09 15:30 use sizemodechange event
@@ -50,6 +53,17 @@
 // @license        The MIT License
 
 function zzzz_VerticalTabbar(){
+      // -----config--------
+      // double click on tabbar if tabsintitlebar is enabled
+      zzzz_VerticalTabbar.dblclick =
+      function(event) {
+        if (event.button != 0 || event.originalTarget.localName != "box")
+          return;
+        BrowserOpenTab(); // open new tab
+        event.preventDefault();
+      };
+      // -----config--------
+
       // Tab Mix plus
       if("tablib" in window) return;
       // Tree Style tab
@@ -199,6 +213,28 @@ function zzzz_VerticalTabbar(){
         min-width:2px !important; \
         } \
  \
+         /*tabs in titlebar/fullscreen要調整*/ \
+        #main-window[tabsintitlebar] > #titlebar { \
+          /*-moz-appearance: none;*/ \
+        } \
+        #main-window[tabsintitlebar][sizemode="normal"] > #tab-view-deck { \
+         margin-top:  1px; \
+        } \
+        #main-window[tabsintitlebar] #nav-bar, \
+        #main-window[sizemode="fullscreen"] #nav-bar { \
+         margin-right:80px; \
+        } \
+        #main-window[sizemode="fullscreen"] #window-controls { \
+        display:-moz-box; \
+        position: fixed; \
+        top:0; \
+        right:0; \
+        } \
+        #main-window[tabsintitlebar][sizemode="normal"][chromehidden~="menubar"] #toolbar-menubar ~ #TabsToolbar, \
+        #main-window[tabsintitlebar][sizemode="normal"] #toolbar-menubar[autohide="true"][inactive] ~ #TabsToolbar { \
+          margin-top: 0; \
+        } \
+ \
          /*default theme要調整*/ \
         /* Fx3.7a2*/ \
         toolbarbutton:not([id="back-button"]):not([id="forward-button"]) \
@@ -227,8 +263,6 @@ function zzzz_VerticalTabbar(){
         border-radius-topright : 0 !important; \
         border-radius-bottomleft : 0 !important; \
         border-radius-bottomright : 0 !important; \
- \
-        /*background-image: url("chrome://browser/skin/tabbrowser/tab-bkgnd.png");*/ \
         } \
  \
         .tabbrowser-tab:last-child, \
@@ -240,12 +274,6 @@ function zzzz_VerticalTabbar(){
         .tabbrowser-tab[selected="true"] \
         { \
         padding: 0 0 0 0 !important; \
-        /*background-image: url("chrome://browser/skin/tabbrowser/tab-active-bkgnd.png");*/ \
-        /*background-color: ThreeDHighlight;*/ \
-        } \
- \
-        .tabbrowser-tab:not(:-moz-lwtheme) { \
-          color: black; \
         } \
  \
         .tabbrowser-tab[pinned] \
@@ -257,21 +285,6 @@ function zzzz_VerticalTabbar(){
         .tab-icon-image[pinned] { \
           -moz-margin-start: 2px; \
           -moz-margin-end: 3px; \
-        } \
- \
-        .tabbrowser-tab[selected="true"] \
-        { \
-        background-color: rgb(245,245,250); \
-        } \
- \
-        .tabbrowser-tab:not([selected="true"]):hover \
-        { \
-        background-color: ThreeDHighlight; \
-        } \
- \
-        .tabbrowser-tab[selected="true"]:hover \
-        { \
-        background-color: ThreeDHighlight; \
         } \
  \
         #TabsToolbar .tab-content:not([pinned]), \
@@ -353,11 +366,6 @@ function zzzz_VerticalTabbar(){
           border-right: 0px solid transparent; \
           margin: 0 0px; \
         } \
- \
-        .tab-background-middle[selected=true] { \
-          background-image :none; \
-          background-color: transparent; \
-        } \
        ';
 
       /* Don't show the tab curve with vertical tabs */
@@ -370,10 +378,13 @@ function zzzz_VerticalTabbar(){
           content: none; \
         } \
  \
-        .tabbrowser-tabs .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) { \
-          background-image: none; \
-        } \
+        .tabbrowser-tab:hover > .tab-stack > .tab-background:not([selected=true]) { \
+          background-image: url(chrome://browser/skin/tabbrowser/tab-background-middle.png); \
+          background-position: left bottom; \
+          background-repeat: no-repeat; \
+          background-size: 100%  100%; \
  \
+        } \
         .tabbrowser-tabs .tabbrowser-tab { \
           pointer-events: auto; \
         } \
@@ -395,7 +406,6 @@ function zzzz_VerticalTabbar(){
       sspi.getAttribute = function(name) {
         return document.documentElement.getAttribute(name);
       };
-
 
       /* 縦のスクロールバーを細く＆背景着色 */
       style = ' \
@@ -449,6 +459,13 @@ function zzzz_VerticalTabbar(){
       tabbrowsertabs.setAttribute('overflow', true);
       tabbrowsertabs.removeAttribute('orient');
       arrowscrollbox.removeAttribute('orient');
+
+      // tabs in title bar
+      tabsToolbar.addEventListener("dblclick", function(event) {
+          if (!TabsInTitlebar.enabled)
+            return;
+          zzzz_VerticalTabbar.dblclick(event);
+      }.bind(gBrowser.tabContainer), true);
 
       //context menu
       tabbrowsertabs.setAttribute("context", "tabContextMenu");
