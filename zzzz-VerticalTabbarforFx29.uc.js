@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/16 00:00 Workaroundposition of private-browsing-indicator
 // @version        2014/05/14 15:30 fix color  if tabsintitlebar and menubar is enabled
 // @version        2014/05/14 09:50 fix color  if tabsintitlebar is enabled
 // @version        2014/05/14 09:00 fix color
@@ -236,6 +237,13 @@ function zzzz_VerticalTabbar(){
         top:0; \
         right:0; \
         } \
+ \
+        #main-window[tabsintitlebar] #private-browsing-indicator-titlebar { \
+        position: fixed; \
+         top:20px; \
+         right:0px; \
+        } \
+ \
         #main-window[tabsintitlebar][sizemode="normal"][chromehidden~="menubar"] #toolbar-menubar ~ #TabsToolbar, \
         #main-window[tabsintitlebar][sizemode="normal"] #toolbar-menubar[autohide="true"][inactive] ~ #TabsToolbar { \
           margin-top: 0; \

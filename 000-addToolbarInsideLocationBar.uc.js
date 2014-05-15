@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/16 00:00 check for toolbar had been registered
 // @version        2014/05/14 14:20 typ csso
 // @version        2014/05/14 00:50 beforecustomization insted aftercustomization
 // @version        2014/05/14 00:00 fix style of #bookmarks-menu-button and BookmarkingUI._currentAreaType
@@ -35,12 +36,16 @@ var addToolbarInsideLocationBar = {
     toolbar.setAttribute("toolboxid", "navigator-toolbox");
 
     //register toolbar.id
-    try {
-      CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
-        type: CustomizableUI.TYPE_TOOLBAR,
-        defaultPlacements: ["feed-button"]
-      });
-    } catch(e) {}
+    //already registered when opening the second or later window
+    if (CustomizableUI.getAreaType("ucjs-Locationbar-toolbar")) {
+      // do nothing
+    } else
+      try {
+        CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
+          type: CustomizableUI.TYPE_TOOLBAR,
+          defaultPlacements: ["feed-button"]
+        });
+      } catch(e) {}
 
     let ref = document.getElementById("urlbar-icons");
     ref.appendChild(toolbar);

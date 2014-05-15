@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/16 00:00 check for toolbar had been registered
 // @version        2014/05/14 00:00 fix BookmarkingUI._currentAreaType
 // @version        2014/05/13 21:30 add to view menu
 // @version        2014/05/13 13:30 see note below
@@ -51,12 +52,16 @@
 
 
   //register toolbar.id
-  try {
-    CustomizableUI.registerArea("ucjs-addon-bar", {
-      type: CustomizableUI.TYPE_TOOLBAR,
-      defaultPlacements: ["spring_revertAddonBarStatusBar", "ucjs-status-bar"]
-    });
-  } catch(ee) {}
+  //already registered when opening the second or later window
+  if (CustomizableUI.getAreaType("ucjs-addon-bar")) {
+    // do nothing
+  } else
+    try {
+      CustomizableUI.registerArea("ucjs-addon-bar", {
+        type: CustomizableUI.TYPE_TOOLBAR,
+        defaultPlacements: ["spring_revertAddonBarStatusBar", "ucjs-status-bar"]
+      });
+    } catch(ee) {}
 
   var bottombox = document.getElementById("browser-bottombox");
   bottombox.appendChild(addonbar);

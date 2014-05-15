@@ -25,6 +25,7 @@
 // @include        main
 // @compatibility  Firefox 24+
 // @author         Alice0775
+// @version        2014/05/16 00:00 remove error logging
 // @version        2014/05/13 09:50 fix second window
 // @version        2014/05/13 09:30 fix second window
 // @version        2014/05/12 15:30 mousethrough
@@ -68,7 +69,6 @@ var showLastModified = {
         }
       });
     }catch(ee) {
-      Components.utils.reportError(ee);
     }
 
     gBrowser.addProgressListener(this);
