@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2014/05/15 20:00 removed the following oraround
 // @version        2014/05/15 19:00 Woraround closes the manager 10 seconds after download completion
 // @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
 // @version        2014/03/01 12:00 Bug 978291
@@ -238,6 +239,7 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
       },
 
       onDownloadChanged: function (aDownload) {
+        Cu.import("resource://gre/modules/DownloadIntegration.jsm");
         if (!this._list)
           return;
         this._list.getAll().then(downloads => {
@@ -253,8 +255,15 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
               closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
             } catch(e) {}
             if (closeWhenDone) {
+              var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
+                             .getService(Components.interfaces.nsIWindowMediator);
+              var enumerator = mediator.getEnumerator("navigator:browser");
+              while(enumerator.hasMoreElements()) {
+                return;
+              }
               /// mmm
-              aWindow.setTimeout(function(aWindow){aWindow.close();}, 10000, aWindow);
+              DownloadIntegration._store.save();
+              aWindow.close();
             }
           }
         }).then(null, Cu.reportError);
