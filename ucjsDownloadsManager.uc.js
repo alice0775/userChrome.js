@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2014/05/15 19:00 Woraround closes the manager 10 seconds after download completion
 // @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
 // @version        2014/03/01 12:00 Bug 978291
 // @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
@@ -132,19 +133,26 @@ var openOrHideDownloadWindow_at_startDownload = {
     }
   },
 
-  onSummaryChanged: function () {
-    Cu.import("resource://gre/modules/Services.jsm");
-    if (!this._summary)
+  onDownloadChanged: function (aDownload) {
+    if (!this._list)
       return;
-    if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
-      var closeWhenDone = false;
-      try {
-        closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
-      } catch(e) {}
-      if (closeWhenDone) {
-        ucjs_closeDownloadManager();
+    this._list.getAll().then(downloads => {
+      var num = 0;
+      for (let download of downloads) {
+        if (!download.succeeded)
+          num++;
       }
-    }
+      if (num == 0) {
+        Cu.import("resource://gre/modules/Services.jsm");
+        var closeWhenDone = false;
+        try {
+          closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
+        } catch(e) {}
+        if (closeWhenDone) {
+          ucjs_closeDownloadManager();
+        }
+      }
+    }).then(null, Cu.reportError);
   }
 }
 openOrHideDownloadWindow_at_startDownload.init();
@@ -229,6 +237,29 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
         }
       },
 
+      onDownloadChanged: function (aDownload) {
+        if (!this._list)
+          return;
+        this._list.getAll().then(downloads => {
+          var num = 0;
+          for (let download of downloads) {
+            if (!(download.succeeded || download.canceled))
+              num++;
+          }
+          if (num == 0) {
+            Cu.import("resource://gre/modules/Services.jsm");
+            var closeWhenDone = false;
+            try {
+              closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
+            } catch(e) {}
+            if (closeWhenDone) {
+              /// mmm
+              aWindow.setTimeout(function(aWindow){aWindow.close();}, 10000, aWindow);
+            }
+          }
+        }).then(null, Cu.reportError);
+      },
+
       xonDownloadChanged: function (aDownload) {
         this.numDls = 0;
         if (!this._list)
@@ -246,23 +277,6 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
           return;
         if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
           aWindow.document.title = originalTitle;
-
-          var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                         .getService(Components.interfaces.nsIWindowMediator);
-          var enumerator = mediator.getEnumerator("navigator:browser");
-          while(enumerator.hasMoreElements()) {
-            return;
-          }
-
-          Cu.import("resource://gre/modules/Services.jsm");
-          var closeWhenDone = false;
-          try {
-            closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
-          } catch(e) {}
-          if (closeWhenDone) {
-            aWindow.close();
-          }
-
         } else {
           // Update window title
           this.xonDownloadChanged();
