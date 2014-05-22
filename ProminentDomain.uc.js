@@ -5,7 +5,8 @@
 // @include        main
 // @compatibility  Firefox 32.0a1
 // @author
-// @version        2014/05/22 00:00 Workaround for Fx29+ prettyView and Bug 1014246
+// @version        2014/02/29 00:00 change workaround
+// @version        2014/02/28 00:00 Workaround Bug 1014246
 // @version        2013/07/12 17:00 by Alice0775  reset horizontal scroll (workaround Bug 893312)
 // @version        2012/12/05 21:00 by Alice0775  fixed getValidTld 
 // ==/UserScript==
@@ -20,11 +21,6 @@
 var ProminentDomain = {
 
   init0: function() {
-
-    // Workaround Bug 1014246
-    setTimeout(function(){
-      CustomizableUI.dispatchToolboxEvent("aftercustomization", {}, window);
-    }, 0);
 
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
                   .getService(Components.interfaces.nsIPrefBranch2);
@@ -63,7 +59,8 @@ var ProminentDomain = {
       icons.insertBefore(this.label, icons.firstChild);
     }
 
-    this.init();
+    // Workaround Bug 1014246
+    setTimeout(function(){this.init();}.bind(this), 0);
 
     var self = this;
     window.addEventListener("unload", this, false);

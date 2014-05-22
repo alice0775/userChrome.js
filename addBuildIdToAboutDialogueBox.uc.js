@@ -5,7 +5,7 @@
 // @include        chrome://browser/content/aboutDialog.xul
 // @compatibility  Firefox 3.0 3.1
 // @author         Alice0775
-// @version        2013/02/21 15:00 Bug 755724 fix2
+// @version        2014/05/22 23:00 size of window
 // @version        2013/02/11 23:00 Bug 755724
 // @version        2008/11/22 12:00
 // @Note           Help > About画面に にBuilsIDを付加するとともにクリップボードにUA+IDをコピー
@@ -41,7 +41,6 @@ var addBuildid = {
     }
     userAgentField.value = this.getBuildSource() + "\n" + ua;
     userAgentField.setAttribute("value", this.getBuildSource() + "\n" + ua);
-    window.resizeBy(0, 100);
   },
 
   convUA: function(){
@@ -82,6 +81,12 @@ var addBuildid = {
     const fph = ios.getProtocolHandler("file").QueryInterface(Ci.nsIFileProtocolHandler);
     const ds = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
     var file = ds.get("CurWorkD", Ci.nsIFile);
+    var file = ds.get("CurProcD", Ci.nsIFile);
+    if (/browser$/.test(file.path)) {
+	    var path = file.path.replace(/browser$/,"");
+			file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
+			file.initWithPath(path);
+    }
     file.append("application.ini");
     var text = this.readFile(file);
     var SourceRepository = text.match(/SourceRepository=(.*)/)[1];
