@@ -54,20 +54,22 @@
         
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar {
-          -moz-border-start: 1px !important;
           margin: 0 3px !important;
           padding: 0 !important;
-          border: 1px solid ThreeDShadow !important;
+          -moz-border-start: 1px solid ThreeDShadow;
+        }
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-lwtheme {
+          -moz-border-start: 1px solid rgba(0,0,0,.32);
         }
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-locale-dir(ltr) {
-          border-top-left-radius: 2px !important;
-          border-bottom-left-radius: 2px !important;
+          border-top-left-radius: 2px;
+          border-bottom-left-radius: 2px;
         }
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-locale-dir(rtl) {
-          border-top-right-radius: 2px !important;
-          border-bottom-right-radius: 2px !important;
+          border-top-right-radius: 2px;
+          border-bottom-right-radius: 2px;
         }
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper {
@@ -90,6 +92,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/25 01:30 fix left border color of URLBar
 // @version        2014/05/15 01:30 add class chromeclass-toolbar-additional
 // @version        2014/05/15 01:30 fix color
 // @version        2014/05/13 10:30 fix second window
