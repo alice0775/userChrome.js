@@ -62,6 +62,13 @@
           -moz-border-start: 1px solid rgba(0,0,0,.32);
         }
         
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme) {
+          border-color: hsla(210,54%,20%,.25) hsla(210,54%,20%,.27) hsla(210,54%,20%,.3);
+        }
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme)[focused] {
+          border-color: Highlight;
+        }
+        
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-locale-dir(ltr) {
           border-top-left-radius: 2px;
           border-bottom-left-radius: 2px;
@@ -81,6 +88,24 @@
         %23urlbar-container %23forward-button {
           display: none;
         }
+
+        /**/
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23forward-button[disabled] + %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(ltr) {
+          padding-left: 2px;
+        }
+
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23forward-button[disabled] + %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(rtl) {
+          padding-right: 2px;
+        }
+
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper:not(:hover) > %23forward-button[disabled] + %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(ltr) {
+          /* when not hovered anymore, trigger a new non-delayed transition to react to the forward button hiding */
+          padding-left: 2px;
+        }
+
+        window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23forward-button[disabled] + %23urlbar > %23notification-popup-box {
+          padding-left: 3px;
+        }
 " type="text/css"?>
 <overlay id="revertBackForwardButton"
      xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul">
@@ -92,6 +117,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/25 05:30 fix shift urlbar when disabled button
 // @version        2014/05/25 01:30 fix left border color of URLBar
 // @version        2014/05/15 01:30 add class chromeclass-toolbar-additional
 // @version        2014/05/15 01:30 fix color
