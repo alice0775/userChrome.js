@@ -5,9 +5,6 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
-// @version        2014/05/23 00:00 preserve position after customize toolbar
-// @version        2014/05/16 00:00 check for toolbar had been registered
-// @version        2014/05/14 14:20 typ csso
 // @version        2014/05/14 00:50 beforecustomization insted aftercustomization
 // @version        2014/05/14 00:00 fix style of #bookmarks-menu-button and BookmarkingUI._currentAreaType
 // @version        2014/05/13 23:30 fix style of |type=menu-button|
@@ -21,6 +18,32 @@
 // ==/UserScript==
 var addToolbarInsideLocationBar = {
   init: function() {
+    const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+    Components.utils.import("resource:///modules/CustomizableUI.jsm");
+
+    //create toolbar
+    let toolbar = document.createElementNS(kNSXUL, "toolbar");
+    toolbar.setAttribute("id", "ucjs-Locationbar-toolbar");
+    toolbar.setAttribute("customizable", "true");
+    toolbar.setAttribute("mode", "icons");
+    toolbar.setAttribute("iconsize", "small");
+    toolbar.setAttribute("hide", "true");
+    toolbar.setAttribute("context", "toolbar-context-menu");
+    toolbar.setAttribute("class", "toolbar-primary chromeclass-toolbar customization-target");
+    toolbar.setAttribute("toolbarname", "UCJS Toolbar Inside LocationBar");
+    toolbar.setAttribute("toolboxid", "navigator-toolbox");
+
+    //register toolbar.id
+    try {
+      CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
+        type: CustomizableUI.TYPE_TOOLBAR,
+        defaultPlacements: ["feed-button"]
+      });
+    } catch(e) {}
+
+    let ref = document.getElementById("urlbar-icons");
+    ref.appendChild(toolbar);
+
     let style = ' \
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
       #ucjs-Locationbar-toolbar { \
@@ -33,7 +56,7 @@ var addToolbarInsideLocationBar = {
       #ucjs-Locationbar-toolbar[hide] > toolbarbutton { \
         -moz-appearance: none; \
         padding: 0 0 !important; \
-        visibility: collapse; \
+        visibility: collapsed; \
       } \
  \
       #main-window[customizing] #ucjs-Locationbar-toolbar { \
@@ -76,43 +99,9 @@ var addToolbarInsideLocationBar = {
       return document.documentElement.getAttribute(name);
     };
 
-    const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    Components.utils.import("resource:///modules/CustomizableUI.jsm");
-
-    //create toolbar
-    let toolbar = document.createElementNS(kNSXUL, "toolbar");
-    toolbar.setAttribute("id", "ucjs-Locationbar-toolbar");
-    toolbar.setAttribute("customizable", "true");
-    toolbar.setAttribute("mode", "icons");
-    toolbar.setAttribute("iconsize", "small");
-    toolbar.setAttribute("hide", "true");
-    toolbar.setAttribute("context", "toolbar-context-menu");
-    toolbar.setAttribute("class", "toolbar-primary chromeclass-toolbar customization-target");
-    toolbar.setAttribute("toolbarname", "UCJS Toolbar Inside LocationBar");
-    toolbar.setAttribute("toolboxid", "navigator-toolbox");
-
-    //register toolbar.id
-    //already registered when opening the second or later window
-    if (CustomizableUI.getAreaType("ucjs-Locationbar-toolbar")) {
-      // do nothing
-    } else
-      try {
-        CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
-          type: CustomizableUI.TYPE_TOOLBAR,
-          defaultPlacements: ["feed-button"]
-        });
-      } catch(e) {}
-
-    let ref = this.getInsertPoint();
-    ref.parentNode.insertBefore(toolbar, ref);
-
     window.addEventListener("beforecustomization", this, true);
     toolbar.removeAttribute("hide");
     BookmarkingUI._updateCustomizationState();
-  },
-
-  getInsertPoint: function() {
-    return document.getElementById("urlbar-icons").firstChild;
   },
 
   handleEvent: function(event) {
@@ -120,7 +109,7 @@ var addToolbarInsideLocationBar = {
     switch(event.type) {
       case "beforecustomization":
         window.addEventListener("customizationending", this, false);
-        this.placeholder = toolbar.parentNode.insertBefore(document.createElement("hbox"), toolbar);
+
         let ref = document.getElementById("nav-bar-customization-target");
         toolbar.setAttribute("tooltiptext", "Toolbar inside LocationBar");
         ref.parentNode.insertBefore(toolbar, ref);
@@ -128,8 +117,8 @@ var addToolbarInsideLocationBar = {
       case "customizationending":
         window.removeEventListener("customizationending", this, false);
 
-        ref = this. placeholder;
-        ref.parentNode.replaceChild(toolbar, ref);
+        ref = document.getElementById("urlbar-icons");
+        ref.appendChild(toolbar);
         toolbar.removeAttribute("tooltiptext");
         toolbar.removeAttribute("hide");
         //BookmarkingUI._updateCustomizationState();

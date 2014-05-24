@@ -56,27 +56,27 @@
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar {
           margin: 0 3px !important;
           padding: 0 !important;
-          -moz-border-start: 1px solid ThreeDShadow;
+          -moz-border-start: 1px solid ThreeDShadow !important;
         }
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-lwtheme {
-          -moz-border-start: 1px solid rgba(0,0,0,.32);
+          -moz-border-start: 1px solid rgba(0,0,0,.32) !important;
         }
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme) {
-          border-color: hsla(210,54%,20%,.25) hsla(210,54%,20%,.27) hsla(210,54%,20%,.3);
+          border-color: hsla(210,54%,20%,.25) hsla(210,54%,20%,.27) hsla(210,54%,20%,.3) !important;
         }
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:not(:-moz-system-metric(windows-classic)):not(:-moz-lwtheme)[focused] {
-          border-color: Highlight;
+          border-color: Highlight !important;
         }
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-locale-dir(ltr) {
-          border-top-left-radius: 2px;
-          border-bottom-left-radius: 2px;
+          border-top-left-radius: 2px !important;
+          border-bottom-left-radius: 2px !important;
         }
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23urlbar:-moz-locale-dir(rtl) {
-          border-top-right-radius: 2px;
-          border-bottom-right-radius: 2px;
+          border-top-right-radius: 2px !important;
+          border-bottom-right-radius: 2px !important;
         }
         
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper {
@@ -90,19 +90,34 @@
         }
 
         /**/
+        /*Fx29,30*/
+        window:not([chromehidden~='toolbar']) %23urlbar-container[forwarddisabled] > %23urlbar-wrapper > %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(ltr) {
+          padding-left: 2px !important;
+        }
+        window:not([chromehidden~='toolbar']) %23urlbar-container[forwarddisabled] > %23urlbar-wrapper > %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(rtl) {
+          padding-right: 2px !important;
+        }
+        window:not([chromehidden~='toolbar']) %23urlbar-container[forwarddisabled] > %23urlbar-wrapper > %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(ltr) {
+          /* when not hovered anymore, trigger a new non-delayed transition to react to the forward button hiding */
+          padding-left: 2px !important;
+        }
+       /*Fx31,32*/
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23forward-button[disabled] + %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(ltr) {
           padding-left: 2px;
         }
-
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23forward-button[disabled] + %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(rtl) {
           padding-right: 2px;
         }
-
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper:not(:hover) > %23forward-button[disabled] + %23urlbar > %23notification-popup-box[hidden] + %23identity-box:-moz-locale-dir(ltr) {
           /* when not hovered anymore, trigger a new non-delayed transition to react to the forward button hiding */
           padding-left: 2px;
         }
 
+        /*Fx29,30*/
+        window:not([chromehidden~='toolbar']) %23urlbar-container[forwarddisabled] > %23urlbar-wrapper > %23urlbar > %23notification-popup-box {
+          padding-left: 3px !important;
+        }
+        /*Fx31,32*/
         window:not([chromehidden~='toolbar']) %23urlbar-wrapper > %23forward-button[disabled] + %23urlbar > %23notification-popup-box {
           padding-left: 3px;
         }
@@ -117,6 +132,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/05/25 06:30 fix style Firefox29, 30
 // @version        2014/05/25 05:30 fix shift urlbar when disabled button
 // @version        2014/05/25 01:30 fix left border color of URLBar
 // @version        2014/05/15 01:30 add class chromeclass-toolbar-additional
