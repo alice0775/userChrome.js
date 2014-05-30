@@ -5,6 +5,7 @@
 // @include        chrome://browser/content/aboutDialog.xul
 // @compatibility  Firefox 3.0 3.1
 // @author         Alice0775
+// @version        2014/05/28 23:00 e10s
 // @version        2014/05/22 23:00 size of window
 // @version        2013/02/11 23:00 Bug 755724
 // @version        2008/11/22 12:00
@@ -39,7 +40,6 @@ var addBuildid = {
       userAgentField.setAttribute("multiline", true);
       userAgentField.setAttribute("rows", "5");
     }
-    userAgentField.value = this.getBuildSource() + "\n" + ua;
     userAgentField.setAttribute("value", this.getBuildSource() + "\n" + ua);
   },
 
@@ -71,7 +71,7 @@ var addBuildid = {
     if (!userAgentField)
       userAgentField = document.getElementById("agent");
     Components.classes["@mozilla.org/widget/clipboardhelper;1"]
-      .getService(Components.interfaces.nsIClipboardHelper).copyString(userAgentField.value);
+      .getService(Components.interfaces.nsIClipboardHelper).copyString(userAgentField.getAttribute("value"));
   },
 
   getBuildSource: function (){
@@ -111,6 +111,6 @@ var addBuildid = {
         return content.replace(/\r\n?/g, "\n");
       }
 }
-
+window.resizeBy(0, 110);
 addBuildid.addBuildid();
 addBuildid.copyUA();

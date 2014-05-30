@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2015/05/31 00:00 lookupなんたら削除, なんかよく分からんけどucjs_isolateNode動かないので変更
 // @version        2008/08/18 02:00 なんか無くなっていたので再up
 // ==/UserScript==
 
@@ -23,7 +24,7 @@ function ucjs_link_and_wrap(doc){
   if (doc.contentType != 'text/html')
     return;
 
-  if (Components.lookupMethod(doc, 'designMode').call(doc) == 'on') return;
+  if (doc.designMode == 'on') return;
 
   var win = doc.defaultView;
   for (var wj=0,lenwj=win.frames.length;wj<lenwj;wj++){
@@ -117,7 +118,7 @@ function ucjs_link_and_wrap(doc){
 // 2ch の外部リンクのあれ
     var Start = (new Date()).getTime();
     var imenu = doc.links;
-    var exp = new RegExp("^http:\/\/(ime\.nu|(www\d\.|)ime\.st)\/","");
+    var exp = new RegExp("^http://(ime\\.nu/|(www\\d\\.|)ime\\.st/|pinktower\\.com/|jump\\.2ch\\.net/\\?)","");
     for (var i=0,len = imenu.length;i<len;i++){
       if ( exp.test(imenu[i].href) )
       imenu[i].href = imenu[i].href.replace(exp,'http://');
@@ -191,7 +192,7 @@ function ucjs_link_and_wrap(doc){
     }
     if (a.childNodes.length == 1){
       var iframe = a.ownerDocument.createElement("iframe");
-      var url = a.href;
+      var url = a.href; 
       url = url.replace(/\/((l\d+)|(\d\d?\d?))?#res(\d+)$/,'/$4');
 
       iframe.src = url;
@@ -202,7 +203,7 @@ function ucjs_link_and_wrap(doc){
       iframe.style.overflow = "auto";
       iframe.addEventListener('load',function(e) {
         var doc = this.contentWindow.document;
-        var dl = doc.getElementsByTagName("dl");
+        var dl = doc.querySelectorAll(".thread");
         ucjs_isolateNode(dl[0]);
         var dt = doc.getElementsByTagName("dt");
         if (dt.length>1 && !/\/1\-/.test(doc.location.href)){
@@ -212,8 +213,8 @@ function ucjs_link_and_wrap(doc){
         ucjs_link_and_wrap(doc);
         if (MAILTORES) ucjs_2ch_mailtores(doc)
         if (MAILTOOFF) ucjs_2ch_mailtooff(doc)
-        e.target.height = dl[0].offsetHeight+40 +'px';
-        doc.body.scrollTop = parseInt(dl[0].offsetTop)+'px';
+        e.target.height = doc.body.offsetHeight+40 +'px';
+        doc.body.scrollTop = parseInt(doc.body.offsetTop)+'px';
 
         setTimeout(function resizeIframe(aNode,h){
           var piFrame = getIFrameByWindow(getElementWindow(aNode));
@@ -339,7 +340,7 @@ function ucjs_link_and_wrap(doc){
       while ( child ){
         //dump((child == aNode ? "o" : "x") + " " + parent.nodeName + " " + child.nodeName + "\n");
         var prevChild = child.previousSibling;
-        if ( child != aNode ) parent.removeChild(child);
+        if ( child != aNode && typeof child.style !="undefined") {child.style.setProperty("display", "none", ""); /*parent.removeChild(child);*/}
         // 前のノードへ移動
         child = prevChild;
       }
