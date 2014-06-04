@@ -111,6 +111,6 @@ var addBuildid = {
         return content.replace(/\r\n?/g, "\n");
       }
 }
-window.resizeBy(0, 110);
 addBuildid.addBuildid();
 addBuildid.copyUA();
+setTimeout(function(){window.resizeBy(0, 0);},0);

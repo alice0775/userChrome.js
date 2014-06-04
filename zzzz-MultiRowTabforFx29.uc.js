@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/05/29 00:00 Bug 1018324 - Remove inIFlasher
 // @version        2014/05/09 14:50 remove debug
 // @version        2014/05/08 10:00 Fix height of when open in foreground new tab
 // @version        2014/05/07 19:50 Fixwd TABBROWSERTABS_MAXROWS
@@ -479,9 +480,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
       tab = tabs[tabs.length - 1]
     }
     try{
-      var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
-               .createInstance(Components.interfaces.inIFlasher);
-      mShell.scrollElementIntoView(tab);
+      tab.scrollIntoView(false);
       return true;
     }catch(e){}
   };
@@ -509,9 +508,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     }
     if (tab)
     try {
-      var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
-               .createInstance(Components.interfaces.inIFlasher);
-      mShell.scrollElementIntoView(tab);
+      tab.scrollIntoView(false);
     }catch(e){}
   }
 
@@ -633,11 +630,7 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 
   function ensureVisibleElement(aTab){
     var selectedTab = gBrowser.selectedTab || aTab
-    try{
-      var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
-               .createInstance(Components.interfaces.inIFlasher);
-      setTimeout(function(){mShell.scrollElementIntoView(selectedTab);}, 0);
-    }catch(e){}
+    setTimeout(function(){selectedTab.scrollIntoView(false);}, 0);
   }
 
   //初回起動時ダミーイベント

@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/05/29 00:00 Bug 1018324 - Remove inIFlasher
 // @version        2014/05/16 00:00 Workaroundposition of private-browsing-indicator
 // @version        2014/05/14 15:30 fix color  if tabsintitlebar and menubar is enabled
 // @version        2014/05/14 09:50 fix color  if tabsintitlebar is enabled
@@ -693,9 +694,7 @@ function zzzz_VerticalTabbar(){
           tab = tabs[tabs.length - 1]
         }
         try{
-          var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
-                   .createInstance(Components.interfaces.inIFlasher);
-          mShell.scrollElementIntoView(tab);
+          tab.scrollIntoView(false);
           return true;
         }catch(e){}
     };
@@ -782,7 +781,7 @@ function zzzz_VerticalTabbar(){
           w = verticalTabToolBox.boxObject.width - TABBARLEFTMERGINE;
         }
         tabsToolbar.style.width =  w + "px";
-        
+
         //高さ調整
         var toolbuttonH = 0;
         if (!TOOLBARBUTTON_AS_TAB) {
@@ -803,7 +802,12 @@ function zzzz_VerticalTabbar(){
           }
         }
 
-        tabsToolbar.style.left = sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
+        //位置調整
+        var verticalToolBar_width = 0;
+        var verticalToolBar = document.getElementById("vertical-toolbox");
+        if (verticalToolBar && verticalToolBar.getAttribute("placement") == "left")
+          verticalToolBar_width = verticalToolBar.boxObject.width;
+        tabsToolbar.style.left =  verticalToolBar_width + sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
         tabsToolbar.style.top = gBrowser.boxObject.y + "px";
         tabsToolbar.style.bottom = browserbottombox.boxObject.height + "px";
 
@@ -836,11 +840,7 @@ function zzzz_VerticalTabbar(){
     }
 
     function ensureVisibleElement(aTab){
-      try{
-        var mShell = Components.classes["@mozilla.org/inspector/flasher;1"]
-                 .createInstance(Components.interfaces.inIFlasher);
-        mShell.scrollElementIntoView(aTab);
-      }catch(e){}
+      aTab.scrollIntoView(false);
     }
     gBrowser.tabContainer.mTabstrip.ensureElementIsVisible = ensureVisibleElement;
 

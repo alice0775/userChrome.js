@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5 3.6 3.7a5pre
 // @author         Alice0775
+// @version        2014/05/31 00:00  e4x
 // @version        2010/05/02 00:00  TreeStyleTab
 // @version        2010/03/27 00:00  Bug 508482  - Window activation status should be a pseudoclass (:-moz-window-inactive) instead of an attribute および 長いタイトルは折り返すように
 // @Note
@@ -25,29 +26,16 @@ var TabTitlePopup = {
 
   init: function() {
     // initialization code
-    if (this.getVer < 3.7) {
-      var style = <><![CDATA[
-        #TabTooltip
-        {
-          max-width:450px !important;
-        }
-        #main-window:not([active="true"]) #TabTooltip
-        {
-          visibility: collapse !important;
-        }
-      ]]></>.toString();
-    } else {
-      var style = <><![CDATA[
-        #TabTooltip
-        {
-          max-width:450px !important;
-        }
-        #main-window:-moz-window-inactive  #TabTooltip
-        {
-          visibility: collapse !important;
-        }
-      ]]></>.toString();
-    }
+    var style = '\
+      #TabTooltip\
+      {\
+        max-width:450px !important;\
+      }\
+      #main-window:-moz-window-inactive  #TabTooltip\
+      {\
+        visibility: collapse !important;\
+      }\
+    '.toString();
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -139,9 +127,9 @@ var TabTitlePopup = {
 
       clearTimeout(this._showTimeout);
       var self = this;
-      this._showTimeout = setTimeout(function(targetElm){
+      this._showTimeout = setTimeout(function(event){
         clearTimeout(self._hideTimeout);
-        self.show(targetElm);
+        self.show(event.target, event);
         self._lastTitle = targetElm.getAttribute('linkedpanel');
 
         if( !(event.ctrlKey || !self._enableCtrlKey) ){
@@ -151,17 +139,19 @@ var TabTitlePopup = {
           }, 5000, this);
         }
 
-      }, ( event.ctrlKey || !this._enableCtrlKey) ? this._delay : 400, aTarget);
+      }, ( event.ctrlKey || !this._enableCtrlKey) ? this._delay : 400, event);
     }
     this._lastTarget = aTarget;
   },
 
-  show: function(targetElm) {
+  show: function(targetElm, event) {
     this.tooltip.hidePopup();
     this.tooltip.firstChild.textContent = targetElm.label;
     this.tooltip.width = "";
+    var x = event.screenX - targetElm.boxObject.screenX + 21;
+    var y = targetElm.boxObject.clientY + 21;
     document.popupNode = null; //THANKS http://www.xuldev.org/blog/?p=109
-    this.tooltip.openPopup( targetElm , "overlap" , 100, targetElm.boxObject.height + 5 , false, false );
+    this.tooltip.openPopup( targetElm , "overlap" , x, y , false, false );
   },
 
   dohide:  function() {

@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.41mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.42mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2014/06/04 12:00 fixed possibility of shutdown crash
 // Date 2014/05/19 00:00 delay 0, experiment
 // Date 2013/10/06 00:00 allow to load scripts into about:xxx
 // Date 2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod, remove REPLACEDOCUMENTOVERLAY
@@ -52,6 +53,7 @@
 //
 
 (function(){
+  "use strict";
   // -- config --
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
   const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
@@ -441,6 +443,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     },
 
     //window.userChrome_js.loadOverlay
+    shutdown: false,
     overlayWait:0,
     overlayUrl:[],
     loadOverlay: function(url, observer, doc){
@@ -484,6 +487,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         };
         //if (this.INFO) this.debug("document.loadOverlay: " + url);
         try{
+          if (window.userChrome_js.shutdown) return;
           doc.loadOverlay(url, observer);
         } catch(ex){
           window.userChrome_js.error(url, ex);
@@ -661,6 +665,10 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
 
 
   var that = window.userChrome_js;
+  window.addEventListener("unload", function(){
+    that.shutdown = true;
+  },false);
+
   window.xxdebug = that.debug;
   //that.debug(typeof that.getScriptsDone);
   if(pref){

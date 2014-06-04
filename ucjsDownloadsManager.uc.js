@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2014/06/03 12:00 
 // @version        2014/05/15 22:00 clean up
 // @version        2014/05/15 20:00 removed the following oraround
 // @version        2014/05/15 19:00 Woraround closes the manager 10 seconds after download completion
@@ -246,12 +247,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
     uninit: function() {
       window.removeEventListener("unload", this, false);
 
-      if (document.getElementById("contentAreaDownloadsView").getAttribute("sizemode") == "normal") {
-        Services.prefs.setIntPref("browser.download.manager.size.height", window.outerHeight);
-        Services.prefs.setIntPref("browser.download.manager.size.width", window.outerWidth);
-        Services.prefs.setIntPref("browser.download.manager.size.screenX", window.screenX);
-        Services.prefs.setIntPref("browser.download.manager.size.screenY", window.screenY);
-      }
+      this.saveSizePosition();
 
       if (this._summary) {
         this._summary.removeView(this);
@@ -266,6 +262,15 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         case "unload":
           this.uninit();
           break;
+      }
+    },
+
+    saveSizePosition: function() {
+      if (document.getElementById("contentAreaDownloadsView").getAttribute("sizemode") == "normal") {
+        Services.prefs.setIntPref("browser.download.manager.size.height", window.outerHeight);
+        Services.prefs.setIntPref("browser.download.manager.size.width", window.outerWidth);
+        Services.prefs.setIntPref("browser.download.manager.size.screenX", window.screenX);
+        Services.prefs.setIntPref("browser.download.manager.size.screenY", window.screenY);
       }
     },
 
@@ -289,6 +294,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
               return;
             }
             /// mmm
+            this.saveSizePosition();
             DownloadIntegration._store.save();
             window.close();
           }
