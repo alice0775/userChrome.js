@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.5 3.6 3.7a5pre
 // @author         Alice0775
+// @version        2014/06/05 21:00  typo
 // @version        2014/05/31 00:00  e4x
 // @version        2010/05/02 00:00  TreeStyleTab
 // @version        2010/03/27 00:00  Bug 508482  - Window activation status should be a pseudoclass (:-moz-window-inactive) instead of an attribute および 長いタイトルは折り返すように
@@ -118,7 +119,7 @@ var TabTitlePopup = {
       return;
     }
 
-    if(this._lastTarget != aTarget){
+    if(this._lastTarget != event.target) {
       var title = aTarget.label;
 
       if( !(event.ctrlKey || !this._enableCtrlKey) && this._lastTitle != aTarget.getAttribute('linkedpanel')){
@@ -130,7 +131,7 @@ var TabTitlePopup = {
       this._showTimeout = setTimeout(function(event){
         clearTimeout(self._hideTimeout);
         self.show(event.target, event);
-        self._lastTitle = targetElm.getAttribute('linkedpanel');
+        self._lastTitle = aTarget.getAttribute('linkedpanel');
 
         if( !(event.ctrlKey || !self._enableCtrlKey) ){
           self._hideTimeout = setTimeout(function(self){
