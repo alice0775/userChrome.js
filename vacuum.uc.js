@@ -1,26 +1,46 @@
+// ==UserScript==
+// @name           vacuum.uc.js
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    remove tab move animation
+// @include        main
+// @compatibility  Firefox29+
+// @author         Alice0775
+// @version        2014/06/07 20:30 async for Fx29
+// ==/UserScript==
 (function(){
   var menuitem = document.createElement("menuitem");
   menuitem.setAttribute("label", "Database Vacuum");
   menuitem.setAttribute("accesskey", "V");
   menuitem.setAttribute("oncommand", 'ucjsVacuume();');
-  document.getElementById("webConsole").parentNode.insertBefore(menuitem, document.getElementById("webConsole"));
+  document.getElementById("menuWebDeveloperPopup").appendChild(menuitem);
 })();
 
 
 
-var ucjsVacuumeExecute = {
-   run: function() {
-     // perform work here that doesn't touch the DOM or anything else that isn't thread safe
-     Components.classes["@mozilla.org/browser/nav-history-service;1"]
-            .getService(Components.interfaces.nsPIPlacesDatabase)
-            .DBConnection
-            .executeSimpleSQL("VACUUM");
-   }
- }
+function ucjsVacuumeExecute() {
+  let db = PlacesUtils.history.QueryInterface(Ci.nsPIPlacesDatabase).DBConnection;
+  let stmt = db.createAsyncStatement("VACUUM");
+  ucjsVacuumeAlerts("Start VACUUM, Do not close browser!");
+  stmt.executeAsync({
+    handleResult: function(aResultSet) {
+    },
+    handleError: function(aError) {
+      ucjsVacuumeAlerts("Unexpected error (" + aError.result + "): " + aError.message);
+      throw "Unexpected error (" + aError.result + "): " + aError.message;
+    },
+    handleCompletion: function(aReason) {
+      ucjsVacuumeAlerts("Done!");
+    }
+  });
+  stmt.finalize();
+}
+
+function ucjsVacuumeAlerts(str) {
+  var alerts = Components.classes["@mozilla.org/alerts-service;1"].
+                       getService(Components.interfaces.nsIAlertsService);
+  alerts.showAlertNotification(null, "Database Vacuum", str, false, "", null);
+}
 
 function ucjsVacuume() {
- var thread = Components.classes["@mozilla.org/thread-manager;1"]
-                        .getService(Components.interfaces.nsIThreadManager)
-                        .newThread(0);
- thread.dispatch(ucjsVacuumeExecute, thread.DISPATCH_NORMAL);
+  Services.tm.currentThread.dispatch(ucjsVacuumeExecute, Ci.nsIThread.DISPATCH_NORMAL);
 }

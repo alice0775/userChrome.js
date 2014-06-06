@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2014/06/07 20:00 Woraround closes
 // @version        2014/06/03 12:00 
 // @version        2014/05/15 22:00 clean up
 // @version        2014/05/15 20:00 removed the following oraround
@@ -294,9 +295,9 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
               return;
             }
             /// mmm
-            this.saveSizePosition();
             DownloadIntegration._store.save();
-            window.close();
+            this.saveSizePosition();
+            setTimeout(function(){window.close();}, 2000);
           }
         }
       }).then(null, Cu.reportError);
