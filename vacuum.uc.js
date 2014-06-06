@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           vacuum.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    remove tab move animation
+// @description    vacuum
 // @include        main
 // @compatibility  Firefox29+
 // @author         Alice0775
