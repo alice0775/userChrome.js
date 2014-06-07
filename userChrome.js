@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.42mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.43mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2014/06/07 19:00 turn off experiment by default
 // Date 2014/06/04 12:00 fixed possibility of shutdown crash
 // Date 2014/05/19 00:00 delay 0, experiment
 // Date 2013/10/06 00:00 allow to load scripts into about:xxx
@@ -55,6 +56,7 @@
 (function(){
   "use strict";
   // -- config --
+  const EXPERIMENT = false; //実験:するtrue, しない[false]
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
   const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
@@ -109,6 +111,7 @@
     BROWSERCHROME: BROWSERCHROME,
     EXCLUDE_CHROMEHIDDEN: EXCLUDE_CHROMEHIDDEN,
     REPLACECACHE: REPLACECACHE,
+    EXPERIMENT: EXPERIMENT,
     get hackVersion () {
       delete this.hackVersion;
       return this.hackVersion = "0.8";
@@ -505,7 +508,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
 
       var overlay;
 
-      if( false && true ){ //← uc.jsでのloadOverlayに対応
+      if( !this.EXPERIMENT && true ){ //← uc.jsでのloadOverlayに対応
         for(var m=0,len=this.overlays.length; m<len; m++){
           overlay = this.overlays[m];
           if( overlay.filename != this.ALWAYSEXECUTE
@@ -728,6 +731,40 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       setTimeout(function(doc){that.runOverlays(doc);},0, doc);
     },0, doc);
   }else{
+    if (!that.EXPERIMENT) {
+      setTimeout(function(doc){
+        that.runScripts(doc);
+        //面倒だからFirefox 3 の場合はeditBookmarkOverlay.xulを先読みしておく
+        var delay = 500;
+        if (location.href === that.BROWSERCHROME &&
+            typeof StarUI != 'undefined' &&
+            !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
+          // xxxx bug 726440
+          StarUI._overlayLoading = true;
+          that.loadOverlay(
+            "chrome://browser/content/places/editBookmarkOverlay.xul",
+            (function (aSubject, aTopic, aData) {
+              //XXX We just caused localstore.rdf to be re-applied (bug 640158)
+              if ("retrieveToolbarIconsizesFromTheme" in window)
+                retrieveToolbarIconsizesFromTheme();
+
+              // Move the header (star, title, button) into the grid,
+              // so that it aligns nicely with the other items (bug 484022).
+              let header = this._element("editBookmarkPanelHeader");
+              let rows = this._element("editBookmarkPanelGrid").lastChild;
+              rows.insertBefore(header, rows.firstChild);
+              header.hidden = false;
+
+              this._overlayLoading = false;
+              this._overlayLoaded = true;
+              //this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
+            }).bind(StarUI)
+          );
+          delay = 0;
+        }
+        setTimeout(function(doc){that.runOverlays(doc);}, delay, doc);
+      },500, doc);
+    } else {
       that.runScripts(doc);
       //面倒だからFirefox 3 の場合はeditBookmarkOverlay.xulを先読みしておく
       if (location.href === that.BROWSERCHROME &&
@@ -756,6 +793,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         );
       }
       that.runOverlays(doc);
+    }
   }
   //Sidebar for Trunc
   if(location.href != that.BROWSERCHROME) return;
