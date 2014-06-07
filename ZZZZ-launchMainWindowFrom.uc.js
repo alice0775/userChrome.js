@@ -1,11 +1,12 @@
 // ==UserScript==
-// @name           launchMainWindowFrom.uc.js
+// @name           ZZZZ-launchMainWindowFrom.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ダウンロードマネージャーからメインウインドウを再構築
 // @include        *
 // @exclude        chrome://browser/content/browser.xul
 // @compatibility  Firefox 3.0 more
 // @author         Alice0775
+// @version        2014/06/07 fix
 // @version        2014/06/07 menupopup
 // @version        2009/12/12 TypeがあったのでZZZ-inspectChrome.uc.jsが無いと動かなかった
 // @version        2009/12/12
@@ -14,39 +15,27 @@
 
 var launchMainWindowFrom = {
 
-  newPopup: null,
-  menuitem: null,
-
   init: function() {
+    let menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("class", "launchMainWindowFrom-menuitem");
+    menuitem.setAttribute("label", "Launch Main Window");
+    menuitem.setAttribute("accesskey","L");
+    menuitem.setAttribute("oncommand", "launchMainWindowFrom.openBrowserWindow();");
 
+    let menupopup = null;
     if (!document.documentElement.hasAttribute("context")) {
-      this.newPopup = document.createElement("menupopup");
-      this.newPopup.setAttribute("id", "launchMainWindowFrom-popup");
-      document.documentElement.setAttribute("context", this.newPopup.id);
-    } else {
-      var id = document.documentElement.getAttribute("context");
-      this.newPopup = document.getElementById(id);
+      menupopup = document.createElement("menupopup");
+      menupopup.setAttribute("id", "launchMainWindowFrom-popup");
+      document.documentElement.appendChild(menupopup);
+      document.documentElement.setAttribute("context", "launchMainWindowFrom-popup");
     }
 
-    this.menuitem = this.newPopup.appendChild(document.createElement("menuitem"));
-    this.menuitem.setAttribute("id", "launchMainWindowFrom-menuitem");
-    this.menuitem.setAttribute("label", "Launch Main Window");
-    this.menuitem.setAttribute("accesskey","L");
-    this.menuitem.setAttribute("oncommand", "launchMainWindowFrom.openBrowserWindow();");
-
-    if (!document.getElementById("mainPopupSet")) {
-      var popup = document.documentElement.appendChild(document.createElement("popupset"));
-      popup.setAttribute("id", "mainPopupSet");
+    let menupopups = document.getElementsByTagName("menupopup");
+    for(let i= 0; i < menupopups.length; i++) {
+      let menupopup = menupopups[i];
+      menupopup.appendChild(menuitem.cloneNode(true));
+      menupopup.addEventListener("popupshowing", this, false);
     }
-    document.getElementById("mainPopupSet").appendChild(this.newPopup);
-
-    this.newPopup.addEventListener("popupshowing", this, false);
-    window.addEventListener("unload", this, false);
-  },
-
-  uninit: function() {
-    this.newPopup.removeEventListener("popupshowing", this, false);
-    window.removeEventListener("unload", this, false);
   },
 
   isExistMainWindow: function() {
@@ -60,26 +49,21 @@ var launchMainWindowFrom = {
   handleEvent: function(aEvent) {
     switch(aEvent.type) {
       case "popupshowing":
-        this.onPopupshowing();
-        break;
-      case "unload":
-        this.uninit();
+        this.onPopupshowing(aEvent);
         break;
     }
   },
 
   onPopupshowing: function(aEvent) {
+    let menupopup = aEvent.target;
+    let menuitems = menupopup.getElementsByClassName("launchMainWindowFrom-menuitem");
+    if (menuitems.length < 1)
+      return;
     if (this.isExistMainWindow()) {
-      this.menuitem.setAttribute("hidden", true);
+      menuitems[0].setAttribute("hidden", true);
     } else {
-      this.menuitem.removeAttribute("hidden");
+      menuitems[0].removeAttribute("hidden");
     }
-    if ('gContextMenu' in window &&
-        gContextMenu ||
-        document.popupNode instanceof HTMLElement) {
-      return false;
-    }
-    return true;
   },
 
   openBrowserWindow: function() {
@@ -107,6 +91,12 @@ var launchMainWindowFrom = {
     }
 
     return win;
+  },
+
+  debug: function(str) {
+        Components.classes["@mozilla.org/consoleservice;1"]
+        .getService(Components.interfaces.nsIConsoleService)
+        .logStringMessage(str);
   }
 }
 
