@@ -6,6 +6,7 @@
 // @exclude        chrome://browser/content/browser.xul
 // @compatibility  Firefox 3.0 more
 // @author         Alice0775
+// @version        2014/06/07 menupopup
 // @version        2009/12/12 TypeがあったのでZZZ-inspectChrome.uc.jsが無いと動かなかった
 // @version        2009/12/12
 // @note           ZZZ-inspectChrome.uc.jsがある場合はZZZ-inspectChrome.uc.jsの方が先に動くようにしておく
@@ -19,7 +20,7 @@ var launchMainWindowFrom = {
   init: function() {
 
     if (!document.documentElement.hasAttribute("context")) {
-      this.newPopup = document.createElement("popup");
+      this.newPopup = document.createElement("menupopup");
       this.newPopup.setAttribute("id", "launchMainWindowFrom-popup");
       document.documentElement.setAttribute("context", this.newPopup.id);
     } else {

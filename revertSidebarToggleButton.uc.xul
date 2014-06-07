@@ -33,6 +33,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/06/07 09:30 fix working with bookmarksHistoryPanel
 // @version        2014/05/15 01:30 fix color
 // @version        2014/05/13 10:30 fix second window
 // @version        2014/05/13 09:30 fix second window
@@ -108,6 +109,9 @@ var revertSidebarToggleButton = {
         }
       });
     } catch(ee) {}
+
+    if ("bookmarksHistoryPanel" in window)
+      bookmarksHistoryPanel.delayedStartup();
 
     window.bookmarksButtonObserver = {
       onDrop: function (aEvent)
