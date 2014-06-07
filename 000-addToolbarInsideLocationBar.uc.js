@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/06/07 20:00 slightly delayed to display toolbar
 // @version        2014/05/23 00:00 preserve position after customize toolbar
 // @version        2014/05/16 00:00 check for toolbar had been registered
 // @version        2014/05/14 14:20 typ csso
@@ -29,11 +30,6 @@ var addToolbarInsideLocationBar = {
         background-image: none; \
         padding: 0px 2px; \
         border: none; \
-      } \
-      #ucjs-Locationbar-toolbar[hide] > toolbarbutton { \
-        -moz-appearance: none; \
-        padding: 0 0 !important; \
-        visibility: collapse; \
       } \
  \
       #main-window[customizing] #ucjs-Locationbar-toolbar { \
@@ -85,11 +81,12 @@ var addToolbarInsideLocationBar = {
     toolbar.setAttribute("customizable", "true");
     toolbar.setAttribute("mode", "icons");
     toolbar.setAttribute("iconsize", "small");
-    toolbar.setAttribute("hide", "true");
     toolbar.setAttribute("context", "toolbar-context-menu");
     toolbar.setAttribute("class", "toolbar-primary chromeclass-toolbar customization-target");
     toolbar.setAttribute("toolbarname", "UCJS Toolbar Inside LocationBar");
     toolbar.setAttribute("toolboxid", "navigator-toolbox");
+    toolbar.setAttribute("hidden", "true");
+    setTimeout(function(){toolbar.removeAttribute("hidden");}, 0)
 
     //register toolbar.id
     //already registered when opening the second or later window
@@ -107,7 +104,6 @@ var addToolbarInsideLocationBar = {
     ref.parentNode.insertBefore(toolbar, ref);
 
     window.addEventListener("beforecustomization", this, true);
-    toolbar.removeAttribute("hide");
     BookmarkingUI._updateCustomizationState();
   },
 
@@ -131,7 +127,6 @@ var addToolbarInsideLocationBar = {
         ref = this. placeholder;
         ref.parentNode.replaceChild(toolbar, ref);
         toolbar.removeAttribute("tooltiptext");
-        toolbar.removeAttribute("hide");
         //BookmarkingUI._updateCustomizationState();
         break;
     }
