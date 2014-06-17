@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2014/06/09 00:00 Modified dropindicator position
 // @version        2014/05/29 00:00 Bug 1018324 - Remove inIFlasher
 // @version        2014/05/16 00:00 Workaroundposition of private-browsing-indicator
 // @version        2014/05/14 15:30 fix color  if tabsintitlebar and menubar is enabled
@@ -614,6 +615,13 @@ function zzzz_VerticalTabbar(){
         //if (this.boxObject.height > _top + ind.clientHeight)
         //  ind.style.MozMarginStart = -1000;
         ind.style.marginTop = _top + 'px';
+
+        var verticalToolBar = document.getElementById("vertical-toolbox");
+        if (verticalToolBar && verticalToolBar.getAttribute("placement") == "left")
+          ind.parentNode.style.left = -5 + this.boxObject.width + verticalToolBar.boxObject.width + 'px';
+        else
+          ind.parentNode.style.left = -5 + this.boxObject.width + 'px';
+        
         ind.removeAttribute('collapsed');
         indicatorbox.style.width = '5px';
       };
@@ -807,7 +815,10 @@ function zzzz_VerticalTabbar(){
         var verticalToolBar = document.getElementById("vertical-toolbox");
         if (verticalToolBar && verticalToolBar.getAttribute("placement") == "left")
           verticalToolBar_width = verticalToolBar.boxObject.width;
-        tabsToolbar.style.left =  verticalToolBar_width + sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
+        if (sidebarbox.getAttribute("sidebarpopuppanel-overlay") =="true")
+          tabsToolbar.style.left =  verticalToolBar_width + "px";
+        else
+          tabsToolbar.style.left =  verticalToolBar_width + sidebarbox.boxObject.width + sidebarsplitter.boxObject.width + "px";
         tabsToolbar.style.top = gBrowser.boxObject.y + "px";
         tabsToolbar.style.bottom = browserbottombox.boxObject.height + "px";
 
@@ -839,8 +850,15 @@ function zzzz_VerticalTabbar(){
         ensureVisibleElement(event.target);
     }
 
-    function ensureVisibleElement(aTab){
-      aTab.scrollIntoView(false);
+    function ensureVisibleElement(aTab) {
+      let tab_box = aTab.boxObject;
+      let tab_y1 = tab_box.screenY;
+      let tab_y2 = tab_y1 + tab_box.height;
+      let tabContainer_box = gBrowser.tabContainer.boxObject;
+      let tabContainer_box_y1 = tabContainer_box.screenY;
+      let tabContainer_box_y2 = tabContainer_box.height + tabContainer_box.screenY;
+      if (tab_y1 < tabContainer_box_y1 || tab_y2 > tabContainer_box_y2)
+        aTab.scrollIntoView(false);
     }
     gBrowser.tabContainer.mTabstrip.ensureElementIsVisible = ensureVisibleElement;
 

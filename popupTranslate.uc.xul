@@ -8,7 +8,7 @@ display: none;
 
 <overlay id="popupTranslate"
          xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-         xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         xmlns:html="http://www.w3.org/1999/xhtml"
          >
 <!--
 // ==UserScript==
@@ -18,8 +18,9 @@ display: none;
 // @note                              基本的にメニューでxxx英日を選んでおくこと
 // @include        main
 // @include        chrome://messenger/content/messageWindow.xul
-// @compatibility  Firefox 10-32a1, Tb10-32a1
+// @compatibility  Firefox 27+
 // @author         Alice0775
+// @version        2014/06/09 12:00 時々sendが失敗する
 // @version        2014/05/03 00:00 Google翻訳仕様変更のため
 // @version        2013/02/19 09:00 isJapanese簡易判定
 // @version        2012/10/07 09:00 動かないもの削除
@@ -594,11 +595,7 @@ display: none;
                node = hdoc = result = null;
               }
             } catch (e) {self.show("取得失敗。");}
-
-
-            res = res.replace(/<br>/ig,'  ').replace(/<p>/ig,'  ').
-                      replace(/&quot;/g,'"').replace(/&amp;/g,'&').
-                      replace(/&lt;/g,'<').replace(/&gt;/g,'>');
+            res = res.replace(/\n/g,'<html:br />');
             if(res != null && res !=='') {
               self.show(res);
             } else {
@@ -669,10 +666,10 @@ display: none;
         });
 
         if(obj.overrideMimeType) req.overrideMimeType(obj.overrideMimeType);
-        setTimeout(function(){
-        if(typeof obj.data == 'string') req.send(obj.data); //may be for post
-        else req.send(null);                                //may be for gett
-        }, 0);
+        setTimeout(function() {
+            if(typeof obj.data == 'string') req.send(obj.data); //may be for post
+            else req.send(null);                                //may be for gett
+        }, 100);
       },
 
       show: function(res){
@@ -695,10 +692,7 @@ display: none;
 
       setValue: function(val){
         var label = document.getElementById("translationResultPopupLabel");
-        while(label.firstChild){
-          label.removeChild(label.firstChild);
-        }
-        if(val!="") label.appendChild(document.createTextNode(val));
+        label.innerHTML = val;
       },
 
       sizeChange: function(){
@@ -846,7 +840,7 @@ display: none;
     <popup id="translationResult"
            style="-moz-appearance:tooltip;display:-moz-popup;font:message-box;background-color:InfoBackground;color:InfoText;border: 1px solid InfoText;width:450px;">
       <vbox id="translationResultPopupBox">
-        <label id="translationResultPopupLabel" flex="1" onclick="popupTranslate.copyToClipboard(this.textContent);"/>
+        <html:div id="translationResultPopupLabel" type="content" flex="1" onclick="popupTranslate.copyToClipboard(this.textContent);"/>
       </vbox>
     </popup>
   </popupset>

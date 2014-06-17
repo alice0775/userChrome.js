@@ -5,6 +5,7 @@
 // @author         Alice0775
 // @include        main
 // @compatibility  Firefox 17-24, 25+
+// @version        2014/06/11 20:00 fix keyword search
 // @version        2014/05/17 00:00 Firefox31+
 // @version        2013/07/18 18:30 Bug 846635 - Use asynchronous getCharsetForURI in getShortcutOrURI in Firefox25 and later
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -27,24 +28,26 @@
         if (!((aTriggeringEvent instanceof KeyEvent) && \
            (aTriggeringEvent.ctrlKey || aTriggeringEvent.shiftKey))) { \
         var linkURI = url; \
-        try { \
-          if (!/^[a-zA-Z-+.]+:/.test(linkURI)) { \
-            linkURI = "http://" + linkURI; \
-          } \
-          linkURI = makeURI(linkURI); \
-          if (!this.speedupcanonizeURL_isValidTld(linkURI)) { \
-            if (!/^[a-zA-Z-+.]+:/.test(url)) { \
-              throw new Error(); \
+        if (!Services.search.getEngineByAlias(linkURI) && !PlacesUtils.getURLAndPostDataForKeyword(linkURI)[0]) { \
+          try { \
+            if (!/^[a-zA-Z-+.]+:/.test(linkURI)) { \
+              linkURI = "http://" + linkURI; \
             } \
-          } \
-        } catch(ex) {\
-          var offset = url.indexOf(" "); \
-          if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) { \
-            var URIFixup = Components.classes["@mozilla.org/docshell/urifixup;1"] \
-                           .getService(Components.interfaces.nsIURIFixup); \
-            url = URIFixup.createFixupURI( \
-                                "?"+url, \
-                                URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec;\
+            linkURI = makeURI(linkURI); \
+            if (!this.speedupcanonizeURL_isValidTld(linkURI)) { \
+              if (!/^[a-zA-Z-+.]+:/.test(url)) { \
+                throw new Error(); \
+              } \
+            } \
+          } catch(ex) {\
+            var offset = url.indexOf(" "); \
+            if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) { \
+              var URIFixup = Components.classes["@mozilla.org/docshell/urifixup;1"] \
+                             .getService(Components.interfaces.nsIURIFixup); \
+              url = URIFixup.createFixupURI( \
+                                  "?"+url, \
+                                  URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec;\
+            } \
           } \
         } \
       }'
@@ -58,24 +61,26 @@
         if (!((aTriggeringEvent instanceof KeyEvent) && \
            (aTriggeringEvent.ctrlKey || aTriggeringEvent.shiftKey))) { \
         var linkURI = url; \
-        try { \
-          if (!/^[a-zA-Z-+.]+:/.test(linkURI)) { \
-            linkURI = "http://" + linkURI; \
-          } \
-          linkURI = makeURI(linkURI); \
-          if (!this.speedupcanonizeURL_isValidTld(linkURI)) { \
-            if (!/^[a-zA-Z-+.]+:/.test(url)) { \
-              throw new Error(); \
+        if (!Services.search.getEngineByAlias(linkURI) && !PlacesUtils.getURLAndPostDataForKeyword(linkURI)[0]) { \
+          try { \
+            if (!/^[a-zA-Z-+.]+:/.test(linkURI)) { \
+              linkURI = "http://" + linkURI; \
             } \
-          } \
-        } catch(ex) {\
-          var offset = url.indexOf(" "); \
-          if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) { \
-            var URIFixup = Components.classes["@mozilla.org/docshell/urifixup;1"] \
-                           .getService(Components.interfaces.nsIURIFixup); \
-            url = URIFixup.createFixupURI( \
-                                "?"+url, \
-                                URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec;\
+            linkURI = makeURI(linkURI); \
+            if (!this.speedupcanonizeURL_isValidTld(linkURI)) { \
+              if (!/^[a-zA-Z-+.]+:/.test(url)) { \
+                throw new Error(); \
+              } \
+            } \
+          } catch(ex) {\
+            var offset = url.indexOf(" "); \
+            if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) { \
+              var URIFixup = Components.classes["@mozilla.org/docshell/urifixup;1"] \
+                             .getService(Components.interfaces.nsIURIFixup); \
+              url = URIFixup.createFixupURI( \
+                                  "?"+url, \
+                                  URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec;\
+            } \
           } \
         } \
       }'
@@ -89,24 +94,26 @@
        if (!((aTriggeringEvent instanceof KeyEvent) && \
            (aTriggeringEvent.ctrlKey || aTriggeringEvent.shiftKey))) { \
         var linkURI = url; \
-        try { \
-          if (!/^[a-zA-Z-+.]+:/.test(linkURI)) { \
-            linkURI = "http://" + linkURI; \
-          } \
-          linkURI = makeURI(linkURI); \
-          if (!this.speedupcanonizeURL_isValidTld(linkURI)) { \
-            if (!/^[a-zA-Z-+.]+:/.test(url)) { \
-              throw new Error(); \
+        if (!Services.search.getEngineByAlias(linkURI) && !PlacesUtils.getURLAndPostDataForKeyword(linkURI)[0]) { \
+          try { \
+            if (!/^[a-zA-Z-+.]+:/.test(linkURI)) { \
+              linkURI = "http://" + linkURI; \
             } \
-          } \
-        } catch(ex) { \
-          var offset = url.indexOf(" "); \
-          if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) { \
-            var URIFixup = Components.classes["@mozilla.org/docshell/urifixup;1"] \
-                           .getService(Components.interfaces.nsIURIFixup); \
-            url = URIFixup.createFixupURI( \
-                                "?"+url, \
-                                URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec; \
+            linkURI = makeURI(linkURI); \
+            if (!this.speedupcanonizeURL_isValidTld(linkURI)) { \
+              if (!/^[a-zA-Z-+.]+:/.test(url)) { \
+                throw new Error(); \
+              } \
+            } \
+          } catch(ex) { \
+            var offset = url.indexOf(" "); \
+            if (offset < 0 && gPrefService.getBoolPref("keyword.enabled")) { \
+              var URIFixup = Components.classes["@mozilla.org/docshell/urifixup;1"] \
+                             .getService(Components.interfaces.nsIURIFixup); \
+              url = URIFixup.createFixupURI( \
+                                  "?"+url, \
+                                  URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP ).spec; \
+            } \
           } \
         } \
       }'

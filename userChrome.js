@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.43mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.44mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2014/06/07 21:00 skip about:blank
 // Date 2014/06/07 19:00 turn off experiment by default
 // Date 2014/06/04 12:00 fixed possibility of shutdown crash
 // Date 2014/05/19 00:00 delay 0, experiment
@@ -801,6 +802,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     window.document.addEventListener("load",
       function(event){
         if (!event.originalTarget.location) return;
+        if( /^about:blank/.test(event.originalTarget.location.href) )return;
         if( !/^(about:|chrome:)/.test(event.originalTarget.location.href) )return;
         var doc = event.originalTarget;
         var href = doc.location.href;

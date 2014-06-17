@@ -3,12 +3,14 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Enable Keywords Search In SearchBar
 // @include        main
-// @compatibility  Firefox 17-24, 25+
+// @compatibility  Firefox 17-24
 // @author         Alice0775
 // @Note           Keywords Searchを検索バーから行えるようにする
 // @Note           サーチバーを表示していないとダメ
 // @Note           kusizasi for conquerymodoki may be broken
+// @version        2014/06/11 21:00 fix keyword
 // @version        2013/07/18 18:30 Bug 846635 - Use asynchronous getCharsetForURI in getShortcutOrURI in Firefox25 and later
+// @note           (For Firefox25+, use enableKeywordsSearchInSearchBar_Fx25.uc.js)
 // ==/UserScript==
 
 (function(){
@@ -128,8 +130,8 @@
     var func = getShortcutOrURI.toString();
       func = func.replace(
       'if (engine) {',
-      'if (engine && !!param.replace(/^\s+/,\'\').replace(/\s+$/,\'\')) { \
-        if(engine.name.match(/^{/) && !engine.name.match(/}/)){ \
+      'if (engine) { \
+        if(engine.name.match(/^{/) && !engine.name.match(/}/) && !!param.replace(/^\s+/,\'\').replace(/\s+$/,\'\')){ \
           if ("conqueryModoki" in window) \
             kusizasi(engine.name, param); \
           return ""; \
