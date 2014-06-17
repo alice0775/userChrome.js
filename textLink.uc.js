@@ -11,6 +11,7 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2014/06/18 07:04 experiments e10s
 // @version        2014/06/18 07:00 experiments e10s
 // @version        2014/03/15 06:00 Fix Issue#21
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
@@ -779,18 +780,16 @@ if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
 
 
 
-var script = 'data:application/javascript,'+encodeURIComponent('addEventListener("dblclick", function(event) {sendSyncMessage("textlink_dblclick", {event:{type:event.type, button:event.button, detail:event.detail, ctrlKey:event.ctrlKey, shiftKey:event.shiftKey, altKey:event.altKey, keyCode:event.keyCode}}, [event.originalTarget, event.target]); }, false);');
-
+var script = 'data:application/javascript,' + encodeURIComponent('addEventListener("dblclick", function(event) {sendSyncMessage("textlink_dblclick", {}, {event: event}); }, false);');
 window.messageManager.loadFrameScript(script, true);
 window.messageManager.addMessageListener("textlink_dblclick", 
-  function(m){m.json.event.originalTarget = m.objects[0];m.json.event.target = m.objects[1];setTimeout(ucjs_textlink, 100, m.json.event);}
+  function(m){setTimeout(ucjs_textlink, 100, m.objects.event);}
 );
 
-var script = 'data:application/javascript,'+encodeURIComponent('addEventListener("keypress", function(event) {sendSyncMessage("textlink_dblclick", {event:{type:event.type, button:event.button, detail:event.detail, ctrlKey:event.ctrlKey, shiftKey:event.shiftKey, altKey:event.altKey, keyCode:event.keyCode}}, [event.originalTarget, event.target]); }, false);');
-
+script = 'data:application/javascript,' + encodeURIComponent('addEventListener("keypress", function(event) {sendSyncMessage("textlink_dblclick", {}, {event: event}); }, false);');
 window.messageManager.loadFrameScript(script, true);
 window.messageManager.addMessageListener("textlink_keypress",
-  function(m){m.json.event.originalTarget = m.objects[0];m.json.event.target = m.objects[1];setTimeout(ucjs_textlink, 100, m.json.event);}
+  function(m){setTimeout(ucjs_textlink, 100, m.objects.event);}
 );
 
 //target.addEventListener('dblclick',function(event){setTimeout(ucjs_textlink,100,event);},false);
