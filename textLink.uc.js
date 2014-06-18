@@ -11,6 +11,8 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2014/06/18 12:30 remove experiments e10s
+// @version        2014/06/18 07:10 experiments e10s event
 // @version        2014/06/18 07:04 experiments e10s
 // @version        2014/06/18 07:00 experiments e10s
 // @version        2014/03/15 06:00 Fix Issue#21
@@ -104,7 +106,6 @@ function ucjs_textlink(event){
   const mailRx1 = /(^(?:(?:(?:(?:[a-zA-Z0-9_#\$\%&'*+/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_#\$\%&'*+/=?\^`{}~|\-]+))*)|(?:"(?:\\[^\r\n]|[^\\"])*")))\@(?:(?:(?:(?:[a-zA-Z0-9_#\$\%&'*+/=?\^`{}~|\-]+)(?:\.(?:[a-zA-Z0-9_#\$\%&'*+/=?\^`{}~|\-]+))*)|(?:\[(?:\\\S|[\x21-\x5a\x5e-\x7e])*\])))$)/;
 
 //ドキュメントとコンテントタイプ
-
   var doc = event.originalTarget.ownerDocument;
   if(doc.contentType != 'text/plain'
      && doc.contentType != 'text/html'
@@ -266,7 +267,6 @@ function ucjs_textlink(event){
 //すべての文字列の中でURLと思しき文字列を配列として得る
   var i1, i2;
   var arrUrl = allStr.match(urlRegex);
-
   if (arrUrl) {
 //見つかったURLと思しき文字列の中にレンジが含まれているかどうか
     i2 = 0;
@@ -479,7 +479,6 @@ function ucjs_textlink(event){
   }
 
   function textlink(event, doc, uri) {
-
       try{
         if(event.shiftKey)
           saveAsURL(uri, doc);
@@ -515,8 +514,12 @@ function ucjs_textlink(event){
       return;
     }
 
-    // urlSecurityCheck
-    urlSecurityCheck(uri.spec, _unremotePrincipal(doc.nodePrincipal));
+    // urlSecurityCheck wanted a URL-as-string for Fx 2.0, but an nsIPrincipal on trunk
+    if(activeBrowser().contentPrincipal)
+      urlSecurityCheck(uri.spec, activeBrowser().contentPrincipal,Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
+    else
+      urlSecurityCheck(uri.spec, activeBrowser().currentURI.spec,Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
+
     saveURL( uri.spec, linkText, null, true, false, aReferrer , doc );
   }
 
@@ -543,8 +546,12 @@ function ucjs_textlink(event){
       protocolSvc.loadUrl(uri);
       return;
     }
-    // urlSecurityCheck
-    urlSecurityCheck(uri.spec, _unremotePrincipal(doc.nodePrincipal));
+
+    // urlSecurityCheck wanted a URL-as-string for Fx 2.0, but an nsIPrincipal on trunk
+    if(activeBrowser().contentPrincipal)
+      urlSecurityCheck(uri.spec, activeBrowser().contentPrincipal,Ci.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
+    else
+      urlSecurityCheck(uri.spec, activeBrowser().currentURI.spec,Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
     if( (event.ctrlKey) ){
       openLinkIn(uri.spec, "current", {});
     }else{
@@ -553,20 +560,6 @@ function ucjs_textlink(event){
       openLinkIn(uri.spec, "tab", {relatedToCurrent:true});
       //openNewTabWith(uri.spec, null,  null, null, false)
     }
-  }
-
-  
-  function _unremotePrincipal(aRemotePrincipal) {
-    let isRemote = gMultiProcessBrowser;
-    if (isRemote) {
-      return Cc["@mozilla.org/scriptsecuritymanager;1"]
-               .getService(Ci.nsIScriptSecurityManager)
-               .getAppCodebasePrincipal(aRemotePrincipal.URI,
-                                        aRemotePrincipal.appId,
-                                        aRemotePrincipal.isInBrowserElement);
-    }
-
-    return aRemotePrincipal;
   }
 
   function closeContextMenu() {
@@ -776,27 +769,9 @@ if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
 } else {
   var target = document.getElementById("appcontent");
 }
-
-
-
-
-var script = 'data:application/javascript,' + encodeURIComponent('addEventListener("dblclick", function(event) {sendSyncMessage("textlink_dblclick", {}, {event: event}); }, false);');
-window.messageManager.loadFrameScript(script, true);
-window.messageManager.addMessageListener("textlink_dblclick", 
-  function(m){setTimeout(ucjs_textlink, 100, m.objects.event);}
-);
-
-script = 'data:application/javascript,' + encodeURIComponent('addEventListener("keypress", function(event) {sendSyncMessage("textlink_dblclick", {}, {event: event}); }, false);');
-window.messageManager.loadFrameScript(script, true);
-window.messageManager.addMessageListener("textlink_keypress",
-  function(m){setTimeout(ucjs_textlink, 100, m.objects.event);}
-);
-
-//target.addEventListener('dblclick',function(event){setTimeout(ucjs_textlink,100,event);},false);
-//target.addEventListener('keypress',function(event){ucjs_textlink(event);},false);
+target.addEventListener('dblclick',function(event){setTimeout(ucjs_textlink,100,event);},false);
+target.addEventListener('keypress',function(event){ucjs_textlink(event);},false);
 //for already loaded chrome://browser/content/web-panels.xul
-
-/*
 if (!/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
   setTimeout(function(){
     try{
@@ -807,7 +782,6 @@ if (!/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
     }catch(e){}
   },1000);
 }
-*/
 //for sidebar document onload event Listener
 window.document.addEventListener('load', textLinkForSidebar.init, true);
 window.document.addEventListener('unload', textLinkForSidebar.uninit, true);
