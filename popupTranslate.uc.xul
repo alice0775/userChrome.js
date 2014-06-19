@@ -20,6 +20,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 27+
 // @author         Alice0775
+// @version        2014/06/20 06:00 remove a trailing comma(,)
 // @version        2014/06/09 12:00 時々sendが失敗する
 // @version        2014/05/03 00:00 Google翻訳仕様変更のため
 // @version        2013/02/19 09:00 isJapanese簡易判定
