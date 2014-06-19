@@ -572,7 +572,7 @@ display: none;
                     'Cookie': cookie
                    } :
                    {'Referer': engine.Referer,
-                    'Content-Type':'application/x-www-form-urlencoded',
+                    'Content-Type':'application/x-www-form-urlencoded'
                    },
           onload:function(details) {
             var txt = details.responseText.toString();
