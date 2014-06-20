@@ -4,6 +4,7 @@
 // @description    tabLock
 // @include        *
 // @compatibility  17-25
+// @version        2014/06/21 07:00 Fixed due to Bug 996053 
 // @version        2014/02/21 23:00  Multiple Tab Handler #66 
 // @version        2013/12/21 23:00 exclude "prevent"
 // @version        2013/11/06 10:20 Bug 846635 - Use asynchronous getCharsetForURI in getShortcutOrURI in Firefox25 and later
@@ -622,7 +623,7 @@ patch: {
     restoreForTab: function(aTab){
       var ss = Components.classes["@mozilla.org/browser/sessionstore;1"].
                              getService(Components.interfaces.nsISessionStore);
-      var retrievedData = ss.getTabValue(aTab, "tabLock");
+      var retrievedData = ss.getTabValue(aTab, "tabLock") == "true";
       if(retrievedData)
         aTab.setAttribute('tabLock',true);
       else
@@ -753,7 +754,7 @@ patch: {
       var isLocked = false;
     }else{
       aTab.setAttribute("tabLock", "true");
-      ss.setTabValue(aTab, "tabLock", true);
+      ss.setTabValue(aTab, "tabLock", "true");
       var isLocked = true;
     }
     this.lockTabIcon(aTab);

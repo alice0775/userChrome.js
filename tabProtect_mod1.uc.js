@@ -6,6 +6,7 @@
 // @author         Alice0775
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  4.0b8pre
+// @version        2014/06/21 07:00 Fixed due to Bug 996053 
 // @version        2012/12/15 10:30 Bug 818732 - Switch Nightly to per-window private browsing
 // ==/UserScript==
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -280,7 +281,7 @@ var tabProtect = {
   restoreForTab: function(aTab){
     var ss = Components.classes["@mozilla.org/browser/sessionstore;1"].
                              getService(Components.interfaces.nsISessionStore);
-    var retrievedData = ss.getTabValue(aTab, "tabProtect");
+    var retrievedData = ss.getTabValue(aTab, "tabProtect") == "true";
     if(retrievedData){
       aTab.setAttribute('tabProtect',true);
       var closeButton = document.getAnonymousElementByAttribute(
@@ -357,7 +358,7 @@ if(!('TM_init' in window)) {
       var isProtected = false;
     } else {
       aTab.setAttribute("tabProtect", "true");
-      ss.setTabValue(aTab, "tabProtect", true);
+      ss.setTabValue(aTab, "tabProtect", "true");
       var isProtected = true;
     }
     this.protectTabIcon(aTab);
