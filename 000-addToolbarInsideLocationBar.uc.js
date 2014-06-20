@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/06/20 22:00 do not collapse in gullscreen
 // @version        2014/06/07 20:00 slightly delayed to display toolbar
 // @version        2014/05/23 00:00 preserve position after customize toolbar
 // @version        2014/05/16 00:00 check for toolbar had been registered
@@ -83,6 +84,7 @@ var addToolbarInsideLocationBar = {
     toolbar.setAttribute("iconsize", "small");
     toolbar.setAttribute("context", "toolbar-context-menu");
     toolbar.setAttribute("class", "toolbar-primary chromeclass-toolbar customization-target");
+    toolbar.setAttribute("fullscreentoolbar", "true");
     toolbar.setAttribute("toolbarname", "UCJS Toolbar Inside LocationBar");
     toolbar.setAttribute("toolboxid", "navigator-toolbox");
     toolbar.setAttribute("hidden", "true");
