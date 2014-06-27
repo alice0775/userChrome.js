@@ -7,8 +7,9 @@
 // @description    コンテキストメニューにQuery To...とサブメニューに検索エンジンリストを追加, 階層化した場合は串刺し検索
 // @description    選択したエンジンで検索, その後エンジンを元に戻す
 // @include        main
-// @compatibility  Firefox 24-31
+// @compatibility  Firefox 16+
 // @author         Alice0775
+// @version        2014/06/27 08:00 Fixed deprecated search service API.
 // @version        2014/04/18 23:50 Fixed rebuildPopup
 // @version        2014/04/18 23:30 Fixed rebuildPopup
 // @version        2013/09/13 21:00 Bug 856437 Remove Components.lookupMethod
@@ -92,6 +93,7 @@
     // -- config --
 
     _currentEngine:null,
+    _initialized:false,
 
     searchBar: function(){
       var searchBar = null;
@@ -103,19 +105,21 @@
       return searchBar;
     },
 
+    get browserSearchService() {
+      delete this.browserSearchService;
+      return this.browserSearchService = Components.classes["@mozilla.org/browser/search-service;1"]
+                                        .getService(Components.interfaces.nsIBrowserSearchService);
+    },
+
     getDefaultEngine: function() {
-      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
-      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
-      return searchService.defaultEngine;
+      return this.browserSearchService.defaultEngine;
     },
 
     getEngineByIndex: function(iEngine) {
-      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
-      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
       if (typeof iEngine == 'undefined'|| iEngine == null) {
-        var aEngine = searchService.defaultEngine;
+        var aEngine = this.browserSearchService.defaultEngine;
       }else{
-        var engines = searchService.getVisibleEngines({ });
+        var engines = this.browserSearchService.getVisibleEngines({ });
         var aEngine = engines[iEngine];
       }
       return aEngine;
@@ -228,8 +232,6 @@
     kusizasi: function conqueryModokikusizasi(aEvent) {
       this.hideAllPopup();
 
-      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
-      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
       aEvent.preventDefault();
       aEvent.stopPropagation();
 
@@ -421,10 +423,8 @@
       // popupにメニューを構築, forSearchBar: trueの時検索バー用, falseの時, コンテキスト用
       const kXULNS =
            "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-      const nsIBSS = Components.interfaces.nsIBrowserSearchService;
-      const searchService =Components.classes["@mozilla.org/browser/search-service;1"].getService(nsIBSS);
 
-      var engines = searchService.getVisibleEngines({ });
+      var engines = this.browserSearchService.getVisibleEngines({ });
       var refNode=[];
       var nest = 0;
       refNode[nest] = popup
@@ -484,7 +484,7 @@
           // Since this menu is rebuilt by the observer method whenever a new
           // engine is selected, the "selected" attribute does not need to be
           // explicitly cleared anywhere.
-          if (engines[i] == searchService.currentEngine)
+          if (engines[i] == this.browserSearchService.currentEngine)
             menuitem.setAttribute("selected", "true");
           if (engines[i].iconURI)
             menuitem.setAttribute("src", engines[i].iconURI.spec);
@@ -562,7 +562,18 @@
     tooltipCM: '',
     tooltipSB: '',
 
-    init : function(aEvent){
+    init: function() {
+      this.browserSearchService.init((function browserSearchService_init(aStatus) {
+        if (Components.isSuccessCode(aStatus)) {
+          this._initialized = true;
+          this.observe();
+        } else {
+          Components.utils.reportError("Cannot initialize search service, bailing out: " + aStatus);
+        }
+      }).bind(this));
+    },
+
+    observe : function(){
       for (var a in this.funcSearchbar)
         this.tooltipS += a + ' : ' + this.funcSearchbar[a] + '\n';
       for (var a in this.funcContext)
