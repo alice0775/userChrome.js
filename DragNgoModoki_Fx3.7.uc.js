@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17
 // @author         Alice0775
+// @version        2014/07/05 12:00 adjusts tolerance due to Bug 378775
 // @version        2014/05/01 12:00 Fix unnecessary toolbaritem creation
 // @version        2013/10/31 00:00 Bug 821687  Status panel should be attached to the content area
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
@@ -1160,7 +1161,8 @@ var DragNGo = {
   // D&Dの方向を得る
   getDirection: function getDirection(event){
     // 認識する最小のマウスの動き
-    const tolerance = 10;
+    const tolerance_x = this.directionChain == "" ? 30 : 10;
+    const tolerance_y = this.directionChain == "" ? 40 : 10;
     var x = event.screenX;
     var y = event.screenY;
 
@@ -1173,14 +1175,14 @@ var DragNGo = {
     // 直前の座標と比較, 移動距離が極小のときは無視する
     var distanceX = Math.abs(x - this.lastX);
     var distanceY = Math.abs(y - this.lastY);
-    if (distanceX < tolerance && distanceY < tolerance)
+    if (distanceX < tolerance_x && distanceY < tolerance_y)
       return this.directionChain;
 
     // 方向の決定
     var direction;
-    if (distanceX > distanceY*2)
+    if (distanceX*1.5 >= distanceY)
         direction = x < this.lastX ? "L" : "R";
-    else if (distanceX*2 < distanceY)
+    else if (distanceX*1.5 < distanceY)
         direction = y < this.lastY ? "U" : "D";
     else {
         this.lastX = x;
