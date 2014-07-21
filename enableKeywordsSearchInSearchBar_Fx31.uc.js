@@ -8,6 +8,7 @@
 // @Note           Keywords Searchを検索バーから行えるようにする
 // @Note           conqueryModoki2がある場合は, 親フォルダにKeywordsを付加していれば, Keywords 串刺し検索が出来る
 // @Note           サーチバーを表示していないとダメ
+// @version        2014/07/21 23:00 Fix working with Tree Style Tab etc.
 // @version        2014/07/04 09:00 Bug 989984, Firefox31+
 // @version        2014/03/31 00:00 add fail safe setTimeout
 // @version        2013/11/21 12:30 Firefox25 分離
@@ -108,7 +109,7 @@
           aWhere = "current";
         openUILinkIn(data.url, aWhere, null, null);
       } else {
-        searchBar.doSearch__keyworks(aData, aWhere);
+        this.doSearch__keyworks(aData, aWhere);
       }
     });
   };

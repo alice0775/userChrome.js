@@ -5,9 +5,10 @@
 // @include        main
 // @compatibility  Firefox 33+
 // @author         Alice0775
+// @version        2014/07/06 09:01
 // @version        2014/07/06 09:00
 // ==/UserScript==
 
-stripUnsafeProtocolOnPaste = function stripUnsafeProtocolOnPaste(pasteData) {
+window.stripUnsafeProtocolOnPaste = function stripUnsafeProtocolOnPaste(pasteData) {
   return pasteData
 }

@@ -16,7 +16,7 @@
 //
 // Date 2014/06/07 21:00 skip about:blank
 // Date 2014/06/07 19:00 turn off experiment by default
-// Date 2014/06/04 12:00 fixed possibility of shutdown crash
+// Date 2014/06/04 12:00 fixed possibility of shutdown crash Bug 1016875
 // Date 2014/05/19 00:00 delay 0, experiment
 // Date 2013/10/06 00:00 allow to load scripts into about:xxx
 // Date 2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod, remove REPLACEDOCUMENTOVERLAY
