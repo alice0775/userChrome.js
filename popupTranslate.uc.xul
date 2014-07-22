@@ -20,6 +20,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 27+
 // @author         Alice0775
+// @version        2014/07/23 06:30 タイムアウト
 // @version        2014/07/20 23:00 Yahoo!翻訳 死亡, 日英は"Google 日英"に
 // @version        2014/06/20 06:00 remove a trailing comma(,)
 // @version        2014/06/09 12:00 時々sendが失敗する
@@ -82,7 +83,7 @@ display: none;
 
       timer: null,
       kXULNS:"http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
-      TIMEOUT: 20000,
+      TIMEOUT: 15000,
 
       mMenus: [
         /*
@@ -667,10 +668,8 @@ display: none;
         });
 
         if(obj.overrideMimeType) req.overrideMimeType(obj.overrideMimeType);
-        setTimeout(function() {
             if(typeof obj.data == 'string') req.send(obj.data); //may be for post
-            else req.send(null);                                //may be for gett
-        }, 100);
+            else req.send(null);                                //may be for get
       },
 
       show: function(res){
