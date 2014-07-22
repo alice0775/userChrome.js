@@ -20,6 +20,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 27+
 // @author         Alice0775
+// @version        2014/07/20 23:00 Yahoo!翻訳 死亡, 日英は"Google 日英"に
 // @version        2014/06/20 06:00 remove a trailing comma(,)
 // @version        2014/06/09 12:00 時々sendが失敗する
 // @version        2014/05/03 00:00 Google翻訳仕様変更のため
@@ -77,7 +78,7 @@ display: none;
       // 足切り1024文字
       MaximumStringLength : 1024,
       //選択テキストがアルファベットでないなら DefaultJapaneseToOther で翻訳
-      DefaultJapaneseToOther : "Yahoo Translate 日英",
+      DefaultJapaneseToOther : "Google 日英",
 
       timer: null,
       kXULNS:"http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
@@ -148,6 +149,7 @@ display: none;
           xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
         },
 
+/*
         {
           Description:"Yahoo Translate 英日",
           method:"POST",
@@ -157,8 +159,16 @@ display: none;
           code:"UTF-8",
           xpath:'.//textarea[@id="trn_textText"]',
         },
+        {
+          Description:"Yahoo Translate 日英",
+          method:"POST",
+          Referer:"http://honyaku.yahoo.co.jp/transtext",
+          action:"http://honyaku.yahoo.co.jp/transtext",
+          post:"eid=CR-JE&both=TH&clearFlg=1&text=%%SEL%%",
+          code:"UTF-8",
+          xpath:'.//textarea[@id="trn_textText"]',
+        },
 
-/*
        {
           Description:"Infoseek 英日",
           method:'GET',
@@ -206,16 +216,6 @@ display: none;
         },
 
 */
-
-        {
-          Description:"Yahoo Translate 日英",
-          method:"POST",
-          Referer:"http://honyaku.yahoo.co.jp/transtext",
-          action:"http://honyaku.yahoo.co.jp/transtext",
-          post:"eid=CR-JE&both=TH&clearFlg=1&text=%%SEL%%",
-          code:"UTF-8",
-          xpath:'.//textarea[@id="trn_textText"]',
-        },
 
         {
           Description:"@nifty翻訳 英日",
@@ -310,7 +310,7 @@ display: none;
         }
         if(engine){
           var prefetch = null;
-          if (engine.prefetchURL){
+          if (!engine.prefetchURL && typeof engine.prefetchURL != "undefined" && engine.prefetchURL !=""){
             this.getPrefetchResult(sel,engine);
           }else{
             this.getTranslateResult(sel,engine,null);
