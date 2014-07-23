@@ -20,6 +20,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 27+
 // @author         Alice0775
+// @version        2014/07/23 09:30 delete debug print
 // @version        2014/07/23 09:30 Weblio 翻訳
 // @version        2014/07/23 06:30 タイムアウト
 // @version        2014/07/20 23:00 Yahoo!翻訳 死亡, 日英は"Google 日英"に
@@ -543,7 +544,7 @@ display: none;
                   val = node.getAttribute('value');
                   prefetch = prefetch + '&' + engine.prefechData[i] + '=' + encodeURIComponent(val)
                 }
-             }alert(prefetch);
+             }
        //self.debug(prefetch);
              self.getTranslateResult(sel,engine,prefetch, cookie);
             } catch (e) {}
