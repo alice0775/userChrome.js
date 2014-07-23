@@ -20,6 +20,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 27+
 // @author         Alice0775
+// @version        2014/07/23 09:30 Weblio 翻訳
 // @version        2014/07/23 06:30 タイムアウト
 // @version        2014/07/20 23:00 Yahoo!翻訳 死亡, 日英は"Google 日英"に
 // @version        2014/06/20 06:00 remove a trailing comma(,)
@@ -217,6 +218,25 @@ display: none;
         },
 
 */
+        {
+          Description:"Weblio 翻訳 英日",
+          method:"POST",
+          Referer:"http://translate.weblio.jp/",
+          action:"http://translate.weblio.jp/",
+          post:"lp=EJ&lpf=&rt=&translatedText=&tlt=english&prtRt=&originalText=%%SEL%%&sentenceStyle=spoken",
+          code:"UTF-8",
+          xpath:'id("translatedText")'
+        },
+
+        {
+          Description:"Weblio 翻訳 日英",
+          method:"POST",
+          Referer:"http://translate.weblio.jp/",
+          action:"http://translate.weblio.jp/",
+          post:"lp=JE&lpf=&rt=&translatedText=&tlt=english&prtRt=&originalText=%%SEL%%&sentenceStyle=spoken",
+          code:"UTF-8",
+          xpath:'id("translatedText")'
+        },
 
         {
           Description:"@nifty翻訳 英日",
@@ -311,7 +331,7 @@ display: none;
         }
         if(engine){
           var prefetch = null;
-          if (!engine.prefetchURL && typeof engine.prefetchURL != "undefined" && engine.prefetchURL !=""){
+          if (typeof engine.prefetchURL != "undefined" && engine.prefetchURL !=""){
             this.getPrefetchResult(sel,engine);
           }else{
             this.getTranslateResult(sel,engine,null);
@@ -523,7 +543,7 @@ display: none;
                   val = node.getAttribute('value');
                   prefetch = prefetch + '&' + engine.prefechData[i] + '=' + encodeURIComponent(val)
                 }
-             }
+             }alert(prefetch);
        //self.debug(prefetch);
              self.getTranslateResult(sel,engine,prefetch, cookie);
             } catch (e) {}
@@ -588,12 +608,12 @@ display: none;
                 res = RegExp.$1;
               } else {
      //self.debug(txt)
-                var hdoc = self.str2dom(txt);
+                var hdoc = self.str2dom(txt); 
                 var result = hdoc.evaluate(xpath, hdoc, null,
-                             XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+                             XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
      //self.debug(result.snapshotItem(0));
                var node = result.snapshotLength>0 ? result.snapshotItem(0) : null
-               res = node.textContent;
+               res = node.textContent || node.value;
                node = hdoc = result = null;
               }
             } catch (e) {self.show("取得失敗。");}
