@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/08/08 20:00 Firefox31
 // @version        2013/11/28 23:00 XUL/migemo
 // @version        2013/11/28 12:00 Firefox25
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
@@ -24,13 +25,14 @@ var findWrapPlayBeep = {
       for (var aFindBar of findBars) {
         findWrapPlayBeep.patch(aFindBar);
       };
-    } else if ("gBrowser" in window && "getFindBar" in gBrowser) {
+    }
+    if ("gBrowser" in window && "getFindBar" in gBrowser) {
       if (gBrowser.selectedTab._findBar) {
         setTimeout(function(){findWrapPlayBeep.patch(gBrowser.selectedTab._findBar);}, 100);
-        gBrowser.tabContainer.addEventListener("TabFindInitialized", function aaa(event){
-          setTimeout(function(event){findWrapPlayBeep.patch(event.target._findBar);}, 100, event);
-        });
       }
+      gBrowser.tabContainer.addEventListener("TabFindInitialized", function aaa(event){
+        setTimeout(function(event){findWrapPlayBeep.patch(event.target._findBar);}, 100, event);
+      });
     }
 
     findWrapPlayBeep.patch2();
@@ -38,6 +40,8 @@ var findWrapPlayBeep = {
 
   patch: function(aFindBar) {
     var func = aFindBar._updateStatusUI.toString();
+    if (/findWrapPlayBeep/.test(func))
+      return;
     func = func.replace(/case this\.nsITypeAheadFind\.FIND_WRAPPED:/, '$& findWrapPlayBeep.playBeep();');
     try{
       aFindBar._updateStatusUI = new Function(
