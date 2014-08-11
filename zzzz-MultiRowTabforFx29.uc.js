@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/08/11 10:00 consider tabcandy
 // @version        2014/05/29 00:00 Bug 1018324 - Remove inIFlasher
 // @version        2014/05/09 14:50 remove debug
 // @version        2014/05/08 10:00 Fix height of when open in foreground new tab
@@ -87,7 +88,8 @@ function zzzz_MultiRowTab(){
     .tabbrowser-tabs .tabbrowser-arrowscrollbox \
     { \
       /*height: 78px;*/ \
-      overflow: auto; \
+      overflow-y: auto; \
+      overflow-x: hidden; \
     } \
     .tabbrowser-tabs .tabbrowser-arrowscrollbox > scrollbox \
     { \
@@ -153,6 +155,7 @@ function zzzz_MultiRowTab(){
         text-shadow: 0 0 4px rgba(255,255,255,.75) !important; \
         background: rgba(255,255,255,.27) !important; \
         background-clip: padding-box !important; \
+        overflow:hidden; \
 \
         height:{TAB_HEIGHT}px; \
     } \
@@ -163,7 +166,7 @@ function zzzz_MultiRowTab(){
     } \
 \
     /*workaround newtab position*/ \
-    #TabsToolbar .tabbrowser-tab:not([image]) .tab-icon-image { \
+    #TabsToolbar .tabbrowser-tab:not([image]):not([busy]) .tab-icon-image { \
       display: -moz-box !important; \
     } \
 \
@@ -490,16 +493,16 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
     let containerTop = gBrowser.tabContainer.boxObject.screenY;
     let containerBottom = containerTop + gBrowser.tabContainer.boxObject.height;
     if (event.detail > 0) {
-      for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
-        tab = gBrowser.tabs.item(i);
+      for (let i=0, len=gBrowser.visibleTabs.length; i<len; i++) {
+        tab = gBrowser.visibleTabs[i];
         let tabBottom = tab.boxObject.screenY + tab.boxObject.height;
         if (tabBottom > containerBottom) {
           break;
         }
       }
     } else {
-      for (let i=gBrowser.tabs.length - 1; i > -1; i--) {
-        tab = gBrowser.tabs.item(i);
+      for (let i=gBrowser.visibleTabs.length - 1; i > -1; i--) {
+        tab = gBrowser.visibleTabs[i];
         let tabTop = tab.boxObject.screenY;
         if (tabTop < containerTop) {
           break;
