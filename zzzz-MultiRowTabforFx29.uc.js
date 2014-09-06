@@ -6,6 +6,7 @@
 // @compatibility  Firefox 17.0-20.0a1(Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用)
 // @author         Alice0775
 // @note           CSS checked it only on a defailt theme. Firefox17以上はzzzz-removeTabMoveAnimation.uc.js併用
+// @version        2014/09/07 01:30 fix calculation of numrows
 // @version        2014/08/11 10:00 consider tabcandy
 // @version        2014/05/29 00:00 Bug 1018324 - Remove inIFlasher
 // @version        2014/05/09 14:50 remove debug
@@ -598,10 +599,10 @@ gBrowser.tabContainer._handleTabDrag = function(event) {
 
     //delay to adust height for CTR
     setTimeout(function() {
-      var y = 0, numrows = 0;
+      var y = -999, numrows = 0;
       for (let i=0, len=gBrowser.tabs.length; i<len; i++) {
         let aTab = gBrowser.tabs.item(i);
-        if (!aTab.getAttribute("hidden")) {
+        if (!aTab.hasAttribute("hidden") || !aTab.getAttribute("hidden")) {
           if (y + 5 < aTab.boxObject.screenY) {
             y = aTab.boxObject.screenY;
             numrows++;
