@@ -7,7 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
-// @version        2013/11/28 23:00 XUL/migemo
+// @version        2014/09/14 23:20 more frequent status check
 // @version        2013/11/22 21:00 XUL/migemo
 // @version        2013/11/22 17:30 Fix input and click caret position etc..
 // @version        2013/11/16 12:30 Firefox25
@@ -226,13 +226,12 @@ var historyFindbar = {
            }
          }, 800, this);
     }
-    setTimeout(function(aFindBar){
-      aFindBar.close_org = aFindBar.close;
-      aFindBar.close = function() {
-        this.close_org();
-        this._dispatchFindEvent("close");
-      }
-    }.bind(this), 100, aFindBar);
+
+    aFindBar.close_org = aFindBar.close;
+    aFindBar.close = function() {
+      this.close_org();
+      this._dispatchFindEvent("close");
+    }
 
   },
 
@@ -263,6 +262,7 @@ var historyFindbar = {
         }.bind(this), this.adjustSizeDelay, this);
         break;
       case 'findbaropen':
+        historyFindbar.statusModified();
         // XUL/Migenoの時 および QuickFind の時は何もしたい
         if ("XMigemoUI" in window && XMigemoUI.isQuickFind || gFindBar._findMode != gFindBar.FIND_NORMAL)
           return;
@@ -305,6 +305,7 @@ var historyFindbar = {
         break;
       case 'find':
       case "findagain":
+        historyFindbar.statusModified();
         if ( gFindBar._findField.value != this.lastInputValue){
           this.addToHistory(gFindBar._findField.value);
         }
@@ -324,6 +325,7 @@ var historyFindbar = {
           if (gBrowser.isFindBarInitialized(aEvent.target)) {
             this.historyfindbar.hidden = gFindBar.hidden;
             this._findField2.value = gFindBar._findField.value;
+            historyFindbar.statusModified();
           } else
             this.historyfindbar.hidden = true;
         }.bind(this), 0);
