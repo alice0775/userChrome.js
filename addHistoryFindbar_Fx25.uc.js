@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/09/14 23:40 XUL/migemo
 // @version        2014/09/14 23:20 more frequent status check
 // @version        2013/11/28 23:00 XUL/migemo
 // @version        2013/11/22 21:00 XUL/migemo
@@ -194,14 +195,10 @@ var historyFindbar = {
       gBrowser.tabContainer.addEventListener("TabSelect", this, false);
 
     //fx25 for existing findbar
-    let findBars = document.querySelectorAll("findbar");
-    if (findBars.length > 0) {
-      Array.forEach(findBars, function (aFindBar) {
-        historyFindbar.patch(aFindBar);
-      });
-    } else if ("gBrowser" in window && "getFindBar" in gBrowser) {
-      if (gBrowser.selectedTab._findBar)
+    if ("gBrowser" in window && "getFindBar" in gBrowser) {
+      if (gBrowser.selectedTab._findBar) {
         historyFindbar.patch(gBrowser.selectedTab._findBar);
+      }
     }
     //fx25 for newly created findbar
     if ("gBrowser" in window && "getFindBar" in gBrowser) {

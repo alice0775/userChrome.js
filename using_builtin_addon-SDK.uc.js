@@ -6,7 +6,7 @@
 // @compatibility  Firefox 23
 // @author         Alice0775
 // @version        2013/09/03 ビルトインaddon SDKをuserChrome.jsで使ってみるテスト
-// @Note
+// @Note           http://www.oxymoronical.com/blog/2013/02/The-Add-on-SDK-is-now-in-Firefox
 // ==/UserScript==
 (function(){
   // init
