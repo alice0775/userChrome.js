@@ -9,7 +9,7 @@
 // @include        main
 // @compatibility  Firefox 16+
 // @author         Alice0775
-// @version        2014/07/30 23:00 e10s.
+// @version        2014/08/22 22:00 Fixed due to Bug 1051017.
 // @version        2014/06/27 08:00 Fixed deprecated search service API.
 // @version        2014/04/18 23:50 Fixed rebuildPopup
 // @version        2014/04/18 23:30 Fixed rebuildPopup
@@ -310,46 +310,39 @@
     },
 
     _getFocusedWindow: function(){ //現在のウインドウを得る
-      let [element, focusedWindow] = BrowserUtils.getFocusSync(document);
-      return focusedWindow;
+        if ("BrowserUtils" in window) {
+          let [elt, win] = BrowserUtils.getFocusSync(document);
+          return win;
+        }
+        var focusedWindow = document.commandDispatcher.focusedWindow;
+        if (!focusedWindow || focusedWindow == window)
+            return window._content;
+        else
+            return focusedWindow;
     },
 
-    _getselection: function(aCharLen) {  //選択されている文字列を得る
-       // selections of more than 150 characters aren't useful
-      const kMaxSelectionLen = 150;
-      const charLen = Math.min(aCharLen || kMaxSelectionLen, kMaxSelectionLen);
-
-      let [element, focusedWindow] = BrowserUtils.getFocusSync(document);
-      var selection = focusedWindow.getSelection().toString();
-      // try getting a selected text in text input.
-      if (!selection) {
-        var isOnTextInput = function isOnTextInput(elem) {
-          // we avoid to return a value if a selection is in password field.
-          // ref. bug 565717
-          return elem instanceof HTMLTextAreaElement ||
-                 (elem instanceof HTMLInputElement && elem.mozIsTextField(true));
-        };
-
-        if (isOnTextInput(element)) {
-          selection = element.QueryInterface(Ci.nsIDOMNSEditableElement)
-                             .editor.selection.toString();
+    _getselection: function() {  //選択されている文字列を得る
+        var targetWindow = this._getFocusedWindow();
+        var sel = targetWindow.getSelection();
+        // for textfields
+        if (sel && !sel.toString()) {
+          if ("BrowserUtils" in window) {
+            var [node, win] = BrowserUtils.getFocusSync(document);
+          } else {
+            node = document.commandDispatcher.focusedElement;
+          }
+          if (node &&
+              ((typeof node.mozIsTextField == 'function' &&  node.mozIsTextField(true)) ||
+               node.type == "search" ||
+               node.type == "text" || node.type == "textarea") &&
+              'selectionStart' in node &&
+              node.selectionStart != node.selectionEnd) {
+              var offsetStart = Math.min(node.selectionStart, node.selectionEnd);
+              var offsetEnd   = Math.max(node.selectionStart, node.selectionEnd);
+              return node.value.substr(offsetStart, offsetEnd-offsetStart);
+          }
         }
-      }
-
-      if (selection) {
-        if (selection.length > charLen) {
-          // only use the first charLen important chars. see bug 221361
-          var pattern = new RegExp("^(?:\\s*.){0," + charLen + "}");
-          pattern.test(selection);
-          selection = RegExp.lastMatch;
-        }
-
-        selection = selection.trim().replace(/\s+/g, " ");
-
-        if (selection.length > charLen)
-          selection = selection.substr(0, charLen);
-      }
-      return selection;
+        return sel ? sel.toString().replace(/\s/g,' ').replace(/^[\ ]+|[\ ]+$/g,'').replace(/[\ ]+/g,' ') : "";
     },
 
     hideAllPopup: function(){

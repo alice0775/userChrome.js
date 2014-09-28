@@ -93,7 +93,7 @@
     // Load `constructor` as global since tabs uses `traits`
     // that use this module
     let loader = makeLoader({ globals: constructor });
-    let module = Module("./main", getCURRENT_DIR()  /*"scratchpad://"*/);
+    let module = Module("./main", CURRENT_DIR /* "scratchpad://" */);
     let require = Require(loader, module);
 
     // test notifications

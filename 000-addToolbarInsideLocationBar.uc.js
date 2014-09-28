@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2014/09/28 22:00 fix does not preserve position due to bug 1001090
 // @version        2014/06/20 22:00 do not collapse in gullscreen
 // @version        2014/06/07 20:00 slightly delayed to display toolbar
 // @version        2014/05/23 00:00 preserve position after customize toolbar
@@ -125,9 +126,7 @@ var addToolbarInsideLocationBar = {
         break;
       case "customizationending":
         window.removeEventListener("customizationending", this, false);
-
-        ref = this. placeholder;
-        ref.parentNode.replaceChild(toolbar, ref);
+        this. placeholder.parentNode.replaceChild(toolbar, this. placeholder);
         toolbar.removeAttribute("tooltiptext");
         //BookmarkingUI._updateCustomizationState();
         break;
