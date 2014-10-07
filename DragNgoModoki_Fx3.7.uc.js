@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24-35 (not e10s)
 // @author         Alice0775
+// @version        2014/10/07 20:00 adjusts tolerance due to backed out Bug 378775
 // @version        2014/10/07 19:00 Modified to use capturing phase for drop and event.defaultprevent
 // ==/UserScript==
 // @version        2014/07/05 12:00 adjusts tolerance due to Bug 378775
@@ -1162,8 +1163,8 @@ var DragNGo = {
   // D&Dの方向を得る
   getDirection: function getDirection(event){
     // 認識する最小のマウスの動き
-    const tolerance_x = this.directionChain == "" ? 30 : 10;
-    const tolerance_y = this.directionChain == "" ? 40 : 10;
+    const tolerance_x = this.directionChain == "" ? 10/*30*/ : 10;
+    const tolerance_y = this.directionChain == "" ? 10/*30*/ : 10;
     var x = event.screenX;
     var y = event.screenY;
 
