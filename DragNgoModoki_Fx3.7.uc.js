@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ファイル名をD&D
 // @include        main
-// @compatibility  Firefox 17
+// @compatibility  Firefox 24-35 (not e10s)
 // @author         Alice0775
+// @version        2014/10/07 19:00 Modified to use capturing phase for drop and event.defaultprevent
+// ==/UserScript==
 // @version        2014/07/05 12:00 adjusts tolerance due to Bug 378775
 // @version        2014/05/01 12:00 Fix unnecessary toolbaritem creation
 // @version        2013/10/31 00:00 Bug 821687  Status panel should be attached to the content area
@@ -21,7 +23,6 @@
 // @version        2013/03/05 00:00 input type=file change event が発火しないのを修正 Fx7+
 // @version        2013/01/29 00:00 draggable="true"もう一度有効
 // @version        2013/01/08 02:00 Bug 827546
-// ==/UserScript==
 // @version        2013/01/01 15:00 Avoid to overwrite data on dragstart. And Bug 789546
 // @version        2012/10/24 23:00 href=javascript://のリンクテキストの処理変更
 // @version        2012/10/06 23:00 Bug 795065 Add privacy status to nsDownload
@@ -1171,7 +1172,6 @@ var DragNGo = {
         this.lastY = y;
         return this.directionChain;
     }
-
     // 直前の座標と比較, 移動距離が極小のときは無視する
     var distanceX = Math.abs(x - this.lastX);
     var distanceY = Math.abs(y - this.lastY);
@@ -1331,7 +1331,6 @@ var DragNGo = {
     if (!supported) {
       return;
     }
-
     //designModeなら何もしない
     if (target.ownerDocument instanceof HTMLDocument && target.ownerDocument.designMode == 'on') {
       self.setStatusMessage('', 0, false);
@@ -1725,7 +1724,7 @@ var DragNGo = {
       case 'dragover':
       case 'drop':
         this.dragover(event);
-        if (event.type == ' drop') {
+        if (event.type == 'drop' && !event.defaultPrevented) {
           this.dragend(event);
         }
         break;
@@ -1748,7 +1747,7 @@ var DragNGo = {
     window.addEventListener('unload', this, false);
     gBrowser.addEventListener('pagehide', this, false);
     gBrowser.addEventListener('dragend', this, false);
-    gBrowser.addEventListener('drop', this, false);
+    gBrowser.addEventListener('drop', this, true);
     gBrowser.addEventListener('dragover', this, false);
     gBrowser.addEventListener('dragenter', this, false);
     gBrowser.addEventListener('dragstart', this, false);
@@ -1787,7 +1786,7 @@ var DragNGo = {
     window.removeEventListener('unload', this, false);
     gBrowser.removeEventListener('pagehide', this, false);
     gBrowser.removeEventListener('dragend', this, false);
-    gBrowser.removeEventListener('drop', this, false);
+    gBrowser.removeEventListener('drop', this, true);
     gBrowser.removeEventListener('dragover', this, false);
     gBrowser.removeEventListener('dragenter', this, false);
     gBrowser.removeEventListener('dragstart', this, false);
