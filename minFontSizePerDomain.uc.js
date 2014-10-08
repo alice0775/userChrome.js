@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24-35 (not e10s)
 // @author         Alice0775
+// @version        2014/10/08 11:00 add acceskey, persist local directory
 // @version        2014/10/07 20:00
 // ==/UserScript==
 
@@ -55,12 +56,25 @@ var minFontSizePerDomain = {
       return;
     }
 
-    let host = aURI.host;
-    userChrome_js.debug(encodeURIComponent(host));
-    let minFontSize = minFontSizePerDomain_menu.params[encodeURIComponent(host)];
+    try {
+      var url = aURI.host;
+      if (!url) {
+        if (/^file:/i.test(aURI.spec)) {
+          let tmp = gBrowser.currentURI.spec.split('/');
+          tmp.pop();
+          url = tmp.join('/');
+          url = ioService.newURI(url, null, null).spec;
+        }
+      }
+    } catch(e) {
+      return;
+    }
+
+    //userChrome_js.debug(encodeURIComponent(url));
+    let minFontSize = minFontSizePerDomain_menu.params[encodeURIComponent(url)];
     if (typeof minFontSize != "undefined") {
        markupDocViewer.minFontSize = Math.floor(minFontSize / 0.016674);
-       userChrome_js.debug(minFontSize);
+       //userChrome_js.debug(minFontSize);
        return;
     }
     
@@ -70,13 +84,13 @@ var minFontSizePerDomain = {
       if (typeof re == "string") {
         re = new RegExp("^" + re.replace(/\./g, "\\.").replace(/\*/g, "."));
       }
-      userChrome_js.debug(re.test(host));
-      userChrome_js.debug(re);
-      userChrome_js.debug(info.size);
-      if (re.test(host)) {
+      //userChrome_js.debug(re.test(url));
+      //userChrome_js.debug(re);
+      //userChrome_js.debug(info.size);
+      if (re.test(url)) {
         minFontSize = info.size;
         markupDocViewer.minFontSize = Math.floor(minFontSize / 0.016674)
-        userChrome_js.debug(minFontSize);
+        //userChrome_js.debug(minFontSize);
         return;
       }
     }
@@ -131,25 +145,25 @@ var minFontSizePerDomain_menu = {
       <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
                xmlns:html="http://www.w3.org/1999/xhtml"> \
         <menupopup id="contentAreaContextMenu"> \
-          <menu id="minFontSizePerDomain" label="Minimum Font Size" > \
+          <menu id="minFontSizePerDomain" label="Minimum Font Size" accesskey="M"> \
             <menupopup id="minFontSizePerDomainMenupopup" \
                        onpopupshowing="minFontSizePerDomain_menu.onpopupshowing();"> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain26" label="26" oncommand="minFontSizePerDomain_menu.setSize(26);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain24" label="24" oncommand="minFontSizePerDomain_menu.setSize(24);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain22" label="22" oncommand="minFontSizePerDomain_menu.setSize(22);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain20" label="20" oncommand="minFontSizePerDomain_menu.setSize(20);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain18" label="18" oncommand="minFontSizePerDomain_menu.setSize(18);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain17" label="17" oncommand="minFontSizePerDomain_menu.setSize(17);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain16" label="16" oncommand="minFontSizePerDomain_menu.setSize(16);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain15" label="15" oncommand="minFontSizePerDomain_menu.setSize(15);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain14" label="14" oncommand="minFontSizePerDomain_menu.setSize(14);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain13" label="13" oncommand="minFontSizePerDomain_menu.setSize(13);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain12" label="12" oncommand="minFontSizePerDomain_menu.setSize(12);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain11" label="11" oncommand="minFontSizePerDomain_menu.setSize(11);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain10" label="10" oncommand="minFontSizePerDomain_menu.setSize(10);" /> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain9" label="9" oncommand="minFontSizePerDomain_menu.setSize(9);" /> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain26" label="26" oncommand="minFontSizePerDomain_menu.setSize(26);" accesskey="d"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain24" label="24" oncommand="minFontSizePerDomain_menu.setSize(24);" accesskey="c"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain22" label="22" oncommand="minFontSizePerDomain_menu.setSize(22);" accesskey="b"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain20" label="20" oncommand="minFontSizePerDomain_menu.setSize(20);" accesskey="a"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain18" label="18" oncommand="minFontSizePerDomain_menu.setSize(18);" accesskey="8"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain17" label="17" oncommand="minFontSizePerDomain_menu.setSize(17);" accesskey="7"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain16" label="16" oncommand="minFontSizePerDomain_menu.setSize(16);" accesskey="6"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain15" label="15" oncommand="minFontSizePerDomain_menu.setSize(15);" accesskey="5"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain14" label="14" oncommand="minFontSizePerDomain_menu.setSize(14);" accesskey="4"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain13" label="13" oncommand="minFontSizePerDomain_menu.setSize(13);" accesskey="3"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain12" label="12" oncommand="minFontSizePerDomain_menu.setSize(12);" accesskey="2"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain11" label="11" oncommand="minFontSizePerDomain_menu.setSize(11);" accesskey="1"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain10" label="10" oncommand="minFontSizePerDomain_menu.setSize(10);" accesskey="0"/> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain9" label="9" oncommand="minFontSizePerDomain_menu.setSize(9);" accesskey="9"/> \
               <menuseparator  id="minFontSizePerDomainMenuseparator"/> \
-              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain0" label="Reset" oncommand="minFontSizePerDomain_menu.setSize(0);" /> \
+              <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain0" label="Reset" oncommand="minFontSizePerDomain_menu.setSize(0);" accesskey="R"/> \
             </menupopup> \
           </menu> \
         </menupopup> \
@@ -172,6 +186,14 @@ var minFontSizePerDomain_menu = {
   setSize: function(val) {
     try {
       var url = encodeURIComponent(gBrowser.currentURI.host);
+      if (!url) {
+        if (/^file:/i.test(gBrowser.currentURI.spec)) {
+          let tmp = gBrowser.currentURI.spec.split('/');
+          tmp.pop();
+          url = tmp.join('/');
+          url = encodeURIComponent(ioService.newURI(url, null, null).spec);
+        }
+      }
     } catch(e) {
       return;
     }
