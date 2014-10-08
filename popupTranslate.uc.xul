@@ -1,0 +1,861 @@
+<?xml version="1.0"?>
+
+<?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+%23translationResult autorepeatbutton {
+display: none;
+}
+" type="text/css"?>
+
+<overlay id="popupTranslate"
+         xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+         xmlns:html="http://www.w3.org/1999/xhtml"
+         >
+<!--
+// ==UserScript==
+// @name           popupTranslate
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    Popup translation. 英日選択時:Shift+P/中Crick:日本語に翻訳, Shift+Alt+P/Shift+中Click:英語に翻訳
+// @note                              基本的にメニューでxxx英日を選んでおくこと
+// @include        main
+// @include        chrome://messenger/content/messageWindow.xul
+// @compatibility  Firefox 27+
+// @author         Alice0775
+// @version        2014/10/08 11:30 delete bing
+// @version        2014/07/23 09:30 delete debug print
+// @version        2014/07/23 09:30 Weblio 翻訳
+// @version        2014/07/23 06:30 タイムアウト
+// @version        2014/07/20 23:00 Yahoo!翻訳 死亡, 日英は"Google 日英"に
+// @version        2014/06/20 06:00 remove a trailing comma(,)
+// @version        2014/06/09 12:00 時々sendが失敗する
+// @version        2014/05/03 00:00 Google翻訳仕様変更のため
+// @version        2013/02/19 09:00 isJapanese簡易判定
+// @version        2012/10/07 09:00 動かないもの削除
+// @version        2012/10/07 07:00 isJapaneseにBing APIを使うように
+// ==/UserScript==
+// @version        2012/10/06 07:00 Bug 722872  call .init(null) for nsITransferable instance
+// @version        2012/06/28 18:00 タイムアウト
+// @version        2012/01/12 23:30 Bing翻訳変更
+// @version        2012/01/09 00:30 "のエスケープ
+// @version        2011/11/30 20:30 Infoseek動かないので削除
+// @version        2011/11/08 12:45 Bing翻訳
+// @version        2011/06/22 01:00 Yahoo!翻訳 jp復活
+// @version        2011/04/01 12:00 @nifty翻訳
+// @version        2011/04/01 12:00 Yahoo!翻訳jpが動かないのでcomの方にした
+// @version        2010/08/12 00:00 Excite 文字コード
+// @version        2010/01/11 00:00 isJapanese
+// @version        2009/12/29 00:00 isJapanese
+// @version        2009/12/22 20:00 Thunderbird 3 Shift+pが動かなかった(Thanks 音吉)
+// @version        2009/12/17 23:00 Thunderbird 3
+// @version        2009/12/12 23:00 Google翻訳仕様変更
+// @version        2009/07/30 12:00 選択テキストがアルファベットでないなら DefaultJapaneseToOther で翻訳
+// @version        2009/05/09 12:00 3.6a1preでポップアップ表示されないのを修正, Yahoo!翻訳を追加. Windows live translator動かないので削除
+// @version        2008/09/14 19:00 取り敢えずWindows live translator対応したけど, なにやらおかしいかも.
+// @version        2008/07/31 01:00 menupopupノードを引数にするようにした
+// @version        2008/05/04 22:00 shft+中クリックで現在設定しているエンジンの次のものを選択
+// @version        2008/03/15 00:00 3/12の退行バグ コンテンツのインプットエリア等の翻訳ができなくなっていたのを修正
+// @version        2008/03/12 00:00 URLバー等の選択テキストには反応しないようにした
+// @version        2008/02/20 14:00 infoseekのように, 識別子をprefetchしてから翻訳する機能を追加
+// @version        2008/01/27 14:00 リンク上のクリックでは無視するようにした
+// @version        2008/01/27 01:30 ツールのポップアップ翻訳の設定が表示されない場合があるのを修正
+// @version        2008/01/27 01:00 gBrowser.mPanelContainerにした
+// @version        2008/01/27 00:00 結果の抽出にxpathを利用するようにした
+// @version        2008/01/26 21:00 選択テキストは%%SEL%%と置き換わるようにした
+// @version        2008/01/26 20:00 「しばらくお待ちください。」を表示
+// @version        2008/01/25 20:30 マイナー仕様変更の耐性向上
+// @version        2008/01/23 00:30 translate.google.comの仕様変更に対応
+// @version        2008/01/10 12:30 中クリックまたはshift+Pでポップアップ
+// @license        GPL
+//  Copyright (C) 2005, hatena.
+//  Released under the GPL license
+//  http://www.gnu.org/copyleft/gpl.html
+//
+//  id:takef
+//  HatenaDiaryKeywordPopupForOpera.user.js
+//  http://userjs.seesaa.net/article/13853826.html
+//
+//  original code by mallowlabs
+//  version 0.0.2
+//  homepage http://mallowlabs.s206.xrea.com/
+ -->
+  <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
+    var popupTranslate = {
+      // 足切り1024文字
+      MaximumStringLength : 1024,
+      //選択テキストがアルファベットでないなら DefaultJapaneseToOther で翻訳
+      DefaultJapaneseToOther : "Google 日英",
+
+      timer: null,
+      kXULNS:"http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul",
+      TIMEOUT: 15000,
+
+      mMenus: [
+        /*
+        {
+          Description:"メニュー表示名",
+          method:'リクエストの方法POSTまたはGET',
+          Referer:'リファラーのURL',
+          action:"送信先URL(選択テキストは%%SEL%%と置き換わる)",
+          post:"POSTの場合のpostdata(選択テキストは%%SEL%%と置き換わる)",
+          code:"サイトのエンコード方法UTF-8,Shift_JIS,EUC-JPとか",
+          xpath:'翻訳結果の入っているHTML要素のxpath式',
+          start:"xpathを使用しない場合, 翻訳結果の直前にあるHTML文書の文字列(正規表現の\は\\とする)",
+          end:"xpathを使用しない場合, 翻訳結果の直後にあるHTML文書の文字列(正規表現の\は\\とする)",
+        },
+        {
+          Description:"Excite英日のxpathを使用しない場合の例",
+          method:'POST',
+          Referer:'http://www.excite.co.jp/world/english/',
+          action:"http://www.excite.co.jp/world/english/",
+          post:"wb_lp=ENJA&before=%%SEL%%",
+          code:"Shift_JIS",
+          start:"<textarea.+name=\"?after\"?[\\s\\w\"'!;:=-~^|#$%&(){}\\[\\]]*>",
+          end:"</textarea>",
+        },
+        */
+
+        {
+          Description:"Excite 英日",
+          method:'POST',
+          Referer:'http://www.excite.co.jp/world/english/',
+          action:"http://www.excite.co.jp/world/english/",
+          post:"before=%%SEL%%&wb_lp=ENJA&after=",
+          code:"UTF-8",
+          xpath:'.//textarea[@name="after"]',
+        },
+
+        {
+          Description:"Excite 日英",
+          method:'POST',
+          Referer:'http://www.excite.co.jp/world/english/',
+          action:"http://www.excite.co.jp/world/english/",
+          post:"before=%%SEL%%&wb_lp=JAEN&after=",
+          code:"UTF-8",
+          xpath:'.//textarea[@name="after"]',
+        },
+
+        {
+          Description:"Google 英日",
+          method:'POST',
+          Referer:'https://translate.google.com/?tab=yT#en',
+          action:"https://translate.google.com/",
+          post:"client=t&hl=ja&sl=auto&tl=ja&multires=1&prev=btn&ssel=0&tsel=0&uptl=ja&sc=1&text=%%SEL%%",
+          code:"UTF-8",
+          xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
+        },
+
+        {
+          Description:"Google 日英",
+          method:'POST',
+          Referer:'https://translate.google.com/?tab=yT#ja',
+          action:"https://translate.google.com/",
+          post:"client=t&hl=ja&sl=ja&tl=en&multires=1&prev=btn&ssel=0&tsel=0&sc=1&text=%%SEL%%",
+          code:"UTF-8",
+          xpath:'.//span[@id="result_box"]|.//div[@id="result_box"]',
+        },
+
+/*
+        {
+          Description:"Yahoo Translate 英日",
+          method:"POST",
+          Referer:"http://honyaku.yahoo.co.jp/transtext",
+          action:"http://honyaku.yahoo.co.jp/transtext",
+          post:"eid=CR-EJ&both=TH&clearFlg=1&text=%%SEL%%",
+          code:"UTF-8",
+          xpath:'.//textarea[@id="trn_textText"]',
+        },
+        {
+          Description:"Yahoo Translate 日英",
+          method:"POST",
+          Referer:"http://honyaku.yahoo.co.jp/transtext",
+          action:"http://honyaku.yahoo.co.jp/transtext",
+          post:"eid=CR-JE&both=TH&clearFlg=1&text=%%SEL%%",
+          code:"UTF-8",
+          xpath:'.//textarea[@id="trn_textText"]',
+        },
+
+       {
+          Description:"Infoseek 英日",
+          method:'GET',
+          Referer:'http://translation.infoseek.co.jp/',
+          action:'http://translation.infoseek.co.jp/?submit='+encodeURI("　翻訳　")+'&ac=Text&lng=en&selector=0&original=%%SEL%%',
+          code:"UTF-8",
+          xpath:'.//textarea[@name="converted"]',
+          prefetchURL:'http://translation.infoseek.co.jp/',      //あらかじめアクセスするURL
+          prefechData:['token']                                  //必要なinput type= hidden の name
+        },
+        {
+          Description:"Infoseek 日英",
+          method:'GET',
+          Referer:'http://translation.infoseek.co.jp/',
+          action:'http://translation.infoseek.co.jp/?submit='+encodeURI("　翻訳　")+'&ac=Text&lng=ja&selector=1&original=%%SEL%%',
+          code:"UTF-8",
+          xpath:'.//textarea[@name="converted"]',
+          prefetchURL:'http://translation.infoseek.co.jp/',      //あらかじめアクセスするURL
+          prefechData:['token']                                  //必要なinput type= hidden の name
+        },
+        {
+          Description:"Live Translate 英日",
+          method:'POST',
+          Referer:'http://www.windowslivetranslator.com/Default.aspx',
+          action:"http://www.windowslivetranslator.com/Default.aspx",
+          post:"__VIEWSTATE=%2FwEPDwULLTEzMTY2NDMxMjFkZA%3D%3D&InputTextVal=%%SEL%%&BrowserLanguagePreference=ja&MaxInputChars=3500&InputURL=http%3A%2F%2F&LangPair%24DDL=en_ja&BtnTransText=%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88%E3%81%AE%E7%BF%BB%E8%A8%B3",
+          code:"UTF-8",
+          xpath:'.//textarea[@name="OutputText"]',
+          prefetchURL:'http://www.windowslivetranslator.com/Default.aspx?MKT=en-US&LangPair%24DDL=en_ja',
+          prefechData:['__EVENTVALIDATION'],
+          cookie:"lp=en_ja"
+        },
+
+        {
+          Description:"Live Translate 日英",
+          method:'POST',
+          Referer:'http://www.windowslivetranslator.com/Default.aspx',
+          action:"http://www.windowslivetranslator.com/Default.aspx",
+          post:"__VIEWSTATE=%2FwEPDwULLTEzMTY2NDMxMjFkZA%3D%3D&InputTextVal=%%SEL%%&BrowserLanguagePreference=ja&MaxInputChars=3500&InputURL=http%3A%2F%2F&LangPair%24DDL=ja_en&BtnTransText=%E3%83%86%E3%82%AD%E3%82%B9%E3%83%88%E3%81%AE%E7%BF%BB%E8%A8%B3",
+          code:"UTF-8",
+          xpath:'.//textarea[@name="OutputText"]',
+          prefetchURL:'http://www.windowslivetranslator.com/Default.aspx?MKT=ja-JP&LangPair%24DDL=ja_en',
+          prefechData:['__EVENTVALIDATION'],
+          cookie:"lp=ja_en"
+        },
+
+*/
+        {
+          Description:"Weblio 翻訳 英日",
+          method:"POST",
+          Referer:"http://translate.weblio.jp/",
+          action:"http://translate.weblio.jp/",
+          post:"lp=EJ&lpf=&rt=&translatedText=&tlt=english&prtRt=&originalText=%%SEL%%&sentenceStyle=spoken",
+          code:"UTF-8",
+          xpath:'id("translatedText")'
+        },
+
+        {
+          Description:"Weblio 翻訳 日英",
+          method:"POST",
+          Referer:"http://translate.weblio.jp/",
+          action:"http://translate.weblio.jp/",
+          post:"lp=JE&lpf=&rt=&translatedText=&tlt=english&prtRt=&originalText=%%SEL%%&sentenceStyle=spoken",
+          code:"UTF-8",
+          xpath:'id("translatedText")'
+        },
+
+        {
+          Description:"@nifty翻訳 英日",
+          method:"POST",
+          Referer:"http://honyaku.nifty.com/",
+          action:"http://honyaku-result.nifty.com/LUCNIFTY/text/text.php",
+          post:"SLANG=en&TLANG=ja&XMODE=0&SSRC=%%SEL%%&txtDirection=enja",
+          code:"UTF-8",
+          xpath:'.//textarea[@id="txtTransArea2"]'
+        },
+
+        {
+          Description:"@nifty翻訳 日英",
+          method:"POST",
+          Referer:"http://honyaku.nifty.com/",
+          action:"http://honyaku-result.nifty.com/LUCNIFTY/text/text.php",
+          post:"SLANG=ja&TLANG=en&XMODE=0&SSRC=%%SEL%%&txtDirection=jaen",
+          code:"UTF-8",
+          xpath:'.//textarea[@id="txtTransArea2"]'
+        }
+      ],
+
+      init: function(){
+        window.addEventListener('unload', this, false);
+        if ("gBrowser" in window) {
+          gBrowser.mPanelContainer.addEventListener('click', this, true);
+          gBrowser.mPanelContainer.addEventListener('mousedown', this, true);
+        } else if (document.getElementById("tabpanelcontainer")) { // Tb main win
+          document.getElementById("tabpanelcontainer").addEventListener('click', this, true);
+          document.getElementById("tabpanelcontainer").addEventListener('mousedown', this, true);
+        } else if (document.getElementById("messagepane")) { // message win
+          document.getElementById("messagepanebox").addEventListener('click', this, true);
+          document.getElementById("messagepanebox").addEventListener('mousedown', this, true);
+        }
+      },
+
+      uninit: function() {
+        if (this.timer)
+          clearTimeout(this.timer);
+        window.removeEventListener('unload', this, false);
+        if ("gBrowser" in window) {
+          gBrowser.mPanelContainer.removeEventListener('click', this, true);
+          gBrowser.mPanelContainer.removeEventListener('mousedown', this, true);
+        } else if (document.getElementById("tabpanelcontainer")) {
+          document.getElementById("tabpanelcontainer").removeEventListener('click', this, true);
+          document.getElementById("tabpanelcontainer").removeEventListener('mousedown', this, true);
+        } else if (document.getElementById("messagepane")) {
+          document.getElementById("messagepanebox").removeEventListener('click', this, true);
+          document.getElementById("messagepanebox").removeEventListener('mousedown', this, true);
+        }
+      },
+
+      onclick: function(event) {
+        if( event.button != 1 )
+          return;
+        var target = event.target;
+        if (target instanceof HTMLAnchorElement ||
+                   target instanceof HTMLAreaElement ||
+                   target instanceof HTMLLinkElement)
+          return;
+        var sel = this._getselection();
+        if (!sel)
+          return;
+        var engine = null;
+        if (popupTranslate.isJapanese(sel) &&
+            !event.shiftKey && !event.ctrlKey && !event.altKey ||
+            event.shiftKey && !event.ctrlKey && event.altKey) {
+          engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, false);
+        }
+        if (!engine) {
+          engine = this.selectEngine(event.shiftKey);
+        }
+        if(engine){
+          var prefetch = null;
+          if (typeof engine.prefetchURL != "undefined" && engine.prefetchURL !=""){
+            this.getPrefetchResult(sel,engine);
+          }else{
+            this.getTranslateResult(sel,engine,null);
+          }
+        }
+      },
+
+      onMousedown: function(event) {
+        if( event.button != 1 )
+          return;
+        if(this._getselection()!=""){
+          event.preventDefault();
+          event.stopPropagation();
+        }
+      },
+
+      handleEvent: function(event) {
+        switch(event.type) {
+          case 'click':
+            this.onclick(event);
+            break;
+          case 'mousedown':
+            this.onMousedown(event);
+            break;
+          case 'unload':
+            this.uninit();
+            break;
+        }
+      },
+
+      onCommand: function(aAlt) {
+        var sel = this._getselection();
+        if (!sel)
+          return;
+        var engine = null;
+        if (popupTranslate.isJapanese(sel) && !aAlt){
+          engine = this.selectEngineByDescription(popupTranslate.DefaultJapaneseToOther, false);
+        }
+        if (!engine) {
+          engine = this.selectEngine(aAlt);
+        }
+        if(engine){
+          var prefetch = null;
+          if (engine.prefetchURL){
+            this.getPrefetchResult(sel,engine);
+          }else{
+            this.getTranslateResult(sel,engine, null);
+          }
+        }
+      },
+
+      //現在のウインドウを得る
+      _getFocusedWindow: function(){
+        var focusedWindow = document.commandDispatcher.focusedWindow;
+        if (!focusedWindow || focusedWindow == window)
+          return window.content;
+        else
+          return focusedWindow;
+      },
+
+      //選択文字列を得る
+      _getselection: function() {
+        var targetWindow = this._getFocusedWindow();
+        var sel = targetWindow.getSelection();
+        if (sel && !sel.toString()) {
+          var node = document.commandDispatcher.focusedElement;
+          if (node &&
+              node.ownerDocument.defaultView == targetWindow &&
+              (node.type == "text" || node.type == "textarea") &&
+              'selectionStart' in node &&
+              node.selectionStart != node.selectionEnd) {
+
+            var offsetStart = Math.min(node.selectionStart, node.selectionEnd);
+            var offsetEnd  = Math.max(node.selectionStart, node.selectionEnd);
+            return node.value.substr(offsetStart, offsetEnd-offsetStart);
+          }
+        }
+        return sel ?
+          sel.toString().substr(0, this.MaximumStringLength).replace(/^\s+/,"").replace(/\s+$/,"") : "";
+      },
+
+      isJapanese: function(str) {
+        var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+          createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+        var s = str.replace(/^\s+/, '')
+        //カタカナ ひらがな
+        if (/[\u3040-\u309F\u30A0-\u30FF]/.test(s))
+          return true;
+        //ハングル
+        if(/[\u1100-\u11FF\uAC00-\uD7A3\u3130-\u318F]/.test(s))
+          return false;
+        //アラビック
+        if(/[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(s))
+          return false;
+        //漢字
+        if (/(?:[\u2E80-\u2FDF\u3005\u3007\u3021-\u3029\u3038-\u303B\u3400-\u4DBF\u4E00-\u9FFF\uF900-\uFAFF]|[\uD840-\uD87F][\uDC00-\uDFFF])/.test(s)) {
+          try {
+            UI.charset = "Shift_JIS";
+            // Shift_JISで定義済み
+            if (UI.ConvertToUnicode(UI.ConvertFromUnicode(s)) == s)
+              return true;
+          } catch(ex) {}
+          // bing判定
+          return this.isJapanese_old(str);
+        }
+        return false;
+      },
+
+      isJapanese_old: function(str) {
+        var url = "http://api.microsofttranslator.com/V2/Ajax.svc/Detect?appId=46846E697D3BC6FA50998483EF31894654002928&text=" + str;
+        var req = new XMLHttpRequest();
+        req.open('GET', url, false);
+        req.send(null);
+        if(req.status == 200)
+          return req.responseText == '"ja"';
+        else
+          return false;
+      },
+
+      selectEngine: function(flag){
+        var Description = this.getPref('userChrome.translation', this.mMenus[0].Description);
+        var max = this.mMenus.length;
+        for(var i = 0;i < max; i++){
+          if(this.mMenus[i].Description === Description){
+            if(!flag) {
+              return this.mMenus[i];
+            } else {
+              if(i == max-1){
+                return this.mMenus[i];
+              }else{
+                return this.mMenus[i+1];
+              }
+            }
+          }
+        }
+        return null;
+      },
+      selectEngineByDescription: function(Description, flag){
+        var max = this.mMenus.length;
+        for(var i = 0;i < max; i++){
+          if(this.mMenus[i].Description === Description){
+            if(!flag) {
+              return this.mMenus[i];
+            } else {
+              if(i == max-1){
+                return this.mMenus[i];
+              }else{
+                return this.mMenus[i+1];
+              }
+            }
+          }
+        }
+        return null;
+      },
+
+      getPrefetchResult: function(sel,engine){
+        var  xpath, result, node, val, prefetch = "";
+     //this.debug(sel);
+        var self = this;
+     //self.debug(engine.prefetchURL);
+        if (typeof engine.cookie != 'undefined')
+          self.cleanThisSiteCookies(engine.action, engine.cookie.match(/(.*)=.*/)[1]);
+
+        self.show("Prefetch中,しばらくお待ちください。");
+        this.GM_xmlhttpRequest({
+          method: 'GET',
+          overrideMimeType:"text/html; charset="+engine.code,
+          url: engine.prefetchURL,
+          data: null,
+          headers: (typeof engine.cookie != 'undefined') ?
+                   {'Referer': engine.Referer, 'Cookie': engine.cookie} :
+                   {'Referer': engine.Referer},
+          onload:function(details) {
+            var f;
+            try{
+              var tmp = details.responseHeaders.match(/Set-Cookie:(.*)\n/)[1];
+//popupTranslate.debug(tmp);
+              var cookie = ""
+              if (tmp){
+                var cookies = tmp.split(';');
+                f = 0;
+                for (var i=0; i < cookies.length; i++){
+                  if(typeof engine.cookie != 'undefined' &&
+                     cookies[i] && cookies[i].match(/(.*)=.*/)[1] == engine.cookie.match(/(.*)=.*/)[1]){
+                    cookies[i] = engine.cookie;
+                    f = 1;
+                  }
+                }
+                if (typeof engine.cookie != 'undefined' && f == 0)
+                  cookies.push(engine.cookie);
+                cookie = cookies.join(';');
+              }
+            }catch(e){}
+//popupTranslate.debug(cookie);
+
+
+            var txt = details.responseText.toString();
+       //self.debug(txt);
+            try {
+              var hdoc = self.str2dom(txt);
+              for (var i = 0;i < engine.prefechData.length; i++) {
+                xpath = './/input[@name="'+engine.prefechData[i]+'"]';
+       //self.debug(xpath);
+                result = hdoc.evaluate(xpath, hdoc, null,
+                             XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null)
+                for (j = 0;j < result.snapshotLength; j++){
+                  node = result.snapshotItem(j);
+                  if (!node.hasAttribute('value')) continue;
+                  val = node.getAttribute('value');
+                  prefetch = prefetch + '&' + engine.prefechData[i] + '=' + encodeURIComponent(val)
+                }
+             }
+       //self.debug(prefetch);
+             self.getTranslateResult(sel,engine,prefetch, cookie);
+            } catch (e) {}
+          },
+          onerror:function(e) {
+            self.show("Error " + e.status + " occurred while receiving the document.");
+          },
+          ontimeout:function() {
+            self.show("Timeout");
+          }
+        });
+      },
+      getTranslateResult: function(sel,engine,prefetch, cookie){
+        var  Exp, xpath;
+        var self = this;
+     //self.debug(sel);
+        var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+                  createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+        UI.charset = engine.code;
+        sel = UI.ConvertFromUnicode(sel);
+        if(engine.method === 'POST'){
+          var aUrl = engine.action;
+          var aData = engine.post.replace(/%%SEL%%/g,escape(sel).replace(/\+/g,'%2B'));
+          if (prefetch) aData = aData + prefetch;
+        }else{
+          var aUrl = engine.action.replace(/%%SEL%%/g,escape(sel).replace(/\+/g,'%2B'));
+          if (prefetch) aUrl = aUrl + prefetch;
+          var aData = null;
+        }
+     //self.debug(aUrl);
+     //self.debug(aData);
+        if(!engine.xpath || engine.xpath == "" )
+          Exp = new RegExp(engine.start+"((.|\\r|\\n)*)"+engine.end,"i");
+        else
+          xpath = engine.xpath;
+     //self.debug(xpath);
+     //self.debug(new RegExp(Exp.source,"i").toSource());
+        self.show("しばらくお待ちください。");
+        this.GM_xmlhttpRequest({
+          method: engine.method,
+          overrideMimeType:"text/html; charset="+engine.code,
+          url: aUrl,
+          data: aData,
+          headers: (typeof engine.cookie != 'undefined') ?
+                   {'Referer': engine.Referer,
+                    'Content-Type':'application/x-www-form-urlencoded',
+                    'Cookie': cookie
+                   } :
+                   {'Referer': engine.Referer,
+                    'Content-Type':'application/x-www-form-urlencoded'
+                   },
+          onload:function(details) {
+            var txt = details.responseText.toString();
+     //self.debug(txt);
+            var res = null;
+            try {
+              if(!xpath){
+     //self.debug("Exp.source " + Exp.source);
+     //self.debug("txt " + txt);
+                res = txt.match(new RegExp(Exp.source,"i"));
+     //self.debug(res.toString());
+                res = RegExp.$1;
+              } else {
+     //self.debug(txt)
+                var hdoc = self.str2dom(txt); 
+                var result = hdoc.evaluate(xpath, hdoc, null,
+                             XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
+     //self.debug(result.snapshotItem(0));
+               var node = result.snapshotLength>0 ? result.snapshotItem(0) : null
+               res = node.textContent || node.value;
+               node = hdoc = result = null;
+              }
+            } catch (e) {self.show("取得失敗。");}
+            res = res.replace(/\n/g,'<html:br />');
+            if(res != null && res !=='') {
+              self.show(res);
+            } else {
+              self.show("取得失敗。");
+            }
+          },
+          onerror:function(e) {
+            self.show("Error " + e.status + " occurred while receiving the document.");
+          },
+          ontimeout:function() {
+            self.show("Timeout");
+          }
+        });
+      },
+
+      str2dom: function (str){
+        var xsl = (new DOMParser()).parseFromString([
+          '<?xml version="1.0"?>',
+          '<stylesheet version="1.0" xmlns="http://www.w3.org/1999/XSL/Transform">',
+          '<output method="html"/>',
+          '</stylesheet>'
+        ].join("\n"), "text/xml");
+
+        var xsltp = new XSLTProcessor();
+        xsltp.importStylesheet(xsl);
+        var htmldoc = xsltp.transformToDocument(document.implementation.createDocument("", "", null));
+
+        var range = htmldoc.createRange();
+        htmldoc.appendChild(htmldoc.createElement("html"));
+        range.selectNodeContents(htmldoc.documentElement);
+
+        htmldoc.documentElement.appendChild(range.createContextualFragment(str));
+        return htmldoc;
+      },
+
+      //from GM_modoki.jsl
+      req: null,
+      GM_xmlhttpRequest: function(obj){
+        if(typeof(obj) != 'object' || (typeof(obj.url) != 'string' && !(obj.url instanceof String)))
+          return;
+        if (!this.req)
+          this.req = new XMLHttpRequest();
+        var req = this.req;
+        req.abort();
+        req.timeout = this.TIMEOUT;
+
+        req.reqestUrl = obj.url;
+        req.open(obj.method || 'GET',obj.url,true); //async
+
+        if(typeof(obj.headers) == 'object'){
+          for(var i in obj.headers) {req.setRequestHeader(i,obj.headers[i], false);
+//popupTranslate.debug(i+","+obj.headers[i]);
+          }
+        }
+
+        ['onload','onerror','onreadystatechange', 'ontimeout'].forEach(function(k){
+            if(obj[k] && (typeof(obj[k]) == 'function' || obj[k] instanceof Function))
+              req[k] = function(){
+                obj[k]({
+                  status          : (req.readyState == 4) ? req.status : 0,
+                  statusText      : (req.readyState == 4) ? req.statusText : '',
+                  responseHeaders : (req.readyState == 4) ? req.getAllResponseHeaders() : '',
+                  responseText    : req.responseText,
+                  readyState      : req.readyState,
+                  finalUrl        : (req.readyState == 4) ? req.channel.URI.spec : ''
+                });
+              };
+        });
+
+        if(obj.overrideMimeType) req.overrideMimeType(obj.overrideMimeType);
+            if(typeof obj.data == 'string') req.send(obj.data); //may be for post
+            else req.send(null);                                //may be for get
+      },
+
+      show: function(res){
+        var popup = document.getElementById("translationResult");
+        this.setValue(res);
+        this.sizeChange();
+        var node=document.getElementById("content");
+        if(!node){
+          node=document.getElementById("messagepane");
+        }
+        if (this.timer)
+          clearTimeout(this.timer);
+        if (typeof popup.openPopup != 'undefined')
+          popup.openPopup(node, "overlap", 0, 0, true, false);
+        else
+          popup.showPopup(node,-1,-1,"popup",null,null);
+        setTimeout(function(){popupTranslate.sizeChange();},0);
+        this.timer = setTimeout(function(){popup.hidePopup();},30000);//最大30秒で消す
+      },
+
+      setValue: function(val){
+        var label = document.getElementById("translationResultPopupLabel");
+        label.innerHTML = val;
+      },
+
+      sizeChange: function(){
+        var popup = document.getElementById("translationResult");
+        var box = document.getElementById("translationResultPopupBox");
+        popup.sizeTo(450, Math.max(box.boxObject.height*1.0+5,23));
+      },
+
+      menuPopup: function(refNode){
+        while(refNode.lastChild){
+          refNode.removeChild(refNode.lastChild);
+        }
+        var Description = this.getPref('userChrome.translation', this.mMenus[0].Description);
+        var max = this.mMenus.length;
+        for(var i = 0;i < max; i++){
+          var mMenu = this.mMenus[i];
+          var menuitem = document.createElementNS(this.kXULNS,"menuitem");
+          menuitem.setAttribute("type", "checkbox");
+          menuitem.setAttribute("label", mMenu.Description);
+          menuitem.setAttribute('oncommand',"popupTranslate.selected("+i+");");
+          menuitem.setAttribute("class", "menuitem-iconic");
+          menuitem.setAttribute("checked", (Description === mMenu.Description));
+          refNode.appendChild(menuitem);
+        }
+      },
+
+      copyToClipboard: function(aValue){
+        var clipid = Components.interfaces.nsIClipboard;
+        var clip = Components.classes['@mozilla.org/widget/clipboard;1'].getService(clipid);
+        if (!clip) {
+          return;
+        }
+        var trans = Components.classes['@mozilla.org/widget/transferable;1'].
+                    createInstance(Components.interfaces.nsITransferable);
+        if (!trans) {
+          return;
+        }
+        trans.init(null);
+        var str = Components.classes['@mozilla.org/supports-string;1'].
+                  createInstance(Components.interfaces.nsISupportsString);
+        str.data = aValue;
+        trans.setTransferData("text/unicode", str, aValue.length * 2);
+        clip.setData(trans, null, clipid.kGlobalClipboard);
+      },
+
+      selected: function(i){
+        this.setPref('userChrome.translation',this.mMenus[i].Description);
+      },
+
+      getPref: function(pref,val){
+        var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+                  createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+        UI.charset = "UTF-8";
+        var gPref = Components.classes["@mozilla.org/preferences-service;1"]
+          .getService(Components.interfaces.nsIPrefService)
+          .getBranch("");
+        try {
+          val = gPref.getCharPref(pref);
+        }catch(e){}
+        try {
+          return UI.ConvertToUnicode(val);
+        }catch(e){
+          return val;
+        }
+      },
+
+      setPref: function(pref,val){
+        var UI = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"].
+                  createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+        UI.charset = "UTF-8";
+        val = UI.ConvertFromUnicode(val);
+        var gPref = Components.classes["@mozilla.org/preferences-service;1"]
+          .getService(Components.interfaces.nsIPrefService)
+          .getBranch("");
+        try {
+          gPref.setCharPref(pref, val);
+        }catch(e){ }
+      },
+
+      cleanThisSiteCookies : function(url, name) {
+        var cookieManager = Components.classes["@mozilla.org/cookiemanager;1"].getService(Components.interfaces.nsICookieManager);
+
+        url = url.toUpperCase()
+
+        if(beginsWith(url, "HTTP://")) {
+              //alert("beginswith 1 true");
+              if(!beginsWith(url, "HTTP://WWW.")) {
+                  //alert("beginswith 2 false");
+                  var s = url;
+                  url = s.substring(0, 7) + "." + s.substring(7);
+              }
+        }
+
+        var iter = cookieManager.enumerator;
+        var cookie_count = 0;
+        while (iter.hasMoreElements()) {
+          var cookie = iter.getNext();
+          if (cookie instanceof Components.interfaces.nsICookie) {
+            if (url.indexOf(cookie.host.toUpperCase()) != -1 && cookie.name == name) {
+                cookieManager.remove(cookie.host, cookie.name, cookie.path, cookie.blocked);
+            }
+          }
+        }
+        function beginsWith(string, text) {
+            var pos = string.indexOf(text);
+            if (pos == 0) {
+          return true;
+            } else {
+          return false;
+            }
+        }
+      },
+
+      debug: function(aMsg){
+        const Cc = Components.classes;
+        const Ci = Components.interfaces;
+        Cc["@mozilla.org/consoleservice;1"]
+          .getService(Ci.nsIConsoleService)
+          .logStringMessage(aMsg);
+      }
+    }
+    popupTranslate.init();
+  ]]></script>
+  <menupopup id="menu_ToolsPopup">
+    <menu id="translation_optionsMenu"
+          label="ポップアップ翻訳の設定" accesskey="t" insertbefore="menu_preferences" >
+      <menupopup id="translation_options"
+                 onpopupshowing="event.stopPropagation();popupTranslate.menuPopup(this)"
+                 menugenerated="true">
+      </menupopup>
+    </menu>
+  </menupopup>
+
+  <menupopup id="taskPopup">
+    <menu id="translation_optionsMenu"
+          label="ポップアップ翻訳の設定" accesskey="t" insertbefore="menu_preferences" >
+      <menupopup id="translation_options"
+                 onpopupshowing="event.stopPropagation();popupTranslate.menuPopup(this)"
+                 menugenerated="true">
+      </menupopup>
+    </menu>
+  </menupopup>
+
+  <popupset id="mainPopupSet">
+    <popup id="translationResult"
+           style="-moz-appearance:tooltip;display:-moz-popup;font:message-box;background-color:InfoBackground;color:InfoText;border: 1px solid InfoText;width:450px;">
+      <vbox id="translationResultPopupBox">
+        <html:div id="translationResultPopupLabel" type="content" flex="1" onclick="popupTranslate.copyToClipboard(this.textContent);"/>
+      </vbox>
+    </popup>
+  </popupset>
+  <window id="main-window">
+    <keyset id="mainKeyset2">
+      <key id="key_Translate" key="P" oncommand="popupTranslate.onCommand(false);" modifiers="shift"/>
+      <key id="key_Translate2" key="P" oncommand="popupTranslate.onCommand(true);" modifiers="shift,alt"/>
+    </keyset>
+  </window>
+  <window id="messengerWindow">
+    <keyset id="mainKeyset2">
+      <key id="key_Translate" key="P" oncommand="popupTranslate.onCommand(false);" modifiers="shift"/>
+      <key id="key_Translate2" key="P" oncommand="popupTranslate.onCommand(true);" modifiers="shift,alt"/>
+    </keyset>
+  </window>
+</overlay>
