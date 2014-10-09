@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24-35 (not e10s)
 // @author         Alice0775
+// @version        2014/10/09 12:00 use sqlite istead of prefs.js
 // @version        2014/10/08 11:00 add acceskey, persist local directory
 // @version        2014/10/07 20:00
 // ==/UserScript==
@@ -21,7 +22,13 @@ var minFontSizePerDomain = {
     {url: "about:*" , size: 0}, // maybe not change
   ],
   
-  handleEvenet: function(event) {
+
+  aUrlMinSize: [],
+  getParam: function() {
+    return minFontSizePerDomain_storage.getAllminFontSizeData();
+  },
+
+  handleEvent: function(event) {
     switch(event.type) {
       case "unload":
         this.uninit();
@@ -30,10 +37,21 @@ var minFontSizePerDomain = {
   },
 
   init: function() {
-    let obj = {};
-    obj.url = /./;
-    obj.size = this.defaultMinSize;
-    this.SITEINFO.push(obj);
+    minFontSizePerDomain_storage.initDB();
+
+    // cache to minimize accessing sqlite db
+    this.initCache();
+
+    // convert to regexp
+    for (let i = 0; i < this.SITEINFO.length; i++) {
+      let info = this.SITEINFO[i];
+      let re = info.url;
+      if (typeof re == "string") {
+        re = new RegExp("^" + re.replace(/\./g, "\\.").replace(/\*/g, "."));
+      this.SITEINFO[i].url = re;
+      }
+    }
+
     window.addEventListener("unload", this, false);
     gBrowser.addProgressListener(this);
     // mmm for already loaded page
@@ -43,6 +61,16 @@ var minFontSizePerDomain = {
   uninit: function() {
     window.removeEventListener("unload", this, false);
     gBrowser.removeProgressListener(this);
+    minFontSizePerDomain_storage.closeDB();
+  },
+
+  initCache: function() {
+    this.aUrlMinSize = this.getParam();
+    this.defaultMinSize = minFontSizePerDomain_storage.getSizeByUrl("default_min_size") || this.defaultMinSize;
+  },
+
+  getDefaultSize: function() {
+    return this.defaultMinSize;
   },
 
   setMinFontSize: function(markupDocViewer, aURI) {
@@ -71,7 +99,7 @@ var minFontSizePerDomain = {
     }
 
     //userChrome_js.debug(encodeURIComponent(url));
-    let minFontSize = minFontSizePerDomain_menu.params[encodeURIComponent(url)];
+    let minFontSize = this.aUrlMinSize[encodeURIComponent(url)];
     if (typeof minFontSize != "undefined") {
        markupDocViewer.minFontSize = Math.floor(minFontSize / 0.016674);
        //userChrome_js.debug(minFontSize);
@@ -81,12 +109,6 @@ var minFontSizePerDomain = {
     for (let i = 0; i < this.SITEINFO.length; i++) {
       let info = this.SITEINFO[i];
       let re = info.url;
-      if (typeof re == "string") {
-        re = new RegExp("^" + re.replace(/\./g, "\\.").replace(/\*/g, "."));
-      }
-      //userChrome_js.debug(re.test(url));
-      //userChrome_js.debug(re);
-      //userChrome_js.debug(info.size);
       if (re.test(url)) {
         minFontSize = info.size;
         markupDocViewer.minFontSize = Math.floor(minFontSize / 0.016674)
@@ -94,7 +116,8 @@ var minFontSizePerDomain = {
         return;
       }
     }
-    markupDocViewer.minFontSize = 0;
+
+    markupDocViewer.minFontSize = Math.floor(this.defaultMinSize / 0.016674)
   },
 
   STATE_START: Ci.nsIWebProgressListener.STATE_START,
@@ -131,17 +154,125 @@ var minFontSizePerDomain = {
   onProgressChange: function(aWebProgress, aRequest, curSelf, maxSelf, curTot, maxTot) {},
   onStatusChange: function(aWebProgress, aRequest, aStatus, aMessage) {},
   onSecurityChange: function(aWebProgress, aRequest, aState) {}
-};
+}
 
-minFontSizePerDomain.init();
+
+
+var minFontSizePerDomain_storage = {
+  db: null,
+  initDB: function() {
+    let file = FileUtils.getFile("UChrm", ["minfontdize.sqlite"]);
+    if (!file.exists()) {
+      this.db = Services.storage.openDatabase(file);
+      let stmt = this.db.createStatement(
+        "CREATE TABLE minfontsize (id INTEGER PRIMARY KEY AUTOINCREMENT, url TEXT NOT NULL, size INTEGER)"
+      );
+      try {
+        stmt.execute();
+      } finally {
+        stmt.finalize();
+      }
+    } else {
+      this.db = Services.storage.openDatabase(file);
+    }
+  },
+
+  closeDB: function() {
+    try {
+      this.db.close();
+    } catch(e) {}
+  },
+
+  getAllminFontSizeData: function(url) {
+    let aUrlMinSize = [];
+
+    let stmt = this.db.createStatement(
+      "SELECT url, size FROM minfontsize"
+    );
+    try {
+      while (stmt.executeStep()) {
+        let url         = stmt.row.url;
+        let minFontSize = stmt.row.size;
+        if (!!url)
+          aUrlMinSize[url] = minFontSize;
+      }
+    } finally {
+      stmt.finalize();
+    }
+    return aUrlMinSize;
+  },
+
+  getSizeByUrl: function(url) {
+    let minfontsize = null;
+    let stmt = this.db.createStatement(
+      "SELECT size FROM minfontsize WHERE url = :url"
+    );
+    stmt.params['url'] = url;
+    try {
+      while (stmt.executeStep()) {
+        minfontsize = stmt.row.size;
+        break;
+      }
+    } finally {
+      stmt.finalize();
+    }
+    return minfontsize;
+  },
+
+  setSizeByUrl: function(url, minFontSize) {
+    if(this.getSizeByUrl(url) == null)
+      this.insertSizeByUrl(url, minFontSize);
+    else
+      this.updateSizeByUrl(url, minFontSize);
+  },
+
+  insertSizeByUrl: function(url, minFontSize) {
+    let stmt = this.db.createStatement(
+      "INSERT INTO minFontSize (url, size) VALUES (:url, :size)"
+    );
+    stmt.params['url'] = url;
+    stmt.params['size'] = minFontSize;
+    try {
+      stmt.execute();
+    } finally {
+      stmt.finalize();
+    }
+  },
+
+  updateSizeByUrl: function(url, minFontSize) {
+    let stmt = this.db.createStatement(
+      "UPDATE minFontSize SET size = :size WHERE url = :url"
+    );
+    stmt.params['size'] = minFontSize;
+    stmt.params['url'] = url;
+    try {
+      stmt.execute();
+    } finally {
+      stmt.finalize();
+    }
+  },
+
+  deleteByUrl: function(url) {
+    let stmt = this.db.createStatement(
+      "DELETE FROM minFontSize WHERE url = :url"
+    );
+    stmt.params['url'] = url;
+    try {
+      stmt.execute();
+    } finally {
+      stmt.finalize();
+    }
+  }
+}
+
 
 
 var minFontSizePerDomain_menu = {
 
   init :function() {
-    this.getParam();
+    minFontSizePerDomain.init();
 
-    var overlay = ' \
+    let overlay = ' \
       <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
                xmlns:html="http://www.w3.org/1999/xhtml"> \
         <menupopup id="contentAreaContextMenu"> \
@@ -164,6 +295,8 @@ var minFontSizePerDomain_menu = {
               <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain9" label="9" oncommand="minFontSizePerDomain_menu.setSize(9);" accesskey="9"/> \
               <menuseparator  id="minFontSizePerDomainMenuseparator"/> \
               <menuitem type="radio" name="minFontSizePerDomain" id="minFontSizePerDomain0" label="Reset" oncommand="minFontSizePerDomain_menu.setSize(0);" accesskey="R"/> \
+              <menuseparator  id="minFontSizePerDomainMenuseparator2"/> \
+              <menuitem id="minFontSizePerDomainDefault" label="Change Default" oncommand="minFontSizePerDomain_menu.changeDefaultSize();" accesskey="t"/> \
             </menupopup> \
           </menu> \
         </menupopup> \
@@ -177,8 +310,8 @@ var minFontSizePerDomain_menu = {
   },
 
   onpopupshowing: function(val) {
-    var size = Math.floor(gBrowser.markupDocumentViewer.minFontSize * 0.016674 + 0.5);
-    var menuitem = document.getElementById("minFontSizePerDomain" + size);
+    let size = Math.floor(gBrowser.markupDocumentViewer.minFontSize * 0.016674 + 0.5);
+    let menuitem = document.getElementById("minFontSizePerDomain" + size);
     if(menuitem)
       menuitem.setAttribute('checked',true);
   },
@@ -198,36 +331,45 @@ var minFontSizePerDomain_menu = {
       return;
     }
 
-    this.params[url] = val;
-
-    var str = "";
-    for (let url in this.params) {
-      if (!!url) {
-        if (this.params[url] != 0)
-          str += url + "<>" + this.params[url] + "><";
-      }
-    }
-    str = str.replace(/><$/, "");
-    Services.prefs.setCharPref("userChrome.minFontSizePerDomain.param", str);
-    minFontSizePerDomain_menu.getParam();
+    minFontSizePerDomain.aUrlMinSize[url] = val;
+    if (val == 0) {
+      delete minFontSizePerDomain.aUrlMinSize[url];
+      minFontSizePerDomain_storage.deleteByUrl(url);
+    } else
+      minFontSizePerDomain_storage.setSizeByUrl(url, val);
 
     minFontSizePerDomain.setMinFontSize(gBrowser.markupDocumentViewer, gBrowser.currentURI);
+    this.broadcast(false);
   },
 
-  params: [],
-  getParam: function() {
-    try {
-      var str = Services.prefs.getCharPref("userChrome.minFontSizePerDomain.param");
-    } catch(e) {
-      str ="";
-    }  
-    this.params = [];
-    var sites = str.split("><");
-    for (var i = 0; i< sites.length; i++) {
-      var [url, size] = sites[i].split("<>");
-      this.params[url] = size;
+  changeDefaultSize: function() {
+    let size = minFontSizePerDomain.defaultMinSize;
+    
+    let prompts = Services.prompt;
+    let check = {value: false};                 // default the checkbox to false
+    let input = {value: size};                  // default the edit field to size
+    let result = prompts.prompt(null, "Min Font Size", "Default Min Font Size?", input, null, check);
+    // result is true if OK is pressed, false if Cancel. input.value holds the value of the edit field if "OK" was pressed.
+    if (result && input.value >= 0) {
+      minFontSizePerDomain.defaultMinSize = input.value;
+      minFontSizePerDomain_storage.setSizeByUrl("default_min_size", minFontSizePerDomain.defaultMinSize);
+      this.broadcast(true);
+    }
+  },
+  
+  broadcast: function(allwindow) {
+    let wm = Services.wm;
+    let enumerator = wm.getEnumerator("navigator:browser");
+    while(enumerator.hasMoreElements()) {
+      let win = enumerator.getNext();
+      // win is [Object ChromeWindow] (just like window), do something with it
+      if (allwindow || win != window) {
+        win.minFontSizePerDomain.initCache();
+        win.minFontSizePerDomain.setMinFontSize(win.gBrowser.markupDocumentViewer, win.gBrowser.currentURI);
+      }
     }
   }
 }
 
 minFontSizePerDomain_menu.init();
+
