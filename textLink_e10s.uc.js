@@ -11,6 +11,8 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2014/10/10 00:00 use gBrowser.selectedBrowser.contentWindowAsCPOW instead of content
+// @version        2014/10/10 00:00 Detect DOM instances by constructor function instead of XPCOM interface 
 // @version        2014/06/20 07:00 experiments e10s
 // @version        2014/06/18 13:30 working with autoCopyToClipboard.uc.js
 // @version        2014/06/18 13:30 experiments e10s
@@ -411,7 +413,7 @@ function ucjs_textlink(event){
   function _getFocusedWindow(){ //現在のウインドウを得る
     var focusedWindow = document.commandDispatcher.focusedWindow;
     if (!focusedWindow || focusedWindow == window)
-        return window._content;
+        return window.gBrowser.selectedBrowser.contentWindowAsCPOW;
     else
         return focusedWindow;
   }
@@ -637,7 +639,7 @@ function ucjs_textlink(event){
   }
 
   function getDocumentBody(aDocument) {
-    if (aDocument instanceof Components.interfaces.nsIDOMHTMLDocument)
+    if (aDocument.body)
       return aDocument.body;
 
     try {
@@ -689,11 +691,10 @@ function ucjs_textlink(event){
     if (!aTarget) return null;
 
     const nsIDOMNSEditableElement = Components.interfaces.nsIDOMNSEditableElement;
-    const nsIDOMWindow = Components.interfaces.nsIDOMWindow;
     try {
       return (aTarget instanceof nsIDOMNSEditableElement) ?
             aTarget.QueryInterface(nsIDOMNSEditableElement).editor.selectionController :
-          (aTarget instanceof nsIDOMWindow) ?
+          (typeof aTarget.Window == 'function' && aTarget instanceof aTarget.Window) ?
             DocShellIterator.prototype.getDocShellFromFrame(aTarget)
               .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
               .getInterface(Components.interfaces.nsISelectionDisplay)
