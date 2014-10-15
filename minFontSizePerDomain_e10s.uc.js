@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 35-35
 // @author         Alice0775
+// @version        2014/10/15 12:00 fixed local file
 // @version        2014/10/10 00:00 e10s (eliminates docShell)
 // @version        2014/10/09 12:00 use sqlite istead of prefs.js
 // @version        2014/10/08 11:00 add acceskey, persist local directory
@@ -104,7 +105,7 @@ var minFontSizePerDomain = {
       var url = aURI.host;
       if (!url) {
         if (/^file:/i.test(aURI.spec)) {
-          let tmp = gBrowser.currentURI.spec.split('/');
+          let tmp = aURI.spec.split('/');
           tmp.pop();
           url = tmp.join('/');
           url = ioService.newURI(url, null, null).spec;
