@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 16+
 // @author         Alice0775
+// @version        2014/10/16 07:00 Revert=デフォルトエンジンに戻す は一番最初の奴にするようにした
 // @version        2014/08/22 22:00 Fixed due to Bug 1051017.
 // @version        2014/06/27 08:00 Fixed deprecated search service API.
 // @version        2014/04/18 23:50 Fixed rebuildPopup
@@ -807,13 +808,7 @@
     },
 
     engineRevert: function(aEvent){
-      let defaultPrefB = Services.prefs.getDefaultBranch("browser.search.");
-      let nsIPLS = Components.interfaces.nsIPrefLocalizedString;
-      let defaultEngine =Services.search.defaultEngine;
-      try {
-        defaultEngineName = defaultPrefB.getComplexValue("defaultenginename", nsIPLS).data;
-        defaultEngine = Services.search.getEngineByName(defaultEngineName);
-      } catch (ex) {}
+      let defaultEngine = Services.search.getVisibleEngines({ })[0];
       setTimeout(function(){Services.search.currentEngine = defaultEngine;},100);
       return false;
     }
