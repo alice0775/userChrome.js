@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Min Font Size Per Domain
 // @include        main
-// @compatibility  Firefox 24-35 (not e10s)
+// @compatibility  Firefox 31-35 (not e10s)
 // @author         Alice0775
+// @version        2014/10/15 12:00 31
 // @version        2014/10/09 12:00 use sqlite istead of prefs.js
 // @version        2014/10/08 11:00 add acceskey, persist local directory
 // @version        2014/10/07 20:00
@@ -55,7 +56,7 @@ var minFontSizePerDomain = {
     window.addEventListener("unload", this, false);
     gBrowser.addProgressListener(this);
     // mmm for already loaded page
-    this.setMinFontSize(gBrowser.markupDocumentViewer, gBrowser.currentURI);
+    this.setMinFontSize(gBrowser.selectedBrowser);
   },
 
   uninit: function() {
@@ -73,7 +74,9 @@ var minFontSizePerDomain = {
     return this.defaultMinSize;
   },
 
-  setMinFontSize: function(markupDocViewer, aURI) {
+  setMinFontSize: function(browser) {
+    let markupDocViewer = browser.markupDocumentViewer;
+    let aURI = browser.currentURI;
     try {
       if (!/https?|ftp|file/.test(aURI.scheme)) {
         markupDocViewer.minFontSize = 0;
@@ -142,12 +145,22 @@ var minFontSizePerDomain = {
     // or when the user switches tabs. If you use myListener for more than one tab/window,
     // use aWebProgress.DOMWindow to obtain the tab/window which triggered the change.
     //userChrome_js.debug("onLocationChange");
+    /*
     let docShell = aWebProgress.DOMWindow
                                .QueryInterface(Ci.nsIInterfaceRequestor)
                                .getInterface(Ci.nsIWebNavigation)
                                .QueryInterface(Ci.nsIDocShell);
     let markupDocViewer = docShell.contentViewer;
-    this.setMinFontSize(markupDocViewer, aLocationURI);
+    */
+    let browser;
+    if ("getBrowserForContentWindow" in gBrowser) {
+       browser = gBrowser.getBrowserForContentWindow(aWebProgress.DOMWindow);
+    } else {
+       let tab = gBrowser._getTabForContentWindow(aWebProgress.DOMWindow);
+       browser = tab ? tab.linkedBrowser : null;
+    }
+    if (browser)
+      this.setMinFontSize(browser);
   },
 
   // For definitions of the remaining functions see related documentation
@@ -310,7 +323,8 @@ var minFontSizePerDomain_menu = {
   },
 
   onpopupshowing: function(val) {
-    let size = Math.floor(gBrowser.markupDocumentViewer.minFontSize * 0.016674 + 0.5);
+    let markupDocViewer = gBrowser.selectedBrowser.markupDocumentViewer;
+    let size = Math.floor(markupDocViewer.minFontSize * 0.016674 + 0.5);
     let menuitem = document.getElementById("minFontSizePerDomain" + size);
     if(menuitem)
       menuitem.setAttribute('checked',true);
@@ -338,7 +352,7 @@ var minFontSizePerDomain_menu = {
     } else
       minFontSizePerDomain_storage.setSizeByUrl(url, val);
 
-    minFontSizePerDomain.setMinFontSize(gBrowser.markupDocumentViewer, gBrowser.currentURI);
+    minFontSizePerDomain.setMinFontSize(gBrowser.selectedBrowser);
     this.broadcast(false);
   },
 
@@ -365,7 +379,7 @@ var minFontSizePerDomain_menu = {
       // win is [Object ChromeWindow] (just like window), do something with it
       if (allwindow || win != window) {
         win.minFontSizePerDomain.initCache();
-        win.minFontSizePerDomain.setMinFontSize(win.gBrowser.markupDocumentViewer, win.gBrowser.currentURI);
+        win.minFontSizePerDomain.setMinFontSize(win.gBrowser.selectedBrowser);
       }
     }
   }
