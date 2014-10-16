@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Min Font Size Per Domain
 // @include        main
-// @compatibility  Firefox 35-35
+// @compatibility  Firefox 31-35(non e10s), 36(non e10s, e10s)
 // @author         Alice0775
+// @version        2014/10/15 12:00 36
 // @version        2014/10/15 12:00 fixed local file
 // @version        2014/10/10 00:00 e10s (eliminates docShell)
 // @version        2014/10/09 12:00 use sqlite istead of prefs.js
@@ -56,13 +57,19 @@ var minFontSizePerDomain = {
 
     // frame script
     function content_setMinFontSize() {
-      /*
       let { interfaces: Ci, utils: Cu } = Components;
+      /*
       Components.utils.import("resource://gre/modules/XPCOMUtils.jsm");
       let wp = docShell.QueryInterface(Ci.nsIWebProgress);
       */
       addMessageListener("minFontSizePerDomain:setMinFontSize",
          function(msg) {
+           /*
+           let docShell =  content
+				                  .QueryInterface(Ci.nsIInterfaceRequestor)
+				                  .getInterface(Ci.nsIWebNavigation)
+				                  .QueryInterface(Ci.nsIDocShell);
+           */
            docShell.contentViewer.minFontSize = Math.floor(msg.data.minFontSize / 0.016674);
          }
       )
@@ -142,10 +149,12 @@ var minFontSizePerDomain = {
     if (!minFontSize)
       return
 
-    //markupDocViewer.minFontSize = Math.floor(minFontSize / 0.016674);
-    browser.messageManager.sendAsyncMessage("minFontSizePerDomain:setMinFontSize", {
-      minFontSize : minFontSize
-    });
+    if (!browser.getAttribute("remote"))
+      browser.markupDocumentViewer.minFontSize = Math.floor(minFontSize / 0.016674);
+    else
+	    browser.messageManager.sendAsyncMessage("minFontSizePerDomain:setMinFontSize", {
+	      minFontSize : minFontSize
+	    });
   },
 
   STATE_START: Ci.nsIWebProgressListener.STATE_START,
@@ -177,7 +186,15 @@ var minFontSizePerDomain = {
                                .QueryInterface(Ci.nsIDocShell);
     let markupDocViewer = docShell.contentViewer;
     */
-    this.setMinFontSize(gBrowser.getBrowserForContentWindow(aWebProgress.DOMWindow));
+    let browser;
+    if ("getBrowserForContentWindow" in gBrowser) {
+       browser = gBrowser.getBrowserForContentWindow(aWebProgress.DOMWindow);
+    } else {
+       let tab = gBrowser._getTabForContentWindow(aWebProgress.DOMWindow);
+       browser = tab ? tab.linkedBrowser : null;
+    }
+    if (browser)
+      this.setMinFontSize(browser);
   },
 
   // For definitions of the remaining functions see related documentation
