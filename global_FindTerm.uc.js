@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 31-
 // @author         Alice0775
+// @version        2014/10/18 08:00 fix a bug
 // @version        2014/10/15 12:00 36
 // ==/UserScript==
 
@@ -13,6 +14,7 @@ var global_FindTerm = {
 
   init : function() {
     gBrowser.tabContainer.addEventListener("TabSelect", this, false);
+    window.addEventListener("findbaropen", this, false);
     window.addEventListener("find", this, false);
     window.addEventListener("findagain", this, false);
 
@@ -36,17 +38,40 @@ var global_FindTerm = {
       case 'TabFindInitialized':
         this.injectButton(vent.target._findBar);
         break;
+      case 'findbaropen':
+        this.onFndbarOpen();
+        break;
       case 'find':
+        // no break here;
       case 'findagain':
         this.findTerm = gFindBar._findField.value;
         break;
       case 'TabSelect':
         this.copyTerm();
         break;
-     case 'click':
-       this.copyToandClearFindbar(event);
+      case 'click':
+        this.copyToandClearFindbar(event);
     }
   },
+
+	onFndbarOpen: function() {
+    if ("BrowserUtils" in window) {
+	    var [elm, win] = BrowserUtils.getFocusSync(document);
+    } else {
+      win = window;
+    }
+    sel = win.getSelection().toString();
+
+    if (!!sel)
+      this.findTerm = sel;
+
+    gFindBar._findField.value = this.findTerm;
+    if ("historyFindbar" in window)
+       historyFindbar._findField2.value = this.findTerm;
+    var evt = document.createEvent("UIEvents");
+    evt.initUIEvent("input", true, false, window, 0);
+    gFindBar._findField.dispatchEvent(evt);
+	},
 
   copyTerm: function() {
     if(gBrowser.isFindBarInitialized(gBrowser.selectedTab) && !gFindBar.hidden) {
@@ -65,7 +90,7 @@ var global_FindTerm = {
       return;
 
     label = document.createElement("label");
-    label.setAttribute("id", "find-label");
+    label.setAttribute("id", "findlabel");
     label.setAttribute("value", "Find:");
     label.setAttribute("tooltiptext", "Left click: selected text, Right click: clear");
     container.insertBefore(label, container.firstChild);
@@ -106,12 +131,11 @@ var global_FindTerm = {
        return;
     }
 
-    if (!!sel)
-      this.findTerm = sel;
+    this.findTerm = sel;
 
-    gFindBar._findField.value = sel;
+    gFindBar._findField.value = this.findTerm;
     if ("historyFindbar" in window)
-       historyFindbar._findField2.value = sel;
+       historyFindbar._findField2.value = this.findTerm;
     var evt = document.createEvent("UIEvents");
     evt.initUIEvent("input", true, false, window, 0);
     gFindBar._findField.dispatchEvent(evt);
