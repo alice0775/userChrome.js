@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 31-
 // @author         Alice0775
+// @version        2014/10/18 18:00 fix a bug
 // @version        2014/10/18 08:00 fix a bug
 // @version        2014/10/15 12:00 36
 // ==/UserScript==
@@ -65,19 +66,13 @@ var global_FindTerm = {
     if (!!sel)
       this.findTerm = sel;
 
-    gFindBar._findField.value = this.findTerm;
-    if ("historyFindbar" in window)
-       historyFindbar._findField2.value = this.findTerm;
-    var evt = document.createEvent("UIEvents");
-    evt.initUIEvent("input", true, false, window, 0);
-    gFindBar._findField.dispatchEvent(evt);
+    this.setTerm(this.findTerm);
+    this.selectFindField();
 	},
 
   copyTerm: function() {
     if(gBrowser.isFindBarInitialized(gBrowser.selectedTab) && !gFindBar.hidden) {
-      gFindBar._findField.value = this.findTerm;
-      if ("historyFindbar" in window)
-         historyFindbar._findField2.value = this.findTerm;
+      this.setTerm(this.findTerm);
       gFindBar._updateFindUI();
     }
   },
@@ -112,7 +107,7 @@ var global_FindTerm = {
   },
 
   copyToandClearFindbar: function(event) {
-    var sel = "";
+    var sel;
     switch (event.button) {
       case 0:
 	      if ("BrowserUtils" in window) {
@@ -125,20 +120,42 @@ var global_FindTerm = {
         if  (sel == "" && document.getElementById("searchbar")) {
           sel = document.getElementById("searchbar")._textbox.value;
         }
-
-        break;
+		    if (!sel)
+		      return;
+       break;
       case 1:
        return;
+      case 2:
+       sel = "";
     }
 
     this.findTerm = sel;
-
-    gFindBar._findField.value = this.findTerm;
-    if ("historyFindbar" in window)
-       historyFindbar._findField2.value = this.findTerm;
+    this.setTerm(this.findTerm);
+    this.selectFindField();
+    /*
     var evt = document.createEvent("UIEvents");
     evt.initUIEvent("input", true, false, window, 0);
     gFindBar._findField.dispatchEvent(evt);
+    */
+  },
+
+  setTerm: function(val) {
+    gFindBar._findField.value = val;
+    if ("historyFindbar" in window) {
+       historyFindbar._findField2.value = val;
+    }
+  },
+
+  selectFindField: function() {
+    setTimeout(function() {
+	    if ("historyFindbar" in window) {
+	       historyFindbar._findField2.focus();
+	       historyFindbar._findField2.select();
+	    } else {
+		    gFindBar._findField.focus();
+		    gFindBar._findField.select();
+	    }
+    }, 0);
   }
 }
 
