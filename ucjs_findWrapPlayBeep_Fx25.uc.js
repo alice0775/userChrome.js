@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/10/19 20:00 Fix sometime not beep
 // @version        2014/08/08 20:00 Firefox31
 // @version        2013/11/28 23:00 XUL/migemo
 // @version        2013/11/28 12:00 Firefox25
@@ -20,17 +21,14 @@
 var findWrapPlayBeep = {
   init: function() {
     //fx25 for existing findbar
-    let findBars = document.querySelectorAll("findbar");
-    if (findBars.length > 0) {
-      for (var aFindBar of findBars) {
-        findWrapPlayBeep.patch(aFindBar);
-      };
-    }
     if ("gBrowser" in window && "getFindBar" in gBrowser) {
       if (gBrowser.selectedTab._findBar) {
         setTimeout(function(){findWrapPlayBeep.patch(gBrowser.selectedTab._findBar);}, 100);
       }
-      gBrowser.tabContainer.addEventListener("TabFindInitialized", function aaa(event){
+    }
+    //fx25 for newly created findbar
+    if ("gBrowser" in window && "getFindBar" in gBrowser) {
+      gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
         setTimeout(function(event){findWrapPlayBeep.patch(event.target._findBar);}, 100, event);
       });
     }
