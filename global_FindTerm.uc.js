@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 31-
 // @author         Alice0775
+// @version        2014/10/19 18:00 fix XUL/migemo UI updates
 // @version        2014/10/18 18:00 fix a bug
 // @version        2014/10/18 08:00 fix a bug
 // @version        2014/10/15 12:00 36
@@ -66,6 +67,7 @@ var global_FindTerm = {
     if (!!sel)
       this.findTerm = sel;
 
+    this.updateUI();
     this.setTerm(this.findTerm);
     this.selectFindField();
 	},
@@ -89,6 +91,11 @@ var global_FindTerm = {
     label.setAttribute("value", "Find:");
     label.setAttribute("tooltiptext", "Left click: selected text, Right click: clear");
     container.insertBefore(label, container.firstChild);
+
+    label.addEventListener("click", this, true);
+  },
+
+  updateUI: function() {
     if ("historyFindbar" in window)
       historyFindbar.adjustSize();
 
@@ -102,8 +109,6 @@ var global_FindTerm = {
 				}, 100, XMigemoUI);
       }, 100);
     }
-
-    label.addEventListener("click", this, true);
   },
 
   copyToandClearFindbar: function(event) {
