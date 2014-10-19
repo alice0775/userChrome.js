@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/10/18 23:40 XUL/migemo input
 // @version        2014/09/14 23:40 XUL/migemo
 // @version        2014/09/14 23:20 more frequent status check
 // @version        2013/11/28 23:00 XUL/migemo
@@ -447,16 +448,22 @@ var historyFindbar = {
     historyfindField.style.marginTop  = textboxY + "px";
   },
 
-  copyToFindfield: function(aEvent){window.userChrome_js.debug(aEvent.originalTarget.localName);
+  copyToFindfield: function(aEvent){window.userChrome_js.debug(aEvent.target.localName);
+    if (aEvent.type == 'keypress' && "XMigemoUI" in window) {
+		  XMigemoUI.onKeyPress(aEvent, XMigemoUI.getFindFieldFromContent(aEvent.originalTarget));
+      historyFindbar._findField2.value = gFindBar._findField.value;
+      return;
+    }
+
     var textbox = aEvent.target;
     //window.userChrome_js.debug("UIEvents  " + this.lastInputValue +"\n"+textbox.value);
-    if (aEvent.originalTarget == this._findField2.inputField &&
+    if (aEvent.target == this._findField2.inputField &&
         aEvent.keyCode == KeyEvent.DOM_VK_TAB) {
       this._handleTab(aEvent);
       return;
     }
 
-    if (aEvent.originalTarget == this._findField2.inputField &&
+    if (aEvent.target == this._findField2.inputField &&
         (aEvent.keyCode == KeyEvent.DOM_VK_ESCAPE ||
          aEvent.keyCode == KeyEvent.DOM_VK_RETURN ||
          aEvent.keyCode == KeyEvent.DOM_VK_ENTER ||
@@ -465,8 +472,9 @@ var historyFindbar = {
          aEvent.keyCode == KeyEvent.DOM_VK_UP ||
          aEvent.keyCode == KeyEvent.DOM_VK_DOWN)) {
       // do nothing if history drop down is openned
-      if (!!this.historyPopup.getAttribute("open"))
-        return
+      if (!!this.historyPopup.getAttribute("open")) {
+        return;
+      }
       var evt = document.createEvent("KeyboardEvent");
       evt.initKeyEvent ('keypress', true, true, window,
                     aEvent.ctrlKey, aEvent.altKey,
@@ -477,12 +485,12 @@ var historyFindbar = {
 
     //本来のfindbar-textboxに転記して, ダミーイベント送信
     var text = textbox.value;
-    gFindBar._findField.value  = text;
-    //gFindBar._findField.removeAttribute('status');
+    gFindBar._findField.value = text;
+    gFindBar._enableFindButtons(!!gFindBar._findField.value);
     if (aEvent.type == 'input' ||
-        aEvent.type == 'drop'){
-      var evt = document.createEvent("UIEvents");
-      evt.initUIEvent("input", true, false, window, 0);
+      aEvent.type == 'drop'){
+			var evt = document.createEvent("UIEvents");
+			evt.initUIEvent("input", true, true, window, 0);
       gFindBar._findField.dispatchEvent(evt);
     }
 
