@@ -5,7 +5,8 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
-// @version        2015/05/31 00:00 lookupなんたら削除, なんかよく分からんけどucjs_isolateNode動かないので変更
+// @version        2014/10/20 21:00 寄せ集め杉，もう何が何だか
+// @version        2014/05/31 00:00 lookupなんたら削除, なんかよく分からんけどucjs_isolateNode動かないので変更
 // @version        2008/08/18 02:00 なんか無くなっていたので再up
 // ==/UserScript==
 
@@ -31,18 +32,6 @@ function ucjs_link_and_wrap(doc){
     if (win.frames[wj])
       ucjs_link_and_wrap(win.frames[wj].document);
   }
-
-  try{
-    var html = doc.getElementsByTagName("html")[0];
-    try{
-      if (html.hasAttribute("__link_and_wrap_done"))
-        return;
-    }catch(e){
-      return;
-    }
-    html.setAttribute("__link_and_wrap_done", "1");
-  }catch(e){}
-
 
   var URIFixup = Components.classes['@mozilla.org/docshell/urifixup;1']
                          .getService(Components.interfaces.nsIURIFixup);
@@ -132,7 +121,7 @@ function ucjs_link_and_wrap(doc){
         }
       }
       if (ASSIST2CH_RES){
-        if (/&gt;&gt;\d+/.test(imenu[i].innerHTML)) imenu[i].addEventListener('click',ucjs_showIframe,true);
+        if (/&gt;&gt;\d+/.test(imenu[i].innerHTML)) imenu[i].addEventListener('click',ucjs_showIframe,false);
       }
     }
     dump('Parsing 2ch : '+((new Date()).getTime()-Start) +'msec ('+url+')\n');
@@ -190,13 +179,12 @@ function ucjs_link_and_wrap(doc){
       }
       return false;
     }
-    if (a.childNodes.length == 1){
       var iframe = a.ownerDocument.createElement("iframe");
       var url = a.href; 
       url = url.replace(/\/((l\d+)|(\d\d?\d?))?#res(\d+)$/,'/$4');
 
       iframe.src = url;
-      iframe.width = "90%";
+      iframe.width = "100%";
       iframe.height = "auto";
       iframe.style.verticalAlign = "top";
       iframe.style.border = "3px solid #cccccc";
@@ -204,44 +192,27 @@ function ucjs_link_and_wrap(doc){
       iframe.addEventListener('load',function(e) {
         var doc = this.contentWindow.document;
         var dl = doc.querySelectorAll(".thread");
+        dl[0].style.removeProperty("margin-right");
         ucjs_isolateNode(dl[0]);
-        var dt = doc.getElementsByTagName("dt");
-        if (dt.length>1 && !/\/1\-/.test(doc.location.href)){
-          dt[0].parentNode.removeChild(dt[0].nextSibling);
-          dt[0].parentNode.removeChild(dt[0]);
-        }
         ucjs_link_and_wrap(doc);
         if (MAILTORES) ucjs_2ch_mailtores(doc)
         if (MAILTOOFF) ucjs_2ch_mailtooff(doc)
-        e.target.height = doc.body.offsetHeight+40 +'px';
+        var h = parseInt(doc.body.offsetHeight || doc.body.scrollHeight) +40;
+        this.style.minHeight = h + 'px';
         doc.body.scrollTop = parseInt(doc.body.offsetTop)+'px';
 
         setTimeout(function resizeIframe(aNode,h){
           var piFrame = getIFrameByWindow(getElementWindow(aNode));
           if (!piFrame)return;
-          piFrame.height = parseInt(piFrame.height,10) + parseInt(h,10) + 40 + 'px';
-          resizeIframe(piFrame,h);
-        },100,e.target,e.target.height);
-      },true);
+          piFrame.style.minHeight = parseInt(piFrame.style.minHeight) + h + 40 + 'px';
+          resizeIframe(piFrame, h);
+        },100,e.target, h);
+      }, false);
 
       a.style.backgroundColor = "#cccccc";
       a.appendChild(a.ownerDocument.createElement("br"));
       a.appendChild(iframe);
       a.appendChild(a.ownerDocument.createElement("br"));
-    }else{
-      setTimeout(function resizeIframe(aNode,h){
-        var piFrame = getIFrameByWindow(getElementWindow(aNode));
-        if (!piFrame)return;
-        piFrame.height = parseInt(piFrame.height,10) - parseInt(h,10) -40 + 'px';
-        resizeIframe(piFrame,h);
-      },0,a.childNodes[2],a.childNodes[2].height);
-      a.style.backgroundColor = "";
-      setTimeout(function(){
-        a.removeChild(a.lastChild);
-        a.removeChild(a.lastChild);
-        a.removeChild(a.lastChild);
-      },100);
-    }
     return false;
   }
   function ucjs_2ch_mailtores(doc) {
@@ -332,15 +303,15 @@ function ucjs_link_and_wrap(doc){
       var fNode = aNode.ownerDocument.body;
     }catch(e){}
     try{
-      if ( fNode.parentNode ) fNode = fNode.parentNode;
+     // if ( fNode.parentNode ) fNode = fNode.parentNode;
     }catch(e){}
-    while ( aNode != fNode ){
+    while ( aNode != fNode && aNode.parentNode){
       var parent = aNode.parentNode;
       var child = parent.lastChild;
       while ( child ){
         //dump((child == aNode ? "o" : "x") + " " + parent.nodeName + " " + child.nodeName + "\n");
         var prevChild = child.previousSibling;
-        if ( child != aNode && typeof child.style !="undefined") {child.style.setProperty("display", "none", ""); /*parent.removeChild(child);*/}
+        if ( child != aNode && typeof child.style !="undefined") {child.style.setProperty("display", "none", ""); parent.removeChild(child);}
         // 前のノードへ移動
         child = prevChild;
       }
@@ -373,10 +344,15 @@ function ucjs_link_and_wrap(doc){
     return null;
   }
 }
-gBrowser.tabContainer.addEventListener('SSTabRestored',function(event){
-   ucjs_link_and_wrap(event.originalTarget.linkedBrowser.contentWindow.document);
-},false);
-gBrowser.addEventListener('DOMContentLoaded', function(event) { if (event.originalTarget instanceof HTMLDocument)ucjs_link_and_wrap(); },true);
+gBrowser.addEventListener('DOMContentLoaded', function(event) {
+  if (event.originalTarget instanceof Components.interfaces.nsIDOMHTMLDocument) {
+    var win = event.originalTarget.defaultView;
+    if (win.frameElement) {
+      return;
+    }
+    ucjs_link_and_wrap(); 
+  } 
+}, true);
 //ucjs_link_and_wrap();
 
 var ucjs_2ch_mailtooff = function ucjs_2ch_mailtooff(doc) {
