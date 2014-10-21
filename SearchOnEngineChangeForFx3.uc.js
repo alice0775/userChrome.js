@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17.0+
 // @author         Alice0775
+// @version        2014/10/21 19:00 デフォルトの検索エンジンは一番最初の奴にするようにした
 // @version        2013/05/19 00:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2013/05/18 23:20 Bug 738818
 // @version        2008/06/24 19:20 修正した
@@ -74,7 +75,6 @@ var searchOnEngineChange = {
     var aData = this.searchBar._textbox.value;
     if (!aData)
       return;
-    var ss = Cc['@mozilla.org/browser/search-service;1'].getService(Ci.nsIBrowserSearchService);
     var aWhere = this.where(event);
 
 
@@ -84,14 +84,8 @@ var searchOnEngineChange = {
       this.clearWord();
     }
     if (this.KeepDefaultEngine){
-      let defaultPrefB = Services.prefs.getDefaultBranch("browser.search.");
-      let nsIPLS = Ci.nsIPrefLocalizedString;
-      let defaultEngine =ss.defaultEngine;
-      try {
-        defaultEngineName = defaultPrefB.getComplexValue("defaultenginename", nsIPLS).data;
-        defaultEngine = ss.getEngineByName(defaultEngineName);
-      } catch (ex) {}
-      setTimeout(function(){ss.currentEngine = defaultEngine;},100);
+      let defaultEngine = Services.search.getVisibleEngines({ })[0];
+      setTimeout(function(){Services.search.currentEngine = defaultEngine;},100);
     }
   }
 };
