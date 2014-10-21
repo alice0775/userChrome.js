@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/10/21 19:30 Fix broken ENTER etc due to XUL/migemo input
 // @version        2014/10/18 23:40 XUL/migemo input
 // @version        2014/09/14 23:40 XUL/migemo
 // @version        2014/09/14 23:20 more frequent status check
@@ -448,29 +449,28 @@ var historyFindbar = {
     historyfindField.style.marginTop  = textboxY + "px";
   },
 
-  copyToFindfield: function(aEvent){window.userChrome_js.debug(aEvent.target.localName);
+  copyToFindfield: function(aEvent){
+		if (aEvent.originalTarget != this._findField2.inputField)
+		  return;
+
+    var textbox = this._findField2;
     if (aEvent.type == 'keypress' && "XMigemoUI" in window) {
 		  XMigemoUI.onKeyPress(aEvent, XMigemoUI.getFindFieldFromContent(aEvent.originalTarget));
-      historyFindbar._findField2.value = gFindBar._findField.value;
-      return;
+      textbox.value = gFindBar._findField.value;
     }
 
-    var textbox = aEvent.target;
-    //window.userChrome_js.debug("UIEvents  " + this.lastInputValue +"\n"+textbox.value);
-    if (aEvent.target == this._findField2.inputField &&
-        aEvent.keyCode == KeyEvent.DOM_VK_TAB) {
+    if (aEvent.keyCode == KeyEvent.DOM_VK_TAB) {
       this._handleTab(aEvent);
       return;
     }
 
-    if (aEvent.target == this._findField2.inputField &&
-        (aEvent.keyCode == KeyEvent.DOM_VK_ESCAPE ||
-         aEvent.keyCode == KeyEvent.DOM_VK_RETURN ||
-         aEvent.keyCode == KeyEvent.DOM_VK_ENTER ||
-         aEvent.keyCode == KeyEvent.DOM_VK_PAGE_UP ||
-         aEvent.keyCode == KeyEvent.DOM_VK_PAGE_DOWN ||
-         aEvent.keyCode == KeyEvent.DOM_VK_UP ||
-         aEvent.keyCode == KeyEvent.DOM_VK_DOWN)) {
+    if (aEvent.keyCode == KeyEvent.DOM_VK_ESCAPE ||
+				aEvent.keyCode == KeyEvent.DOM_VK_RETURN ||
+				aEvent.keyCode == KeyEvent.DOM_VK_ENTER ||
+				aEvent.keyCode == KeyEvent.DOM_VK_PAGE_UP ||
+				aEvent.keyCode == KeyEvent.DOM_VK_PAGE_DOWN ||
+				aEvent.keyCode == KeyEvent.DOM_VK_UP ||
+				aEvent.keyCode == KeyEvent.DOM_VK_DOWN) {
       // do nothing if history drop down is openned
       if (!!this.historyPopup.getAttribute("open")) {
         return;
@@ -484,11 +484,10 @@ var historyFindbar = {
     }
 
     //本来のfindbar-textboxに転記して, ダミーイベント送信
-    var text = textbox.value;
-    gFindBar._findField.value = text;
+    gFindBar._findField.value = textbox.value;
     gFindBar._enableFindButtons(!!gFindBar._findField.value);
     if (aEvent.type == 'input' ||
-      aEvent.type == 'drop'){
+      aEvent.type == 'drop') {
 			var evt = document.createEvent("UIEvents");
 			evt.initUIEvent("input", true, true, window, 0);
       gFindBar._findField.dispatchEvent(evt);
