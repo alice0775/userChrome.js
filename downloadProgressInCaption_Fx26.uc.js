@@ -3,9 +3,9 @@
 // @name downloadProgressInCaption_Fx26.uc.js
 // @namespace http://space.geocities.yahoo.co.jp/gl/alice0775
 // @include main
-// @compatibility Firefox 26
+// @compatibility Firefox 31+
 // @version 1.0
-// @version        2013/12/16 02:00 defineLazyModuleGetter for Firefox26
+// @date 2014-10-23 22:00 number of files
 // @date 2013-11-26 21:00 null check
 // @date 2013-04-06 22:00
 // @description Display Download Progress In Library
@@ -16,8 +16,6 @@ var downloadProgressInCaption = {
   _list: null,
 
    init: function() {
-    XPCOMUtils.defineLazyModuleGetter(window, "Downloads",
-              "resource://gre/modules/Downloads.jsm");
     gBrowser.tabContainer.addEventListener("TabSelect", this, false);
     window.addEventListener("unload", this, false);
     // Ensure that the DownloadSummary object will be created asynchronously.
@@ -59,18 +57,6 @@ var downloadProgressInCaption = {
     }
   },
 
-  xonDownloadChanged: function (aDownload) {
-    this.numDls = 0;
-    if (!this._list)
-      return;
-    this._list.getAll().then(downloads => {
-    for (let download of downloads) {
-      if (download.hasProgress && !download.succeeded)
-        this.numDls++;
-    }
-    }).then(null, Cu.reportError);
-  },
-
   onSummaryChanged: function () {
     if (!this._summary)
       return;
@@ -78,12 +64,23 @@ var downloadProgressInCaption = {
       document.title = document.title.replace(/^\d+% of \d+ files? - /,"");
     } else {
       // Update window title
-      this.xonDownloadChanged();
-      let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
-                                        this._summary.progressCurrentBytes);
-      let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
-      let text = percent + "% of " + this.numDls + (this.numDls < 2 ? " file - " : " files - ") ;
-      document.title = text + document.title.replace(/^\d+% of \d+ files? - /,"");
+	    this.numDls = 0;
+	    if (!this._list)
+	      return;
+	    this._list.getAll().then(downloads => {
+		    for (let download of downloads) {
+		      if (download.hasProgress &&
+                !download.succeeded &&
+                !download.canceled  &&
+                !download.stopped )
+		        this.numDls++;
+		    }
+	      let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
+	                                        this._summary.progressCurrentBytes);
+	      let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
+	      let text = percent + "% of " + this.numDls + (this.numDls < 2 ? " file - " : " files - ") ;
+	      document.title = text + document.title.replace(/^\d+% of \d+ files? - /,"");
+	    }).then(null, Cu.reportError);
     }
   }
 

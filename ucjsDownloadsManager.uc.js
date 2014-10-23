@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Donloads Manager
 // @include        main
-// @compatibility  Firefox 26+
+// @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2014-10-23 22:00 number of files
 // @version        2014/10/18 20:00 fix posiotion
 // @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
 // @version        2014/03/01 12:00 Bug 978291
@@ -27,10 +28,8 @@
 (function(){
   window.ucjs_openDownloadManager = function ucjs_openDownloadManager(aForceFocus) {
 
-    var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                   .getService(Components.interfaces.nsIWindowMediator);
-
-    var enumerator = mediator.getEnumerator(null);
+    Cu.import("resource://gre/modules/Services.jsm");
+    var enumerator = Services.wm.getEnumerator(null);
     while(enumerator.hasMoreElements()) {
       var win = enumerator.getNext();
       if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xul") {
@@ -42,11 +41,7 @@
     window.open("chrome://browser/content/downloads/contentAreaDownloadsView.xul","Download", "width=600,height=300,chrome,toolbar=yes,dialog=no,resizable");
   }
   window.ucjs_closeDownloadManager = function ucjs_closeDownloadManager() {
-
-    var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                   .getService(Components.interfaces.nsIWindowMediator);
-
-    var enumerator = mediator.getEnumerator(null);
+    var enumerator = Services.wm.getEnumerator(null);
     while(enumerator.hasMoreElements()) {
       var win = enumerator.getNext();
       if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xul") {
@@ -230,32 +225,18 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
         }
       },
 
-      xonDownloadChanged: function (aDownload) {
-        this.numDls = 0;
-        if (!this._list)
-          return;
-        this._list.getAll().then(downloads => {
-        for (let download of downloads) {
-          if (download.hasProgress && !download.succeeded)
-            this.numDls++;
-        }
-        }).then(null, Cu.reportError);
-      },
-
       onSummaryChanged: function () {
         if (!this._summary)
           return;
         if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
           aWindow.document.title = originalTitle;
 
-          var mediator = Components.classes["@mozilla.org/appshell/window-mediator;1"]
-                         .getService(Components.interfaces.nsIWindowMediator);
-          var enumerator = mediator.getEnumerator("navigator:browser");
+          Cu.import("resource://gre/modules/Services.jsm");
+          var enumerator = Services.wm.getEnumerator("navigator:browser");
           while(enumerator.hasMoreElements()) {
             return;
           }
 
-          Cu.import("resource://gre/modules/Services.jsm");
           var closeWhenDone = false;
           try {
             closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
@@ -266,12 +247,24 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
 
         } else {
           // Update window title
-          this.xonDownloadChanged();
-          let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
-                                            this._summary.progressCurrentBytes);
-          let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
-          let text = percent + "% of " + this.numDls + (this.numDls < 2 ? " file - " : " files - ") ;
-          aWindow.document.title = text + originalTitle;
+	        this.numDls = 0;
+	        if (!this._list)
+	          return;
+	        this._list.getAll().then(downloads => {
+		        for (let download of downloads) {
+		          if (download.hasProgress &&
+	                !download.succeeded &&
+	                !download.canceled  &&
+	                !download.stopped )
+		            this.numDls++;
+		        }
+
+	          let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
+	                                            this._summary.progressCurrentBytes);
+	          let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
+	          let text = percent + "% of " + this.numDls + (this.numDls < 2 ? " file - " : " files - ") ;
+	          aWindow.document.title = text + originalTitle;
+	        }).then(null, Cu.reportError);
         }
       }
 

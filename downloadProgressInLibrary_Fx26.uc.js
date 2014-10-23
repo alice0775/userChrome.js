@@ -3,8 +3,9 @@
 // @name downloadProgressInLibrary_Fx26.uc.js
 // @namespace http://space.geocities.yahoo.co.jp/gl/alice0775
 // @include chrome://browser/content/places/places.xul
-// @compatibility Firefox 26
+// @compatibility Firefox 31+
 // @version 1.0
+// @date 2014-10-23 22:00 number of files
 // @date 2013-11-26 21:00 null check
 // @date 2013-04-06 22:00
 // @description Display Download Progress In Library
@@ -51,18 +52,6 @@ var downloadProgressInLibrary = {
     }
   },
 
-  xonDownloadChanged: function (aDownload) {
-    this.numDls = 0;
-    if (!this._list)
-      return;
-    this._list.getAll().then(downloads => {
-    for (let download of downloads) {
-      if (download.hasProgress && !download.succeeded)
-        this.numDls++;
-    }
-    }).then(null, Cu.reportError);
-  },
-
   onSummaryChanged: function () {
     if (!this._summary)
       return;
@@ -70,12 +59,23 @@ var downloadProgressInLibrary = {
       document.title = originalTitle;
     } else {
       // Update window title
-      this.xonDownloadChanged();
-      let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
-                                        this._summary.progressCurrentBytes);
-      let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
-      let text = percent + "% of " + this.numDls + (this.numDls < 2 ? " file - " : " files - ") ;
-      document.title = text + originalTitle;
+	    this.numDls = 0;
+	    if (!this._list)
+	      return;
+	    this._list.getAll().then(downloads => {
+		    for (let download of downloads) {
+		      if (download.hasProgress &&
+                !download.succeeded &&
+                !download.canceled  &&
+                !download.stopped )
+		        this.numDls++;
+		    }
+	      let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
+	                                        this._summary.progressCurrentBytes);
+	      let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
+	      let text = percent + "% of " + this.numDls + (this.numDls < 2 ? " file - " : " files - ") ;
+	      document.title = text + originalTitle;
+	    }).then(null, Cu.reportError);
     }
   }
 

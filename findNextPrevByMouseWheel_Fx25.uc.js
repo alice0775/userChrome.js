@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/10/19 20:00 Fix sometime not initialized
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
 // @version        2009/03/15 23:30 何でこうコロコロと意味のない変更するのかね > Dao  Gottwald (Bug 481397 -  Incorrect tab order of findbar buttons on Linux)
 // @Note
@@ -17,20 +18,17 @@
 
 var findNextPrevByMouseWheel = {
   init: function() {
+
     //fx25 for existing findbar
-    let findBars = document.querySelectorAll("findbar");
-    if (findBars.length > 0) {
-      Array.forEach(findBars, function (aFindBar) {
-        findNextPrevByMouseWheel.patch(aFindBar);
-      });
-    } else if ("gBrowser" in window && "getFindBar" in gBrowser) {
-      if (gBrowser.selectedTab._findBar)
-        findNextPrevByMouseWheel.patch(gBrowser.selectedTab._findBar);
+    if ("gBrowser" in window && "getFindBar" in gBrowser) {
+      if (gBrowser.selectedTab._findBar) {
+        setTimeout(function(){findNextPrevByMouseWheel.patch(gBrowser.selectedTab._findBar);}, 100);
+      }
     }
     //fx25 for newly created findbar
     if ("gBrowser" in window && "getFindBar" in gBrowser) {
       gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
-        findNextPrevByMouseWheel.patch(event.target._findBar);
+        setTimeout(function(event){findNextPrevByMouseWheel.patch(event.target._findBar);}, 100, event);
       });
     }
   },
