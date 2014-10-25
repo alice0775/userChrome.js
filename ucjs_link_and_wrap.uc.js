@@ -179,6 +179,7 @@ function ucjs_link_and_wrap(doc){
       }
       return false;
     }
+    if (a.childNodes.length == 1){
       var iframe = a.ownerDocument.createElement("iframe");
       var url = a.href; 
       url = url.replace(/\/((l\d+)|(\d\d?\d?))?#res(\d+)$/,'/$4');
@@ -213,6 +214,20 @@ function ucjs_link_and_wrap(doc){
       a.appendChild(a.ownerDocument.createElement("br"));
       a.appendChild(iframe);
       a.appendChild(a.ownerDocument.createElement("br"));
+    }else{
+      setTimeout(function resizeIframe(aNode,h){
+        var piFrame = getIFrameByWindow(getElementWindow(aNode));
+        if (!piFrame)return;
+        piFrame.style.minHeight = parseInt(piFrame.style.minHeight,10) - parseInt(h,10) -40 + 'px';
+        resizeIframe(piFrame,h);
+      },0,a.childNodes[2],a.childNodes[2].style.minHeight);
+      a.style.backgroundColor = "";
+      setTimeout(function(){
+        a.removeChild(a.lastChild);
+        a.removeChild(a.lastChild);
+        a.removeChild(a.lastChild);
+      },100);
+    }
     return false;
   }
   function ucjs_2ch_mailtores(doc) {
