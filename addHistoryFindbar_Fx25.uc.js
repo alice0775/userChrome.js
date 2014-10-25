@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2014/10/25 12:30 Fix viewsource
 // @version        2014/10/22 23:30 Fix broken find from form-history
 // @version        2014/10/21 19:30 Fix broken ENTER etc due to XUL/migemo input
 // @version        2014/10/18 23:40 XUL/migemo input
@@ -273,6 +274,9 @@ var historyFindbar = {
         gFindBar.historyfindbarObserver = new MutationObserver(function(mutations) {
           mutations.forEach(function(mutation) {
             switch (mutation.attributeName) {
+              case "hidden":
+                this.historyfindbar.hidden = gFindBar.hidden;
+                break;
               case "_moz-xmigemo-disable-ime":
               case "_moz-xmigemo-inactivate-ime":
                 if (mutation.target.getAttribute("mutation.attributeName"))
@@ -282,17 +286,17 @@ var historyFindbar = {
                 break;
               case "status":
               case "flash":
-                historyFindbar.statusModified();
+                this.statusModified();
                 break;
             }
-          });
-        });
+          }.bind(this));
+        }.bind(this));
          
         // configuration of the observer:
-        var config = { attributes: true };
+        var config = { attributes: true, subtree: true};
          
         // pass in the target node, as well as the observer options
-        gFindBar.historyfindbarObserver.observe(gFindBar._findField, config);
+        gFindBar.historyfindbarObserver.observe(gFindBar, config);
 
         this.placeholderModified();
         gFindBar._findField.addEventListener("focus", this, false);
@@ -327,7 +331,7 @@ var historyFindbar = {
           if (gBrowser.isFindBarInitialized(aEvent.target)) {
             this.historyfindbar.hidden = gFindBar.hidden;
             this._findField2.value = gFindBar._findField.value;
-            historyFindbar.statusModified();
+            this.statusModified();
           } else
             this.historyfindbar.hidden = true;
         }.bind(this), 0);
