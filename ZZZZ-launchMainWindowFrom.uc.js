@@ -6,6 +6,7 @@
 // @exclude        chrome://browser/content/browser.xul
 // @compatibility  Firefox 3.0 more
 // @author         Alice0775
+// @version        2014/10/26 fix
 // @version        2014/06/07 fix
 // @version        2014/06/07 menupopup
 // @version        2009/12/12 TypeがあったのでZZZ-inspectChrome.uc.jsが無いと動かなかった
@@ -28,12 +29,15 @@ var launchMainWindowFrom = {
       menupopup.setAttribute("id", "launchMainWindowFrom-popup");
       document.documentElement.appendChild(menupopup);
       document.documentElement.setAttribute("context", "launchMainWindowFrom-popup");
+      menupopup.appendChild(menuitem.cloneNode(true));
+    } else {
+      document.getElementById(document.documentElement.getAttribute("context"))
+              .appendChild(menuitem.cloneNode(true));
     }
 
     let menupopups = document.getElementsByTagName("menupopup");
     for(let i= 0; i < menupopups.length; i++) {
       let menupopup = menupopups[i];
-      menupopup.appendChild(menuitem.cloneNode(true));
       menupopup.addEventListener("popupshowing", this, false);
     }
   },
