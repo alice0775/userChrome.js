@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 33
 // @author         Alice0775
+// @version        2014/10/28 07:30 Use gBrowser instead window
 // @version        2014/10/28 01:30 typo
 // @version        2014/10/28 00:30
 // @version        2014/10/25 12:30
@@ -12,12 +13,12 @@
 var bugbugSearch = {
   init: function() {
     window.addEventListener('unload', this, false);
-    window.addEventListener("mousedown", this, true);
+    gBrowser.addEventListener("mousedown", this, true);
   },
 
   uninit: function() {
     window.removeEventListener('unload', this, false);
-    window.removeEventListener('mousedown', this, true);
+    gBrowser.removeEventListener('mousedown', this, true);
   },
 
   handleEvent: function(event) {
