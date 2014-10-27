@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 33
 // @author         Alice0775
+// @version        2014/10/28 01:30 typo
 // @version        2014/10/28 00:30
 // @version        2014/10/25 12:30
 // ==/UserScript==
@@ -44,8 +45,8 @@ var bugbugSearch = {
 
     while(listitem) {
       if ('searchSuggestionEntry' == listitem.className) {
-        event.stopPropagation;
-        event.preventDefault;
+        event.stopPropagation();
+        event.preventDefault();
         BrowserSearch._loadSearch(term, false);
         break;
       }
