@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0 5.0 6.0 7.0
 // @author         Alice0775
+// @version        2014/11/20 23:00 幅
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
 // @version        2012/02/25 23:00 幅
@@ -80,8 +81,8 @@
       } else {
         return;
       }
-    } else if (x < iconW + tabx + tabw * 0.3) {
-      //fabicon右端～タブ幅の0.3倍の範囲
+    } else if (x < iconW + tabx + tabw - 20) {
+      //fabicon右端～右端-20pxの範囲
       //タブを再読み込み
       if (aEvent.altKey) {
         // Bypass proxy and cache.
@@ -89,8 +90,8 @@
       } else {
         gBrowser.reloadTab(tab);
       }
-    } else if (x <= tab.boxObject.screenX + tab.boxObject.width - 18) {
-      //タブ幅の0.3倍～右端から18pxの範囲
+    } else if (x <= tab.boxObject.screenX + tab.boxObject.width - 8) {
+      //タブ幅の0.3倍～右端から8pxの範囲
       //タブを再読み込み
       if (aEvent.altKey) {
         // Bypass proxy and cache.
@@ -102,8 +103,8 @@
           gBrowser.reloadTab(tab);
         }
       }
-    } else if (x > tab.boxObject.screenX + tab.boxObject.width - 18) {
-      //右端から18pxの範囲
+    } else if (x > tab.boxObject.screenX + tab.boxObject.width - 8) {
+      //右端から8pxの範囲
       //すべてのタブを再読み込み
       if (aEvent.altKey) {
         // Bypass proxy and cache.

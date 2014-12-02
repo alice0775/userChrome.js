@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 24-35 (not e10s)
 // @author         Alice0775
+// @version        2014/11/10 10:00 get rid document.commandDispatcher
+// @version        2014/10/30 10:00 working with addHistoryFindbarFx3.0.uc.js
 // @version        2014/10/07 20:00 adjusts tolerance due to backed out Bug 378775
 // @version        2014/10/07 19:00 Modified to use capturing phase for drop and event.defaultprevent
 // ==/UserScript==
@@ -171,7 +173,13 @@ var DragNGo = {
     },
     {dir:'RLU', modifier:'',name:'選択テキスト(プロンプト)を指定ドメイン内で検索',obj:'link, text',
       cmd:function(self,event,info){
-        var _document=document.commandDispatcher.focusedWindow.document;
+        if ("BrowserUtils" in window) {
+          var [node, win] = BrowserUtils.getFocusSync(document);
+        } else {
+          win = document.commandDispatcher.focusedWindow;
+        }
+
+        var _document = win.document;
         var p = prompt('Input word to search under the domain('+_document.location.hostname+'):', info.texts[0]);
         if(p)
           _document.location.href = 'http://www.google.com/search?as_qdr=y15&q=site:' +
@@ -182,10 +190,14 @@ var DragNGo = {
     {dir:'UDUD', modifier:'',name:'選択範囲をテキストファイルとして保存',obj:'text',
       cmd:function(self){
         // 選択範囲をテキストファイルとして保存する。
-        var _window = document.commandDispatcher.focusedWindow;
-        var sel = _window.getSelection();
+        if ("BrowserUtils" in window) {
+          var [node, win] = BrowserUtils.getFocusSync(document);
+        } else {
+          win = document.commandDispatcher.focusedWindow;
+        }
+        var sel = win.getSelection();
         if (sel && !sel.isCollapsed) {
-          var fname = _window.location.href.match(/[^\/]+$/) + '.txt';
+          var fname = win.location.href.match(/[^\/]+$/) + '.txt';
           fname = decodeURIComponent(fname);
           fname = fname.replace(/[\*\:\?\"\|\/\\<>]/g, '_');
           self.saveTextToLocal(sel.toString(), fname, false);
@@ -254,7 +266,11 @@ var DragNGo = {
     var targetWindow = this.focusedWindow;
     var sel = targetWindow.getSelection();
     if (sel && !sel.toString()) {
-      var node = document.commandDispatcher.focusedElement;
+      if ("BrowserUtils" in window) {
+        var [node, win] = BrowserUtils.getFocusSync(document);
+      } else {
+        node = document.commandDispatcher.focusedElement;
+      }
       if (node &&
           ((typeof node.mozIsTextField == 'function' && node.mozIsTextField(true)) ||
            node.type == "search" ||
@@ -272,7 +288,11 @@ var DragNGo = {
 
   //現在のウインドウを得る
   get focusedWindow() {
-    var win = document.commandDispatcher.focusedWindow;
+    if ("BrowserUtils" in window) {
+      var [node, win] = BrowserUtils.getFocusSync(document);
+    } else {
+      win = document.commandDispatcher.focusedWindow;
+    }
     if (!win || win == window)
       win = window.content;
     return win;
@@ -466,6 +486,8 @@ var DragNGo = {
     if ('onFindAgainCommand' in findbar){ //fx3
       if(findbar.hidden)
         findbar.onFindCommand();
+    if("historyFindbar" in window)
+      historyFindbar._findField2.value = word;
       findbar._findField.value = word;
       var event = document.createEvent("UIEvents");
       event.initUIEvent("input", true, false, window, 0);

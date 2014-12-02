@@ -8,6 +8,7 @@
 // @Note           Keywords Searchを検索バーから行えるようにする
 // @Note           conqueryModoki2がある場合は, 親フォルダにKeywordsを付加していれば, Keywords 串刺し検索が出来る
 // @Note           サーチバーを表示していないとダメ
+// @version        2014/11/29 21:00 Fix arguments due to bug 1088660
 // @version        2014/07/21 23:00 Fix working with Tree Style Tab etc.
 // @version        2014/07/04 09:00 Bug 989984, Firefox31+
 // @version        2014/03/31 00:00 add fail safe setTimeout
@@ -97,7 +98,7 @@
     return
 
   searchBar.doSearch__keyworks = searchBar.doSearch;
-  searchBar.doSearch = function doSearch(aData, aWhere) {
+  searchBar.doSearch = function doSearch(aData, aWhere, aEngine) {
     var textBox = this._textbox;
     let offset = aData.indexOf(" ");
     getShortcutOrURIAndPostData(aData, data => {
@@ -107,9 +108,13 @@
         //do keyword search
         if (/^javascript:/.test(data.url))
           aWhere = "current";
+        if ("TreeStyleTabService" in window)
+          TreeStyleTabService.onBeforeBrowserSearch(textBox.value);
         openUILinkIn(data.url, aWhere, null, null);
+        if ("TreeStyleTabService" in window)
+          TreeStyleTabService.stopToOpenChildTab();
       } else {
-        this.doSearch__keyworks(aData, aWhere);
+        this.doSearch__keyworks(aData, aWhere, aEngine);
       }
     });
   };

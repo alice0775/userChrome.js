@@ -8,6 +8,8 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には toggleSidebar(何タラ);
 // @Note
+// @version        2014/10/31 22:00 fix due to Bug 714675
+// @version        2014/05/22 12:00 fix var
 // @version        2013/03/03 00:00 fix It close too soon when it opened from a button or menu
 // @version        2013/02/26 00:00 fix close delay 
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
@@ -45,6 +47,7 @@ var ucjs_expand_sidebar = {
                            //(http://www.xuldev.org/blog/?p=113) を先に実行するようにしておく。
   _KEEP_SIZES:true,        //サイドバーの種類毎に幅を記憶する
   _defaultWidth: 234,      //デフォルトサイドバー幅
+  _inFullscreen: true,     //Fullscreen時の挙動をFirefox31当時の物にする
   //ここまで
 // --- config ---
 
@@ -142,6 +145,15 @@ var ucjs_expand_sidebar = {
       })(this);
     }
 
+    if (this._inFullscreen) {
+	    eval("FullScreen.enterDomFullscreen = " + FullScreen.enterDomFullscreen.toString().replace(
+		      'document.documentElement.setAttribute("inDOMFullscreen", true);',
+		      'if (!document.getElementById("sidebar-box").hidden) \
+		         toggleSidebar();'
+		    ));
+	    document.documentElement.removeAttribute("inDOMFullscreen");
+    }
+
     eval("PrintUtils.printPreview = " + PrintUtils.printPreview.toString().replace(
       '{',
       '$& \
@@ -166,7 +178,7 @@ var ucjs_expand_sidebar = {
     //fireSidebarFocusedEventの置き換え
     //
     var func = fireSidebarFocusedEvent.toString();
-    new_cmd = "ucjs_expand_sidebar._focused(); $& ";
+    var new_cmd = "ucjs_expand_sidebar._focused(); $& ";
     func = func.replace(/}$/, new_cmd);
     eval('fireSidebarFocusedEvent = ' + func + ';');
 

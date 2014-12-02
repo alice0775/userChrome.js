@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Bug 628086 - Text in the input box would not scroll if drag was starting on border even if mouse pointer is I-beam pointer. And drag selection don't stop till i click elsewhere
 // @include        *
-// @compatibility  Firefox 4.0 5.0 6.0
+// @compatibility  Firefox
 // @author         alice0775
+// @version        2014/07/10 fx34 Bug 1036694 - merge nsIMarkupDocumentViewer into nsIContentViewer
 // @version        2011/04/28
 // ==/UserScript==
 
@@ -240,12 +241,20 @@ if (typeof window == 'undefined' ||
 			catch(e) {
 				return 1;
 			}
-			var markupDocumentViewer = aFrame.top
+			try {
+	      var markupDocumentViewer = aFrame.top
 					.QueryInterface(Ci.nsIInterfaceRequestor)
 					.getInterface(Ci.nsIWebNavigation)
 					.QueryInterface(Ci.nsIDocShell)
 					.contentViewer
 					.QueryInterface(Ci.nsIMarkupDocumentViewer);
+      } catch(ee) { //Bug 1036694 - merge nsIMarkupDocumentViewer into nsIContentViewer
+         markupDocumentViewer = aFrame.top
+					.QueryInterface(Ci.nsIInterfaceRequestor)
+					.getInterface(Ci.nsIWebNavigation)
+					.QueryInterface(Ci.nsIDocShell)
+					.contentViewer;
+      }
 			return markupDocumentViewer.fullZoom;
 		}
 

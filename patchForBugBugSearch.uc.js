@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 33
 // @author         Alice0775
+// @version        2014/11/20 19:30 temporary fix for e10s
 // @version        2014/10/28 07:30 Use gBrowser instead window
 // @version        2014/10/28 01:30 typo
 // @version        2014/10/28 00:30
@@ -40,14 +41,26 @@ var bugbugSearch = {
       return;
 
     let listitem = event.target;
+    let timer = gBrowser.selectedBrowser.getAttribute("remote") != "true" ? 0: 500;
+    if (!timer) {
+      this.doSearch(event);
+    } else {
+		  setTimeout(function() {
+		    this.doSearch(event);
+		  }.bnd(this), timer);
+    }
+  },
+
+  doSearch: function(event) {
+    let listitem = event.target;
     let term = listitem.textContent;
     if (!term)
       return;
 
     while(listitem) {
       if ('searchSuggestionEntry' == listitem.className) {
-        event.stopPropagation();
         event.preventDefault();
+        event.stopPropagation();
         BrowserSearch._loadSearch(term, false);
         break;
       }

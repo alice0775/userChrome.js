@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/web-panels.xul
 // @compatibility  Firefox 3.0 3.5 3.6 3.7a1pre
 // @author         Alice0775
+// @version        2014/07/10 fx34 Bug 1036694 - merge nsIMarkupDocumentViewer into nsIContentViewer
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
 // @version        2011/10/30 20:00 Bug 684821 - Remove nsIDOMNSHTMLElement
@@ -512,12 +513,20 @@ scrollContextMenu.init();
       catch(e) {
         return 1;
       }
-      var markupDocumentViewer = aFrame.top
-          .QueryInterface(Ci.nsIInterfaceRequestor)
-          .getInterface(Ci.nsIWebNavigation)
-          .QueryInterface(Ci.nsIDocShell)
-          .contentViewer
-          .QueryInterface(Ci.nsIMarkupDocumentViewer);
+			try {
+	      var markupDocumentViewer = aFrame.top
+					.QueryInterface(Ci.nsIInterfaceRequestor)
+					.getInterface(Ci.nsIWebNavigation)
+					.QueryInterface(Ci.nsIDocShell)
+					.contentViewer
+					.QueryInterface(Ci.nsIMarkupDocumentViewer);
+      } catch(ee) { //Bug 1036694 - merge nsIMarkupDocumentViewer into nsIContentViewer
+         markupDocumentViewer = aFrame.top
+					.QueryInterface(Ci.nsIInterfaceRequestor)
+					.getInterface(Ci.nsIWebNavigation)
+					.QueryInterface(Ci.nsIDocShell)
+					.contentViewer;
+      }
       return markupDocumentViewer.fullZoom;
     }
 
