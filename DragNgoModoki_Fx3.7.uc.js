@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 24-35 (not e10s)
 // @author         Alice0775
+// @version        2014/11/26 21:00 Bug 1103280, Bug 704320
 // @version        2014/11/10 10:00 get rid document.commandDispatcher
 // @version        2014/10/30 10:00 working with addHistoryFindbarFx3.0.uc.js
 // @version        2014/10/07 20:00 adjusts tolerance due to backed out Bug 378775
@@ -568,7 +569,13 @@ var DragNGo = {
       let privacyContext = window.QueryInterface(Ci.nsIInterfaceRequestor)
                                 .getInterface(Ci.nsIWebNavigation)
                                 .QueryInterface(Ci.nsILoadContext);
-      persist.saveURI( uri, null, null, null, "", file, privacyContext);
+      if (parseInt(Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo).version) < 36) {
+        persist.saveURI( uri, null, null, null, "", file, privacyContext);
+      } else {
+        persist.saveURI( uri, null, null, Ci.nsIHttpChannel.REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE,
+                         null, "", file, privacyContext);
+      }
+
     } catch (ex) {
       alert('failed:\n' + ex);
       file = null;

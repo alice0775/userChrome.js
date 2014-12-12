@@ -7,8 +7,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    saveFolderModoki
 // @include        main
-// @compatibility  Firefox 2.0 3.0
+// @compatibility  Firefox 31-37
 // @author         Alice0775
+// @version        2014/11/26 21:00 Bug 1103280, Bug 704320
 // @version        2013/05/02 01:00 Bug 789546
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/02/09 23:00 Bug 622423
@@ -435,9 +436,19 @@ var saveFolderModoki = {
       let privacyContext = window.QueryInterface(Ci.nsIInterfaceRequestor)
                                 .getInterface(Ci.nsIWebNavigation)
                                 .QueryInterface(Ci.nsILoadContext);
-      persist.saveURI((aChosenData ? aChosenData.uri : source),
-                      null, aReferrer, persistArgs.postData, null,
-                      persistArgs.target, privacyContext);
+      if (parseInt(Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo).version) < 36) {
+        persist.saveURI((aChosenData ? aChosenData.uri : source),
+                        null, 
+                        aReferrer,
+                        persistArgs.postData, null,
+                        persistArgs.target, privacyContext);
+      } else {
+        persist.saveURI((aChosenData ? aChosenData.uri : source),
+                        null, 
+                        aReferrer, Ci.nsIHttpChannel.REFERRER_POLICY_NO_REFERRER_WHEN_DOWNGRADE,
+                        persistArgs.postData, null,
+                        persistArgs.target, privacyContext);
+      }
     }
   },
 
