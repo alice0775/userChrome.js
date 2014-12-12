@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.44mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.45mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,8 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2014/12/13 21:00 allow to load scripts into about: in dialog
+// Date 2014/12/13 21:00 require userchrome.js-0.8.014121301-Fx31.xpi
 // Date 2014/06/07 21:00 skip about:blank
 // Date 2014/06/07 19:00 turn off experiment by default
 // Date 2014/06/04 12:00 fixed possibility of shutdown crash Bug 1016875
@@ -54,6 +56,9 @@
 // Date 2008/03/23 12:00 80氏のフォルダ規則に対応, 0.8modバージョンにも対応
 //
 
+Components.classes["@mozilla.org/consoleservice;1"]
+        .getService(Components.interfaces.nsIConsoleService)
+        .logStringMessage(location.href);
 (function(){
   "use strict";
   // -- config --
@@ -95,12 +100,12 @@
  */
 
 
-  //chromeでないならスキップ
-  if(!/^chrome:/i.test(location.href)) return;
+  //chrome/aboutでないならスキップ
+  if(!/^(chrome:|about:)/i.test(location.href)) return;
+  if(/^(about:blank)/i.test(location.href)) return;
   //コモンダイアログに対するオーバーレイが今のところ無いので時間短縮のためスキップすることにした
   if(location.href =='chrome://global/content/commonDialog.xul') return;
   if(/.html?$/i.test(location.href)) return;
-
   window.userChrome_js = {
     USE_0_63_FOLDER: USE_0_63_FOLDER,
     UCJS: UCJS,

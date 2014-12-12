@@ -1,0 +1,15 @@
+content userchrome ../../chrome/
+resource userchrome-modules ../../chrome/modules/
+
+# Component registration
+component {58d33e40-f0e8-11db-8314-0800200c9a66} components/userChrome_js.js   application={ec8030f7-c20a-464f-9b0e-13a3a9e97384} appversion>=4.0b2pre
+contract @zeniko/userchrome_js;1 {58d33e40-f0e8-11db-8314-0800200c9a66}        application={ec8030f7-c20a-464f-9b0e-13a3a9e97384} appversion>=4.0b2pre
+category profile-after-change @zeniko/userchrome_js;1 @zeniko/userchrome_js;1  application={ec8030f7-c20a-464f-9b0e-13a3a9e97384} appversion>=4.0b2pre
+
+component {58d33e40-f0e8-11db-8314-0800200c9a66} components/userChrome_js.js   application={3550f703-e582-4d05-9a08-453d09bdfdc6} appversion>=3.2a1pre
+contract @zeniko/userchrome_js;1 {58d33e40-f0e8-11db-8314-0800200c9a66}        application={3550f703-e582-4d05-9a08-453d09bdfdc6} appversion>=3.2a1pre
+category profile-after-change @zeniko/userchrome_js;1 @zeniko/userchrome_js;1  application={3550f703-e582-4d05-9a08-453d09bdfdc6} appversion>=3.2a1pre
+
+component {58d33e40-f0e8-11db-8314-0800200c9a66} components/userChrome_js.js   application={92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a} appversion>=2.1b2pre
+contract @zeniko/userchrome_js;1 {58d33e40-f0e8-11db-8314-0800200c9a66}        application={92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a} appversion>=2.1b2pre
+category profile-after-change @zeniko/userchrome_js;1 @zeniko/userchrome_js;1  application={92650c4d-4b8e-4d2a-b7eb-24ecf4f6b63a} appversion>=2.1b2pre
