@@ -6,6 +6,7 @@
 // @compatibility  Firefox 35
 // @author         Original Author: pile0nades
 // @modifier       Alice0775
+// @version        2014/12/13 for update buttons
 // @version        2014/12/13 for Stylish2.0
 // @Note           This version will only work with the following add-on and sub script loader.
 // @Note           userchrome.js-0.8.014121301-Fx31.xpi and Sub-Script/Overlay Loader v3.0.45mod
@@ -87,6 +88,9 @@
                                      text.substring(e,text.length);
                   box.setSelectionRange(s + 7, s + 7);  // 7 = "#AABBCC".length
                   box.focus();
+									enableSave(true);
+									enablePreview(true);
+									enableCheckForErrors(true);
         }
         picker.getColor = getColor;
         picker.setAttribute("label", "Color Picker");
@@ -147,7 +151,9 @@
           aWindow.sourceEditor.setText(code);
         } else {
           codeElement.value = code;
-
+					enableSave(true);
+					enablePreview(true);
+					enableCheckForErrors(true);
           box.scrollTop = scroll[0];
           box.scrollLeft = scroll[1];
         }
@@ -272,6 +278,9 @@
           else
             target.value = "";
         }
+				enableSave(true);
+				enablePreview(true);
+				enableCheckForErrors(true);
 
         sstream.close();
         istr.close();
