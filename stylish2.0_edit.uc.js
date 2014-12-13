@@ -6,10 +6,12 @@
 // @compatibility  Firefox 35
 // @author         Original Author: pile0nades
 // @modifier       Alice0775
+// @version        2014/12/13 add note
 // @version        2014/12/13 for update buttons
 // @version        2014/12/13 for Stylish2.0
 // @Note           This version will only work with the following add-on and sub script loader.
 // @Note           userchrome.js-0.8.014121301-Fx31.xpi and Sub-Script/Overlay Loader v3.0.45mod
+// @Note           You should set preferred source edidor to _editor on line 199,203
 // ==/UserScript==
 
 /* ***** BEGIN LICENSE BLOCK *****
@@ -194,8 +196,8 @@
 
     function editinit(){
       if(window.navigator.platform.toLowerCase().indexOf("win") != -1){
-        //_editor = "C:\\WINDOWS\\notepad.exe";             /* windows */
-        _editor = "C:\\progra~1\\hidemaru\\hidemaru.exe"; /* windows */
+        _editor = "C:\\WINDOWS\\notepad.exe";             /* windows */
+        //_editor = "C:\\progra~1\\hidemaru\\hidemaru.exe"; /* windows */
         _dir_separator = '\\';                            /* windows */
         _os = 'win';                                      /* windows */
       }else{
