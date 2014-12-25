@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2014-12-23 23:00 number of files
 // @version        2014-10-23 22:00 number of files
 // @version        2014/10/18 20:00 fix posiotion
 // @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
@@ -113,15 +114,15 @@ var openOrHideDownloadWindow_at_startDownload = {
     try {
       showWhenStarting = Services.prefs.getBoolPref("browser.download.manager.showWhenStarting");
     } catch(e) {}
-    this.numDls = 0;
+    var numDls = 0;
     if (showWhenStarting) {
       if (this._list) {
         this._list.getAll().then(downloads => {
           for (let download of downloads) {
             if (!download.stopped)
-              this.numDls++;
+              numDls++;
           }
-          if (this.numDls > 0)
+          if (numDls > 0)
             ucjs_openDownloadManager(false);
         }).then(null, Cu.reportError);
       }
@@ -247,7 +248,7 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
 
         } else {
           // Update window title
-	        this.numDls = 0;
+	        var numDls = 0;
 	        if (!this._list)
 	          return;
 	        this._list.getAll().then(downloads => {
@@ -256,13 +257,13 @@ WindowHook.register("chrome://browser/content/downloads/contentAreaDownloadsView
 	                !download.succeeded &&
 	                !download.canceled  &&
 	                !download.stopped )
-		            this.numDls++;
+		            numDls++;
 		        }
 
 	          let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
 	                                            this._summary.progressCurrentBytes);
 	          let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
-	          let text = percent + "% of " + this.numDls + (this.numDls < 2 ? " file - " : " files - ") ;
+	          let text = percent + "% of " + numDls + (numDls < 2 ? " file - " : " files - ") ;
 	          aWindow.document.title = text + originalTitle;
 	        }).then(null, Cu.reportError);
         }
