@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.46mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.47mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2014/12/28 19:00 workaround loading xul on second browser
 // Date 2014/12/13 21:00 remove a debug log
 // Date 2014/12/13 21:00 allow to load scripts into about: in dialog
 // Date 2014/12/13 21:00 require userchrome.js-0.8.014121301-Fx31.xpi
@@ -100,9 +101,10 @@
 
   //chrome/aboutでないならスキップ
   if(!/^(chrome:|about:)/i.test(location.href)) return;
-  if(/^(about:blank)/i.test(location.href)) return;
+  if(/^(about:(blank|newtab|home))/i.test(location.href)) return;
   //コモンダイアログに対するオーバーレイが今のところ無いので時間短縮のためスキップすることにした
   if(location.href =='chrome://global/content/commonDialog.xul') return;
+  if(location.href =='chrome://global/content/alerts/alert.xul') return;
   if(/.html?$/i.test(location.href)) return;
   window.userChrome_js = {
     USE_0_63_FOLDER: USE_0_63_FOLDER,
@@ -805,7 +807,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     window.document.addEventListener("load",
       function(event){
         if (!event.originalTarget.location) return;
-        if( /^about:blank/.test(event.originalTarget.location.href) )return;
+        if(/^(about:(blank|newtab|home))/i.test(event.originalTarget.location.href)) return;
         if( !/^(about:|chrome:)/.test(event.originalTarget.location.href) )return;
         var doc = event.originalTarget;
         var href = doc.location.href;
