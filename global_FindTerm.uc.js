@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 31-
 // @author         Alice0775
+// @version        2015/02/09 23:00 fix a bug copy term
+// @version        2015/01/09 08:00 workaround
 // @version        2014/10/19 18:00 fix XUL/migemo UI updates
 // @version        2014/10/18 18:00 fix a bug
 // @version        2014/10/18 08:00 fix a bug
@@ -67,15 +69,14 @@ var global_FindTerm = {
     if (!!sel)
       this.findTerm = sel;
 
-    this.updateUI();
     this.setTerm(this.findTerm);
+    this.updateUI();
     this.selectFindField();
 	},
 
   copyTerm: function() {
     if(gBrowser.isFindBarInitialized(gBrowser.selectedTab) && !gFindBar.hidden) {
       this.setTerm(this.findTerm);
-      gFindBar._updateFindUI();
     }
   },
 
@@ -145,7 +146,15 @@ var global_FindTerm = {
   },
 
   setTerm: function(val) {
-    gFindBar._findField.value = val;
+    var oldVal= gFindBar._findField.value;
+    if (oldVal != val) {
+	    gFindBar._findField.value = val;
+	    /*
+      gFindBar.browser.finder.fastFind(val, gFindBar._findMode == gFindBar.FIND_LINKS,
+	                             gFindBar._findMode != gFindBar.FIND_NORMAL);
+	    */
+      gFindBar._updateFindUI();
+    }
     if ("historyFindbar" in window) {
        historyFindbar._findField2.value = val;
     }

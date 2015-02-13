@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26
 // @author         Alice0775
+// @version        2015/01/15 1:00 Fixed strictmode
 // @version        2013/12/18 11:00 defineLazyModuleGetter for Firefox26
 // @version        2013/12/18 Firefox26
 // @version        2009/11/28
@@ -44,7 +45,7 @@ var downloadPlaySound = {
 
   onDownloadAdded: function (aDownload) {
     //**** ダウンロード開始イベント
-    if (this.DL_START);
+    if (this.DL_START)
       this.playSoundFile(this.DL_START);
   },
 

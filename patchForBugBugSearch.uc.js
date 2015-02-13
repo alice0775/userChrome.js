@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           patchForBugBugSearch.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    patch For Bug Bug Search
+// @description    patch For Bug Bug Search Bug 1115616
 // @include        main
 // @compatibility  Firefox 33
 // @author         Alice0775

@@ -32,6 +32,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2015/01/15 00:00 fix strict mode
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/01/08 02:00 Bug 827546
@@ -461,6 +462,13 @@ var GrabScroll = {
   },
 
   mouseup:  function(event) {
+    function scrolling(event, self){
+      Start = new Date().getTime();
+      self.scroll2(event);
+
+      self.cScroll = setTimeout(arguments.callee,
+                     Math.max(25 - ((new Date()).getTime()-Start), 0), event, self);
+    }
     //window.userChrome_js.debug("museup " + this.mStatus);
     if (event.button == this.MOUSEBUTTON && this.mStatus > 1) {
       event.preventDefault();
@@ -487,13 +495,6 @@ var GrabScroll = {
           this.cSpeedY = Math.max(this.cSpeedY, -v);
 
         var Start;
-        function scrolling(event, self){
-          Start = new Date().getTime();
-          self.scroll2(event);
-
-          self.cScroll = setTimeout(arguments.callee,
-                         Math.max(25 - ((new Date()).getTime()-Start), 0), event, self);
-        }
         this.scroll2(event);
         scrolling(event, this);
 /*
@@ -746,7 +747,7 @@ var GrabScroll = {
 
   toggle: function(flag){
     if(typeof flag =='undefined')
-      var flag = this.getPref("grabScroll.enable","bool",true);
+      flag = this.getPref("grabScroll.enable","bool",true);
     this.setPref("grabScroll.enable","bool",!flag);
     this.setIcon(!flag);
   },

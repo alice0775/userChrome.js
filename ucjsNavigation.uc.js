@@ -4,6 +4,8 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2015/01/15 Fixed strictmode
+// @version        2013/09/02 19:00 26.0 Bug 910161 Remove nsIHistoryEntry and replace it with nsISHEntry
 // @version        2011/02/01 22:00 4.0
 // @version        2008/04/15 loadURIの使用やめ
 // @note           use UCJSLoader
@@ -86,8 +88,10 @@ var ucjsNavigation = {
       var entry  = this.activeBrowser().sessionHistory.getEntryAtIndex(aIndex, false);
       var info = { URI : null, referrerURI : null };
       if (entry) {
-        entry = entry.QueryInterface(Components.interfaces.nsIHistoryEntry)
-              .QueryInterface(Components.interfaces.nsISHEntry);
+        try {
+          entry = entry.QueryInterface(Components.interfaces.nsIHistoryEntry)
+                .QueryInterface(Components.interfaces.nsISHEntry);
+        } catch(er) {}
         if (entry.URI)
           info.URI = entry.URI;
         if (entry.referrerURI)
@@ -395,7 +399,7 @@ ucjsNavigation.tabFocusManager = {
       this._tabHistory.shift();
   }
 }
-if(gBrowser.selectedTab && gBrowser.selectedTab.hasAttribute("linkedpanel"));
+if(gBrowser.selectedTab && gBrowser.selectedTab.hasAttribute("linkedpanel"))
   ucjsNavigation.tabFocusManager._tabHistory = [gBrowser.selectedTab.getAttribute("linkedpanel")];
 gBrowser.mTabContainer.addEventListener("TabSelect", ucjsNavigation.tabFocusManager, false);
 gBrowser.mTabContainer.addEventListener("TabOpen", ucjsNavigation.tabFocusManager, false);

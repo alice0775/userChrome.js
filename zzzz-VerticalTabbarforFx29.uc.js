@@ -6,6 +6,7 @@
 // @compatibility  Firefox 29-32
 // @author         Alice0775
 // @note           デフォルトテーマ , zzzz-removeTabMoveAnimation.uc.js が必要
+// @version        2015/01/15 00:00 Fixed strictmode
 // @version        2014/06/09 00:00 Modified dropindicator position
 // @version        2014/05/29 00:00 Bug 1018324 - Remove inIFlasher
 // @version        2014/05/16 00:00 Workaroundposition of private-browsing-indicator
@@ -199,6 +200,9 @@ function zzzz_VerticalTabbar(){
  \
  \
         /*ポップアップの時*/ \
+        #main-window[chromehidden~="directories"] #TabsToolbar, \
+        #main-window[chromehidden~="directories"] #verticalTabToolBox, \
+        #main-window[chromehidden~="directories"] #vtb_splitter, \
         #main-window[chromehidden~="extrachrome"] #TabsToolbar, \
         #main-window[chromehidden~="extrachrome"] #verticalTabToolBox, \
         #main-window[chromehidden~="extrachrome"] #vtb_splitter \
@@ -640,7 +644,7 @@ function zzzz_VerticalTabbar(){
         return tab;
 
         
-        var tab = document.evaluate(
+        tab = document.evaluate(
                     'ancestor-or-self::*[local-name()="tab"]',
                     event.originalTarget,
                     null,
@@ -782,7 +786,7 @@ function zzzz_VerticalTabbar(){
         tabbrowsertabs.setAttribute('overflow', true);
 
         //幅調整
-        if (vtbSplitter.getAttribute('state') == 'collapsed')
+        if (vtbSplitter.getAttribute('state') == 'collapsed' || !verticalTabToolBox.boxObject.width)
           var w = 0;
         else {
           gPrefService.setIntPref(kTABBAR_WIDTH, verticalTabToolBox.boxObject.width);

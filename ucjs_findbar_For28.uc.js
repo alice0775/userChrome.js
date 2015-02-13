@@ -6,6 +6,7 @@
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 28+
+// @version        2015/01/15 12:00 Fixed strictmode
 // @version        2014/07/10 fx34 Bug 1036694 - merge nsIMarkupDocumentViewer into nsIContentViewer
 // @version        2014/05/29 00:00 Bug 1018324 - Remove inIFlasher
 // @version        2013/11/21 12:05 Bug 856437 Remove Components.lookupMethod
@@ -638,10 +639,10 @@ var findcenter = {
       var overfllowx = style.getPropertyValue("overflow-x");
       var overfllowy = style.getPropertyValue("overflow-y");
       var xx = aFrame.scrollX;
-      if (overfllowx != "visible" && overfllowx != "hidden");
+      if (overfllowx != "visible" && overfllowx != "hidden")
         xx = (viewbox.x + viewbox.width / 2) - aFrame.innerWidth / 2;
       var yy = aFrame.scrollY;
-      if (overfllowy != "visible" && overfllowy != "hidden");
+      if (overfllowy != "visible" && overfllowy != "hidden")
         yy = (viewbox.y + viewbox.height / 2) - aFrame.innerHeight / 2;
       this._scrollTo(aFrame, xx ,yy);
 

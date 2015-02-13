@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17.0+
 // @author         Alice0775
+// @version        2015/01/26 10:00 Fix Focus the content area
 // @version        2014/10/21 19:00 デフォルトの検索エンジンは一番最初の奴にするようにした
 // @version        2013/05/19 00:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2013/05/18 23:20 Bug 738818
@@ -18,7 +19,7 @@
 var searchOnEngineChange = {
   // -- config --
   KeepDefaultEngine: true,         //デフォルトの検索エンジンに戻す
-  ClearWordAfterSearch: true,      //検索後検索ワードをクリア
+  ClearWordAfterSearch: true,      //検索後検索ワードをクリア --- 旧ポップアップの検索エンジンを選んだときだけ有効
   // -- config --
   searchBar: null,
   popup: null,
@@ -77,15 +78,17 @@ var searchOnEngineChange = {
       return;
     var aWhere = this.where(event);
 
+	  setTimeout(function(){
+	    var submission = aEngine.getSubmission(aData, null);
+	    openUILinkIn(submission.uri.spec, aWhere, null, submission.postData);
+	  },0);
 
-    var submission = aEngine.getSubmission(aData, null);
-    openUILinkIn(submission.uri.spec, aWhere, null, submission.postData);
     if (this.ClearWordAfterSearch){
       this.clearWord();
-    }
+    } 
     if (this.KeepDefaultEngine){
       let defaultEngine = Services.search.getVisibleEngines({ })[0];
-      setTimeout(function(){Services.search.currentEngine = defaultEngine;},100);
+      setTimeout(function(){Services.search.currentEngine = defaultEngine;},0);
     }
   }
 };

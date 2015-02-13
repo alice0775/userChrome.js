@@ -5,6 +5,7 @@
 // @include        *
 // @compatibility  Firefox
 // @author         alice0775
+// @version        2015/01/15 nsIDOMXULTextBoxElement
 // @version        2014/07/10 fx34 Bug 1036694 - merge nsIMarkupDocumentViewer into nsIContentViewer
 // @version        2011/04/28
 // ==/UserScript==
@@ -34,7 +35,7 @@ var stopSelection = {
       var node = event.originalTarget;
       if (node instanceof HTMLInputElement ||
           node instanceof HTMLTextAreaElement ||
-          node instanceof XULTextBoxElement) {
+          node instanceof Components.interfaces.nsIDOMXULTextBoxElement) {
 
         var boxObject = window['piro.sakura.ne.jp'].boxObject;
 
