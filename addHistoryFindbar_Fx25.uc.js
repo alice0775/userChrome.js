@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2015/02/25 00:30 Fix tabview
 // @version        2014/10/25 12:30 Fix viewsource
 // @version        2014/10/22 23:30 Fix broken find from form-history
 // @version        2014/10/21 19:30 Fix broken ENTER etc due to XUL/migemo input
@@ -154,6 +155,9 @@ var historyFindbar = {
         } \
         #find-field2[_moz-xmigemo-inactivate-ime="true"] { \
           ime-mode: inactive !important; \
+        } \
+        #tab-view-deck:not([selectedIndex="0"]) ~ #historyfindbar { \
+          display:none; \
         } \
      '.replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(

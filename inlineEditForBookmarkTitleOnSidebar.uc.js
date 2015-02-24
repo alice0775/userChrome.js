@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/bookmarks/bookmarksPanel.xul
 // @compatibility Firefox 10-
 // @author        Alice0775
+// @version        2015/02/08 22:30 Fixed strictmode
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2012/08/12 22:30 Bug 761723 implement toString of function objects by saving source
 // ==/UserScript==
@@ -26,10 +27,10 @@ var inlineEditForBookmarkTitleOnSidebar = {
 
     var func = SidebarUtils.handleTreeKeyPress.toString();
     func = func.replace(
-      '{',
+      'let tree = aEvent.target;',
     ' \
       $& \
-      var tree = aEvent.target.parentNode; \
+      tree = aEvent.target.parentNode; \
       if (tree.editing) \
         return; \
     '
