@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 32.0a1
 // @author
+// @version        2015/03/11 00:00 change handle overflow
 // @version        2014/02/29 00:00 change workaround
 // @version        2014/02/28 00:00 Workaround Bug 1014246
 // @version        2013/07/12 17:00 by Alice0775  reset horizontal scroll (workaround Bug 893312)
@@ -141,11 +142,13 @@ var ProminentDomain = {
       case "aftercustomization":
         this.onAftercustomization();
         break;
-      case "overflow":
-        this.label.textContent = "...";
+      case "overflow": 
+        if(event.detail >= 1)
+          this.label.textContent = "...";
         break;
       case "underflow":
-        this.label.textContent = "";
+        if(event.detail >= 1)
+          this.label.textContent = "";
         break;
       case "unload":
         this.uninit();
