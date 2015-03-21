@@ -6,6 +6,7 @@
 // @compatibility  Firefox 35
 // @author         Original Author: pile0nades
 // @modifier       Alice0775
+// @version        2015/03/21 fix rich text mode issue #27
 // @version        2014/12/13 add note
 // @version        2014/12/13 for update buttons
 // @version        2014/12/13 for Stylish2.0
@@ -196,8 +197,8 @@
 
     function editinit(){
       if(window.navigator.platform.toLowerCase().indexOf("win") != -1){
-        _editor = "C:\\WINDOWS\\notepad.exe";             /* windows */
-        //_editor = "C:\\progra~1\\hidemaru\\hidemaru.exe"; /* windows */
+        //_editor = "C:\\WINDOWS\\notepad.exe";             /* windows */
+        _editor = "C:\\progra~1\\hidemaru\\hidemaru.exe"; /* windows */
         _dir_separator = '\\';                            /* windows */
         _os = 'win';                                      /* windows */
       }else{
@@ -273,7 +274,7 @@
         textBoxText = sstream.read(sstream.available());
         encode = target.getAttribute("encode");
         if (aWindow.sourceEditorType == "orion" || aWindow.sourceEditorType == "sourceeditor") {
-          aWindow.sourceEditor.setText(textBoxText);
+          aWindow.sourceEditor.setText(utf.convertStringToUTF8(textBoxText, encode, true));
         } else {
           if(textBoxText.length)
             target.value = utf.convertStringToUTF8(textBoxText, encode, true);
