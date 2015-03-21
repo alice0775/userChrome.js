@@ -197,8 +197,8 @@
 
     function editinit(){
       if(window.navigator.platform.toLowerCase().indexOf("win") != -1){
-        //_editor = "C:\\WINDOWS\\notepad.exe";             /* windows */
-        _editor = "C:\\progra~1\\hidemaru\\hidemaru.exe"; /* windows */
+        _editor = "C:\\WINDOWS\\notepad.exe";             /* windows */
+        //_editor = "C:\\progra~1\\hidemaru\\hidemaru.exe"; /* windows */
         _dir_separator = '\\';                            /* windows */
         _os = 'win';                                      /* windows */
       }else{
