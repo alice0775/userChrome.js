@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2015/03/29 00:00 Check window.windowState instead of sizemode attribute
 // @version        2014/12/28 23:00 Skip save window size if closed immediately
 // @version        2014-12-23 23:00 number of files
 // @version        2014-10-23 22:00 number of files
@@ -275,7 +276,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
     },
 
     saveSizePosition: function() {
-      if (document.getElementById("contentAreaDownloadsView").getAttribute("sizemode") == "normal") {
+      if (window.windowState == 3) {
         Services.prefs.setIntPref("browser.download.manager.size.height", window.outerHeight);
         Services.prefs.setIntPref("browser.download.manager.size.width", window.outerWidth);
         Services.prefs.setIntPref("browser.download.manager.size.screenX", window.screenX);
