@@ -1,5 +1,5 @@
 // ==UserScript==
-// @name           textLink.uc.js
+// @name           textLink_e10s.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TextLinkもどき
 // @include        main
@@ -11,6 +11,7 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2015/02/15 23:30 Bug 1127927 Make link saving safe for e10s
 // @version        2014/10/12 23:30 !
 // @version        2014/10/10 00:00 use gBrowser.selectedBrowser.contentWindowAsCPOW instead of content
 // @version        2014/10/10 00:00 Detect DOM instances by constructor function instead of XPCOM interface 
@@ -127,7 +128,7 @@ function ucjs_textlink(event){
   var str1, text, str2;
 
   //textarea かどうか
-  var node = isParentEditableNode(document.commandDispatcher.focusedElement);
+  var node = isParentEditableNode(_getFocusedWindow());
   if (!node) {
   // このif ブロックは textarea等以外の処理
   //ダブルクリックで選択された選択文字列のレンジを得る
@@ -492,44 +493,12 @@ function ucjs_textlink(event){
     }
 
     try{
-      if(event.shiftKey)
-        saveAsURL(uri, doc);
-      else
-        openNewTab(uri, doc);
+      openURL(uri, doc);
     }catch(e){}
     closeContextMenu();
   }
 
-  function saveAsURL(uri, doc){
-    var linkText = uri.spec;
-    var aReferrer = doc;
-    if (aReferrer instanceof HTMLDocument) {
-      aReferrer = aReferrer.documentURIObject;
-    }
-    //Thunderbird
-    if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
-      // URL Loading Security Check
-      const nsIScriptSecurityManager = Components.interfaces.nsIScriptSecurityManager;
-      var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
-                             .getService(nsIScriptSecurityManager);
-      try {
-        if (uri instanceof Components.interfaces.nsIURI)
-         secMan.checkLoadURIWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
-        else
-         secMan.checkLoadURIStrWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
-      } catch (e) {
-        throw "Load denied.";
-      }
-      saveURL( uri.spec, linkText, null, true, false ,aReferrer , doc);
-      return;
-    }
-
-    // urlSecurityCheck
-    urlSecurityCheck(uri.spec, _unremotePrincipal(doc.nodePrincipal));
-    saveURL( uri.spec, linkText, null, true, false, aReferrer , doc );
-  }
-
-  function openNewTab(uri, doc){
+  function openURL(uri, doc){
     //Thunderbird
     if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
       // Make sure we are allowed to open this URL
@@ -550,34 +519,26 @@ function ucjs_textlink(event){
       protocolSvc.loadUrl(uri);
       return;
     }
-    // urlSecurityCheck
-    urlSecurityCheck(uri.spec, _unremotePrincipal(doc.nodePrincipal));
-    if( (event.ctrlKey) ){
+
+    try {
+      var pribcipal = gBrowser.selectedBrowser.contentPrincipal;
+    } catch(ex) {
+      pribcipal = doc.nodePrincipal;
+    }
+
+    urlSecurityCheck(uri.spec, pribcipal);
+    if (event.shiftKey) {
+      openLinkIn(uri.spec, "save", {referrerURI: doc.referrer, 
+                                    referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
+                                    initiatingDoc: doc ? doc : null,
+      });
+    } else if (event.ctrlKey) {
       openLinkIn(uri.spec, "current", {});
-    }else{
+    } else {
       if ('TreeStyleTabService' in window)
         TreeStyleTabService.readyToOpenChildTab(activeBrowser().selectedTab);
       openLinkIn(uri.spec, "tab", {relatedToCurrent:true});
-      //openNewTabWith(uri.spec, null,  null, null, false)
     }
-  }
-
-  
-  function _unremotePrincipal(aRemotePrincipal) {
-    try {
-      let isRemote = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                    .getInterface(Ci.nsIWebNavigation)
-                    .QueryInterface(Ci.nsILoadContext)
-                    .useRemoteTabs;
-      if (isRemote) {
-        return Cc["@mozilla.org/scriptsecuritymanager;1"]
-                 .getService(Ci.nsIScriptSecurityManager)
-                 .getAppCodebasePrincipal(aRemotePrincipal.URI,
-                                          aRemotePrincipal.appId,
-                                          aRemotePrincipal.isInBrowserElement);
-      }
-    } catch(e) {}
-    return aRemotePrincipal;
   }
 
   function closeContextMenu() {
