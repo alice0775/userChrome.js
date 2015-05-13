@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2015/04/11 12:00 fix icon size due to bug 1147702
 // @version        2014/09/28 22:00 fix does not preserve position due to bug 1001090
 // @version        2014/06/20 22:00 do not collapse in gullscreen
 // @version        2014/06/07 20:00 slightly delayed to display toolbar
@@ -40,7 +41,8 @@ var addToolbarInsideLocationBar = {
       } \
  \
       /*default theme*/ \
-      #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{ \
+      #nav-bar #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{ \
+        width: 18px; \
         padding: 0 !important; \
       } \
  \

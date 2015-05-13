@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0
 // @author         alice0775
+// @version        2015/04/12 gContextMenu.target instead of document.popupNode;
 // @version        2011/04/15
 // ==/UserScript==
 var deleteHistoryByLink = {
@@ -80,7 +81,7 @@ var deleteHistoryByLink = {
   },
 
   onclick: function(aEvent) {
-    var target = document.popupNode;
+    var target = gContextMenu.target; //document.popupNode;
     this.target = null;
     while (target.nodeType == Node.ELEMENT_NODE) {
       try {

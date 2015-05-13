@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2015/05/08 00:00 remove padding due to Bug 1160734
 // @version        2015/03/29 00:00 Check window.windowState instead of sizemode attribute
 // @version        2014/12/28 23:00 Skip save window size if closed immediately
 // @version        2014-12-23 23:00 number of files
@@ -197,8 +198,8 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
       window.addEventListener("unload", this, false);
       var style = ' \
         @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
-        *|*:root { \
-          padding: 5px 5px 0 5px; \
+        #contentAreaDownloadsView { \
+          padding: 0 ; \
         } \
         #downloadsRichListBox:empty + #downloadsListEmptyDescription { \
           pointer-events: none; \

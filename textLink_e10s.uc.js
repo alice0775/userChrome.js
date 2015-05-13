@@ -11,6 +11,7 @@
 // @note           ctrl + Left DblClick : open current tab
 // @note           shift + Left DblClick: save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2015/04/08 12:30 focusedWindow
 // @version        2015/02/15 23:30 Bug 1127927 Make link saving safe for e10s
 // @version        2014/10/12 23:30 !
 // @version        2014/10/10 00:00 use gBrowser.selectedBrowser.contentWindowAsCPOW instead of content
@@ -413,11 +414,17 @@ function ucjs_textlink(event){
   }
 
   function _getFocusedWindow(){ //現在のウインドウを得る
-    var focusedWindow = document.commandDispatcher.focusedWindow;
-    if (!focusedWindow || focusedWindow == window)
-        return window.gBrowser.selectedBrowser.contentWindowAsCPOW;
-    else
-        return focusedWindow;
+    let element, focusedWindow;
+    try {
+	    [element, focusedWindow] = BrowserUtils.getFocusSync(document);
+      return focusedWindow;
+    } catch(ex) {
+	    focusedWindow = document.commandDispatcher.focusedWindow;
+	    if (!focusedWindow || focusedWindow == window)
+	      return window.gBrowser.selectedBrowser.contentWindowAsCPOW;
+	    else
+	      return focusedWindow;
+   }
   }
 
 //レンジの要素が所属する親ブロック要素を得る

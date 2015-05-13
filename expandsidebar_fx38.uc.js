@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2015/05/13 19:00 fix lastused command
 // @version        2015/02/20 22:00 fix due to Bug 1123517
 // @version        2014/10/31 22:00 fix due to Bug 714675
 // @version        2014/05/22 12:00 fix var
@@ -227,6 +228,7 @@ var ucjs_expand_sidebar = {
 	      this._box.collapsed = false;
 	      this._splitter.hidden = false;
         ucjs_expand_sidebar._loadKeepItSizes(commandID);
+        ucjs_expand_sidebar._lastcommand = commandID;
         ucjs_expand_sidebar._opend = true;
         if ("treeStyleTab" in gBrowser)
           gBrowser.treeStyleTab.updateFloatingTabbar(gBrowser.treeStyleTab.kTABBAR_UPDATE_BY_WINDOW_RESIZE);
@@ -488,8 +490,9 @@ var ucjs_expand_sidebar = {
     ucjs_expand_sidebar._checkWindowSideOrNot(event);
   },
 
-  _mousemove: function(event){
+  _mousemove: function(event){ 
     var self = ucjs_expand_sidebar;
+//self.debug(event);
     if (self._mtimer)
       return;
     self._mtimer = true;
@@ -677,7 +680,7 @@ var ucjs_expand_sidebar = {
     var sidebar_box = this._sidebar_box;
     if (sidebar_box.width == 0)
       sidebar_box.width = this._defaultWidth;//デフォルトサイドバー幅
-
+//this.debug(event.target.localName);
     if(/tabbrowser/.test(event.target.localName)){
       return
     }
