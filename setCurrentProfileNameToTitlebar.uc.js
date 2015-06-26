@@ -7,6 +7,7 @@
 // @author         Alice0775
 // @version        2012/12/31 00:00 Bug 818800 Remove the global private browsing service
 // ==/UserScript==
+// @version        2015/06/06 fix
 // @version        2012/08/06 08:00 remove hack privatebrowsingUI
 // @version        2010/09/25 23:00 Bug 598221 - Page Title not shown in Title Bar on Session Restore
 // @version        2009/07/25 18:00 Bug 506437 -  The titlebar of a tear off window is not updated correctly after having detached a tab
@@ -37,8 +38,8 @@
     var profiles = ini.match(/Name=.+/g);
     var profilesD = ini.match(/Path=.+/g);
     for ( var i = 0; i < profiles.length;i++) {
-      if (profilesD[i].indexOf(PrefD.leafName) >= 0) {
-        profiles[i].match(/Name=(.+)/);
+      if ((profilesD[i]+"$").indexOf(PrefD.leafName+"$") >= 0) {
+        profiles[i].match(/Name=(.+)$/);
         return RegExp.$1;
       }
     }

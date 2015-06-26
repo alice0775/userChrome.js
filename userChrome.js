@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.47mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.48mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2015/06/28 13:00 about:preferences#privacy etc
 // Date 2014/12/28 19:00 workaround loading xul on second browser
 // Date 2014/12/13 21:00 remove a debug log
 // Date 2014/12/13 21:00 allow to load scripts into about: in dialog
@@ -507,7 +508,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     //xulを読み込む
     runOverlays: function(doc){
       try {
-        var dochref = doc.location.href;
+        var dochref = doc.location.href.replace(/#.*$/, "");
       } catch (e) {
         return;
       }
@@ -557,7 +558,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     //uc.jsを読み込む
     runScripts: function(doc){
       try {
-        var dochref = doc.location.href;
+        var dochref = doc.location.href.replace(/#.*$/, "");
       } catch (e) {
         return;
       }
