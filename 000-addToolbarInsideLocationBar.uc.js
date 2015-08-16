@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 29+
 // @author         Alice0775
+// @version        2015/08/11 18:00 fix icon size due to bug Bug 1147702
 // @version        2015/04/11 12:00 fix icon size due to bug 1147702
 // @version        2014/09/28 22:00 fix does not preserve position due to bug 1001090
 // @version        2014/06/20 22:00 do not collapse in gullscreen
@@ -64,6 +65,12 @@ var addToolbarInsideLocationBar = {
       #ucjs-Locationbar-toolbar #bookmarks-menu-button[cui-areatype="toolbar"]:not(.bookmark-item):not([overflowedItem=true]) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon { \
         padding-top: 0; \
         padding-bottom: 0; \
+        padding-left: 2px; \
+        padding-right: 2px; \
+        width: 23px; \
+      } \
+      #ucjs-Locationbar-toolbar:not([customizing="true"]) #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-button > .toolbarbutton-icon { \
+        width: 18px; \
       } \
       '.replace(/\s+/g, " ");
 

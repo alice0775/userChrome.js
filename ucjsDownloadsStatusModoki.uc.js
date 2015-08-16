@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2015/05/08 00:00 remove padding due to Bug 1160734
 // @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
 // @version        2013/12/22 13:00 chromehidden
 // @version        2013/12/19 17:10 rename REMEMBERHISTOTY to DO_NOT_DELETE_HISTORY
@@ -178,9 +179,6 @@ var ucjsDownloadsStatusModoki = {
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
       #contentAreaDownloadsView { \
         -moz-box-orient: horizontal; \
-      } \
- \
-       *|*:root { \
         padding: 0; \
       } \
  \
