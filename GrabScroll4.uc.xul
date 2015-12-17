@@ -32,11 +32,12 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2015/09/18 00:00 writing-mode
+// ==/UserScript==
 // @version        2015/01/15 00:00 fix strict mode
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2013/01/08 02:00 Bug 827546
-// ==/UserScript==
 // @version        2012/01/30 01:00 pagehide, this.xxx = null;
 // @version        2011/10/30 Bug 684821 - Remove nsIDOMNSHTMLElement 
 // @version        2011/10/18 22:00 オーバーフロウなしのiframeの場合は親ドキュメント
@@ -860,24 +861,29 @@ var GrabScroll = {
         if (_scrollingView instanceof HTMLElement) {
           if (_scrollingView.localName.toUpperCase() == "HTML" ||
               _scrollingView.localName.toUpperCase() == "BODY") {
-            _scrollingView = _scrollingView.ownerDocument.defaultView;
-            if (_scrollingView.scrollMaxX > 0 &&
-                _scrollingView.scrollMaxY > 0) {
+            //alert(_scrollingView.scrollWidth - _scrollingView.clientWidth);
+            //_scrollingView = _scrollingView.ownerDocument.defaultView;
+            if (_scrollingView.scrollWidth - _scrollingView.clientWidth > 0 &&
+                _scrollingView.scrollHeight - _scrollingView.clientHeight> 0) {
               NSEW = !NSEW ? _scrollingView : NSEW;
-              EW = !EW ? _scrollingView : EW;
-              NS = !NS ? _scrollingView : NS;
+              EW = !EW ? _scrollingView.ownerDocument.defaultView : EW;
+              NS = !NS ? _scrollingView.ownerDocument.defaultView : NS;
             }
-            if (_scrollingView.scrollMaxX > 0) {
-              EW = !EW ? _scrollingView : EW;
+            if (_scrollingView.scrollWidth - _scrollingView.clientWidth > 0) {
+              EW = !EW ? _scrollingView.ownerDocument.defaultView : EW;
             }
-            if (_scrollingView.scrollMaxY > 0) {
-              NS = !NS ? _scrollingView : NS;
+            if (_scrollingView.scrollHeight - _scrollingView.clientHeight > 0) {
+              NS = !NS ? _scrollingView.ownerDocument.defaultView : NS;
             }
-            if (_scrollingView.frameElement && !NS && !EW && !NSEW) {
-               return this.getScrollView({originalTarget : _scrollingView.frameElement});
+            if (_scrollingView.ownerDocument.defaultView.frameElement && !NS && !EW && !NSEW) {
+               return this.getScrollView({originalTarget : _scrollingView.ownerDocument.defaultView.frameElement});
             }
-            break;
+            if (_scrollingView.localName.toUpperCase() == "BODY") 
+              continue;
+            else
+              break;
           }
+          
           if (_scrollingView.localName.toLowerCase() == "select") {
               _scrollingView.parentNode.focus();
             return [NS, EW, NSEW];

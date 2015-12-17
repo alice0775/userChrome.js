@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 40 non-e10s
 // @author         Alice0775
+// @version        2015/10/12 20:00 Nightly44.0a1 fixed contectMenu
 // @version        2015/08/12 20:00 Fixed due to Bug 1134769
 // @version        2014/10/16 07:00 Revert=デフォルトエンジンに戻す は一番最初の奴にするようにした
 // @version        2014/08/22 22:00 Fixed due to Bug 1051017.
@@ -592,29 +593,31 @@
         //search.xmlの置き換え
         searchbar.rebuildPopup=function(){
           var popup = searchbar._popup;
-          //Clear the popup, down to the first separator
-          var popup_org = [];
-          do {
-            if (!popup.lastChild)
-              return;
-            var menuitem = popup.lastChild.cloneNode(true);
-            popup_org.push(menuitem);
-            popup.removeChild(popup.lastChild);
-          } while (popup.lastChild && menuitem.localName != "menuseparator")
-          while (popup.lastChild)
-            popup.removeChild(popup.lastChild);
+          if (popup) {
+            //Clear the popup, down to the first separator
+            var popup_org = [];
+            do {
+              if (!popup.lastChild)
+                return;
+              var menuitem = popup.lastChild.cloneNode(true);
+              popup_org.push(menuitem);
+              popup.removeChild(popup.lastChild);
+            } while (popup.lastChild && menuitem.localName != "menuseparator")
+            while (popup.lastChild)
+              popup.removeChild(popup.lastChild);
 
-          conqueryModoki.makemenu(popup, true); //検索バー用ポップアップメニュー作成
-          //メニューに検索バーの管理と直前のセパレータを追加
-          for (var i = popup_org.length - 1; i > -1; i--) {
-            popup.appendChild(popup_org[i]);
-          }
-          if (conqueryModoki.getVer() > 2) { //trunc Gecko/2007070706 Minefield/3.0a7pre でこれがいる
-            document.getAnonymousElementByAttribute(searchbar, "anonid", "open-engine-manager")
-                    .setAttribute("oncommand","document.getElementById('searchbar').openManager(event);");
+            conqueryModoki.makemenu(popup, true); //検索バー用ポップアップメニュー作成
+            //メニューに検索バーの管理と直前のセパレータを追加
+            for (var i = popup_org.length - 1; i > -1; i--) {
+              popup.appendChild(popup_org[i]);
+            }
+            if (conqueryModoki.getVer() > 2) { //trunc Gecko/2007070706 Minefield/3.0a7pre でこれがいる
+              document.getAnonymousElementByAttribute(searchbar, "anonid", "open-engine-manager")
+                      .setAttribute("oncommand","document.getElementById('searchbar').openManager(event);");
+            }
           }
           //second search -0.4.2008052301
-          searchbar._engines = searchbar.searchService.getVisibleEngines({ });
+          searchbar._engines = conqueryModoki.browserSearchService.getVisibleEngines({ });
 
           var count = 0;
           var timer = setInterval(function(){
@@ -668,9 +671,11 @@
       if (this.searchBar()){
         var button = document.getAnonymousElementByAttribute(this.searchBar(),
                                                              "anonid", "searchbar-engine-button");
-        button.setAttribute('tooltiptext', this.tooltipSB);
-        button.addEventListener("click", this, false);
-        button.addEventListener("dblclick", this, false);
+        if (button) {
+          button.setAttribute('tooltiptext', this.tooltipSB);
+          button.addEventListener("click", this, false);
+          button.addEventListener("dblclick", this, false);
+        }
       }
     },
 

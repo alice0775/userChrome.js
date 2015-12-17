@@ -1,5 +1,9 @@
 <?xml version="1.0"?>
 <?xml-stylesheet href="data:text/css,@namespace%20url('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul');@namespace%20html%20url('http://www.w3.org/1999/xhtml');
+%23GrabScroll-status {
+  padding-left:0px !important;
+  padding-right:0px !important;
+}
 %23GrabScroll-image {
   list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlklEQVQ4jaWTuw0EIQxEd8UFBFeEczoYCYkm6IeiSU+zySIZjs9+JrKQ52GDvW1jGQA84905953k/gsASVJBlvoAKAajAeq8yu/eqE0l1uciYqcl6+QeYNpSm9wCvPe/nDNDCKxMABhjNG0VI1VVFFNKia8Ad/QK0HvE/Q5k+AuP+n8CWY72DHJpL0aAy0slIlYv0Gp8D2h34zRWWYjjAAAAAElFTkSuQmCC');
 }
@@ -26,6 +30,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2014/10/27 17:30 adhoc adhoc adhoc fix for Bug 962249 RTL
 // @version        2014/05/13 10:30 fix second window
 // @version        2014/05/12 08:30 Working on Firefox29+
 // ==/UserScript==
@@ -770,7 +775,7 @@ var GrabScroll = {
 
   toggle: function(flag){
     if(typeof flag =='undefined')
-      var flag = this.getPref("grabScroll.enable","bool",true);
+      flag = this.getPref("grabScroll.enable","bool",true);
     this.setPref("grabScroll.enable","bool",!flag);
     this.setIcon(!flag);
   },
@@ -864,26 +869,60 @@ var GrabScroll = {
 
     if (event.originalTarget.ownerDocument.contentType == "application/xml") {
       _scrollingView = event.originalTarget.ownerDocument.defaultView;
-      if (_scrollingView.scrollMaxX > 0) {
-        if (_scrollingView.scrollMaxY > 0) {
+
+      if (_scrollingView.scrollMaxX != _scrollingView.scrollMinX) {
+        if (_scrollingView.scrollMaxY != _scrollingView.scrollMinY) {
           NSEW = _scrollingView;
           NS = _scrollingView;
+          EW = _scrollingView;
+        } else {
+          EW = _scrollingView;
         }
-        EW = _scrollingView;
+      } else if (_scrollingView.scrollMaxY != _scrollingView.scrollMinY) {
+        NS = _scrollingView;
+      } else if (_scrollingView.frameElement) {
+        //this.findNearestScrollableElement(_scrollingView.frameElement);
+      } else {
+        // abort scrolling
+      }
+
+      if (_scrollingView.scrollMaxX > 0) {
+        if (_scrollingView.scrollMaxY > 0) {
+          NSEW = !NSEW ? _scrollingView : NSEW;
+          NS = !NS ? _scrollingView : NS;
+        }
+        EW = !EW ? _scrollingView : EW;
       }
       else if (_scrollingView.scrollMaxY > 0) {
-        NS = _scrollingView;
+        NS = !NS ? _scrollingView : NS;
       }
       else {
         return [NS, EW, NSEW];
       }
-   } else {
 
+   } else {
       for (_scrollingView = event.originalTarget; _scrollingView; _scrollingView = _scrollingView.parentNode) {
         if (_scrollingView instanceof HTMLElement) {
           if (_scrollingView.localName.toUpperCase() == "HTML" ||
               _scrollingView.localName.toUpperCase() == "BODY") {
             _scrollingView = _scrollingView.ownerDocument.defaultView;
+
+            if (_scrollingView.scrollMaxX != _scrollingView.scrollMinX) {
+              if (_scrollingView.scrollMaxY != _scrollingView.scrollMinY) {
+                NSEW = !NSEW ? _scrollingView : NSEW;
+                EW = !EW ? _scrollingView : EW;
+                NS = !NS ? _scrollingView : NS;
+              } else {
+                 EW = !EW ? _scrollingView : EW;
+              }
+            } else if (_scrollingView.scrollMaxY != _scrollingView.scrollMinY) {
+              NS = !NS ? _scrollingView : NS;
+            } else if (_scrollingView.frameElement) {
+              //return this.getScrollView({originalTarget : _scrollingView.frameElement});
+            } else {
+              // abort scrolling
+            }
+
             if (_scrollingView.scrollMaxX > 0 &&
                 _scrollingView.scrollMaxY > 0) {
               NSEW = !NSEW ? _scrollingView : NSEW;
@@ -897,8 +936,9 @@ var GrabScroll = {
               NS = !NS ? _scrollingView : NS;
             }
             if (_scrollingView.frameElement && !NS && !EW && !NSEW) {
-               return this.getScrollView({originalTarget : _scrollingView.frameElement});
+              return this.getScrollView({originalTarget : _scrollingView.frameElement});
             }
+            
             break;
           }
           if (_scrollingView.localName.toLowerCase() == "select") {

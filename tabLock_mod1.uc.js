@@ -4,6 +4,7 @@
 // @description    tabLock
 // @include        *
 // @compatibility  17-25
+// @version        2014/10/18 00:00 skip to check isNext/Prev/Hash for some url 
 // @version        2014/06/21 07:00 Fixed due to Bug 996053 
 // @version        2014/02/21 23:00  Multiple Tab Handler #66 
 // @version        2013/12/21 23:00 exclude "prevent"
@@ -789,6 +790,11 @@ patch: {
   }
 
   gBrowser.isNextLink = function (aNode){
+    if (/^https?:\/\/hg\.mozilla\.org/.test(aNode.href) || 
+        /^https?:\/\/ftp\.mozilla\.org/.test(aNode.href) ||
+        /^https?:\/\/bugzilla\.mozilla\.org/.test(aNode.href))
+      return false;
+
     if(!tabLock.getPref('userChrome.tabLock.ignoreNextPrevLink','bool',tabLock.ignoreNextPrevLink) || !aNode) return false;
     var b = gBrowser.getBrowserForDocument(aNode.ownerDocument);
     if (!b || b.docShell.busyFlags || b.docShell.restoringDocument)
@@ -833,6 +839,11 @@ patch: {
   }
 
   gBrowser.isPrevLink = function (aNode){
+    if (/^https?:\/\/hg\.mozilla\.org/.test(aNode.href) || 
+        /^https?:\/\/ftp\.mozilla\.org/.test(aNode.href) ||
+        /^https?:\/\/bugzilla\.mozilla\.org/.test(aNode.href))
+      return false;
+
     if(!tabLock.getPref('userChrome.tabLock.ignoreNextPrevLink','bool',tabLock.ignoreNextPrevLink) || !aNode) return false;
     var b = gBrowser.getBrowserForDocument(aNode.ownerDocument);
     if (!b || b.docShell.busyFlags || b.docShell.restoringDocument)
@@ -905,6 +916,11 @@ patch: {
   }
 
   gBrowser.isHashLink = function (aNode){
+    if (/^https?:\/\/hg\.mozilla\.org/.test(aNode.href) || 
+        /^https?:\/\/ftp\.mozilla\.org/.test(aNode.href) ||
+        /^https?:\/\/bugzilla\.mozilla\.org/.test(aNode.href))
+      return false;
+
     if(!tabLock.getPref('userChrome.tabLock.ignoreHashLink','bool',tabLock.ignoreHashLink) || !aNode) return false;
     var b = gBrowser.getBrowserForDocument(aNode.ownerDocument);
     if (!b || b.docShell.busyFlags || b.docShell.restoringDocument)

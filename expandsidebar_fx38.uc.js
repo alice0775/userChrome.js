@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2015/08/29 00:00 fix lastused command
 // @version        2015/05/13 19:00 fix lastused command
 // @version        2015/02/20 22:00 fix due to Bug 1123517
 // @version        2014/10/31 22:00 fix due to Bug 714675
@@ -319,6 +320,9 @@ var ucjs_expand_sidebar = {
     //起動時 閉じておく?
 
     setTimeout(function(self) {
+      var command = self._sidebar_box.getAttribute("sidebarcommand");
+      if (command)
+        self._lastcommand = command;
       var broadcasters = document.getElementsByAttribute("group", "sidebar");
       if (self._CLOSE_AT_STARTUP) {
         SidebarUI.hide();
