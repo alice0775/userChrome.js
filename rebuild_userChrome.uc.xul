@@ -8,6 +8,8 @@
 // @include        main
 // @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
 // @author         Alice0775
+// @version        2015/12/04 24:00 Bug 1177310 [e10s] Stop using CPOWs on application shutdow
+// @version        2013/03/20 24:00 force cancel default right click action for unknown modification
 // @version        2013/03/22 08:02 Added "use strict"
 // @version        2013/03/22 08:01 Fixed commands to work properly, even if menus had been moved into other place
 // @version        2013/03/22 08:00 Fixed dragdrop target
@@ -327,7 +329,7 @@
             menuitem = document.createElement('menuitem');
             menuitem.setAttribute('label',script.filename);
             menuitem.setAttribute('oncommand','userChromejs.chgScriptStat(this.script.filename);');
-            menuitem.setAttribute('onclick','if(event.button != 0) {event.stopPropagation();event.preventDefault();userChromejs.clickScriptMenu(event);}');
+            menuitem.setAttribute('onclick','userChromejs.clickScriptMenu(event);');
             menuitem.setAttribute('type','checkbox');
             menuitem.setAttribute('autocheck','false');
             menuitem.setAttribute('checked',!userChrome_js.scriptDisable[script.filename] );
@@ -347,7 +349,7 @@
             menuitem = document.createElement('menuitem');
             menuitem.setAttribute('label',script.filename);
             menuitem.setAttribute('oncommand','userChromejs.chgScriptStat(this.script.filename);');
-            menuitem.setAttribute('onclick','if(event.button != 0) {event.stopPropagation();event.preventDefault();userChromejs.clickScriptMenu(event);}');
+            menuitem.setAttribute('onclick','userChromejs.clickScriptMenu(event);');
             menuitem.setAttribute('type','checkbox');
             menuitem.setAttribute('autocheck','false');
             menuitem.setAttribute('checked',!userChrome_js.scriptDisable[script.filename] );
@@ -364,6 +366,8 @@
 
     clickDirMenu: function(event){
       if(event.button == 1 || event.button == 2){
+        event.stopPropagation();
+        event.preventDefault();
         userChromejs.chgDirStat(event.target.dirName);
         if(event.target.firstChild && event.target.firstChild.firstChild)
           event.target.firstChild.firstChild.setAttribute('checked',!userChrome_js.dirDisable[event.target.dirName] );
@@ -376,6 +380,8 @@
 
     clickDirMenuitem: function(event,stop){
       if(event.button == 1 || event.button == 2){
+        event.stopPropagation();
+        event.preventDefault();
         userChromejs.chgDirStat(event.target.dirName);
         event.target.setAttribute('checked',!userChrome_js.dirDisable[event.target.dirName] );
         if(!stop && !!userChrome_js.dirDisable[event.target.dirName])
@@ -387,9 +393,13 @@
 
     clickScriptMenu: function(event){
       if(event.button==1){
+        event.stopPropagation();
+        event.preventDefault();
         userChromejs.chgScriptStat(event.target.script.filename);
         event.target.setAttribute('checked',!userChrome_js.scriptDisable[event.target.script.filename] );
       }else if(event.button==2){
+        event.stopPropagation();
+        event.preventDefault();
         this.launchEditor(event.target.script);
       }
     },
@@ -524,6 +534,13 @@
     },
 
     restartApp: function() {
+      if ("BrowserUtils" in window && typeof BrowserUtils.restartApplication == "function") {
+        Components.classes["@mozilla.org/xre/app-info;1"]
+                  .getService(Components.interfaces.nsIXULRuntime).invalidateCachesOnRestart();
+        BrowserUtils.restartApplication();
+        return;
+      }
+
       const appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                         .getService(Components.interfaces.nsIAppStartup);
 

@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Alice0775
+// @version        2015/12/04 24:00 Bug 1177310 [e10s] Stop using CPOWs on application shutdow
 // @version
 // @Note
 // ==/UserScript==
@@ -76,6 +77,15 @@ try{
   restartApp: function(clearCache) {
     if (typeof clearCache == 'undefined')
       clearCache = false;
+
+    if ("BrowserUtils" in window && typeof BrowserUtils.restartApplication == "function") {
+      if (clearCache) {
+        let XRE = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
+        XRE.invalidateCachesOnRestart();
+      }
+      BrowserUtils.restartApplication();
+      return;
+    }
 
     const appStartup = Components.classes["@mozilla.org/toolkit/app-startup;1"]
                       .getService(Components.interfaces.nsIAppStartup);
