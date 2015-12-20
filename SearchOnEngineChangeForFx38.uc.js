@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 38.0+
 // @author         Alice0775
+// @version        2015/12/20 20:00 Fix default search engine should be preference setting for new searchbar
 // @version        2015/12/20 10:00 Fix nsIPrefBranch Service
 // @version        2015/12/20 10:00 Fix Firefox 38.0+
 // @version        2015/01/26 10:00 Fix Focus the content area
@@ -44,7 +45,7 @@ var searchOnEngineChange = {
           searchOnEngineChange.clearWord();
         } 
         if (searchOnEngineChange.KeepDefaultEngine){
-          let defaultEngine = Services.search.getVisibleEngines({ })[0];
+          let defaultEngine = searchOnEngineChange.getDefaultEngine();
           setTimeout(function(){Services.search.currentEngine = defaultEngine;},0);
         }
       }
@@ -56,6 +57,25 @@ var searchOnEngineChange = {
     }
 
     window.addEventListener("aftercustomization", this, false);
+  },
+
+  isOldSearchBar: function() {
+    try {
+      if (typeof classicthemerestorerjs != "undefined")
+        return this.xPref.getBoolPref("extensions.classicthemerestorer.ctroldsearch");
+    } catch(x) {}
+    try {
+      return !this.xPref.getBoolPref("browser.search.showOneOffButtons");
+    } catch(x) {}
+    return false;
+  },
+
+  getDefaultEngine: function() {
+    if (!this.isOldSearchBar()) {
+      let aEngineName = this.xPref.getCharPref("browser.search.defaultenginename");
+      return Services.search.getEngineByName(aEngineName);
+    }
+    return Services.search.getVisibleEngines({ })[0];
   },
 
   handleEvent: function(event){
