@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 38.0+
 // @author         Alice0775
+// @version        2015/12/20 21:00 Ignore garbage pref
 // @version        2015/12/20 20:00 Fix default search engine should be preference setting for new searchbar
 // @version        2015/12/20 10:00 Fix nsIPrefBranch Service
 // @version        2015/12/20 10:00 Fix Firefox 38.0+
@@ -61,12 +62,16 @@ var searchOnEngineChange = {
 
   isOldSearchBar: function() {
     try {
+      // new searchbar
       if (typeof classicthemerestorerjs != "undefined")
         return this.xPref.getBoolPref("extensions.classicthemerestorer.ctroldsearch");
     } catch(x) {}
     try {
-      return !this.xPref.getBoolPref("browser.search.showOneOffButtons");
+      // old searchbar
+      if (this.popup)
+        return !this.xPref.getBoolPref("browser.search.showOneOffButtons");
     } catch(x) {}
+    // default new searchbar
     return false;
   },
 
