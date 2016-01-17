@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         2ch
+// @version        2015/10/26 00:00 Fix Bug 1218162
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2009/05/14 00:00 isempty
 // @modified       by Alice0775
@@ -35,7 +36,12 @@
       if (STOP_DND && aEvent && (aEvent.type == "dragdrop"||aEvent.type == "drop")){
         textBox.removeAttribute("isempty");
         searchBar.removeAttribute('empty');
-        textBox.focus();
+        textBox.blur();
+        setTimeout(function(){
+          textBox.focus();
+          var len = textBox.value.length;
+          textBox.setSelectionRange(0, len);
+        }, 0);
         var evt = document.createEvent("UIEvents");
         evt.initUIEvent("input", true, true, window, 0);
         searchBar.dispatchEvent(evt);
