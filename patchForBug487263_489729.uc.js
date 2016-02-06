@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 44
 // @author         Alice0775
+// @version        2016/02/07 01:01 var
 // @version        2016/02/07 01:00 stop tab detach
 // ==/UserScript==
 // @version        2009/06/03 00:00 TMPとの互換, Bug 493978再考
@@ -12,9 +13,9 @@
 // @version        2009/05/03 19:00 コンテンエリア判定
 // @version        2009/05/02 19:00 ブラウザの外へのタブ分離と, センシビリティの改善
 gBrowser.tabContainer.addEventListener("dragend", function(event){
-   var dt = event.dataTransfer;
+  var dt = event.dataTransfer;
   if (dt.mozTypesAt(0)[0] == TAB_DROP_TYPE) { // tab copy or move
-    draggedTab = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
+    var draggedTab = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
     // our drop then
     if (draggedTab) {
       event.preventDefault();
