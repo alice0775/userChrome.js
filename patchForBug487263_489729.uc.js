@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 44
 // @author         Alice0775
+// @version        2016/02/07 20:00 fixed tab animation
 // @version        2016/02/07 01:01 var
 // @version        2016/02/07 01:00 stop tab detach
 // ==/UserScript==
@@ -18,6 +19,7 @@ gBrowser.tabContainer.addEventListener("dragend", function(event){
     var draggedTab = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
     // our drop then
     if (draggedTab) {
+      this._finishAnimateTabMove();
       event.preventDefault();
       event.stopPropagation();
     }
