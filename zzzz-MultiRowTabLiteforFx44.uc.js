@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 44
 // @author         Alice0775
+// @version        2016/02/09 00:01 workaround css for lwt
 // @version        2016/02/09 00:00
 // ==/UserScript==
 "user strict";
@@ -127,7 +128,7 @@ function zzzz_MultiRowTabLite(){
         border-color: rgba(0,0,0,.2) !important; \
         border-width: 1px 1px 0 1px !important; \
         text-shadow: 0 0 4px rgba(255,255,255,.75) !important; \
-        background: rgba(255,255,255,.27) !important; \
+        /*xx background: rgba(255,255,255,.27) !important; */\
         background-clip: padding-box !important; \
 \
         height:{TAB_HEIGHT}px; \
@@ -152,12 +153,13 @@ function zzzz_MultiRowTabLite(){
        border-left-color: rgba(0,0,0,.25) !important; \
     } \
 \
+/*xx\
     #TabsToolbar .tabbrowser-tab[selected] { \
         background: #EAF2FA !important; \
         background-clip: padding-box !important; \
         border-color: rgba(0,0,0,.25) !important; \
     } \
-\
+*/\
     #TabsToolbar .tabs-newtab-button:hover, \
     #TabsToolbar .tabbrowser-tab:hover:not([selected]) { \
         border-color: rgba(0,0,0,.2) !important; \
@@ -175,8 +177,12 @@ function zzzz_MultiRowTabLite(){
     } \
 \
     #TabsToolbar .tab-background-middle { \
-        margin: 0 !important; \
-        background: transparent !important; \
+        /*xxmargin: 0 !important; \
+         background: transparent !important;*/ \
+    } \
+\
+    #TabsToolbar .tab-background-middle[selected] { \
+        margin-top: -2px !important; /*xxx*/\
     } \
 \
     #TabsToolbar .tabbrowser-tab:after, \
