@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    多段タブもどき実験版 CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 44
+// @compatibility  Firefox 44, 45
 // @author         Alice0775
+// @version        2016/03/09 00:01 Bug 1222490 - Actually remove panorama for Fx45+
 // @version        2016/02/09 00:01 workaround css for lwt
 // @version        2016/02/09 00:00
 // ==/UserScript==
@@ -239,14 +240,15 @@ function zzzz_MultiRowTabLite(){
     return H;
   }
 
-  TabView.hide = function() {
-        if (!this.isVisible()) {
-        return;
+  if ("TabView" in window)
+    TabView.hide = function() {
+          if (!this.isVisible()) {
+          return;
+      }
+      this._window.UI.exit();
+      setTabWidthAutomatically({type:"resize"});
+      setTimeout(function(){setTabWidthAutomatically({type:"resize"});}, 250);
     }
-    this._window.UI.exit();
-    setTabWidthAutomatically({type:"resize"});
-    setTimeout(function(){setTabWidthAutomatically({type:"resize"});}, 250);
-  }
 
   //D&Dの調整
 /*
