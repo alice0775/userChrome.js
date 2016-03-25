@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    global_FindTerm + find-label
 // @include        main
-// @compatibility  Firefox 31-
+// @compatibility  Firefox 45-
 // @author         Alice0775
+// @version        2016/03/07 08:00 Bug 1134769
 // @version        2015/08/07 08:00 fix a bug copy term
 // @version        2015/02/09 23:00 fix a bug copy term
 // @version        2015/01/09 08:00 workaround
@@ -60,12 +61,7 @@ var global_FindTerm = {
   },
 
 	onFndbarOpen: function() {
-    if ("BrowserUtils" in window) {
-	    var [elm, win] = BrowserUtils.getFocusSync(document);
-    } else {
-      win = window;
-    }
-    sel = win.getSelection().toString();
+    let sel = BrowserUtils.getSelectionDetails(window).text
 
     if (!!sel)
       this.findTerm = sel;
@@ -76,7 +72,7 @@ var global_FindTerm = {
 	},
 
   copyTerm: function() {
-    if(!!this.findTerm && gBrowser.isFindBarInitialized(gBrowser.selectedTab) && !gFindBar.hidden) {
+    if(gBrowser.isFindBarInitialized(gBrowser.selectedTab) && !gFindBar.hidden) {
       this.setTerm(this.findTerm);
     }
   },
@@ -138,7 +134,7 @@ var global_FindTerm = {
     }
 
     this.findTerm = sel;
-    this.setTerm(sel);
+    this.setTerm(this.findTerm);
     this.selectFindField();
     /*
     var evt = document.createEvent("UIEvents");
@@ -148,20 +144,17 @@ var global_FindTerm = {
   },
 
   setTerm: function(val) {
-    if (gFindBar.hidden)
-      return;
-    var oldVal = gFindBar._findField.value;
+    var oldVal= gFindBar._findField.value;
     if (oldVal != val) {
-      gFindBar._findField.value = val;
-      gFindBar._find(val);
-      /*
+	    gFindBar._findField.value = val;
+	    /*
       gFindBar.browser.finder.fastFind(val, gFindBar._findMode == gFindBar.FIND_LINKS,
 	                             gFindBar._findMode != gFindBar.FIND_NORMAL);
 	    */
-      //gFindBar._updateFindUI();
-      if ("historyFindbar" in window) {
-         historyFindbar._findField2.value = val;
-      }
+      gFindBar._updateFindUI();
+    }
+    if ("historyFindbar" in window) {
+       historyFindbar._findField2.value = val;
     }
   },
 

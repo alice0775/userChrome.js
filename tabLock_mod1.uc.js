@@ -4,6 +4,8 @@
 // @description    tabLock
 // @include        *
 // @compatibility  17-25
+// @version        2016/03/19 00:00 TST
+// @version        2016/03/18 00:00 update scanner
 // @version        2014/10/18 00:00 skip to check isNext/Prev/Hash for some url 
 // @version        2014/06/21 07:00 Fixed due to Bug 996053 
 // @version        2014/02/21 23:00  Multiple Tab Handler #66 
@@ -31,44 +33,72 @@
 
 patch: {
   if (location.href == "chrome://updatescan/content/updatescan.xul") {
-    var func = USc_updatescan._diffItemThisWindow.toString();
-    func = func.replace(
-      'if (diffURL) {',
-      '$& \
-      var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
-                         .getService(Components.interfaces.nsIWindowMediator); \
-      var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
-      if (mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
-          !/^\s*(javascript:|data:)/.test(diffURL)) { \
-        mainWindow.gBrowser.loadOneTab(diffURL, null, null, null, false, null); \
-        return; \
-      }'
-    );
-    eval ("USc_updatescan._diffItemThisWindow = " + func);
-  }
-
-
-  if (location.href == "chrome://browser/content/places/places.xul" ||
-      location.href == "chrome://browser/content/bookmarks/bookmarksPanel.xul" ||
-      location.href == "chrome://browser/content/history/history-panel.xul") {
-    var func = openLinkIn.toString();
-    if (!/isLockTab/.test(func)) {
+    if ("USc" in window) {
+      var func = window.USc_updatescan._diffItemThisWindow.toString();
       func = func.replace(
-        /{/,
-        '{ \
-          var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
-                             .getService(Components.interfaces.nsIWindowMediator); \
-          var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
-          if (url && where == "current" && "isLockTab" in mainWindow.gBrowser && \
-              mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
-              !/^\s*(javascript:|data:)/.test(url)) { \
-            where = "tab"; \
-          }'
+        'if (diffURL) {',
+        '$& \
+        var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
+                           .getService(Components.interfaces.nsIWindowMediator); \
+        var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
+        if (mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
+            !/^\s*(javascript:|data:)/.test(diffURL)) { \
+          mainWindow.gBrowser.loadOneTab(diffURL, null, null, null, false, null); \
+          return; \
+        }'
       );
-      eval ("openLinkIn = " + func);
+      eval ("window.USc_updatescan._diffItemThisWindow = " + func);
+    } else if ("UpdateScanner" in window) {
+      var func = window.UpdateScanner.Updatescan._diffItemThisWindow.toString();
+      func = func.replace(
+        'if (diffURL) {',
+        '$& \
+        var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
+                           .getService(Components.interfaces.nsIWindowMediator); \
+        var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
+        if (mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
+            !/^\s*(javascript:|data:)/.test(diffURL)) { \
+          mainWindow.gBrowser.loadOneTab(diffURL, null, null, null, false, null); \
+          return; \
+        }'
+      );
+      eval ("window.UpdateScanner.Updatescan._diffItemThisWindow = " + func);
     }
   }
 
+  if ("openLinkIn" in window) {
+    var func = openLinkIn.toString();
+    if (!/isLockTab/.test(func)) {
+      if (/aUrl/.test(func) && /aWhere/.test(func)) {
+        func = func.replace(
+          /{/,
+          '{ \
+            var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
+                               .getService(Components.interfaces.nsIWindowMediator); \
+            var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
+            if (aUrl && aWhere == "current" && "isLockTab" in mainWindow.gBrowser && \
+                mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
+                !/^\s*(javascript:|data:)/.test(aUrl)) { \
+              aWhere = "tab"; \
+            }'
+        );
+      } else {
+        func = func.replace(
+          /{/,
+          '{ \
+            var wm = Components.classes["@mozilla.org/appshell/window-mediator;1"] \
+                               .getService(Components.interfaces.nsIWindowMediator); \
+            var mainWindow = wm.getMostRecentWindow("navigator:browser"); \
+            if (url && where  == "current" && "isLockTab" in mainWindow.gBrowser && \
+                mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) && \
+                !/^\s*(javascript:|data:)/.test(url)) { \
+              where  = "tab"; \
+            }'
+        );
+      }
+      eval ("openLinkIn = " + func);
+    }
+  }
 
   if (location.href != "chrome://browser/content/browser.xul")
     break patch;
@@ -257,16 +287,6 @@ patch: {
         }'
       );
       eval("gURLBar.handleCommand =" + func);
-
-      //openUILinkIn whereToOpenLinkを書き換え現在のタブかつロックタブなら 新規タブに
-      eval("openUILinkIn ="+openUILinkIn.toSource().replace(
-      'switch (where) {',
-      'if (where == "current" && gBrowser.isLockTab(gBrowser.selectedTab) && \
-           !/^\s*(javascript:|data:)/.test(url) ) \
-          where = "tab"; \
-      $&'
-      ));
-  //this.debug('openUILinkIn: \n'+openUILinkIn.toString());
 
 
     //Left Click (Home Button, WizzRSS)

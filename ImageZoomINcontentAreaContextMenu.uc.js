@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0
 // @author         Alice0775
+// @version        2016/03/30 00:00 style
 // @version        2013/04/14 21:00 checking element using Ci.nsIImageLoadingContent instead of HTMLImageElement
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        LastMod 2009/02/18 14:00 スタイル幅高さが指定されていても実行できるように
@@ -278,8 +279,8 @@ var ImageZoomUtil = {
     }
     var w = node.getAttribute("originalWidth");
     var h = node.getAttribute("originalHeight");
-    node.width  = w * zoom;
-    node.height = h * zoom;
+    node.style.setProperty("width", w * zoom + "px", "");
+    node.style.setProperty("height", h * zoom + "px", "");
   },
 
   zoomBy: function(zoom, node) {
@@ -292,8 +293,8 @@ var ImageZoomUtil = {
     }
     var w = node.width;
     var h = node.height;
-    node.width  = w * zoom;
-    node.height = h * zoom;
+    node.style.setProperty("width", w * zoom + "px", "");
+    node.style.setProperty("height", h * zoom + "px", "");
   },
 
   reset: function(node) {
@@ -301,8 +302,8 @@ var ImageZoomUtil = {
     if (!(node instanceof Ci.nsIImageLoadingContent ||  node.nodeName.match(/img/i)))
       return;
     if (node.hasAttribute("originalWidth")) {
-      node.width  = node.getAttribute("originalWidth");
-      node.height = node.getAttribute("originalHeight");
+      node.style.setProperty("width", node.getAttribute("originalWidth") + "px", "");
+      node.style.setProperty("height", node.getAttribute("originalHeight") + "px", "");
     }
   }
 }

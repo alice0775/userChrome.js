@@ -60,7 +60,9 @@ var ucjs_toggleFindBar = {
 
   init: function(){
 
-    var dummy = gFindBar;
+    try {
+      gFindBar;
+    } catch(ee) {}
     if (!document.getElementById("FindToolbar") &&
         typeof gFindBarInitialized != 'undefined' &&
         !gFindBarInitialized) {

@@ -6,8 +6,9 @@
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
 // @include        chrome://browser/content/web-panels.xul
-// @compatibility  Firefox 3.0 3.1 3.2
+// @compatibility  Firefox 45
 // @author         zeniko
+// @version        2016/03/12 use viewSource
 // @version        2015/04/12 gContextMenu.target instead of document.popupNode;
 // @version        2009/05/19 source view windowのリンクからもView Link Sourceできるように
 // @version        2008/12/23 Fx 3.0 3.1 3.2
@@ -164,12 +165,7 @@ var viewLinkSource = {
 
   ViewSourceOfURL: function(aURL, aPageDescriptor, aDocument)
   {
-    if (getBoolPref("view_source.editor.external", false)) {
-      this.browserWindow.gViewSourceUtils.openInExternalEditor(aURL, aPageDescriptor, aDocument);
-    }
-    else {
-      this.browserWindow.gViewSourceUtils.openInInternalViewer(aURL, aPageDescriptor, aDocument);
-    }
+    this.browserWindow.gViewSourceUtils.viewSource(aURL, aPageDescriptor, aDocument, true);
   },
 
   handleEvent: function(aEvent) {

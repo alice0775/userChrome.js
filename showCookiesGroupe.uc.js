@@ -2,9 +2,11 @@
 // @name           showCookiesGroup.uc.xul
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    クッキー関連が隠されいるのを表示
+// @include        about:preferences
 // @include        chrome://browser/content/preferences/preferences.xul
-// @compatibility  Firefox 14+
+// @compatibility  Firefox 45
 // @author         Alice0775
+// @version        2016/03/24 00:00 fix in-content preferences
 // @version        2013/03/04 00:00 fix bug of check default value, Fx22
 // @version        2013/02/25 12:00 Bug 818340 Block cookies from sites I haven't visited
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
@@ -78,7 +80,12 @@ function moveCookiesGroup() {
       let getVal = function (aPref)
         document.getElementById(aPref).value;
 
-      if (_checkDefaultValues(gPrivacyPane.prefsForDefault)) {
+      if (_checkDefaultValues([
+              "places.history.enabled",
+              "browser.formfill.enable",
+              "network.cookie.cookieBehavior",
+              "network.cookie.lifetimePolicy",
+              "privacy.sanitize.sanitizeOnShutdown"])) {
         if (getVal("browser.privatebrowsing.autostart")) {
           mode = "dontremember";
         } else {
@@ -117,6 +124,7 @@ function moveCookiesGroup() {
     CookiesGroup.appendChild(cookiesBox);
     CookiesGroup.appendChild(acceptThirdParty);
     CookiesGroup.appendChild(keepRow);
+    CookiesGroup.setAttribute("hidden", true);
     locationBarGroup.parentNode.insertBefore(CookiesGroup,locationBarGroup);
 
     // move Clear Recent History
@@ -173,6 +181,16 @@ function moveCookiesGroup() {
   }
   if (document.getElementById("historyPane"))
     document.getElementById("historyPane").selectedIndex = 2;
+  if (document.getElementById("categories").getAttribute("last-selected") == "category-privacy")
+    document.getElementById("cookiesGroup").removeAttribute("hidden");
 }
 moveCookiesGroup();
-document.getElementById("panePrivacy").addEventListener("paneload", moveCookiesGroup, false);
+try {
+  var categories = document.getElementById("categories");
+  categories.addEventListener("select", moveCookiesGroup, false);
+} catch(e) {
+}
+try {
+  document.getElementById("panePrivacy").addEventListener("paneload", moveCookiesGroup, false);
+} catch(e) {
+}

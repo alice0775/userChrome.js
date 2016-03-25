@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ダウンロードマネージャー用のダウンロードを監視し音を鳴らす
 // @include        main
-// @compatibility  Firefox 26
+// @compatibility  Firefox 45
 // @author         Alice0775
+// @version        2016/03/15 hack of selection chanhe
 // @version        2015/01/15 1:00 Fixed strictmode
 // @version        2013/12/18 11:00 defineLazyModuleGetter for Firefox26
 // @version        2013/12/18 Firefox26
@@ -57,8 +58,11 @@ var downloadPlaySound = {
     if (aDownload.error && this.DL_FAILED)
       this.playSoundFile(this.DL_FAILED)
     //**** ダウンロード完了
-    if (aDownload.succeeded && this.DL_DONE)
-      this.playSoundFile(this.DL_DONE)
+    if (typeof aDownload.downloadPlaySound == "undefined" &&
+        aDownload.succeeded && aDownload.stopped && this.DL_DONE) {
+      aDownload.downloadPlaySound = true;
+      this.playSoundFile(this.DL_DONE);
+    }
   },
 
   playSoundFile: function(aFilePath) {
