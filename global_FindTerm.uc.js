@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 45-
 // @author         Alice0775
+// @version        2016/03/31 18:00 Bug 1134769
 // @version        2016/03/07 08:00 Bug 1134769
 // @version        2015/08/07 08:00 fix a bug copy term
 // @version        2015/02/09 23:00 fix a bug copy term
@@ -114,16 +115,7 @@ var global_FindTerm = {
     var sel;
     switch (event.button) {
       case 0:
-	      if ("BrowserUtils" in window) {
-	  	    var [elm, win] = BrowserUtils.getFocusSync(document);
-	      } else {
-	        win = window;
-	      }
-	      sel = win.getSelection().toString();
-
-        if  (sel == "" && document.getElementById("searchbar")) {
-          sel = document.getElementById("searchbar")._textbox.value;
-        }
+	      sel = BrowserUtils.getSelectionDetails(window, 150).text
 		    if (!sel)
 		      return;
        break;

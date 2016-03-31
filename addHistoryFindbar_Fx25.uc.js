@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2016/03/31 00:00 Fix textbox height
 // @version        2015/02/25 00:30 Fix tabview take 2
 // @version        2015/02/25 00:30 Fix tabview
 // @version        2014/10/25 12:30 Fix viewsource
@@ -453,7 +454,7 @@ var historyFindbar = {
                       getPropertyValue('border-bottom-width').replace('px','')
 
     historyfindField.style.width  = -0+textboxW + "px";
-    historyfindField.style.height = textboxH + "px";
+    historyfindField.style.height = "auto"; /*textboxH + "px";*/
     //
     historyfindbarbox.style.marginLeft = 0+textboxX + "px";
     historyfindField.style.marginTop  = textboxY + "px";
