@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2016/04/02 00:00 status4evar
 // @version        2014/04/25 00:00 ctr changed id
 // @version        2013/11/19 08:00 ctr
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
@@ -101,6 +102,7 @@ var ucjs_toggleFindBar = {
 
     this.addonbar = document.getElementById("ctraddon_addon-bar") ||
                     document.getElementById("ctr_addon-bar") ||
+                    document.getElementById("status4evar-status-bar") ||
                     document.getElementById("addon-bar") ||
                     document.getElementById("statusbar-line-col") ||
                     document.getElementById("viewSource-main-menubar");
@@ -110,6 +112,8 @@ var ucjs_toggleFindBar = {
     if (this.OPENFINDBAR_RCLICK_STATUSBAR && this.statusbarDisplay)
       this.statusbarDisplay.addEventListener("click", this, false);
 
+    if (document.getElementById("status4evar-status-widget"))
+      document.getElementById("status4evar-status-widget").setAttribute("mousethrough", "always");
 
     if(this.OPENFINDBAR_DARGOVER_STATUSBAR && this.statusbarDisplay)
       this.statusbarDisplay.addEventListener("dragover", this, false);
