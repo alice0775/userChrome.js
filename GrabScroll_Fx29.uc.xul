@@ -30,6 +30,8 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2016/04/19 0700 fix regression of 2016/03/27 0100 prevent Bug 1209100
+// @version        2016/03/27 0100 prevent Bug 1209100
 // @version        2014/10/27 17:30 adhoc adhoc adhoc fix for Bug 962249 RTL
 // @version        2014/05/13 10:30 fix second window
 // @version        2014/05/12 08:30 Working on Firefox29+
@@ -403,13 +405,14 @@ var GrabScroll = {
           return;
         }
         //横スクロールできないときに横に動かした, GrabScrollをキャンセル
-        if (Math.abs(x-this.mLastX) < this.TOLERANCE_WHEN_NO_H_SCROLL)
+        if (Math.abs(x-this.mLastX) < this.TOLERANCE_WHEN_NO_H_SCROLL) {
           var movingh = Math.abs(x-this.mLastX) > Math.abs(y-this.mLastY) * 50;
           if (!this._isImage && this.MOUSEBUTTON == 0  && this.isText(event)  && movingh && !this.EW) {
             this.grabFinish();
             this.mStatus = 0;
             return;
           }
+        }
 
         //マウス移動量が小さいときは何もしない
         if(Math.abs(x - this.mLastX) + Math.abs(y - this.mLastY) < this.TOLERANCE)
@@ -431,8 +434,8 @@ var GrabScroll = {
           }
         }
 
-      //  this.mLastX += (x - this.mLastX) ? -this.MOVERATE: this.MOVERATE;
-      //  this.mLastY += (y - this.mLastY) ? -this.MOVERATE: this.MOVERATE;
+        // this.mLastX += (x - this.mLastX) ? -this.MOVERATE: this.MOVERATE;
+        // this.mLastY += (y - this.mLastY) ? -this.MOVERATE: this.MOVERATE;
         this.mLastX = x - (x - this.mLastX) / 10;
         this.mLastY = y - (y - this.mLastY) / 10;
         this.mStatus = 2;
@@ -448,9 +451,10 @@ var GrabScroll = {
       this.cSpeedX = this._MOVERATEpZoom * (x - this.mLastX);
       this.cSpeedY = this._MOVERATEpZoom * (y - this.mLastY);
 
-      this.scroll(event);
-      this.mLastX = x;
-      this.mLastY = y;
+      if (this.scroll(event)) {
+        this.mLastX = x;
+        this.mLastY = y;
+      }
     }
   },
 
@@ -565,8 +569,12 @@ var GrabScroll = {
   },
 
   scroll: function(event){
+    var minScroll = 10; // prevent Bug 1209100
     this._mtimer = true;
-    if(this.NS && this.NS == this.EW){
+    var flg = false;
+    if (this.NS && this.NS == this.EW &&
+        (Math.abs(this.cSpeedX) > minScroll || Math.abs(this.cSpeedY) > minScroll)) {
+      flg = true;
       if ("scrollBy" in this.NS) {
         this.NS.scrollBy(this.cSpeedX, this.cSpeedY);
       } else {
@@ -574,14 +582,16 @@ var GrabScroll = {
         this.NS.scrollTop  += this.cSpeedY;
       }
     } else {
-      if(this.NS){
+      if (this.NS && Math.abs(this.cSpeedY) > minScroll) {
+        flg = true;
         if ("scrollBy" in this.NS) {
           this.NS.scrollBy(0, this.cSpeedY);
         } else {
           this.NS.scrollTop += this.cSpeedY;
         }
       }
-      if(this.EW){
+      if (this.EW && Math.abs(this.cSpeedX) > minScroll){
+        flg = true;
         if ("scrollBy" in this.EW) {
           this.EW.scrollBy(this.cSpeedX, 0);
         } else {
@@ -592,6 +602,7 @@ var GrabScroll = {
     setTimeout(function(self){
       self._mtimer = false;
     }, 20, this);
+    return flg;
   },
 
   isText: function(event) {
