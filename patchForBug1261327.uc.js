@@ -5,39 +5,80 @@
 // @include        main
 // @compatibility  Firefox17
 // @author         Alice0775
+// @version        2016/03/19 00:30 fix
 // @version        2016/02/09 14:30
 // ==/UserScript==
 
 (function patchForBug1261327() {
-  var style = ' \
-      #toolbar-context-menu[patchForBug1261327], \
-      #placesContext[patchForBug1261327] \
-      { \
-        height: 0; \
-        border: 0; \
-        overflow: hidden; \
-        position: absolute; \
-      } ';
-
-  style = style.replace(/\s+/g, " ");
-  var sspi = document.createProcessingInstruction(
-  'xml-stylesheet',
-  'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
-  );
-  document.insertBefore(sspi, document.documentElement);
-  sspi.getAttribute = function(name) {
-  return document.documentElement.getAttribute(name);
-  };
-
   var placesContext = document.getElementById("placesContext");
-  placesContext.setAttribute("patchForBug1261327", "true");
+  placesContext.addEventListener("mouseenter", mouseenter, true);
+  placesContext.addEventListener("mouseout", mouseout, true);
+  placesContext.addEventListener("popuphidden", popuphidden, false);
   var toolbarContext = document.getElementById("toolbar-context-menu");
-  toolbarContext.setAttribute("patchForBug1261327", "true");
+  toolbarContext.addEventListener("mouseenter", mouseenter, true);
+  toolbarContext.addEventListener("mouseout", mouseout, true);
+  toolbarContext.addEventListener("popuphidden", popuphidden, false);
+  var backup = [];
 
-  window.addEventListener("popupshowing", onPopupShowing, true);
-  function onPopupShowing() {
-    window.removeEventListener("popupshowing", onPopupShowing, true);
-    placesContext.removeAttribute("patchForBug1261327");
-    toolbarContext.removeAttribute("patchForBug1261327");
+  // create an observer instance
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      var target = mutation.target;
+      if (target.hasAttribute("x_active") &&
+          !target.hasAttribute("_moz-menuactive")) {
+        target.setAttribute("_moz-menuactive", "true");
+      }
+    });
+  });
+  // configuration of the observer:
+  var config = { attributes: true, subtree: true, attributeFilter: ["_moz-menuactive"]};
+  // pass in the target node, as well as the observer options
+  // select the target node
+  observer.observe(placesContext, config);
+  observer.observe(toolbarContext, config);
+  // later, you can stop observing
+  window.addEventListener("unload", function(){observer.disconnect();}, false);
+
+  function mouseenter(event) {
+    var target = event.originalTarget;
+    while(target) {
+      if (target.localName == "menuitem") {
+        remove();
+        target.setAttribute("x_active", "true");
+        backup.push(target);
+        break;
+      }
+      target = target.parentNode;
+    }
+  }
+  function mouseout(event) {
+    var target = event.originalTarget;
+    while(target) {
+      if (target.localName == "menuitem") {
+        var mx = event.screenX;
+        var my = event.screenY;
+        var bo = target.boxObject;
+        var x = bo.screenX;
+        var y = bo.screenY;
+        var w = bo.width;
+        var h = bo.height;
+        if (mx - 2 < x || mx > x + w - 2 || my - 2 < y || my > y + h - 2) {
+          target.removeAttribute("x_active");
+        }
+        break;
+      }
+      target = target.parentNode;
+    }
+  }
+  function popuphidden(event) {
+    remove();
+  }
+
+  function remove() {
+    for (var i = backup.length -1 ; i >= 0; i--) {
+      backup[i].removeAttribute("x_active");
+      backup[i].removeAttribute("_moz-menuactive");
+      backup.pop();
+    }
   }
 })();

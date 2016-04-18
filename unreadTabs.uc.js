@@ -6,6 +6,8 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  4.0b8pre - 9
+// @version        2016/01/30 18:00 fix Bug 1220564
+// @version        2015/03/30 11:00 Force unread whwn tab title changed
 // @version        2014/06/21 07:00 Fixed due to Bug 996053 
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
@@ -44,6 +46,7 @@ var unreadTabs = {
   UNREAD_STYLE: 'italic', // 未読のタブの文スタイル
   LOADING_COLOR:'blue',   // 読み込み中のタブの文字色
   LOADING_STYLE:'normal', // 読み込み中のタブの文スタイル
+  WATCHURLS: /mail\.yahoo\.co\.jp|reader\.livedoor\.com\/reader/  , // タブのラベル変更のチェックするURL正規表現
   // -- config --
 
   ss: null,
@@ -369,6 +372,7 @@ function unreadTabsEventListener(aTab) {
 
 unreadTabsEventListener.prototype = {
   mTab : null,
+  observer: null,
   init : function() {
     //window.userChrome_js.debug('init');
     //this.mTab = aTab;
@@ -378,7 +382,32 @@ unreadTabsEventListener.prototype = {
       this.mTab.linkedBrowser.addEventListener('scroll', this, false);
       this.mTab.linkedBrowser.addEventListener('mousedown', this, false);
     }
+
+		// select the target node
+		var target = this.mTab;
+		// create an observer instance
+		this.observer = new MutationObserver(function(mutations) {
+		  mutations.forEach(function(mutation) {
+        var tab = mutation.target;
+        if (mutation.attributeName != "label")
+          return;
+        if (tab.hasAttribute('busy') ||
+            tab.hasAttribute('unreadTabs-restoring') ||
+            tab.hasAttribute('unreadTab'))
+          return;
+        if (tab.selected)
+          return
+        if(unreadTabs.WATCHURLS.test(tab.linkedBrowser.contentDocument.documentURI)) {
+          unreadTabs.setUnreadForTab(tab);
+        }
+		  });    
+		});
+		// configuration of the observer:
+		var config = { attributes: true, attributeFilter: ["label"] };
+		// pass in the target node, as well as the observer options
+		this.observer.observe(target, config);
   },
+
   destroy : function() {
     if (unreadTabs.CONTENT_LOAD)
       this.mTab.linkedBrowser.removeEventListener('DOMContentLoaded', this, false);
@@ -386,6 +415,8 @@ unreadTabsEventListener.prototype = {
       this.mTab.linkedBrowser.removeEventListener('scroll', this, false);
       this.mTab.linkedBrowser.removeEventListener('mousedown', this, false);
     }
+		// later, you can stop observing
+		this.observer.disconnect();
 
     delete this.mTab;
   },
@@ -490,7 +521,8 @@ unreadTabsEventListener.prototype = {
     }
 
     // バイナリのハッシュデータを 16 進数文字列に変換する。
-    return [toHexString(hash.charCodeAt(i)) for (i in hash)].join("");
+    // return [toHexString(hash.charCodeAt(i)) for (i in hash)].join("");
+    return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join(""); // due to Bug 1220564
   }
 
 
