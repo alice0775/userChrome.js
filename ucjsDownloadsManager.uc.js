@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2016/04/19 07:00 change title dexcription "/" instead of " of "
 // @version        2015/05/08 00:00 remove padding due to Bug 1160734
 // @version        2015/03/29 00:00 Check window.windowState instead of sizemode attribute
 // @version        2014/12/28 23:00 Skip save window size if closed immediately
@@ -320,7 +321,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
           let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
                                             this._summary.progressCurrentBytes);
           let percent = Math.floor(progressCurrentBytes / this._summary.progressTotalBytes * 100);
-          let text = percent + "% of " + numDls + (numDls < 2 ? " file - " : " files - ") ;
+          let text = percent + "%/" + numDls + (numDls < 2 ? " file - " : " files - ") ;
           document.title = text + this.originalTitle;
         }).then(null, Cu.reportError);
       }

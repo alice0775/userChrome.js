@@ -30,6 +30,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2016/04/19 0800 judge >fx46
 // @version        2016/04/19 0700 fix regression of 2016/03/27 0100 prevent Bug 1209100
 // @version        2016/03/27 0100 prevent Bug 1209100
 // @version        2014/10/27 17:30 adhoc adhoc adhoc fix for Bug 962249 RTL
@@ -116,8 +117,13 @@ var GrabScroll = {
   _MOVERATEpZoom:1,
   IGNOREURL:[],
   _window: null,
+  Bug1209100: 1,  //Bug 1209100
 
   initGrabScroll: function() {
+    var curentBrowserVersion = Services.appinfo.platformVersion; //example: '31.*'
+    var compareToThisVersion = '46.*';
+    var compareResult = Services.vc.compare(curentBrowserVersion, compareToThisVersion);
+    this.Bug1209100 = (compareResult < 0) ? 10 : 1;
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
     try {
       CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
@@ -548,7 +554,7 @@ var GrabScroll = {
     //this.winX -= ax;
     //if (this.winY < 30)this.cSpeedY = 0;
     //if (this.winX < 30)this.cSpeedX = 0;
-    if (ay < 1 && ax  < 1){
+    if (ay < 10 && ax  < 10){
        clearTimeout(this.cScroll);
        return;
     }
@@ -556,20 +562,16 @@ var GrabScroll = {
     if      (ax >= 100) this.cSpeedX = this.cSpeedX * 0.95;
     else if (ax < 100) this.cSpeedX = this.cSpeedX * 0.95;
     else if (ax < 20) this.cSpeedX = this.cSpeedX * 0.95;
-    else if (ax < 10) this.cSpeedX = this.cSpeedX * 0.95;
-    else if (ax < 5) this.cSpeedX = this.cSpeedX * 0.95;
-    else if (ax < 1) this.cSpeedX = 0;
+    else if (ax < 10)  this.cSpeedX = 0;
 
     if      (ay >= 100) this.cSpeedY = this.cSpeedY * 0.95;
     else if (ay < 100) this.cSpeedY = this.cSpeedY * 0.95;
     else if (ay < 20) this.cSpeedY = this.cSpeedY * 0.95;
-    else if (ay < 10) this.cSpeedY = this.cSpeedY * 0.95;
-    else if (ay < 5) this.cSpeedY = this.cSpeedY * 0.95;
-    else if (ay < 1) this.cSpeedY = 0;
+    else if (ay < 10) this.cSpeedY = 0;
   },
 
   scroll: function(event){
-    var minScroll = 10; // prevent Bug 1209100
+    var minScroll = this.Bug1209100; // prevent Bug 1209100, 10px <fx46. 1px >=fx46
     this._mtimer = true;
     var flg = false;
     if (this.NS && this.NS == this.EW &&
