@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 40 non-e10s
 // @author         Alice0775
+// @version        2016/04/21 22:00 Update form history
 // @version        2015/10/12 20:00 Nightly44.0a1 fixed contectMenu
 // @version        2015/08/12 20:00 Fixed due to Bug 1134769
 // @version        2014/10/16 07:00 Revert=デフォルトエンジンに戻す は一番最初の奴にするようにした
@@ -94,6 +95,7 @@
                          'LA' : 'Not',
                          'LC' : 'Or',
                         },
+    updateHistory : true, // form history
     // -- config --
 
     _currentEngine:null,
@@ -224,8 +226,21 @@
                    backGround ? "tabshifted": "tab",
                    { postData: submission.postData,
                      relatedToCurrent: true });
-      }else
+      }else {
         gBrowser.loadURI(submission.uri.spec, null, submission.postData, false);
+      }
+      if (this.updateHistory) {
+        if (searchText && !PrivateBrowsingUtils.isWindowPrivate(window)) {
+          var searchBar = this.searchBar();
+          searchBar.FormHistory.update(
+            { op : "bump",
+              fieldname : searchBar._textbox.getAttribute("autocompletesearchparam"),
+              value : searchText },
+            { handleError : function(aError) {
+                Components.utils.reportError("Saving search to form history failed: " + aError.message);
+            }});
+        }
+      }
     },
 
 

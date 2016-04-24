@@ -5,7 +5,7 @@
 // @include        main
 // @compatibility  Firefox 40 (not e10s)
 // @author         Alice0775
-// @version        2015/08/18 00:50 Fixed 受
+// @version        2016/04/21 22:00 Update form history
 // @version        2015/08/12 18:00 Fixed due to Bug 1134769
 // @version        2014/11/26 21:00 Bug 1103280, Bug 704320
 // @version        2014/11/10 10:00 get rid document.commandDispatcher
@@ -149,8 +149,8 @@ var DragNGo = {
     {dir:'RD', modifier:'',name:'画像をD:/hogeに保存(SF)',obj:'image',cmd:function(self,event,info){if('saveFolderModoki' in window){saveFolderModoki.saveLink(info.urls[0], info.texts[0], 'D:\\hoge');}else{ self.saveLinkToLocal(info.urls[0],info.fname[0],'D:/hoge', true);}}},
     {dir:'RD', modifier:'',name:'リンクをD:/に保存(SF)',obj:'link',cmd:function(self,event,info){if('saveFolderModoki' in window){saveFolderModoki.saveLink(info.urls[0], info.texts[0], 'D:\\');}else{ self.saveLinkToLocal(info.urls[0],info.fname[0],'D:/', false);}}},
 */
-    {dir:'RD', modifier:'',name:'画像を名前を付けて保存'  ,obj:'image',cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0], info.nodes[0].ownerDocument, info.nodes[0].ownerDocument);}},
-    {dir:'RD', modifier:'',name:'リンクを名前を付けて保存',obj:'link' ,cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0], info.nodes[0].ownerDocument, info.nodes[0].ownerDocument);}},
+    {dir:'RD', modifier:'',name:'画像を名前を受けて保存'  ,obj:'image',cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0], info.nodes[0].ownerDocument, info.nodes[0].ownerDocument);}},
+    {dir:'RD', modifier:'',name:'リンクを名前を受けて保存',obj:'link' ,cmd:function(self,event,info){self.saveAs(info.urls[0], info.fname[0], info.nodes[0].ownerDocument, info.nodes[0].ownerDocument);}},
 
   /*=== テキストをえでぃたーで開く ===*/
     {dir:'DL', modifier:'',name:'テキストをエディターで開く',obj:'text',cmd:function(self,event,info){self.editText(null, info.texts[0]);}}, // 引数 null: view_source.editor.pathのエディターを使う
@@ -351,7 +351,7 @@ var DragNGo = {
       where = 'tabshifted';
     }
     // 検索履歴に残す
-    if (addHistoryEntry)
+    if (typeof addHistoryEntry == "undefined" || addHistoryEntry)
       this.searchBardispatchEvent(text);
     return true;
   },

@@ -11,6 +11,7 @@
 // @compatibility  Firefox 2.0 3.0 3.1
 // @author         Alice0775
 // @Note           quickProxyModoki3.0.uc.xulも合わせてどうぞ
+// @version        2016/04/23 00:00 allow separeter space tab as well as :
 // @version        2013/09/13 00:00 Bug 856437 Remove Components.lookupMethod
 // @version        2009/09/06 00:00 httpsも設定するかどうか USE_PROXY_SSL
 // ==/UserScript==
@@ -23,12 +24,12 @@
   <script type="application/x-javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
   var ucjsProxy ={
     // --- config ---
-    USE_PROXY_SSL:false, //httpsも設定 true:する, [false]しない
+    USE_PROXY_SSL:true, //httpsも設定 true:する, [false]しない
     // --- config ---
 
     _Prefs: Components.classes["@mozilla.org/preferences-service;1"].
               getService(Components.interfaces.nsIPrefBranch),
-    _exp:/([a-z0-9_\-]+(\.[a-z0-9_\-]+)+):(\d+)/i,
+    _exp:/([a-z0-9_\-]+(\.[a-z0-9_\-]+)+)[:\x20\t]+(\d+)/i,
 
     _Switch: function _Switch() {
       var first = true;
