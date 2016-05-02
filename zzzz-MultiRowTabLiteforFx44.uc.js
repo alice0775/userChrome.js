@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 44, 45
 // @author         Alice0775
+// @version        2016/05/01 00:01 hide favicon if busy
 // @version        2016/03/09 00:01 Bug 1222490 - Actually remove panorama for Fx45+
 // @version        2016/02/09 00:01 workaround css for lwt
 // @version        2016/02/09 00:00
@@ -143,6 +144,9 @@ function zzzz_MultiRowTabLite(){
     /*workaround newtab position*/ \
     #TabsToolbar .tabbrowser-tab:not([image]) .tab-icon-image { \
       display: -moz-box !important; \
+    } \
+    #TabsToolbar .tabbrowser-tab[busy] .tab-icon-image { \
+      display: none !important; \
     } \
 \
     #TabsToolbar .tabbrowser-tab[first-tab][last-tab], \

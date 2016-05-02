@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2016/05/03 01:00 Indicate Taskbar Progress
 // @version        2016/04/19 07:00 change title dexcription "/" instead of " of "
 // @version        2015/05/08 00:00 remove padding due to Bug 1160734
 // @version        2015/03/29 00:00 Check window.windowState instead of sizemode attribute
@@ -253,11 +254,27 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
           return this._list.addView(this);
         }).then(null, Cu.reportError);
       }
+
+      setTimeout(function() {
+        try {
+          let docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIWebNavigation)
+                                .QueryInterface(Ci.nsIDocShellTreeItem).treeOwner
+                                .QueryInterface(Ci.nsIInterfaceRequestor)
+                                .getInterface(Ci.nsIXULWindow).docShell;
+          let gWinTaskbar = Components.classes["@mozilla.org/windows-taskbar;1"]
+                                    .getService(Components.interfaces.nsIWinTaskbar);
+          this._taskbarProgress = gWinTaskbar.getTaskbarProgress(docShell);
+        } catch(ex) {
+          this._taskbarProgress = null;
+        }
+      }.bind(this), 10);
     },
 
     uninit: function() {
       window.removeEventListener("unload", this, false);
 
+      this._taskbarProgress = null;
       if (this._wait)
         this.saveSizePosition();
 
@@ -291,7 +308,10 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         return;
       if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
         document.title = this.originalTitle;
-
+        if (this._taskbarProgress) {
+          this._taskbarProgress.setProgressState(
+                                     Ci.nsITaskbarProgress.STATE_NO_PROGRESS, 0, 0);
+        }
         Cu.import("resource://gre/modules/Services.jsm");
         var enumerator = Services.wm.getEnumerator("navigator:browser");
         while(enumerator.hasMoreElements()) {
@@ -308,6 +328,25 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         }
 
       } else {
+
+        // If the last browser window has been closed, we have no indicator any more.
+        if (this._taskbarProgress) {
+          if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
+            this._taskbarProgress.setProgressState(
+                                     Ci.nsITaskbarProgress.STATE_NO_PROGRESS, 0, 0);
+          } else {
+            // For a brief moment before completion, some download components may
+            // report more transferred bytes than the total number of bytes.  Thus,
+            // ensure that we never break the expectations of the progress indicator.
+            let progressCurrentBytes = Math.min(this._summary.progressTotalBytes,
+                                                this._summary.progressCurrentBytes);
+            this._taskbarProgress.setProgressState(
+                                     Ci.nsITaskbarProgress.STATE_NORMAL,
+                                     progressCurrentBytes,
+                                     this._summary.progressTotalBytes);
+          }
+        }
+
         // Update window title
         var numDls = 0;
         if (!this._list)
