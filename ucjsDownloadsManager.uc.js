@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2016/05/04 20:30 remove typo
 // @version        2016/05/04 20:00 remove in-content css, add preference for Taskbar Progress
 // @version        2016/05/03 01:00 Indicate Taskbar Progress
 // @version        2016/04/19 07:00 change title dexcription "/" instead of " of "
@@ -250,7 +251,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
     observe: function() {
       this.originalTitle = document.title;
-chrome://browser/skin/downloads/contentAreaDownloadsView.css
+
       setTimeout(function(){this._wait = true}.bind(this), 0);
 
       // Ensure that the DownloadSummary object will be created asynchronously.
