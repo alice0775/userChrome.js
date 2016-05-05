@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2016/05/04 20:00 remove in-content css, add preference for Taskbar Progress
 // @version        2016/05/03 01:00 Indicate Taskbar Progress
 // @version        2016/04/19 07:00 change title dexcription "/" instead of " of "
 // @version        2015/05/08 00:00 remove padding due to Bug 1160734
@@ -34,8 +35,9 @@
 // @version        2013/12/14 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
 // @version        2013/12/02 00:00 
 // @note           Require Sub-Script/Overlay Loader v3.0.40mod
-// @note           preferences: browser.download.manager.showWhenStarting
-// @note                        browser.download.manager.closeWhenDone
+// @note           preferences: (bool) browser.download.manager.showWhenStarting
+// @note                        (bool) browser.download.manager.closeWhenDone
+// @note                        (bool) browser.download.manager.showProgressInTaskButton
 // ==/UserScript== 
 
 if (location.href == "chrome://browser/content/browser.xul") {
@@ -198,6 +200,17 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
     init: function() {
       window.addEventListener("unload", this, false);
+
+      // xxx remove in-content css
+      var elements = document.childNodes;
+      for (var i = 0; i <= elements.length; i++) {
+        var element = elements[i];
+        if (element.nodeValue.indexOf("chrome://browser/skin/downloads/contentAreaDownloadsView.css") > -1) {
+          document.removeChild(element);
+          break;
+        }
+      }
+      
       var style = ' \
         @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
         #contentAreaDownloadsView { \
@@ -237,7 +250,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
     observe: function() {
       this.originalTitle = document.title;
-
+chrome://browser/skin/downloads/contentAreaDownloadsView.css
       setTimeout(function(){this._wait = true}.bind(this), 0);
 
       // Ensure that the DownloadSummary object will be created asynchronously.
@@ -255,20 +268,26 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         }).then(null, Cu.reportError);
       }
 
-      setTimeout(function() {
-        try {
-          let docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
-                                .getInterface(Ci.nsIWebNavigation)
-                                .QueryInterface(Ci.nsIDocShellTreeItem).treeOwner
-                                .QueryInterface(Ci.nsIInterfaceRequestor)
-                                .getInterface(Ci.nsIXULWindow).docShell;
-          let gWinTaskbar = Components.classes["@mozilla.org/windows-taskbar;1"]
-                                    .getService(Components.interfaces.nsIWinTaskbar);
-          this._taskbarProgress = gWinTaskbar.getTaskbarProgress(docShell);
-        } catch(ex) {
-          this._taskbarProgress = null;
-        }
-      }.bind(this), 10);
+      try {
+        var showProgressInTaskButton = Services.prefs.getBoolPref("browser.download.manager.showProgressInTaskButton")
+      } catch(ex) {
+        showProgressInTaskButton = true; //default
+      }
+      if (showProgressInTaskButton)
+        setTimeout(function() {
+          try {
+            let docShell = window.QueryInterface(Ci.nsIInterfaceRequestor)
+                                  .getInterface(Ci.nsIWebNavigation)
+                                  .QueryInterface(Ci.nsIDocShellTreeItem).treeOwner
+                                  .QueryInterface(Ci.nsIInterfaceRequestor)
+                                  .getInterface(Ci.nsIXULWindow).docShell;
+            let gWinTaskbar = Components.classes["@mozilla.org/windows-taskbar;1"]
+                                      .getService(Components.interfaces.nsIWinTaskbar);
+            this._taskbarProgress = gWinTaskbar.getTaskbarProgress(docShell);
+          } catch(ex) {
+            this._taskbarProgress = null;
+          }
+        }.bind(this), 10);
     },
 
     uninit: function() {

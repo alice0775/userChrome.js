@@ -8,6 +8,7 @@
 // @permalink      http://amb.vis.ne.jp/mozilla/?p=71
 // @contributor    Alice0775
 // @Note           http://space.geocities.yahoo.co.jp/gl/alice0775
+// @version        2016/05/04 02:00 ignore one off....
 // @version        2013/02/09 22:00 Bug 565717
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2011/03/11 10:00 ellips and update in fullscreen and fix Bug641090 by alice0775
@@ -48,8 +49,10 @@ var scrollSearchEngines = {
   init: function() {
     if (this.searchBar) {
       // enable to change search engine by mouse-wheel on engine button
-      document.getAnonymousElementByAttribute(this.searchBar, "anonid", "searchbar-engine-button")
+      try {
+        document.getAnonymousElementByAttribute(this.searchBar, "anonid", "searchbar-engine-button")
           .addEventListener("DOMMouseScroll", this, false);
+      } catch(ex) {}
     }
     if(this.searchMenu) {
       // enables to change search engine by mouse-wheel on context menu
