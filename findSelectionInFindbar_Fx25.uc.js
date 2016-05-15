@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2016/05/15 23:00 RetryHistoryFindbar
 // @version        2013/11/22 19:00 historyFindbar
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
 // @version        2013/03/28 11:00 Improved to work properly without addHistoryFindbarFx3.0.uc.js
@@ -17,15 +18,21 @@
 var findSelectionInFindbar = {
   // addHistoryFindbarFx3.0.uc.js
   get _findField2(){
-    delete this._findField2;
-    return this._findField2 = document.getElementById("find-field2");
+    return document.getElementById("find-field2");
   },
 
+  _maxRetryHistoryFindbarCont: 10,
+  _timer: null,
+
   init: function() {
-    setTimeout(function(){
-      if (this._findField2) {
+    this._timer = setInterval(function(){
+      if (typeof historyFindbar != "undefined" && this._findField2) {
         this._findField2.addEventListener("DOMMouseScroll", this, false);
+        clearInterval(this._timer);
+        return;
       }
+      if (!this._maxRetryHistoryFindbarCont--)
+        clearInterval(this._timer);
     }.bind(this), 2000);
 
     //fx25 for  existing findbar
