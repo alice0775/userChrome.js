@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2016/05/18 00:00 fix toggleFindbar
 // @version        2016/04/02 00:00 status4evar
 // @version        2014/04/25 00:00 ctr changed id
 // @version        2013/11/19 08:00 ctr
@@ -216,13 +217,14 @@ var ucjs_toggleFindBar = {
     var findToolbar = document.getElementById("FindToolbar");
     if ('gFindBar' in window && 'onFindAgainCommand' in gFindBar ){ // Fx3
       if (gFindBar.hidden){
+        gFindBar.open();
         content.focus();
-        if(aValue)
+        if(aValue) {
           gFindBar._findField.value = aValue;
-//window.userChrome_js.debug("cmd_find " + gFindBar._findField.value);
-        document.getElementById("cmd_find").doCommand();
-        if (gFindBar._findField.value)
-          gFindBar._enableFindButtons(true);
+        }
+        var event = document.createEvent("UIEvents");
+        event.initUIEvent("input", true, false, window, 0);
+        gFindBar._findField.dispatchEvent(event);
       } else
         gFindBar.close();
     }

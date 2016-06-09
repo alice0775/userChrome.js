@@ -7,6 +7,7 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 25
 // @author         Alice0775
+// @version        2016/05/15 23:00 fix selection
 // @version        2016/05/15 23:00 RetryHistoryFindbar
 // @version        2013/11/22 19:00 historyFindbar
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
@@ -121,8 +122,9 @@ var findSelectionInFindbar = {
       if (!!match) {
         term = match.value;
         if (!!term) {
-          textbox.selectionStart = match.index;
-          textbox.selectionEnd = match.index + term.length;
+          textbox.setSelectionRange(match.index, match.index + term.length);
+          //textbox.selectionStart = match.index;
+          //textbox.selectionEnd = match.index + term.length;
         }
       }
     } else {

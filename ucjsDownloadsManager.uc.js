@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2016/06/10 00:00 Workaround Bug 1279329
 // @version        2016/05/04 20:30 remove typo
 // @version        2016/05/04 20:00 remove in-content css, add preference for Taskbar Progress
 // @version        2016/05/03 01:00 Indicate Taskbar Progress
@@ -251,6 +252,13 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
     observe: function() {
       this.originalTitle = document.title;
+
+      // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
+      var listBox = document.getElementById("downloadsRichListBox");
+      var placesView = listBox._placesView;
+      var place = placesView.place;
+      placesView.place= null;
+      placesView.place = place;
 
       setTimeout(function(){this._wait = true}.bind(this), 0);
 

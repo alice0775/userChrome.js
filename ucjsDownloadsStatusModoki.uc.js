@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2016/06/10 00:00 Workaround Bug 1279329. adjust some padding
 // @version        2015/05/08 00:00 remove padding due to Bug 1160734
 // @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
 // @version        2013/12/22 13:00 chromehidden
@@ -196,6 +197,7 @@ var ucjsDownloadsStatusModoki = {
         max-width:200px; \
         max-height:33px; \
         font-size: 13px; \
+        padding-right: 1px; \
       } \
  \
       richlistitem vbox { \
@@ -203,9 +205,11 @@ var ucjsDownloadsStatusModoki = {
  \
       .downloadTypeIcon { \
         height:24px; \
-        width: 24px; \
+        width: 16px; \
         -moz-margin-end: 0px; \
         -moz-margin-start: 1px; \
+         padding-right: 1px; \
+         padding-left: 1px; \
       } \
  \
       .downloadTarget { \
@@ -243,9 +247,11 @@ var ucjsDownloadsStatusModoki = {
         margin: 0; \
       } \
  \
-     .button-box { \
+     button > .button-box { \
         -moz-padding-start: 0px; \
         -moz-padding-end: 1px; \
+        padding-right: 0 !important; \
+        padding-left: 0 !important; \
       } \
  \
      #downloadFilter { \
@@ -295,6 +301,13 @@ var ucjsDownloadsStatusModoki = {
     closebtn.setAttribute("oncommand", "ucjsDownloadsStatusModoki_doClose();");
     box.appendChild(closebtn);
     ref.parentNode.insertBefore(vbox, ref);
+
+    // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
+    var listBox = document.getElementById("downloadsRichListBox");
+    var placesView = listBox._placesView;
+    var place = placesView.place;
+    placesView.place= null;
+    placesView.place = place;
 
     win.ucjsDownloadsStatusModoki_clearDownloads = function ucjs_clearDownloads() {
       var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
