@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2016/06/10 07:00 modify style of close button, fix typo
 // @version        2016/06/10 00:00 Workaround Bug 1279329. adjust some padding
 // @version        2015/05/08 00:00 remove padding due to Bug 1160734
 // @version        2014/03/31 00:00 fix for browser.download.manager.showWhenStarting
@@ -67,6 +68,7 @@ var ucjsDownloadsStatusModoki = {
     bottombox.appendChild(toolbar);
     var browser = toolbar.appendChild(document.createElement("browser"));
     browser.setAttribute("disablehistory", true);
+    browser.setAttribute("remote", false);
     browser.setAttribute("id", "ucjsDownloadsStatusModoki");
     browser.addEventListener("load", function(event){ucjsDownloadsStatusModoki.onload(event)}, true);
     browser.setAttribute("src", "chrome://browser/content/downloads/contentAreaDownloadsView.xul");
@@ -260,15 +262,30 @@ var ucjsDownloadsStatusModoki = {
  \
      #ucjsDownloadsStatusModoki-closebutton { \
         border: none; \
+        width:20px;\
         padding: 0 5px; \
         list-style-image: url("chrome://global/skin/icons/close.png"); \
         -moz-appearance: none; \
-        -moz-image-region: rect(0, 16px, 16px, 0); \
+        -moz-image-region: rect(0, 20px, 20px, 0); \
       } \
  \
-      #ucjsDownloadsStatusModoki-closebutton:hover { \
-        -moz-image-region: rect(0px, 32px, 16px, 16px); \
+        #ucjsDownloadsStatusModoki-closebutton:hover { \
+          -moz-image-region: rect(0px, 40px, 20px, 20px); \
       } \
+ \
+      @media (-moz-windows-classic) { \
+       #ucjsDownloadsStatusModoki-closebutton { \
+          border: none; \
+          padding: 0 5px; \
+          list-style-image: url("chrome://global/skin/icons/close.png"); \
+          -moz-appearance: none; \
+          -moz-image-region: rect(0, 16px, 16px, 0); \
+        } \
+ \
+        #ucjsDownloadsStatusModoki-closebutton:hover { \
+          -moz-image-region: rect(0px, 32px, 16px, 16px); \
+        } \
+    } \
      '.replace(/\s+/g, " ");
     var sspi = doc.createProcessingInstruction(
       'xml-stylesheet',
@@ -303,11 +320,13 @@ var ucjsDownloadsStatusModoki = {
     ref.parentNode.insertBefore(vbox, ref);
 
     // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
-    var listBox = document.getElementById("downloadsRichListBox");
+    var listBox = doc.getElementById("downloadsRichListBox");
     var placesView = listBox._placesView;
-    var place = placesView.place;
-    placesView.place= null;
-    placesView.place = place;
+    if (placesView) {
+      var place = placesView.place;
+      placesView.place= null;
+      placesView.place = place;
+    }
 
     win.ucjsDownloadsStatusModoki_clearDownloads = function ucjs_clearDownloads() {
       var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
