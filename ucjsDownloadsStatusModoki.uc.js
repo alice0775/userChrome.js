@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 26+
 // @author         Alice0775
+// @version        2016/06/10 12:00 modify style independent of font-family
 // @version        2016/06/10 07:00 modify style of close button, fix typo
 // @version        2016/06/10 00:00 Workaround Bug 1279329. adjust some padding
 // @version        2015/05/08 00:00 remove padding due to Bug 1160734
@@ -47,7 +48,7 @@ var ucjsDownloadsStatusModoki = {
       #ucjsDownloadsStatusModoki { \
         width: 100%; \
         max-height: 100px; \
-        height: 34px; \
+        height: 35px; \
       } \
      '.replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
@@ -186,7 +187,7 @@ var ucjsDownloadsStatusModoki = {
       } \
  \
       #downloadsRichListBox { \
-        max-height:34px; \
+        max-height:35px; \
         background-color: -moz-dialog; \
       } \
  \
@@ -206,17 +207,19 @@ var ucjsDownloadsStatusModoki = {
       } \
  \
       .downloadTypeIcon { \
-        height:24px; \
+        height:16px; \
         width: 16px; \
         -moz-margin-end: 0px; \
         -moz-margin-start: 1px; \
-         padding-right: 1px; \
+         padding-right: 0; \
          padding-left: 1px; \
       } \
  \
       .downloadTarget { \
         margin-top:2px; \
         padding-bottom:16px; \
+        max-width: calc(100% - 50px) !important; \
+        min-width: calc(100% - 50px) !important; \
       } \
  \
       .downloadTarget:-moz-system-metric(windows-default-theme) { \
@@ -226,6 +229,7 @@ var ucjsDownloadsStatusModoki = {
  \
       .downloadProgress { \
         margin-top:-16px; \
+        margin-bottom: -1px; \
       } \
  \
       .progress-bar { \
