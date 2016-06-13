@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 40 (not e10s)
 // @author         Alice0775
+// @version        2016/06/12 22:00 Fix regression from Update form history
 // @version        2016/04/21 22:00 Update form history
 // @version        2015/08/18 00:50 Fixed 受
 // @version        2015/08/12 18:00 Fixed due to Bug 1134769
@@ -353,7 +354,7 @@ var DragNGo = {
     }
     // 検索履歴に残す
     if (typeof addHistoryEntry == "undefined" || addHistoryEntry)
-      this.searchBardispatchEvent(text);
+      this.updateSearchbarHistory(text);
     return true;
   },
 
@@ -374,13 +375,13 @@ var DragNGo = {
   },
 
   //検索バーにテキストをコピー, 疑似イベント発行
-  searchBardispatchEvent: function searchBardispatchEvent(searchText){
+  updateSearchbarHistory: function updateSearchbarHistory(searchText){
     this.copyToSearchBar(searchText);
 
-    var event = document.createEvent("UIEvents");
-    event.initUIEvent("input", true, true, window, 0);
+    //var event = document.createEvent("UIEvents");
+    //event.initUIEvent("input", true, true, window, 0);
     var searchbar = this.searchbar;
-    searchbar.dispatchEvent(event);
+    //searchbar.dispatchEvent(event);
     if (typeof searchbar.FormHistory == "object") {
       if (searchText && !PrivateBrowsingUtils.isWindowPrivate(window)) {
         searchbar.FormHistory.update(
