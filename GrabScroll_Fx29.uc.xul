@@ -30,6 +30,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2016/07/19 0800 zoom
 // @version        2016/04/19 0800 judge >fx46
 // @version        2016/04/19 0700 fix regression of 2016/03/27 0100 prevent Bug 1209100
 // @version        2016/03/27 0100 prevent Bug 1209100
@@ -421,7 +422,7 @@ var GrabScroll = {
         }
 
         //マウス移動量が小さいときは何もしない
-        if(Math.abs(x - this.mLastX) + Math.abs(y - this.mLastY) < this.TOLERANCE)
+        if(Math.abs(x - this.mLastX) + Math.abs(y - this.mLastY) < this.TOLERANCE / (ZoomManager.useFullZoom ? ZoomManager.zoom : 1))
           return;
 
         if (this.MOUSEBUTTON == 0) {
@@ -571,7 +572,7 @@ var GrabScroll = {
   },
 
   scroll: function(event){
-    var minScroll = this.Bug1209100; // prevent Bug 1209100, 10px <fx46. 1px >=fx46
+    var minScroll = this.Bug1209100 / (ZoomManager.useFullZoom ? ZoomManager.zoom : 1); // prevent Bug 1209100, 10px <fx46. 1px >=fx46
     this._mtimer = true;
     var flg = false;
     if (this.NS && this.NS == this.EW &&
