@@ -8,6 +8,7 @@
 // @permalink      http://amb.vis.ne.jp/mozilla/?p=71
 // @contributor    Alice0775
 // @Note           http://space.geocities.yahoo.co.jp/gl/alice0775
+// @version        2016/08/19 00:00 fix Bug 970746
 // @version        2016/08/14 20:00 DOMMouseScroll -> wheel
 // @version        2016/05/04 02:00 ignore one off....
 // @version        2013/02/09 22:00 Bug 565717
@@ -66,7 +67,7 @@ var scrollSearchEngines = {
 
     if(this.searchMenu) {
       this.searchMenu.setAttribute("onclick", "scrollSearchEngines.menuClick(event);");
-      this.searchMenu.setAttribute("oncommand", "this.loadSearch(getBrowserSelection(), true, this.engine);");
+      this.searchMenu.setAttribute("oncommand", "this.loadSearch(this.searchTerms, true, this.engine);");
       this.searchMenu.loadSearch = function(searchText, useNewTab, engine) {
         var ss = Cc["@mozilla.org/browser/search-service;1"].
                  getService(Ci.nsIBrowserSearchService);
@@ -253,7 +254,7 @@ var scrollSearchEngines = {
 
   menuClick: function(event) {
     if (event.button == 1) {
-        this.searchMenu.loadSearch(getBrowserSelection(), true, this.searchMenu.engine);
+        this.searchMenu.loadSearch(this.searchMenu.searchTerms, true, this.searchMenu.engine);
         event.stopPropagation();
         event.originalTarget.parentNode.hidePopup();
     }

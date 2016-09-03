@@ -8,7 +8,8 @@
 // @permalink      http://amb.vis.ne.jp/mozilla/?p=71
 // @contributor    Alice0775
 // @Note           http://space.geocities.yahoo.co.jp/gl/alice0775
-// @version        2016/05/04 02:00 ignore one off....
+// @version        2016/08/19 00:00 fix Bug 970746
+// @version        2016/03/09 22:00 convert getBrowserSelection(aCharLen) to BrowserUtils.getSelectionDetails(window, aCharLen).text
 // @version        2013/02/09 22:00 Bug 565717
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // @version        2011/03/11 10:00 ellips and update in fullscreen and fix Bug641090 by alice0775
@@ -49,10 +50,8 @@ var scrollSearchEngines = {
   init: function() {
     if (this.searchBar) {
       // enable to change search engine by mouse-wheel on engine button
-      try {
-        document.getAnonymousElementByAttribute(this.searchBar, "anonid", "searchbar-engine-button")
+      document.getAnonymousElementByAttribute(this.searchBar, "anonid", "searchbar-engine-button")
           .addEventListener("DOMMouseScroll", this, false);
-      } catch(ex) {}
     }
     if(this.searchMenu) {
       // enables to change search engine by mouse-wheel on context menu
@@ -63,9 +62,10 @@ var scrollSearchEngines = {
     document.getElementById("contentAreaContextMenu").addEventListener("popupshowing", this, false);
     window.addEventListener("aftercustomization", this, false);
 
+
     if(this.searchMenu) {
       this.searchMenu.setAttribute("onclick", "scrollSearchEngines.menuClick(event);");
-      this.searchMenu.setAttribute("oncommand", "this.loadSearch(getBrowserSelection(), true, this.engine);");
+      this.searchMenu.setAttribute("oncommand", "this.loadSearch(this.searchTerms, true, this.engine);");
       this.searchMenu.loadSearch = function(searchText, useNewTab, engine) {
         var ss = Cc["@mozilla.org/browser/search-service;1"].
                  getService(Ci.nsIBrowserSearchService);
@@ -190,7 +190,7 @@ var scrollSearchEngines = {
   },
 
   getSearchTextForLabel: function() {
-   var selectedText = getBrowserSelection(16);
+   var selectedText = BrowserUtils.getSelectionDetails(window, 16).text;
 
    if (!selectedText)
      return false;
@@ -252,7 +252,7 @@ var scrollSearchEngines = {
 
   menuClick: function(event) {
     if (event.button == 1) {
-        this.searchMenu.loadSearch(getBrowserSelection(), true, this.searchMenu.engine);
+        this.searchMenu.loadSearch(this.searchMenu.searchTerms, true, this.searchMenu.engine);
         event.stopPropagation();
         event.originalTarget.parentNode.hidePopup();
     }
