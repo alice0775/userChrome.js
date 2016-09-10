@@ -20,6 +20,7 @@ display: none;
 // @include        chrome://messenger/content/messageWindow.xul
 // @compatibility  Firefox 27+
 // @author         Alice0775
+// @version        2016/09/10 23:30 revert "Excite"
 // @version        2016/09/10 11:30 Modify Google and remove "Excite", "@nifty翻訳"
 // @version        2014/10/08 11:30 delete bing
 // @version        2014/07/23 09:30 delete debug print
@@ -103,6 +104,25 @@ display: none;
           end:"xpathを使用しない場合, 翻訳結果の直後にあるHTML文書の文字列(正規表現の\は\\とする)",
         },
         */
+
+        {
+          Description:"Excite 英日",
+          method:'POST',
+          Referer:'http://www.excite.co.jp/world/english_japanese/',
+          action:"http://www.excite.co.jp/world/english_japanese/",
+          post:"before=%%SEL%%&wb_lp=ENJA&before_lang=EN&after_lang=&after=",
+          code:"UTF-8",
+          xpath:'.//textarea[@name="after"]',
+        },
+        {
+          Description:"Excite 日英",
+          method:'POST',
+          Referer:'http://www.excite.co.jp/world/english_japanese/',
+          action:"http://www.excite.co.jp/world/english_japanese/",
+          post:"before=%%SEL%%&wb_lp=JAEN&before_lang=JA&after_lang=&after=",
+          code:"UTF-8",
+          xpath:'.//textarea[@name="after"]',
+        },
 
         {
           Description:"Google 英日",
