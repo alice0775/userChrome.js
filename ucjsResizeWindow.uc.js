@@ -25,6 +25,7 @@
 // @exclude        chrome://browser/content/sanitize.xul
 // @compatibility  Firefox 2.0 3.0 3.1 3.2a1pre
 // @author         Alice0775
+// @version        2017/11/18 nsIPrefBranch to nsIPrefBranch
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // ==/UserScript==
 // @version        2010/03/29 00:00 exclude chrome://browser/content/sanitize.xul
@@ -54,7 +55,7 @@ var ucjsResizeWindow = {
 
   get prefs() {
     var p = Components.classes["@mozilla.org/preferences-service;1"]
-                             .getService(Components.interfaces.nsIPrefBranch2);
+                             .getService(Components.interfaces.nsIPrefBranch);
     if (!p)
       p = window.top.gPrefService;
     return p;

@@ -53,13 +53,12 @@ var selectPrevTabOnClickSelectedTab = {
   },
 
   getTab: function(event){
-    var tab = document.evaluate(
-                'ancestor-or-self::*[local-name()="tab"]',
-                event.originalTarget,
-                null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE,
-                null
-              ).singleNodeValue;
+    var tab = aEvent.originalTarget;
+    while(tab) {
+      if (tab.localName == "tab")
+        break;
+      tab = tab.parentNode;
+    }
     return tab;
   }
 }

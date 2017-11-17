@@ -85,13 +85,12 @@ if (gBrowser && !("_onDrop" in gBrowser)) {
      var url = dt.getData(["text/plain"]);
      if(/^ttps?/.test(url)) {
       url = url.match(/(.*)[\\n]?/)[1].replace(/^(ttp|tp|h..p)/i,'http');
-      var tab = document.evaluate(
-                  'ancestor-or-self::*[local-name()="tab"]',
-                  event.originalTarget,
-                  null,
-                  XPathResult.FIRST_ORDERED_NODE_TYPE,
-                  null
-                ).singleNodeValue;
+        var tab = aEvent.originalTarget;
+        while(tab) {
+          if (tab.localName == "tab")
+            break;
+          tab = tab.parentNode;
+        }
         if (tab) {
           // drag to tab
           gBrowser.tabContainer._tabDropIndicator.collapsed = true;

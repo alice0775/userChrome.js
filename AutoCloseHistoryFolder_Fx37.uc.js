@@ -7,6 +7,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version       2008/11/28 Firefox3.1b3pre tboの初期化に時間が掛かるようでsetTimeoutするようにした
 // @Note          http://space.geocities.yahoo.co.jp/gl/alice0775
 // @Note          I got permission to open this script to the public from Mr.Sephiroth on July 28,2007.
@@ -181,13 +182,13 @@ var acHistoryFolder = {
 
   clearPref: function(aPrefString){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     xpPref.clearUserPref(aPrefString);
   },
 
   getPref: function(aPrefString, aPrefType, aDefault){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case 'complex':
@@ -207,7 +208,7 @@ var acHistoryFolder = {
 
   setPref: function(aPrefString, aPrefType, aValue){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case 'complex':

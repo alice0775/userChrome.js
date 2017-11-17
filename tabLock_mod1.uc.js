@@ -4,6 +4,7 @@
 // @description    tabLock
 // @include        *
 // @compatibility  17-25
+// @version        2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version        2016/03/19 00:00 TST
 // @version        2016/03/18 00:00 update scanner
 // @version        2014/10/18 00:00 skip to check isNext/Prev/Hash for some url 
@@ -711,7 +712,7 @@ patch: {
 
     getPref: function(aPrefString, aPrefType, aDefault){
       var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                    .getService(Components.interfaces.nsIPrefBranch2);
+                    .getService(Components.interfaces.nsIPrefBranch);
       try{
         switch (aPrefType){
           case 'complex':
@@ -731,7 +732,7 @@ patch: {
 
     setPref: function(aPrefString, aPrefType, aValue){
       var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                    .getService(Components.interfaces.nsIPrefBranch2);
+                    .getService(Components.interfaces.nsIPrefBranch);
       try{
         switch (aPrefType){
           case 'complex':

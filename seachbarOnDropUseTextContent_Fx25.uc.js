@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.0 3.1
 // @author         Alice0775
+// @version        2017/11/18 nsIPrefBranch to nsIPrefBranch
 // @version        2013/11/16 12:00 addHistoryFindbar_Fx25.uc.jsに対応
 // @version        2013/01/16 12:00 Bug 831008 Disable Mutation Events in chrome/XUL
 // ==/UserScript==
@@ -133,7 +134,7 @@ var seachbarOnDropUseTextContent = {
       var sep ="";
       var pasteNewlines = 2;
       pasteNewlines = Components.classes["@mozilla.org/preferences-service;1"]
-                            .getService(Components.interfaces.nsIPrefBranch2)
+                            .getService(Components.interfaces.nsIPrefBranch)
                             .getIntPref("editor.singleLine.pasteNewlines");
       switch (pasteNewlines){
         case 0:

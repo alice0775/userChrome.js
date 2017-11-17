@@ -107,13 +107,12 @@
 
   gBrowser.tabContainer.addEventListener("click", function(event) {
     if (event.button != 1) return;
-    var tab = document.evaluate(
-                'ancestor-or-self::*[local-name()="tab"]',
-                event.originalTarget,
-                null,
-                XPathResult.FIRST_ORDERED_NODE_TYPE,
-                null
-              ).singleNodeValue;
+    var tab = aEvent.originalTarget;
+    while(tab) {
+      if (tab.localName == "tab")
+        break;
+      tab = tab.parentNode;
+    }
     if (!tab)
       return;
     event.stopPropagation();

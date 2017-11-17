@@ -8,6 +8,8 @@
 // @include        main
 // @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
 // @author         Alice0775
+// @version        2017/11/14 21:00 use Services.jsm
+// @version        2016/11/28 21:00 remove "for each"
 // @version        2015/12/04 24:00 Bug 1177310 [e10s] Stop using CPOWs on application shutdow
 // @version        2013/03/20 24:00 force cancel default right click action for unknown modification
 // @version        2013/03/22 08:02 Added "use strict"
@@ -44,6 +46,13 @@
     // editor: "/usr/bin/gedit",
 // --- config ---
     _statusDisplay: null,
+
+    get Services() {
+      if (!this._Services)
+        this._Services = Components.utils.import('resource://gre/modules/Services.jsm');
+      return this._Services;
+    },
+
     get statusDisplay() {
       if (!this._statusDisplay)
         this._statusDisplay = document.getElementById('status-bar') ||
@@ -99,7 +108,7 @@
                         .getService(Ci.nsIDragService);
       var dragSession = dragService.getCurrentSession();
       var supportedTypes = ["text/x-moz-url", "text/unicode", "application/x-moz-file"];
-      for each (var type in supportedTypes) {
+      for (let type of supportedTypes) {
         if (event.dataTransfer.types.contains(type)) {
           var data = event.dataTransfer.getData(type);
           var url = (/^\s*(.*?)\s*$/m.test(data))
@@ -118,7 +127,7 @@
                         .getService(Ci.nsIDragService);
       var dragSession = dragService.getCurrentSession();
       var supportedTypes = ["text/x-moz-url", "text/unicode", "application/x-moz-file"];
-      for each (var type in supportedTypes) {
+      for (let type of supportedTypes) {
         if (event.dataTransfer.types.contains(type)) {
           var data = event.dataTransfer.getData(type);
           this.dndObserver.onDrop(event, {data: data}, dragSession);
@@ -459,8 +468,7 @@
 
     //prefを読み込み
     getPref: function(aPrefString, aPrefType, aDefault){
-      var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                    .getService(Components.interfaces.nsIPrefBranch2);
+      var xpPref = this.Services.prefs;
       try{
         switch (aPrefType){
           case 'complex':
@@ -479,8 +487,8 @@
     },
     //prefを書き込み
     setPref: function(aPrefString, aPrefType, aValue){
-      var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                    .getService(Components.interfaces.nsIPrefBranch2);
+      var xpPref = this.Services.prefs;
+
       try{
         switch (aPrefType){
           case 'complex':
@@ -501,8 +509,7 @@
     // 監視を開始する
     addPrefListener: function(aObserver) {
         try {
-            var pbi = Components.classes['@mozilla.org/preferences;1']
-                      .getService(Components.interfaces.nsIPrefBranch2);
+            var pbi = this.Services.prefs;
             pbi.addObserver(aObserver.domain, aObserver, false);
         } catch(e) {}
     },
@@ -510,8 +517,7 @@
     // 監視を終了する
     removePrefListener: function(aObserver) {
         try {
-            var pbi = Components.classes['@mozilla.org/preferences;1']
-                      .getService(Components.interfaces.nsIPrefBranch2);
+            var pbi =  this.Services.prefs;
             pbi.removeObserver(aObserver.domain, aObserver);
         } catch(e) {}
     },

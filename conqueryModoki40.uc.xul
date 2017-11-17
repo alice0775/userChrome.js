@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 40 non-e10s
 // @author         Alice0775
+// @version        2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version        2016/04/21 22:00 Update form history
 // @version        2015/10/12 20:00 Nightly44.0a1 fixed contectMenu
 // @version        2015/08/12 20:00 Fixed due to Bug 1134769
@@ -495,7 +496,7 @@
 
     getPref: function(aPrefString, aPrefType, aDefault){
       var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
-                    .getService(Components.interfaces.nsIPrefBranch2);
+                    .getService(Components.interfaces.nsIPrefBranch);
       try{
         switch (aPrefType){
           case "str":

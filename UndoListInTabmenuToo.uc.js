@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 4.0
 // @author         Alice0775
+// @version        2017/11/18 nsIPrefBranch to nsIPrefBranch
 // @version        2010/09/18 00:00 4.0b7pre
 // @version        2009/02/03 13:00 ツールチップにタブ内履歴を表示するようにした
 // @Note           タブやコンテキストメニューにもUndoClose Tab Listを追加するもの
@@ -360,7 +361,7 @@ var UndoListInTabmenu = {
 
   getPref: function(aPrefString, aPrefType, aDefault){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case 'complex':
@@ -380,7 +381,7 @@ var UndoListInTabmenu = {
 
   setPref: function(aPrefString, aPrefType, aValue){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case 'complex':

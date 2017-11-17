@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 17+
 // @author         Alice0775
+// @version        2017/16/30 20:00 Form typo
 // @version        2016/06/03 17:00 Form Histroty
 // ==/UserScript==
 // Form History
@@ -17,7 +18,8 @@
   var removeOldFormHistory = {};
 
   XPCOMUtils.defineLazyModuleGetter(removeOldFormHistory, "FormHistory",
-  try {                                   "resource://gre/modules/FormHistory.jsm");
+                                   "resource://gre/modules/FormHistory.jsm");
+  try {
     var change = { op: "remove" };
     change.firstUsedStart = aBeginTime;
     change.firstUsedEnd = aEndTime;

@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 40 (not e10s)
 // @author         Alice0775
+// @version        2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version        2016/06/12 22:00 Fix regression from Update form history
 // @version        2016/04/21 22:00 Update form history
 // @version        2015/08/18 00:50 Fixed 受
@@ -879,7 +880,7 @@ var DragNGo = {
   //prefを読み込み
   getPref: function(aPrefString, aPrefType, aDefault){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case 'complex':
@@ -899,7 +900,7 @@ var DragNGo = {
   //prefを書き込み
   setPref: function(aPrefString, aPrefType, aValue){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case 'complex':

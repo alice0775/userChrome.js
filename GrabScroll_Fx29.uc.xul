@@ -30,6 +30,7 @@
 // @Note           altキーを押しながらドラッグで文字列を選択
 // @Note           clickとmouseupのタイミングはWInXPの時 -mouseup-clickの順, 他のOSは知らん
 // @Note           shiftキーを押しながらドラッグでスクロール
+// @version        2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version        2016/07/19 0800 zoom
 // @version        2016/04/19 0800 judge >fx46
 // @version        2016/04/19 0700 fix regression of 2016/03/27 0100 prevent Bug 1209100
@@ -1016,7 +1017,7 @@ var GrabScroll = {
 
   getPref: function(aPrefString, aPrefType, aDefault){
     var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case "str":
@@ -1033,7 +1034,7 @@ var GrabScroll = {
   },
   setPref: function(aPrefString, aPrefType, aValue){
     var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case "str":
@@ -1059,7 +1060,7 @@ var GrabScroll = {
   // 監視を開始する
   addPrefListener: function(aObserver) {
     try {
-      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch);
       pbi.addObserver(aObserver.domain, aObserver, false);
     } catch(e) {}
   },
@@ -1067,7 +1068,7 @@ var GrabScroll = {
   // 監視を終了する
   removePrefListener: function(aObserver) {
     try {
-      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch2);
+      var pbi = Components.classes['@mozilla.org/preferences;1'].getService(Components.interfaces.nsIPrefBranch);
       pbi.removeObserver(aObserver.domain, aObserver);
     } catch(e) {}
   },

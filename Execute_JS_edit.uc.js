@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           Execute_JS_edit.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    External Edittor for Execute_JS
+// @description    External Edittor(middle click) for Execute_JS
 // @include        main
 // @compatibility  Firefox 2.0 3.0
 // @author         Original Author: pile0nades
@@ -99,7 +99,7 @@ WindowHook.register("chrome://executejs/content/executejs/executeJS.xul",
     function editinit(){
       if(window.navigator.platform.toLowerCase().indexOf("win") != -1){
         //_editor = "C:\\WINDOWS\\notepad.exe";             /* windows */
-        _editor = "C:\\progra~1\\hidemaru\\hidemaru.exe"; /* windows */
+        _editor = "C:\\Program Files\\Hidemaru\\hidemaru.exe"; /* windows */
         _dir_separator = '\\';                            /* windows */
         _os = 'win';                                      /* windows */
       }else{
@@ -229,7 +229,7 @@ WindowHook.register("chrome://executejs/content/executejs/executeJS.xul",
         var filename = TmpFilenameTextarea();
       }
       file.initWithPath(filename);
-      file.create(file.NORMAL_FILE_TYPE, parseInt(600,8));
+      file.create(file.NORMAL_FILE_TYPE, 0600);
 
       // Write the data to the file.
       var ostr = Components.classes['@mozilla.org/network/file-output-stream;1'].

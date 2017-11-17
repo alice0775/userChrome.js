@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 3.7 13 14
 // @author         Alice0775
+// @version        2017/11/18 nsIPrefBranch to nsIPrefBranch
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2012/04/11 12:00 Bug 739451 Don't rely on XPConnect-magic for getting the owner window of a places view
 // @version        2012/03/05 12:00 remove deprecated code(PlacesUtils.nodeIsLivemarkItem)
@@ -136,7 +137,7 @@ var contextPopupBookmarksFolder = {
   //prefを読み込み
   getPref: function(aPrefString, aPrefType, aDefault){
     var xpPref = Components.classes['@mozilla.org/preferences-service;1']
-                  .getService(Components.interfaces.nsIPrefBranch2);
+                  .getService(Components.interfaces.nsIPrefBranch);
     try{
       switch (aPrefType){
         case 'complex':
@@ -157,7 +158,7 @@ var contextPopupBookmarksFolder = {
   // 監視を開始する
   addPrefListener: function(aObserver) {
       try {
-          var pbi = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch2);
+          var pbi = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch);
           pbi.addObserver(aObserver.domain, aObserver, false);
       } catch(e) {}
   },
@@ -165,7 +166,7 @@ var contextPopupBookmarksFolder = {
   // 監視を終了する
   removePrefListener: function(aObserver) {
       try {
-          var pbi = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch2);
+          var pbi = Components.classes['@mozilla.org/preferences-service;1'].getService(Components.interfaces.nsIPrefBranch);
           pbi.removeObserver(aObserver.domain, aObserver);
       } catch(e) {}
   },

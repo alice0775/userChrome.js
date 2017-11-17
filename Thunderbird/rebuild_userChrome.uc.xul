@@ -8,6 +8,7 @@
 // @include        main
 // @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
 // @author         Alice0775
+// @version        2016/11/28 21:00 remove "for each"
 // @version        2013/03/22 08:02 Added "use strict"
 // @version        2013/03/22 08:01 Fixed commands to work properly, even if menus had been moved into other place
 // @version        2013/03/22 08:00 Fixed dragdrop target
@@ -97,7 +98,7 @@
                         .getService(Ci.nsIDragService);
       var dragSession = dragService.getCurrentSession();
       var supportedTypes = ["text/x-moz-url", "text/unicode", "application/x-moz-file"];
-      for each (var type in supportedTypes) {
+      for (let type of supportedTypes) {
         if (event.dataTransfer.types.contains(type)) {
           var data = event.dataTransfer.getData(type);
           var url = (/^\s*(.*?)\s*$/m.test(data))
@@ -116,7 +117,7 @@
                         .getService(Ci.nsIDragService);
       var dragSession = dragService.getCurrentSession();
       var supportedTypes = ["text/x-moz-url", "text/unicode", "application/x-moz-file"];
-      for each (var type in supportedTypes) {
+      for (let type of supportedTypes) {
         if (event.dataTransfer.types.contains(type)) {
           var data = event.dataTransfer.getData(type);
           this.dndObserver.onDrop(event, {data: data}, dragSession);
