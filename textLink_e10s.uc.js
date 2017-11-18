@@ -1,26 +1,24 @@
 // ==UserScript==
-// @name           textLink_e10s.uc.js
+// @name           textLink.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TextLinkもどき
 // @include        main
+// @include        chrome://browser/content/web-panels.xul
 // @include        chrome://messenger/content/messenger.xul
 // @include        chrome://messenger/content/messageWindow.xul
-// @compatibility  Firefox 24, Thunderbird 24
+// @compatibility  Firefox 57, (not checked for Thunderbird 57)
 // @author         Alice0775
-// @note           Left DblClick        : open link on  new tab
-// @note           ctrl + Left DblClick : open current tab
-// @note           shift + Left DblClick: save as link
+// @note           Left DblClick         : open link on new tab
+// @note           shift + Left DblClick : open current on new tab but focus oppsite
+// @note           ctrl + Left DblClick  : open current tab
+// @note           alt + Left DblClick   : save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
-// @version        2015/04/08 12:30 focusedWindow
-// @version        2015/02/15 23:30 Bug 1127927 Make link saving safe for e10s
+// @version        2017/11/18 07:00 experiments e10s
 // @version        2014/10/12 23:30 !
-// @version        2014/10/10 00:00 use gBrowser.selectedBrowser.contentWindowAsCPOW instead of content
-// @version        2014/10/10 00:00 Detect DOM instances by constructor function instead of XPCOM interface 
-// @version        2014/06/20 07:00 experiments e10s
 // @version        2014/06/18 13:30 working with autoCopyToClipboard.uc.js
-// @version        2014/06/18 13:30 experiments e10s
 // @version        2014/06/18 13:30 Fix Thunderbird
 // @version        2014/06/18 12:30 remove experiments e10s
+// @version        2014/06/18 07:10 experiments e10s event
 // @version        2014/06/18 07:04 experiments e10s
 // @version        2014/06/18 07:00 experiments e10s
 // @version        2014/03/15 06:00 Fix Issue#21
@@ -93,14 +91,12 @@
 *
 * ***** END LICENSE BLOCK ***** */
 
-function ucjs_textlink(event){
+function ucjs_textlink(event) {
   if(event.button != 0 && event.keyCode != 13) return;
 
   var Start = new Date().getTime();
 
   const RELATIVE = true; //相対urlを解決するかどうか
-  const SELECTUTL = false; //urlらしき文字列を選択するかどうか
-
   const ioService = Components.classes['@mozilla.org/network/io-service;1']
                       .getService(Components.interfaces.nsIIOService);
 /*
@@ -129,7 +125,7 @@ function ucjs_textlink(event){
   var str1, text, str2;
 
   //textarea かどうか
-  var node = isParentEditableNode(_getFocusedWindow());
+  var node = isParentEditableNode(event.originalTarget);
   if (!node) {
   // このif ブロックは textarea等以外の処理
   //ダブルクリックで選択された選択文字列のレンジを得る
@@ -144,10 +140,10 @@ function ucjs_textlink(event){
   //レンジのノードなど
     text = selection.toString();
     if(text == '') return;
-  //debug(text);
-    var sNode = selRange.startContainer; //debug(sNode.localName);
+
+    var sNode = selRange.startContainer;
     var soffset = selRange.startOffset;
-    var eNode = selRange.endContainer; //debug(eNode.localName);
+    var eNode = selRange.endContainer;
     var eoffset = selRange.endOffset;
     if (sNode != eNode){
       eNode = sNode;
@@ -162,8 +158,6 @@ function ucjs_textlink(event){
       root = doc;
     if (!root)
       return;
-//debug("sOyaNode " + sOyaNode.localName + " soffset " + soffset);
-//debug("eOyaNode " + eOyaNode.localName + " eoffset " + eoffset);
 
   //親ブロック要素の文字列をすべて得る
     const allowedParents = [
@@ -175,8 +169,8 @@ function ucjs_textlink(event){
         ];
     var xpath = ".//text()[(parent::" + allowedParents.join(" or parent::") + ")]";
 
-    var candidates = doc.evaluate(xpath, root, null, XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE, null);
-//debug("candidates.snapshotLength " + candidates.snapshotLength);
+    var candidates = doc.evaluate(xpath, root, null, 6 /*XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE */, null);
+
   //レンジより前にある文字列
     var i1 = - 1;
     for (var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
@@ -190,15 +184,13 @@ function ucjs_textlink(event){
         if(sOyaNode == oyaNode(candidates.snapshotItem(i))){
           if (candidates.snapshotItem(i).nextSibling &&
               /^br$/i.test(candidates.snapshotItem(i).nextSibling.localName)) {
-            //debug(candidates.snapshotItem(i).nodeValue + "  " + candidates.snapshotItem(i).nextSibling.localName);
             break;
           }
-//debug("candidates.snapshotItem(i).parentNode.localName "+candidates.snapshotItem(i).parentNode.localName);
           if (/^a$/i.test(candidates.snapshotItem(i).parentNode.localName) &&
               candidates.snapshotItem(i).parentNode.hasAttribute("href") )
             break;
           str1 = candidates.snapshotItem(i).nodeValue + str1;
-//debug("str1 "+str1);
+
           if (/[ 　]/.test(str1))
             break;
         } else {
@@ -213,7 +205,6 @@ function ucjs_textlink(event){
     for(var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
       if(sOyaNode == oyaNode(candidates.snapshotItem(i))) {
         str2 = str2 + candidates.snapshotItem(i).nodeValue;
-//debug(candidates.snapshotItem(i).nodeValue);
         if (i > i1 + 1 && /[ 　]/.test(candidates.snapshotItem(i).nodeValue))
           break;
       } else {
@@ -267,30 +258,20 @@ function ucjs_textlink(event){
   //文末の.は無いことに
   allStr = allStr.replace(/\.$/ ,'');
 
-//debug("2 " + str2);
-//debug("Str " + text);
-//debug("1 " + str1);
-//debug("all " + allStr);
 
 //すべての文字列の中でURLと思しき文字列を配列として得る
   var i1, i2;
   var arrUrl = allStr.match(urlRegex);
-
   if (arrUrl) {
 //見つかったURLと思しき文字列の中にレンジが含まれているかどうか
     i2 = 0;
     for (var i = 0, len = arrUrl.length; i < len; i++){
-//debug(i + "] " + arrUrl[i]);
       i1 = allStr.indexOf(arrUrl[i],i2);
       i2 = i1 + arrUrl[i].length;
-//debug(i1 <= si && ei <= i2);
       if(i1 <= si && ei <= i2){
-//debug(arrUrl[i]);
         //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
         var url = arrUrl[i];
         url = additionalFixUpURL(url);
-        if (SELECTUTL)
-          var URLRange = getURLRange(selRange, url)
 
         // ttp等を http等に および  :// を 半角に
         url = /^(ftp|\uff46\uff54\uff50)/i.test(url)
@@ -305,9 +286,6 @@ function ucjs_textlink(event){
         if (!isValidTld(uri))
           return;
         uri = ioService.newURI(uri.spec, null, null);
-//debug('Parsing ucjs_textlink: '+((new Date()).getTime()-Start) +'msec\n');
-        if (SELECTUTL)
-          selectRange(URLRange);
         textlink(event, doc, uri);
         return;
       }
@@ -319,21 +297,17 @@ function ucjs_textlink(event){
   if (!arrUrl) return;
   i2 = 0;
   for (var i = 0, len = arrUrl.length; i < len; i++){
-//debug("Relative " + arrUrl[i]);
     i1 = allStr.indexOf(arrUrl[i],i2);
     i2 = i1 + arrUrl[i].length;
 
-//debug(i1 +" "+ si +" "+ ei +" "+ i2);
     if (i1 <= si && ei <= i2){
       // .hoge とか ..huga はスキップ
       if (/^\./.test(arrUrl[i]) && !/^[\.]+[/]/.test(arrUrl[i]))
         return;
-//debug(arrUrl[i]);
+
       //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
       var url = arrUrl[i];
       url = additionalFixUpURL(url);
-      if (SELECTUTL)
-        var URLRange = getURLRange(selRange, url)
 
       // host名が ftp で始まるなら ftp://に
       if (/^ftp/.test(url)){
@@ -352,12 +326,11 @@ function ucjs_textlink(event){
         var baseURI = ioService.newURI(win.document.documentURI, null, null);
         url = ioService.newURI(url, null, baseURI).spec;
       }
-//debug(url.indexOf(url.match(urlRegex)));
+
       if (!mailRx.test(url) && url.indexOf(url.match(urlRegex)) > 1) return;
       var URIFixup = Components.classes['@mozilla.org/docshell/urifixup;1']
                      .getService(Components.interfaces.nsIURIFixup);
       try{
-//debug(url);
         var uri = URIFixup.createFixupURI(
             url,
             URIFixup.FIXUP_FLAG_NONE ); //FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP→FIXUP_FLAG_NONE
@@ -367,12 +340,7 @@ function ucjs_textlink(event){
       if (!isValidTld(uri)) {
         return;
       }
-//debug('Parsing ucjs_textlink: ' + url);
-      if (SELECTUTL)
-        selectRange(URLRange);
-
       uri = ioService.newURI(uri.spec, null, null);
-//debug('Parsing ucjs_textlink: '+((new Date()).getTime()-Start) +'msec\n'+uri.spec);
       textlink(event, doc, uri);
       return;
     }
@@ -408,24 +376,6 @@ function ucjs_textlink(event){
     return url;
   }
 
-  function activeBrowser() {
-    return ('SplitBrowser' in window ? SplitBrowser.activeBrowser : null )
-            ||  gBrowser;
-  }
-
-  function _getFocusedWindow(){ //現在のウインドウを得る
-    let element, focusedWindow;
-    try {
-	    [element, focusedWindow] = BrowserUtils.getFocusSync(document);
-      return focusedWindow;
-    } catch(ex) {
-	    focusedWindow = document.commandDispatcher.focusedWindow;
-	    if (!focusedWindow || focusedWindow == window)
-	      return window.gBrowser.selectedBrowser.contentWindowAsCPOW;
-	    else
-	      return focusedWindow;
-   }
-  }
 
 //レンジの要素が所属する親ブロック要素を得る
   function oyaNode(aNode){
@@ -473,10 +423,10 @@ function ucjs_textlink(event){
         host = RegExp.$2;
       }
     }
-//debug("host  " + host);
+
     if (!host)
       return false;
-    if (getVer() < 3.0){
+    if (false){
       if (regexpTLD.test(host))
         return true;
       else
@@ -494,18 +444,71 @@ function ucjs_textlink(event){
   }
 
   function textlink(event, doc, uri) {
-    if ("autoCopy" in window) {
-      autoCopy.forceDisable = true;
-      setTimeout(function(){ autoCopy.forceDisable = false;}, 1500);
-    }
-
     try{
-      openURL(uri, doc);
+      if(event.altKey)
+        sendAsyncMessage("textlink_saveAsURL",
+        {
+          uri: uri,
+          shiftKey: event.shiftKey,
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey
+        },
+        {
+          target : event.target.ownerDocument
+        });
+      else
+        sendAsyncMessage("textlink_openNewTab",
+        {
+          uri: uri,
+          shiftKey: event.shiftKey,
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey,
+          documentURIObject: event.target.ownerDocument.documentURIObject
+        },
+        {
+          target : event.target.ownerDocument
+        });
+
     }catch(e){}
-    closeContextMenu();
+  }
+}
+
+
+function ucjs_textlink_main() {
+  window.messageManager.loadFrameScript(
+     'data:application/javascript,'
+      + encodeURIComponent(ucjs_textlink.toSource())
+      + encodeURIComponent('addEventListener("dblclick", ucjs_textlink, false);')
+      + encodeURIComponent('addEventListener("keypress", ucjs_textlink, false);')
+    , true);
+
+
+  window.messageManager.addMessageListener("textlink_saveAsURL", messageListener);
+  window.messageManager.addMessageListener("textlink_openNewTab", messageListener);
+
+
+  function messageListener(message) {
+    var uri = message.data.uri;
+    var shiftKey = message.data.shiftKey;
+    var ctrlKey = message.data.ctrlKey;
+    var altKey = message.data.altKey;
+    var doc = message.target.contentDocument; //null;
+    
+    switch(message.name) {
+    case "textlink_openNewTab":
+      openNewTab(uri, doc, shiftKey, ctrlKey, altKey);
+      break;
+    case "textlink_saveAsURL":
+      saveAsURL(uri, doc);
+      break;
+    }
+  }
+  
+  function activeBrowser() {
+    return (gBrowser ? gBrowser : top.document.getElementById("sidebar"));
   }
 
-  function openURL(uri, doc){
+  function openNewTab(uri, doc, shiftKey, ctrlKey, altKey){
     //Thunderbird
     if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
       // Make sure we are allowed to open this URL
@@ -515,9 +518,9 @@ function ucjs_textlink(event){
                              .getService(nsIScriptSecurityManager);
       try {
         if (uri instanceof Components.interfaces.nsIURI)
-         secMan.checkLoadURIWithPrincipal(_unremotePrincipal(doc.nodePrincipal), uri, nsIScriptSecurityManager.STANDARD);
+         secMan.checkLoadURIWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
         else
-         secMan.checkLoadURIStrWithPrincipal(_unremotePrincipal(doc.nodePrincipal), uri, nsIScriptSecurityManager.STANDARD);
+         secMan.checkLoadURIStrWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
       } catch (e) {
         throw "Load denied.";
       }
@@ -527,259 +530,31 @@ function ucjs_textlink(event){
       return;
     }
 
-    try {
-      var pribcipal = gBrowser.selectedBrowser.contentPrincipal;
-    } catch(ex) {
-      pribcipal = doc.nodePrincipal;
-    }
-
-    urlSecurityCheck(uri.spec, pribcipal);
-    if (event.shiftKey) {
-      openLinkIn(uri.spec, "save", {referrerURI: doc.referrer, 
-                                    referrerPolicy: Components.interfaces.nsIHttpChannel.REFERRER_POLICY_DEFAULT,
-                                    initiatingDoc: doc ? doc : null,
-      });
-    } else if (event.ctrlKey) {
-      openLinkIn(uri.spec, "current", {});
-    } else {
-      if ('TreeStyleTabService' in window)
-        TreeStyleTabService.readyToOpenChildTab(activeBrowser().selectedTab);
-      openLinkIn(uri.spec, "tab", {relatedToCurrent:true});
+    if (ctrlKey) {
+      openLinkIn(uri.spec, "current", {noReferrer: true});
+    }else if (shiftKey) {
+      openLinkIn(uri.spec, "tabshifted", {noReferrer: true, relatedToCurrent:true});
+    }else if (altKey) {
+      openLinkIn(uri.spec, "save", {noReferrer: true, initiatingDoc: doc});
+    }else{
+      openLinkIn(uri.spec, "tab", {noReferrer: true, relatedToCurrent:true});
     }
   }
 
-  function closeContextMenu() {
-    var popup = document.getElementById("contentAreaContextMenu");
-    if (popup)
-      popup.hidePopup();
-  }
-
-  function getURLRange(selRange, url) {
-    //レンジのノードなど
-    var doc = selRange.startContainer.ownerDocument
-    var bodyNode = getDocumentBody(doc);
-    if(!bodyNode)return;
-
-    //nsIFindげと
-    var mFind = Components.classes["@mozilla.org/embedcomp/rangefind;1"]
-                .createInstance(Components.interfaces.nsIFind);
-
-    //Rangeげと
-    var theRange = doc.createRange();
-    var start = doc.createRange();
-    var end = doc.createRange();
-
-    try{
-      var count = bodyNode.childNodes.length;
-    }catch(e){
-      var count = 0;
+  function saveAsURL(uri, doc){
+    var linkText = uri.spec;
+    var aReferrer = doc;
+    if (aReferrer instanceof HTMLDocument) {
+      aReferrer = aReferrer.documentURIObject;
     }
-    theRange.setStart(bodyNode, 0);
-    theRange.setEnd(bodyNode, count);
-
-    start.setStart(bodyNode, 0);
-    start.setEnd(bodyNode, 0);
-    end.setStart(bodyNode, count);
-    end.setEnd(bodyNode, count);
-
-    var selRangeBox = selRange.getBoundingClientRect();
-    mFind.caseSensitive = false;
-    while ((foundRange = mFind.Find(url, theRange, start, end))) {
-      //検索range更新
-      start = doc.createRange();
-      start.setStart(foundRange.endContainer, foundRange.endOffset);
-      start.collapse(true);
-
- //debug("loop 1");
-      // selRange 始点が foundRange の始点よりも前
-      if (selRange.compareBoundaryPoints(Range.START_TO_START, foundRange) == -1) 
-        continue;
-      // selRangeの終点がfoundRangeの終点より後ろにある場合
-      //if (foundRange.compareBoundaryPoints(Range.END_TO_END, selRange) == -1)
-      // xxx selRangeの次がbrの時endContainerが先祖の要素になるので...
-      var foundRangeBox = foundRange.getBoundingClientRect();
-      if (selRangeBox.right > foundRangeBox.right ||
-          selRangeBox.top < foundRangeBox.top ||
-          selRangeBox.bottom > foundRangeBox.bottom)
-        continue;
-      return foundRange;
-    }
-    return null;
-  }
-
-  function getDocumentBody(aDocument) {
-    if (aDocument.body)
-      return aDocument.body;
-
-    try {
-      var xpathResult = aDocument.evaluate(
-          'descendant::*[contains(" BODY body ", concat(" ", local-name(), " "))]',
-          aDocument,
-          null,
-          Components.interfaces.nsIDOMXPathResult.FIRST_ORDERED_NODE_TYPE,
-          null
-        );
-      return xpathResult.singleNodeValue;
-    }
-    catch(e) {
-    }
-    return null;
-  }
-
-  function selectRange(aRange) {
-    if (!aRange)
+    //Thunderbird
+    if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
+      saveURL( uri.spec, linkText, null, true, false ,aReferrer , doc);
       return;
-
-    var doc = aRange.startContainer.ownerDocument;
-    var elm = findParentEditable(aRange);
-
-    var selCon = getSelectionController(elm);
-    if(!selCon) selCon = getSelconForDoc(doc);
-    var selection = selCon.getSelection(selCon.SELECTION_NORMAL);
-    selection.removeAllRanges();  //既存の選択領域を取得し、全て破棄
-    selection.addRange(aRange);
-  }
-
-  //レンジは編集可能ノードにある?
-  function findParentEditable(aRange) {
-    var node = aRange.commonAncestorContainer.parentNode;
-    while (node && node.parentNode){
-      try {
-        if (!(node instanceof Components.interfaces.nsIDOMNSEditableElement))
-          throw 0;
-        node.QueryInterface(Components.interfaces.nsIDOMNSEditableElement);
-        return node;
-      }
-      catch(e){}
-      node = node.parentNode;
     }
-    return null;
-  }
 
-  function getSelectionController(aTarget) {
-    if (!aTarget) return null;
-
-    const nsIDOMNSEditableElement = Components.interfaces.nsIDOMNSEditableElement;
-    try {
-      return (aTarget instanceof nsIDOMNSEditableElement) ?
-            aTarget.QueryInterface(nsIDOMNSEditableElement).editor.selectionController :
-          (typeof aTarget.Window == 'function' && aTarget instanceof aTarget.Window) ?
-            DocShellIterator.prototype.getDocShellFromFrame(aTarget)
-              .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-              .getInterface(Components.interfaces.nsISelectionDisplay)
-              .QueryInterface(Components.interfaces.nsISelectionController) :
-          null;
-    }
-    catch(e) {
-    }
-    return null;
-  }
-
-  function getSelconForDoc(doc) {
-    var docShell = getDocShellForFrame(doc.defaultView);
-    var selCon = docShell
-      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-      .getInterface(Components.interfaces.nsISelectionDisplay)
-      .QueryInterface(Components.interfaces.nsISelectionController);
-    return selCon;
-  }
-
-  function getDocShellForFrame(aFrame) {
-    return aFrame
-      .QueryInterface(Components.interfaces.nsIInterfaceRequestor)
-      .getInterface(Components.interfaces.nsIWebNavigation)
-      .QueryInterface(Components.interfaces.nsIDocShell);
-  }
-
-  function getVer(){
-    const Cc = Components.classes;
-    const Ci = Components.interfaces;
-    var info = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
-    // このコードを実行しているアプリケーションの名前を取得する
-    var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
-    return ver;
-  }
-
-  function getPref(aPrefString, aPrefType, aDefault){
-    var xpPref = Components.classes["@mozilla.org/preferences-service;1"]
-                  .getService(Components.interfaces.nsIPrefBranch2);
-    try{
-      switch (aPrefType){
-        case "str":
-          return xpPref.getCharPref(aPrefString).toString(); break;
-        case "int":
-          return xpPref.getIntPref(aPrefString); break;
-        case "bool":
-        default:
-          return xpPref.getBoolPref(aPrefString); break;
-      }
-    }catch(e){
-    }
-    return aDefault;
-  }
-
-  function debug(aMsg){
-    const Cc = Components.classes;
-    const Ci = Components.interfaces;
-    Cc["@mozilla.org/consoleservice;1"]
-      .getService(Ci.nsIConsoleService)
-      .logStringMessage(aMsg);
+    saveURL( uri.spec, linkText, null, true, false, aReferrer , doc );
   }
 }
-var textLinkForSidebar = {
-  init: function(event){
-    try{
-      var doc = event.originalTarget;
-      if (!doc.location) return;
-      if(doc.location.href == "chrome://browser/content/web-panels.xul"){
-        doc.addEventListener('dblclick',function(event){setTimeout(ucjs_textlink,100,event);},false);
-        doc.addEventListener('keypress',function(event){ucjs_textlink(event);},false);
-      }
-    }catch(e){}
-  },
-  uninit: function(event){
-    try{
-      var doc = event.originalTarget;
-      if (!doc.location) return;
-      if(doc.location.href == "chrome://browser/content/web-panels.xul"){
-        doc.removeEventListener('dblclick',function(event){setTimeout(ucjs_textlink,100,event);},false);
-        doc.removeEventListener('keypress',function(event){ucjs_textlink(event);},false);
+ucjs_textlink_main();
 
-      }
-    }catch(e){}
-  }
-}
-
-//for contents area
-if (parseInt(Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo).version.substr(0,3) * 10,10) / 10 > 24) { // fx25 and more
-  var script = 'data:application/javascript,' + encodeURIComponent('addEventListener("dblclick", function(event) {sendSyncMessage("textlink_dblclick", {}, {event: event}); }, false);');
-  window.messageManager.loadFrameScript(script, true);
-  window.messageManager.addMessageListener("textlink_dblclick", 
-    function(m){setTimeout(ucjs_textlink, 100, m.objects.event);}
-  );
-
-  script = 'data:application/javascript,' + encodeURIComponent('addEventListener("keypress", function(event) {sendSyncMessage("textlink_keypress", {}, {event: event}); }, false);');
-  window.messageManager.loadFrameScript(script, true);
-  window.messageManager.addMessageListener("textlink_keypress",
-    function(m){setTimeout(ucjs_textlink, 100, m.objects.event);}
-  );
-
-} else { //Fx24 and less
-  window.document.addEventListener('dblclick', function(event){setTimeout(ucjs_textlink, 100, event);}, false);
-  window.document.addEventListener('keypress', function(event){setTimeout(ucjs_textlink, 100, event);}, false);
-}
-
-//for already loaded chrome://browser/content/web-panels.xul
-if (!/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
-  setTimeout(function(){
-    try{
-      var doc = document.getElementById('sidebar').contentDocument;
-      if(doc && doc.location && doc.location.href == "chrome://browser/content/web-panels.xul")
-        doc.addEventListener('dblclick',function(event){setTimeout(ucjs_textlink,100,event);},false);
-        doc.addEventListener('keypress',function(event){ucjs_textlink(event);},false);
-    }catch(e){}
-  },1000);
-}
-//for sidebar document onload event Listener
-window.document.addEventListener('load', textLinkForSidebar.init, true);
-window.document.addEventListener('unload', textLinkForSidebar.uninit, true);
