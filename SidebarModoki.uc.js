@@ -6,6 +6,8 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/22 23:00 DOM fullscreen
+// @version        2017/11/22 22:00 F11 fullscreen
 // @version        2017/11/15 09:00
 // ==/UserScript==
 
@@ -13,7 +15,7 @@
 var SidebarModoki = {
   // -- config --
   SM_WIDTH : 130,
-  SM_AUTOHIDE : false,
+  SM_AUTOHIDE : false,  //F11 Fullscreen
   TAB0_SRC   : "chrome://browser/content/bookmarks/bookmarksPanel.xul",
   TAB0_LABEL : "Bookmarks",
   TAB1_SRC   : "chrome://browser/content/history/history-panel.xul",
@@ -44,7 +46,7 @@ var SidebarModoki = {
 
       /*フルスクリーン*/
       #SM_toolbox[moz-collapsed="true"],
-      #SM_splitter[moz-collapsed="true"]
+      #SM_splitter[moz-collapsed="true"],
       {
         visibility:collapse;
       }
@@ -133,7 +135,7 @@ var SidebarModoki = {
           </tabpanel>
         </tabpanels>
       </tabbox>
-      <splitter orient="horizontal"  ordinal="1"
+      <splitter ordinal="1"
                 id = "SM_splitter"
                 state = "open"
                 collapse = "before"
@@ -156,23 +158,32 @@ var SidebarModoki = {
     overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
     window.userChrome_js.loadOverlay(overlay, this);
 
-    //フルスクリーン
+    //F11 fullscreen
     FullScreen.showNavToolbox_org = FullScreen.showNavToolbox;
     FullScreen.showNavToolbox = function(trackMouse = true) {
       FullScreen.showNavToolbox_org(trackMouse);
-      if (!!SM_ToolBox) {
-        SM_ToolBox.removeAttribute("moz-collapsed"); 
-        SM_Splitter.removeAttribute("moz-collapsed");
+      if (!!SidebarModoki.ToolBox) {
+        SidebarModoki.ToolBox.removeAttribute("moz-collapsed"); 
+        SidebarModoki.Splitter.removeAttribute("moz-collapsed");
       }
     }
     FullScreen.hideNavToolbox_org = FullScreen.hideNavToolbox;
     FullScreen.hideNavToolbox = function(aAnimate = false) {
       FullScreen.hideNavToolbox_org(aAnimate);
-      if (!!SM_ToolBox) {
-        SM_ToolBox.setAttribute("moz-collapsed", "true");
-        SM_Splitter.setAttribute("moz-collapsed", "true");
+      if (SidebarModoki.SM_AUTOHIDE && !!SidebarModoki.ToolBox) {
+        SidebarModoki.ToolBox.setAttribute("moz-collapsed", "true");
+        SidebarModoki.Splitter.setAttribute("moz-collapsed", "true");
       }
     }
+
+    //DOM fullscreen
+     window.addEventListener("MozDOMFullscreen:Entered", this,
+                            /* useCapture */ true,
+                            /* wantsUntrusted */ false);
+    window.addEventListener("MozDOMFullscreen:Exited", this,
+                            /* useCapture */ true,
+                            /* wantsUntrusted */ false);
+    
   },
 
 
@@ -218,8 +229,8 @@ var SidebarModoki = {
     this.Button = document.getElementById("SM_Button");
     if (!this.Button.hasAttribute("checked") || forceopen) {
       this.Button.setAttribute("checked", true);
-      this.ToolBox.style.setProperty("visibility", "visible", "");
-      this.Splitter.style.setProperty("visibility", "visible", "");
+      this.ToolBox.style.removeProperty("visibility");
+      this.Splitter.style.removeProperty("visibility");
       this.prefs.setBoolPref(this.kSM_Open, true)
     } else {
       this.close();
@@ -246,6 +257,18 @@ var SidebarModoki = {
     switch(event.type) {
       case 'resize':
         this.onResize(event);
+        break;
+      case 'MozDOMFullscreen:Entered':
+        if (!!SidebarModoki.ToolBox) {
+          SidebarModoki.ToolBox.setAttribute("moz-collapsed", "true");
+          SidebarModoki.Splitter.setAttribute("moz-collapsed", "true");
+        }
+        break;
+      case 'MozDOMFullscreen:Exited':
+        if (!!SidebarModoki.ToolBox) {
+          SidebarModoki.ToolBox.removeAttribute("moz-collapsed"); 
+          SidebarModoki.Splitter.removeAttribute("moz-collapsed");
+        }
         break;
      }
   },
