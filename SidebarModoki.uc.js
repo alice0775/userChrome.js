@@ -6,6 +6,7 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/23 00:30 Make button icon
 // @version        2017/11/23 00:00 Make button customizable
 // @version        2017/11/22 23:00 fullscreen
 // @version        2017/11/22 23:00 DOM fullscreen
@@ -73,9 +74,14 @@ var SidebarModoki = {
       }
 
 
-      #SM_Button
+      #SM_Button,
+      #SM_Button:-moz-lwtheme-darktext
       {
-        list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABIAAAASCAYAAABWzo5XAAADQklEQVQ4jZ2US28TVxiG3f+QDW5JlYrGG0pbVWAoJvcqdhw7TvAY23OJJ449t0ziyYydcRxfGAI4yCotUhdVxIIlQmxYwAI2CKSoYhEkJKRs0gXSGQuHCV0QKauXTWKXCqmCV3oW5xzpWZzv0+ty/SsAvvgUXP8NgC4A7s+k61DiDkbZqZ4TZ/76+vjpvZ7vzuwd+8GH/+ObE2fR8/3Pm6HY9HkAbhcA97c/9r/yjZ53RifZ1hQr7fQFEwjGZj5gjOIxRvHtcyCaQl+AguengVZbdGoo/E+MV5t0ViPp+aI9nsiCEfQ28dkclHytqeRrzfhsDoygg84uIsarOD0yibbIF7zgMKJOGFEnswslezwpgJUMsJIBRtQRpgW8eLl198XLrbthWgAj6u33gVCyI+ofTzicXCCcXCDCYtkOMxIYyUAio2EqNQdBL28DEAAIgl7enkrNIZHRwEgGhibojmggRDsptUhSapFIRtUOMzLEfO3tnXsPnmw8e/5o583uTQDnAJzbebN7c+PZ80d37j14IuZrbwcnmI5ocIJx0gslkl4oETlv2WFGhmxUt/b29wsAOABeAMcO8ALg9vb3C7JR3RoKswDwpQuAeyQy7WS0CsloFaKYq3aEUxFKCvD5qYfNZtMLoBvAVwd0N5tNr89PPQwlBQxPTgPAURcA9y/RlCMYFhEMi8yv1O1oWgMnL6EvGAfFiiUAvQdL2wWgl2LFUl8wDk5ewig10xH5qVlHNleJbK6Sxeo1O57NQypcQoRVsH7rtgWgu9VqeVqtlgdA9/qt21aEVSAVLmEsnumIAvGso5bqRC3ViXHxVzshmVBX1hBNa3j8dIO2rlw/23uyf7P3ZP9moXJ58PHTDTqa1qCurCGYFDt/NJbI7uYqDZKrNEhh9YbNzC0jV22AVkwEKP7+qZHIu1FqBv5YGt6RyXcBir9PKyZy1QbGabkztWBC/FstX7MXreukWP/D5ubL0K3fIJtXQEtL4OaWoRSvQileBacug5aXIJmXMV9uIMQoO4eiI2s31vMXpMI2r1VbvHbxdVq3kNYt8FoNqVwVvFbDx+6SkunUf//TBHDksAE8AIYB+D+RYQCej/XSZxfbe0aP+PckvphDAAAAAElFTkSuQmCC');
+        list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQ0lEQVQ4jWNgoAL4z8DA8N/AwAArTQRGFSBBI4YBDHhonC6n3AA1NTUMZ6F5gyQXYFNEsheweWnUBfRyAbmYcgMoAgBFX4a/wlDliwAAAABJRU5ErkJggg==');
+      }
+      #SM_Button:-moz-lwtheme-brighttext
+      {
+        list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANklEQVQ4jWP4TyFg+P///38GBgayMHUNwEdjdTrVDcDnTKJdgEsRSV5ACaBRF9DZBQObFygBAMeIxVdCQIJTAAAAAElFTkSuQmCC');
       }
      `;
 
