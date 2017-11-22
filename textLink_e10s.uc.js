@@ -13,6 +13,7 @@
 // @note           ctrl + Left DblClick  : open current tab
 // @note           alt + Left DblClick   : save as link
 // @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2017/11/19 00:00 experiments e10s more releable
 // @version        2017/11/18 07:00 experiments e10s
 // @version        2014/10/12 23:30 !
 // @version        2014/06/18 13:30 working with autoCopyToClipboard.uc.js
@@ -444,32 +445,152 @@ function ucjs_textlink(event) {
   }
 
   function textlink(event, doc, uri) {
-    try{
-      if(event.altKey)
-        sendAsyncMessage("textlink_saveAsURL",
-        {
-          uri: uri,
-          shiftKey: event.shiftKey,
-          ctrlKey: event.ctrlKey,
-          altKey: event.altKey
-        },
-        {
-          target : event.target.ownerDocument
-        });
-      else
-        sendAsyncMessage("textlink_openNewTab",
-        {
-          uri: uri,
-          shiftKey: event.shiftKey,
-          ctrlKey: event.ctrlKey,
-          altKey: event.altKey,
-          documentURIObject: event.target.ownerDocument.documentURIObject
-        },
-        {
-          target : event.target.ownerDocument
-        });
+    let originalTarget = event.originalTarget;
+    let ownerDoc = originalTarget.ownerDocument;
+    if (!ownerDoc) {
+      return;
+    }
 
-    }catch(e){}
+    //let [href, node, principal] = _hrefAndLinkNodeForClickEvent(event);
+    let href = uri.spec;
+    let node = null;
+    let principal = ownerDoc.nodePrincipal
+    
+    // get referrer attribute from clicked link and parse it
+    // if per element referrer is enabled, the element referrer overrules
+    // the document wide referrer
+    let referrerPolicy = ownerDoc.referrerPolicy;
+    if (node) {
+      let referrerAttrValue = Services.netUtils.parseAttributePolicyString(node.
+                              getAttribute("referrerpolicy"));
+      if (referrerAttrValue !== Components.interfaces.nsIHttpChannel.REFERRER_POLICY_UNSET) {
+        referrerPolicy = referrerAttrValue;
+      }
+    }
+
+    let frameOuterWindowID = WebNavigationFrames.getFrameId(ownerDoc.defaultView);
+
+    let json = { button: event.button, shiftKey: event.shiftKey,
+                 ctrlKey: event.ctrlKey, metaKey: event.metaKey,
+                 altKey: event.altKey, href: null, title: null,
+                 bookmark: false, frameOuterWindowID, referrerPolicy,
+                 triggeringPrincipal: principal,
+                 originAttributes: principal ? principal.originAttributes : {},
+                 isContentWindowPrivate: PrivateBrowsingUtils.isContentWindowPrivate(ownerDoc.defaultView)};
+
+    json.uri = uri;
+    if (href) {
+      try {
+        BrowserUtils.urlSecurityCheck(href, principal);
+      } catch (e) {
+        return;
+      }
+
+      try {
+        json.uri = Services.io.newURI(href);
+      } catch(e){}
+      json.href = href;
+      if (node) {
+        json.title = node.getAttribute("title");
+        if (event.button == 0 && !event.ctrlKey && !event.shiftKey &&
+            !event.altKey && !event.metaKey) {
+          json.bookmark = node.getAttribute("rel") == "sidebar";
+          if (json.bookmark) {
+            event.preventDefault(); // Need to prevent the pageload.
+          }
+        }
+      }
+      json.noReferrer = BrowserUtils.linkHasNoReferrer(node);
+
+      // Check if the link needs to be opened with mixed content allowed.
+      // Only when the owner doc has |mixedContentChannel| and the same origin
+      // should we allow mixed content.
+      json.allowMixedContent = false;
+      let docshell = ownerDoc.defaultView.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                             .getInterface(Components.interfaces.nsIWebNavigation)
+                             .QueryInterface(Components.interfaces.nsIDocShell);
+      if (docShell.mixedContentChannel) {
+        const sm = Services.scriptSecurityManager;
+        try {
+          let targetURI = Services.io.newURI(href);
+          sm.checkSameOriginURI(docshell.mixedContentChannel.URI, targetURI, false);
+          json.allowMixedContent = true;
+        } catch (e) {}
+      }
+      json.originPrincipal = ownerDoc.nodePrincipal;
+      json.triggeringPrincipal = ownerDoc.nodePrincipal;
+    } else {
+      try {
+        BrowserUtils.urlSecurityCheck(uri.spec, principal);
+      } catch (e) {
+        return;
+      }
+      json.noReferrer = true;
+      // Check if the link needs to be opened with mixed content allowed.
+      // Only when the owner doc has |mixedContentChannel| and the same origin
+      // should we allow mixed content.
+      json.allowMixedContent = false;
+      let docshell = ownerDoc.defaultView.QueryInterface(Components.interfaces.nsIInterfaceRequestor)
+                             .getInterface(Components.interfaces.nsIWebNavigation)
+                             .QueryInterface(Components.interfaces.nsIDocShell);
+      if (docShell.mixedContentChannel) {
+        const sm = Services.scriptSecurityManager;
+        try {
+          let targetURI = Services.io.newURI(href);
+          sm.checkSameOriginURI(docshell.mixedContentChannel.URI, targetURI, false);
+          json.allowMixedContent = true;
+        } catch (e) {}
+      }
+      json.originPrincipal = ownerDoc.nodePrincipal;
+      json.triggeringPrincipal = ownerDoc.nodePrincipal;
+    }
+
+    sendAsyncMessage("textlink_openNewTab",
+      json,
+      {
+        target : event.target.ownerDocument
+      }
+    );
+  }
+
+  function _hrefAndLinkNodeForClickEvent(event) {
+    function isHTMLLink(aNode) {
+      // Be consistent with what nsContextMenu.js does.
+      return ((aNode instanceof content.HTMLAnchorElement && aNode.href) ||
+              (aNode instanceof content.HTMLAreaElement && aNode.href) ||
+              aNode instanceof content.HTMLLinkElement);
+    }
+
+    let node = event.target;
+    while (node && !isHTMLLink(node)) {
+      node = node.parentNode;
+    }
+
+    if (node)
+      return [node.href, node, node.ownerDocument.nodePrincipal];
+
+    // If there is no linkNode, try simple XLink.
+    let href, baseURI;
+    node = event.target;
+    while (node && !href) {
+      if (node.nodeType == content.Node.ELEMENT_NODE &&
+          (node.localName == "a" ||
+           node.namespaceURI == "http://www.w3.org/1998/Math/MathML")) {
+        href = node.getAttribute("href") ||
+               node.getAttributeNS("http://www.w3.org/1999/xlink", "href");
+        if (href) {
+          baseURI = node.ownerDocument.baseURIObject;
+          break;
+        }
+      }
+      node = node.parentNode;
+    }
+
+    // In case of XLink, we don't return the node we got href from since
+    // callers expect <a>-like elements.
+    // Note: makeURI() will throw if aUri is not a valid URI.
+    return [href ? Services.io.newURI(href, null, baseURI).spec : null, null,
+            node && node.ownerDocument.nodePrincipal];
   }
 }
 
@@ -498,9 +619,6 @@ function ucjs_textlink_main() {
     case "textlink_openNewTab":
       openNewTab(uri, doc, shiftKey, ctrlKey, altKey);
       break;
-    case "textlink_saveAsURL":
-      saveAsURL(uri, doc);
-      break;
     }
   }
   
@@ -509,52 +627,22 @@ function ucjs_textlink_main() {
   }
 
   function openNewTab(uri, doc, shiftKey, ctrlKey, altKey){
-    //Thunderbird
-    if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
-      // Make sure we are allowed to open this URL
-      // URL Loading Security Check
-      const nsIScriptSecurityManager = Components.interfaces.nsIScriptSecurityManager;
-      var secMan = Components.classes["@mozilla.org/scriptsecuritymanager;1"]
-                             .getService(nsIScriptSecurityManager);
-      try {
-        if (uri instanceof Components.interfaces.nsIURI)
-         secMan.checkLoadURIWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
-        else
-         secMan.checkLoadURIStrWithPrincipal(doc.nodePrincipal, uri, nsIScriptSecurityManager.STANDARD);
-      } catch (e) {
-        throw "Load denied.";
-      }
-      var protocolSvc = Components.classes["@mozilla.org/uriloader/external-protocol-service;1"]
-                        .getService(Components.interfaces.nsIExternalProtocolService);
-      protocolSvc.loadUrl(uri);
-      return;
-    }
-
     if (ctrlKey) {
       openLinkIn(uri.spec, "current", {noReferrer: true});
     }else if (shiftKey) {
       openLinkIn(uri.spec, "tabshifted", {noReferrer: true, relatedToCurrent:true});
     }else if (altKey) {
-      openLinkIn(uri.spec, "save", {noReferrer: true, initiatingDoc: doc});
+      var linkText = uri.spec;
+      var aReferrer = doc;
+      if (aReferrer instanceof HTMLDocument) {
+        aReferrer = aReferrer.documentURIObject;
+      }
+      saveURL( uri.spec, linkText, null, true, false, null/*aReferrer*/ , doc );
     }else{
       openLinkIn(uri.spec, "tab", {noReferrer: true, relatedToCurrent:true});
     }
   }
 
-  function saveAsURL(uri, doc){
-    var linkText = uri.spec;
-    var aReferrer = doc;
-    if (aReferrer instanceof HTMLDocument) {
-      aReferrer = aReferrer.documentURIObject;
-    }
-    //Thunderbird
-    if (/^chrome:\/\/messenger\/content\//.test(window.location.href)) {
-      saveURL( uri.spec, linkText, null, true, false ,aReferrer , doc);
-      return;
-    }
-
-    saveURL( uri.spec, linkText, null, true, false, aReferrer , doc );
-  }
 }
 ucjs_textlink_main();
 

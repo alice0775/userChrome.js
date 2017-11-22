@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 40 (not e10s)
 // @author         Alice0775
+// @version        2017/11/18 Bug 1334975 removed  nsIFilePicker.show(), nsILocalFile. use  nsIFilePicker.open(), nsIFile
 // @version        2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version        2016/06/12 22:00 Fix regression from Update form history
 // @version        2016/04/21 22:00 Update form history
@@ -239,7 +240,7 @@ var DragNGo = {
     UI.charset = charset;
 
     var appfile = Cc['@mozilla.org/file/local;1']
-                    .createInstance(Ci.nsILocalFile);
+                    .createInstance(Ci.nsIFile);
     appfile.initWithPath(decodeURIComponent(escape(appPath)));
     if (!appfile.exists()){
       alert("Executable does not exist.");
@@ -526,7 +527,7 @@ var DragNGo = {
       if (dir)
         fp.displayDirectory = dir;
       fp.defaultString = fname;
-      switch (fp.show()) {
+      switch (fp.open()) {
         case (nsIFilePicker.returnOK):
         case (nsIFilePicker.returnReplace):
           file = fp.file;
@@ -536,7 +537,7 @@ var DragNGo = {
           return null;
       }
     } else {
-      file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
+      file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
       fpath = (/\/$/.test(fpath)) ? fpath+fname :fpath+'/'+fname;
       if(window.navigator.platform.toLowerCase().indexOf('win')>-1)
         fpath = fpath.replace(/\//g, '\\');
@@ -569,7 +570,7 @@ var DragNGo = {
       file = null;
     }
 
-    return file; // nsILocalFileObject or null
+    return file; // nsIFileObject or null
   },
 
   saveTextToLocal: function saveTextToLocal(text, fpath, skipPrompt) {
@@ -592,7 +593,7 @@ var DragNGo = {
       if (dir)
         fp.displayDirectory = dir;
       fp.defaultString = fpath;
-      switch (fp.show()) {
+      switch (fp.open()) {
         case (nsIFilePicker.returnOK):
         case (nsIFilePicker.returnReplace):
           file = fp.file;
@@ -602,7 +603,7 @@ var DragNGo = {
           return null;
       }
     } else {
-      file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsILocalFile);
+      file = Cc["@mozilla.org/file/local;1"].createInstance(Ci.nsIFile);
       fpath = (/\/$/.test(fpath)) ? fpath+fname :fpath+'/'+fname;
       if(window.navigator.platform.toLowerCase().indexOf('win')>-1)
         fpath = fpath.replace(/\//g, '\\');
@@ -624,7 +625,7 @@ var DragNGo = {
     }
     strm.close();
 
-    return file; // nsILocalFileObject or null
+    return file; // nsIFileObject or null
   },
 
   saveAs: function(aURL, aFileName, aReferrer, aSourceDocument){
@@ -708,7 +709,7 @@ var DragNGo = {
       }
 
       var file = Components.classes["@mozilla.org/file/local;1"].
-          createInstance(Components.interfaces.nsILocalFile);
+          createInstance(Components.interfaces.nsIFile);
       file.initWithPath(editor);
       if(!file.exists()){
         alert("Error_invalid_Editor_file");
@@ -884,7 +885,7 @@ var DragNGo = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsIFile); break;
         case 'str':
           return xpPref.getCharPref(aPrefString).toString(); break;
         case 'int':
@@ -904,7 +905,7 @@ var DragNGo = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsIFile, aValue); break;
         case 'str':
           return xpPref.setCharPref(aPrefString, aValue); break;
         case 'int':

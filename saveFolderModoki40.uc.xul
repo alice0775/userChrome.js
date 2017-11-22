@@ -9,6 +9,7 @@
 // @include        main
 // @compatibility  Firefox 40+ non-e10s
 // @author         Alice0775
+// @version        2017/11/18 Bug 1334975 removed  nsIFilePicker.show(), nsILocalFile. use  nsIFilePicker.open(), nsIFile
 // @version        2017/11/18 nsIPrefBranch to nsIPrefBranch
 // @version        2015/08/12 18:00 Fixed due to Bug 1134769
 // @version        2015/04/08 12:30 focusedWindow
@@ -87,14 +88,16 @@ var saveFolderModoki = {
   //メニュー用
   //保存用フォルダを新規追加する
   addFolderPath: function(){
-    var fp = this.getFolderPath();
-    var folders = this.getPref('userChrome.save.folders', 'str', '') + ',';
-    if (fp){
-      if((',' + folders).indexOf(',' + fp.file.path + ',')<0){
-        folders = folders + fp.file.path;
-        this.setPref('userChrome.save.folders', 'str', folders);
+    let callback = function(fp) {
+      var folders = this.getPref('userChrome.save.folders', 'str', '') + ',';
+      if (fp){
+        if((',' + folders).indexOf(',' + fp.file.path + ',')<0){
+          folders = folders + fp.file.path;
+          this.setPref('userChrome.save.folders', 'str', folders);
+        }
       }
-    }
+    }.bind(this);
+    var fp = this.getFolderPath(callback);
   },
 
   //保存用フォルダを編集する
@@ -106,7 +109,7 @@ var saveFolderModoki = {
   },
 
   //保存用フォルダをファイルピッカにより選択する
-  getFolderPath: function(){
+  getFolderPath: function(callback){
     var nsIFilePicker = Components.interfaces.nsIFilePicker;
     var fp = Components.classes["@mozilla.org/filepicker;1"]
             .createInstance(nsIFilePicker);
@@ -116,11 +119,13 @@ var saveFolderModoki = {
                          .get("TmpD", Components.interfaces.nsIFile);
 
     fp.displayDirectory = file;
-    var res = fp.show();
-    if (res == nsIFilePicker.returnOK){
-      return fp;
-    }
-    return null;
+    fp.open(rv => {
+      if (rv == nsIFilePicker.returnOK) {
+        callback(fp);
+      }else
+        callback(null);
+      }
+    );
   },
 
   //Documentlinkの保存
@@ -241,10 +246,10 @@ var saveFolderModoki = {
            null, null, aDocumentURI, true, aFolder.path);
   },
 
-  //パス文字列からnsILocalFileを返す この内部およびrebuild_userChrome.uc.xul から呼び出される
+  //パス文字列からnsIFileを返す この内部およびrebuild_userChrome.uc.xul から呼び出される
   initFileWithPath : function(aPath){
     var file = Components.classes["@mozilla.org/file/local;1"].
-            createInstance(Components.interfaces.nsILocalFile);
+            createInstance(Components.interfaces.nsIFile);
     file.initWithPath(aPath);
     return file;
   },
@@ -462,7 +467,7 @@ var saveFolderModoki = {
     var prefs = Components.classes[prefSvcContractID]
                           .getService(prefSvcIID).getBranch("browser.download.");
 
-    const nsILocalFile = Components.interfaces.nsILocalFile;
+    const nsIFile = Components.interfaces.nsIFile;
 
     // For information on download folder preferences, see
     // mozilla/browser/components/preferences/main.js
@@ -489,7 +494,7 @@ var saveFolderModoki = {
     //
     if (!dir){
       try {
-        var lastDir = prefs.getComplexValue("lastDir", nsILocalFile);
+        var lastDir = prefs.getComplexValue("lastDir", nsIFile);
         if ((!aSkipPrompt || !useDownloadDir) && lastDir.exists())
           dir = lastDir;
         else
@@ -503,7 +508,7 @@ var saveFolderModoki = {
         // Default to desktop.
         var fileLocator = Components.classes["@mozilla.org/file/directory_service;1"]
                                     .getService(Components.interfaces.nsIProperties);
-        dir = fileLocator.get("Desk", nsILocalFile);
+        dir = fileLocator.get("Desk", nsIFile);
       }
 
       var fp = makeFilePicker();
@@ -529,19 +534,21 @@ var saveFolderModoki = {
         }
       }
 
-      if (fp.show() == Components.interfaces.nsIFilePicker.returnCancel || !fp.file)
-        return false;
+      fp.open(rv => {
+        if (rv == Components.interfaces.nsIFilePicker.returnCancel || !fp.file)
+          return false;
 
-      var directory = fp.file.parent.QueryInterface(nsILocalFile);
-      prefs.setComplexValue("lastDir", nsILocalFile, directory);
+        var directory = fp.file.parent.QueryInterface(nsIFile);
+        prefs.setComplexValue("lastDir", nsIFile, directory);
 
-      fp.file.leafName = validateFileName(fp.file.leafName);
-      aFpP.saveAsType = fp.filterIndex;
-      aFpP.file = fp.file;
-      aFpP.fileURL = fp.fileURL;
+        fp.file.leafName = validateFileName(fp.file.leafName);
+        aFpP.saveAsType = fp.filterIndex;
+        aFpP.file = fp.file;
+        aFpP.fileURL = fp.fileURL;
 
-      if (aFpP.isDocument)
-        prefs.setIntPref("save_converter_index", aFpP.saveAsType);
+        if (aFpP.isDocument)
+          prefs.setIntPref("save_converter_index", aFpP.saveAsType);
+      });
     }
     else {
       dir.append(getNormalizedLeafName(aFpP.fileInfo.fileName,
@@ -743,7 +750,7 @@ var saveFolderModoki = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsIFile); break;
         case 'str':
           return UI.ConvertToUnicode(xpPref.getCharPref(aPrefString).toString()); break;
         case 'int':
@@ -767,7 +774,7 @@ var saveFolderModoki = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsIFile, aValue); break;
         case 'str':
           return xpPref.setCharPref(aPrefString, UI.ConvertFromUnicode(aValue)); break;
         case 'int':

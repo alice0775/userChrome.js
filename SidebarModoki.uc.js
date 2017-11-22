@@ -6,6 +6,7 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/23 00:00 Make button customizable
 // @version        2017/11/22 23:00 fullscreen
 // @version        2017/11/22 23:00 DOM fullscreen
 // @version        2017/11/22 22:00 F11 fullscreen
@@ -88,28 +89,33 @@ var SidebarModoki = {
       return document.documentElement.getAttribute(name);
     };
 
+    Components.utils.import("resource:///modules/CustomizableUI.jsm");
+    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+      id: 'SM_Button',
+      type: 'custom',
+      defaultArea: CustomizableUI.AREA_NAVBAR,
+      onBuild: function(aDocument) {
+        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+        var props = {
+          id: "SM_Button",
+          class: "toolbarbutton-1 chromeclass-toolbar-additional",
+          tooltiptext: "Sidebar Modoki",
+          oncommand: "SidebarModoki.toggle();",
+          sidebarurl: "chrome://browser/content/bookmarks/bookmarksPanel.xul",
+          type: "checkbox",
+          label: "Sidebar Modoki",
+          autoCheck: "false",
+          removable: "true"
+        };
+        for (var p in props) {
+          toolbaritem.setAttribute(p, props[p]);
+        }
+        
+        return toolbaritem;
+      }
+    });
 
-    let overlay = `
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-                 xmlns:html="http://www.w3.org/1999/xhtml">
-        <hbox id="nav-bar-customization-target">
-          <toolbarbutton id = "SM_Button"
-                         label ="Sidebar Modoki"
-                         tooltiptext = "Sidebar Modoki"
-                         class = "toolbarbutton-1 chromeclass-toolbar-additional"
-                         oncommand="SidebarModoki.toggle()"
-                         type="checkbox"
-                         autoCheck="false">
-          </toolbarbutton>
-        </hbox>
-    </overlay>
-    `;
-
-    overlay = overlay.replace(/\s+/g, " ");
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-    window.userChrome_js.loadOverlay(overlay, null);
-
-    overlay = `
+    var overlay = `
       <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
                  xmlns:html="http://www.w3.org/1999/xhtml">
       <hbox id="browser">
@@ -200,6 +206,7 @@ var SidebarModoki = {
     } else {
       this.close();
     }
+    window.addEventListener("aftercustomization", this, false);
 
     this.SM_Observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
@@ -269,6 +276,11 @@ var SidebarModoki = {
         if (!!SidebarModoki.ToolBox) {
           SidebarModoki.ToolBox.removeAttribute("moz-collapsed"); 
           SidebarModoki.Splitter.removeAttribute("moz-collapsed");
+        }
+        break;
+      case 'aftercustomization':
+        if (this.getPref(this.kSM_Open, "bool", true)) {
+          this.Button.setAttribute("checked", true);
         }
         break;
      }
