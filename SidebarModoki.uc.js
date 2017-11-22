@@ -6,6 +6,7 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/22 23:00 fullscreen
 // @version        2017/11/22 23:00 DOM fullscreen
 // @version        2017/11/22 22:00 F11 fullscreen
 // @version        2017/11/15 09:00
@@ -46,7 +47,7 @@ var SidebarModoki = {
 
       /*フルスクリーン*/
       #SM_toolbox[moz-collapsed="true"],
-      #SM_splitter[moz-collapsed="true"],
+      #SM_splitter[moz-collapsed="true"]
       {
         visibility:collapse;
       }
