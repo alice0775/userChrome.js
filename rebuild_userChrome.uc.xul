@@ -8,6 +8,7 @@
 // @include        main
 // @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
 // @author         Alice0775
+// @version        2017/11/14 21:00 use nsIFile instead nsILocalFile
 // @version        2017/11/14 21:00 use Services.jsm
 // @version        2016/11/28 21:00 remove "for each"
 // @version        2015/12/04 24:00 Bug 1177310 [e10s] Stop using CPOWs on application shutdow
@@ -427,7 +428,7 @@
       var path = Components.classes['@mozilla.org/network/io-service;1'].getService(Components.interfaces.nsIIOService).getProtocolHandler('file').QueryInterface(Components.interfaces.nsIFileProtocolHandler).getFileFromURLSpec(aScript.url).path
       path = UI.ConvertFromUnicode(path);
 
-      var appfile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsILocalFile);
+      var appfile = Components.classes['@mozilla.org/file/local;1'].createInstance(Components.interfaces.nsIFile);
       appfile.initWithPath(editor);
       var process = Components.classes['@mozilla.org/process/util;1'].createInstance(Components.interfaces.nsIProcess);
       process.init(appfile);
@@ -472,7 +473,7 @@
       try{
         switch (aPrefType){
           case 'complex':
-            return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+            return xpPref.getComplexValue(aPrefString, Components.interfaces.nsIFile); break;
           case 'str':
             return unescape(xpPref.getCharPref(aPrefString).toString()); break;
           case 'int':
@@ -492,7 +493,7 @@
       try{
         switch (aPrefType){
           case 'complex':
-            return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+            return xpPref.setComplexValue(aPrefString, Components.interfaces.nsIFile, aValue); break;
           case 'str':
             return xpPref.setCharPref(aPrefString, escape(aValue)); break;
           case 'int':
@@ -649,7 +650,7 @@
                   oncommand="userChromejs.restartApp();"/>
         <menuitem label="chromeフォルダを開く"
                   accesskey="h"
-                  oncommand='new Components.Constructor("@mozilla.org/file/local;1","nsILocalFile", "initWithPath")(Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsIFile).path).reveal();'/>
+                  oncommand='new Components.Constructor("@mozilla.org/file/local;1","nsIFile", "initWithPath")(Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsIFile).path).reveal();'/>
       </menupopup>
     </menu>
 
@@ -678,7 +679,7 @@
                   oncommand="userChromejs.restartApp();"/>
         <menuitem label="chromeフォルダを開く"
                   accesskey="h"
-                  oncommand='new Components.Constructor("@mozilla.org/file/local;1","nsILocalFile", "initWithPath")(Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsIFile).path).reveal();'/>
+                  oncommand='new Components.Constructor("@mozilla.org/file/local;1","nsIFile", "initWithPath")(Components.classes["@mozilla.org/file/directory_service;1"].getService(Components.interfaces.nsIProperties).get("UChrm", Components.interfaces.nsIFile).path).reveal();'/>
       </menupopup>
     </menu>
 
