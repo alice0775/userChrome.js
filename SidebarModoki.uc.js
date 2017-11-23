@@ -6,6 +6,7 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/23 12:30 try catch.  download manager
 // @version        2017/11/23 00:30 Make button icon
 // @version        2017/11/23 00:00 Make button customizable
 // @version        2017/11/22 23:00 fullscreen
@@ -23,8 +24,8 @@ var SidebarModoki = {
   TAB0_LABEL : "Bookmarks",
   TAB1_SRC   : "chrome://browser/content/history/history-panel.xul",
   TAB1_LABEL : "History",
-  TAB2_SRC   : "",
-  TAB2_LABEL : "none",
+  TAB2_SRC   : "chrome://browser/content/downloads/contentAreaDownloadsView.xul",
+  TAB2_LABEL : "DL",
   // -- config --
 
   kSM_Open : "userChrome.SidebarModoki.Open",
@@ -96,30 +97,33 @@ var SidebarModoki = {
     };
 
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
-    CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
-      id: 'SM_Button',
-      type: 'custom',
-      defaultArea: CustomizableUI.AREA_NAVBAR,
-      onBuild: function(aDocument) {
-        var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-        var props = {
-          id: "SM_Button",
-          class: "toolbarbutton-1 chromeclass-toolbar-additional",
-          tooltiptext: "Sidebar Modoki",
-          oncommand: "SidebarModoki.toggle();",
-          sidebarurl: "chrome://browser/content/bookmarks/bookmarksPanel.xul",
-          type: "checkbox",
-          label: "Sidebar Modoki",
-          autoCheck: "false",
-          removable: "true"
-        };
-        for (var p in props) {
-          toolbaritem.setAttribute(p, props[p]);
+    // xxxx try-catch may need for 2nd window
+    try {
+      CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+        id: 'SM_Button',
+        type: 'custom',
+        defaultArea: CustomizableUI.AREA_NAVBAR,
+        onBuild: function(aDocument) {
+          var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
+          var props = {
+            id: "SM_Button",
+            class: "toolbarbutton-1 chromeclass-toolbar-additional",
+            tooltiptext: "Sidebar Modoki",
+            oncommand: "SidebarModoki.toggle();",
+            sidebarurl: "chrome://browser/content/bookmarks/bookmarksPanel.xul",
+            type: "checkbox",
+            label: "Sidebar Modoki",
+            autoCheck: "false",
+            removable: "true"
+          };
+          for (var p in props) {
+            toolbaritem.setAttribute(p, props[p]);
+          }
+          
+          return toolbaritem;
         }
-        
-        return toolbaritem;
-      }
-    });
+      });
+    }catch(e){}
 
     var overlay = `
       <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
@@ -148,7 +152,7 @@ var SidebarModoki = {
           </tabpanel>
         </tabpanels>
       </tabbox>
-      <splitter ordinal="1"
+      <splitter ordinal="0"
                 id = "SM_splitter"
                 state = "open"
                 collapse = "before"
@@ -205,7 +209,7 @@ var SidebarModoki = {
     this.Splitter = document.getElementById("SM_splitter");
 
     let index = this.getPref(this.kSM_lastSelectedTabIndex, "int", 0);
-		document.getElementById("tabs").selectedIndex = index;
+    document.getElementById("tabs").selectedIndex = index;
     addEventListener("resize", this, false);
     if (this.getPref(this.kSM_Open, "bool", true)) {
       this.toggle(true);
@@ -214,12 +218,13 @@ var SidebarModoki = {
     }
     window.addEventListener("aftercustomization", this, false);
 
+    // xxxx native sidebar changes ordinal when change position of the native sidebar and open/close
     this.SM_Observer = new MutationObserver(function(mutations) {
       mutations.forEach(function(mutation) {
         switch (mutation.attributeName) {
           case "ordinal":
             this.ToolBox.setAttribute("ordinal", "0");
-            this.Splitter.setAttribute("ordinal", "1");
+            this.Splitter.setAttribute("ordinal", "0");
             break;
         }
       }.bind(this));
@@ -273,15 +278,15 @@ var SidebarModoki = {
         this.onResize(event);
         break;
       case 'MozDOMFullscreen:Entered':
-        if (!!SidebarModoki.ToolBox) {
-          SidebarModoki.ToolBox.setAttribute("moz-collapsed", "true");
-          SidebarModoki.Splitter.setAttribute("moz-collapsed", "true");
+        if (!!this.ToolBox) {
+          this.ToolBox.setAttribute("moz-collapsed", "true");
+          this.Splitter.setAttribute("moz-collapsed", "true");
         }
         break;
       case 'MozDOMFullscreen:Exited':
-        if (!!SidebarModoki.ToolBox) {
-          SidebarModoki.ToolBox.removeAttribute("moz-collapsed"); 
-          SidebarModoki.Splitter.removeAttribute("moz-collapsed");
+        if (!!this.ToolBox) {
+          this.ToolBox.removeAttribute("moz-collapsed"); 
+          this.Splitter.removeAttribute("moz-collapsed");
         }
         break;
       case 'aftercustomization':
