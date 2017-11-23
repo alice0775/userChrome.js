@@ -6,8 +6,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    userChrome.js用のスクリプトのキャッシュをクリアーし,新しいウインドウを開く
 // @include        main
-// @compatibility  Firefox 3.5b4pre 3.6a1pre 4.0b7pre
+// @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2017/11/23 23:00 Services :(
 // @version        2017/11/14 21:00 use nsIFile instead nsILocalFile
 // @version        2017/11/14 21:00 use Services.jsm
 // @version        2016/11/28 21:00 remove "for each"
@@ -41,18 +42,13 @@
  -->
 <script type="application/javascript" xmlns="http://www.w3.org/1999/xhtml"><![CDATA[
   "use strict";
+  Components.utils.import('resource://gre/modules/Services.jsm');
   var userChromejs = {
 // --- config ---
     editor: "C:\\Program Files\\hidemaru\\hidemaru.exe",
     // editor: "/usr/bin/gedit",
 // --- config ---
     _statusDisplay: null,
-
-    get Services() {
-      if (!this._Services)
-        this._Services = Components.utils.import('resource://gre/modules/Services.jsm');
-      return this._Services;
-    },
 
     get statusDisplay() {
       if (!this._statusDisplay)
@@ -469,8 +465,8 @@
 
     //prefを読み込み
     getPref: function(aPrefString, aPrefType, aDefault){
-      var xpPref = this.Services.prefs;
-      try{
+      var xpPref = Services.prefs;
+      try {
         switch (aPrefType){
           case 'complex':
             return xpPref.getComplexValue(aPrefString, Components.interfaces.nsIFile); break;
@@ -482,15 +478,13 @@
           default:
             return xpPref.getBoolPref(aPrefString); break;
         }
-      }catch(e){
-      }
+        } catch(e) {}
       return aDefault;
     },
     //prefを書き込み
     setPref: function(aPrefString, aPrefType, aValue){
-      var xpPref = this.Services.prefs;
-
-      try{
+      var xpPref = Services.prefs;
+      try {
         switch (aPrefType){
           case 'complex':
             return xpPref.setComplexValue(aPrefString, Components.interfaces.nsIFile, aValue); break;
@@ -503,14 +497,13 @@
           default:
             return xpPref.setBoolPref(aPrefString, aValue); break;
         }
-      }catch(e){
-      }
+        } catch(e) {}
       return null;
     },
     // 監視を開始する
     addPrefListener: function(aObserver) {
         try {
-            var pbi = this.Services.prefs;
+            var pbi = Services.prefs;
             pbi.addObserver(aObserver.domain, aObserver, false);
         } catch(e) {}
     },
@@ -518,7 +511,7 @@
     // 監視を終了する
     removePrefListener: function(aObserver) {
         try {
-            var pbi =  this.Services.prefs;
+            var pbi =  Services.prefs;
             pbi.removeObserver(aObserver.domain, aObserver);
         } catch(e) {}
     },
