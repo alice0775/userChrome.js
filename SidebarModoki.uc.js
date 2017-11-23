@@ -6,6 +6,7 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/23 13:10 restore initial tab index/width and more unique id
 // @version        2017/11/23 12:30 try catch.  download manager
 // @version        2017/11/23 00:30 Make button icon
 // @version        2017/11/23 00:00 Make button customizable
@@ -68,7 +69,7 @@ var SidebarModoki = {
       {
         visibility:collapse;
       }
-      #SM-tabpanels
+      #SM_tabpanels
       { 
         padding: 0;
         border: hidden !important;
@@ -110,7 +111,6 @@ var SidebarModoki = {
             class: "toolbarbutton-1 chromeclass-toolbar-additional",
             tooltiptext: "Sidebar Modoki",
             oncommand: "SidebarModoki.toggle();",
-            sidebarurl: "chrome://browser/content/bookmarks/bookmarksPanel.xul",
             type: "checkbox",
             label: "Sidebar Modoki",
             autoCheck: "false",
@@ -133,22 +133,22 @@ var SidebarModoki = {
             ordinal="0"
             insertBefore="sidebar-box"
             command="SidebarModoki">
-        <tabs id="tabs" onselect="SidebarModoki.onSelect(this);">
-          <tab id="tab0" label="{tab0-label}"/>
-          <tab id="tab1" label="{tab1-label}"/>
-          <tab id="tab2" label="{tab2-label}"/>
+        <tabs id="SM_tabs">
+          <tab id="SM_tab0" label="{tab0-label}"/>
+          <tab id="SM_tab1" label="{tab1-label}"/>
+          <tab id="SM_tab2" label="{tab2-label}"/>
         </tabs>
-        <tabpanels id="SM-tabpanels" flex="1" style="border: none;">
-          <tabpanel id="tab0-container" orient="vertical" flex="1">
-            <browser id="tab0-browser" flex="1" autoscroll="false" src="{tab0-src}"/>
+        <tabpanels id="SM_tabpanels" flex="1" style="border: none;">
+          <tabpanel id="SM_tab0-container" orient="vertical" flex="1">
+            <browser id="SM_tab0-browser" flex="1" autoscroll="false" src="{tab0-src}"/>
           </tabpanel>
           
-          <tabpanel id="tab1-container" orient="vertical" flex="1">
-            <browser id="tab1-browser" flex="1" autoscroll="false" src="{tab1-src}"/>
+          <tabpanel id="SM_tab1-container" orient="vertical" flex="1">
+            <browser id="SM_tab1-browser" flex="1" autoscroll="false" src="{tab1-src}"/>
           </tabpanel>
           
-          <tabpanel id="tab2-container" orient="vertical" flex="1">
-            <browser id="tab2-browser" flex="1" autoscroll="false" src="{tab2-src}"/>
+          <tabpanel id="SM_tab2-container" orient="vertical" flex="1">
+            <browser id="SM_tab2-browser" flex="1" autoscroll="false" src="{tab2-src}"/>
           </tabpanel>
         </tabpanels>
       </tabbox>
@@ -194,7 +194,7 @@ var SidebarModoki = {
     }
 
     //DOM fullscreen
-     window.addEventListener("MozDOMFullscreen:Entered", this,
+    window.addEventListener("MozDOMFullscreen:Entered", this,
                             /* useCapture */ true,
                             /* wantsUntrusted */ false);
     window.addEventListener("MozDOMFullscreen:Exited", this,
@@ -208,14 +208,12 @@ var SidebarModoki = {
     this.ToolBox = document.getElementById("SM_toolbox");
     this.Splitter = document.getElementById("SM_splitter");
 
-    let index = this.getPref(this.kSM_lastSelectedTabIndex, "int", 0);
-    document.getElementById("tabs").selectedIndex = index;
-    addEventListener("resize", this, false);
     if (this.getPref(this.kSM_Open, "bool", true)) {
       this.toggle(true);
     } else {
       this.close();
     }
+    document.getElementById("SM_tabs").setAttribute("onselect", "SidebarModoki.onSelect();");
     window.addEventListener("aftercustomization", this, false);
 
     // xxxx native sidebar changes ordinal when change position of the native sidebar and open/close
@@ -236,9 +234,8 @@ var SidebarModoki = {
                              {attribute: true, attributeFilter: ["ordinal"]});
   },
 
-  onSelect: function(aTab) {
-    let aIndex = aTab.selectedIndex;
-    document.getElementById("SM-tabpanels").selectedIndex = aIndex;
+  onSelect: function() {
+    let aIndex = document.getElementById("SM_tabpanels").selectedIndex;
     this.prefs.setIntPref(this.kSM_lastSelectedTabIndex, aIndex);
     width = this.getPref(this.kSM_lastSelectedTabWidth + aIndex, "int", this.SM_WIDTH);
     document.getElementById("SM_toolbox").width = width;
@@ -250,13 +247,19 @@ var SidebarModoki = {
       this.Button.setAttribute("checked", true);
       this.ToolBox.style.removeProperty("visibility");
       this.Splitter.style.removeProperty("visibility");
-      this.prefs.setBoolPref(this.kSM_Open, true)
+      let index = this.getPref(this.kSM_lastSelectedTabIndex, "int", 0);
+      document.getElementById("SM_tabs").selectedIndex = index;
+      width = this.getPref(this.kSM_lastSelectedTabWidth + index, "int", this.SM_WIDTH);
+      document.getElementById("SM_toolbox").width = width;
+     this.prefs.setBoolPref(this.kSM_Open, true)
+     addEventListener("resize", this, false);
     } else {
       this.close();
     }
   },
 
   close: function() {
+    removeEventListener("resize", this, false);
     this.Button = document.getElementById("SM_Button");
     this.Button.removeAttribute("checked");
     this.ToolBox.style.setProperty("visibility", "collapse", "");
@@ -268,7 +271,7 @@ var SidebarModoki = {
   //ここからは, 大きさの調整
   onResize: function(event) {
      let width = this.ToolBox.getBoundingClientRect().width;
-     let aIndex = document.getElementById("tabs").selectedIndex;
+     let aIndex = document.getElementById("SM_tabs").selectedIndex;
      this.prefs.setIntPref(this.kSM_lastSelectedTabWidth + aIndex, width);
   },
 
