@@ -3,9 +3,13 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TST
 // @include        main
+// @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/24 19:10 add key(accel(ctrl)+alt+s) and close button
+// @version        2017/11/24 19:00 hack for DL manager
+// @version        2017/11/24 15:00 remove unused variable
 // @version        2017/11/23 13:10 restore initial tab index/width and more unique id
 // @version        2017/11/23 12:30 try catch.  download manager
 // @version        2017/11/23 00:30 Make button icon
@@ -16,6 +20,43 @@
 // @version        2017/11/15 09:00
 // ==/UserScript==
 
+//xxxx download manager hack
+if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM") {
+    let style = `
+      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+      #contentAreaDownloadsView
+      {
+        padding: 0;
+      }
+      #downloadsRichListBox > richlistitem.download
+      {
+        height: auto;
+      }
+      .downloadTypeIcon,
+      .downloadBlockedBadge
+      {
+        margin-left:0;
+        margin-right:1px;
+      }
+      .downloadButton {
+        padding-left:0;
+        padding-right:0;
+      }
+     `;
+
+    style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH);
+    let sspi = document.createProcessingInstruction(
+      'xml-stylesheet',
+      'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
+    );
+    document.insertBefore(sspi, document.documentElement);
+    sspi.getAttribute = function(name) {
+      return document.documentElement.getAttribute(name);
+    };
+    throw 'not an error, just load contentAreaDownloadsView.xul';
+}
+
+
 
 var SidebarModoki = {
   // -- config --
@@ -25,7 +66,7 @@ var SidebarModoki = {
   TAB0_LABEL : "Bookmarks",
   TAB1_SRC   : "chrome://browser/content/history/history-panel.xul",
   TAB1_LABEL : "History",
-  TAB2_SRC   : "chrome://browser/content/downloads/contentAreaDownloadsView.xul",
+  TAB2_SRC   : "chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM",
   TAB2_LABEL : "DL",
   // -- config --
 
@@ -47,6 +88,9 @@ var SidebarModoki = {
       #SM_toolbox
       {
         width: {SM_WIDTH}px;
+        background-color: -moz-dialog;
+        color: -moz-dialogtext;
+        text-shadow: none;
       }
 
       /*フルスクリーン*/
@@ -72,7 +116,7 @@ var SidebarModoki = {
       #SM_tabpanels
       { 
         padding: 0;
-        border: hidden !important;
+        margin:-4px; /*hack*/
       }
 
 
@@ -84,6 +128,17 @@ var SidebarModoki = {
       #SM_Button:-moz-lwtheme-brighttext
       {
         list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANklEQVQ4jWP4TyFg+P///38GBgayMHUNwEdjdTrVDcDnTKJdgEsRSV5ACaBRF9DZBQObFygBAMeIxVdCQIJTAAAAAElFTkSuQmCC');
+      }
+      #SM_closeButton
+      {
+        -moz-appearance: none;
+        list-style-image: url(chrome://browser/skin/sidebar/close.svg);
+        margin: 0;
+        padding: 4px;
+        border-radius: 4px;
+      }
+      #SM_closeButton:hover {
+        background: hsla(240, 5%, 5%, 0.05);
       }
      `;
 
@@ -128,37 +183,49 @@ var SidebarModoki = {
     var overlay = `
       <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
                  xmlns:html="http://www.w3.org/1999/xhtml">
+      <commandset id="mainCommandSet">
+        <command id="cmd_SidebarModoki" oncommand="SidebarModoki.toggle()"/>
+      </commandset>
+      <keyset id="mainKeyset">
+        <key id="key_SidebarModoki" key="s" modifiers="accel,alt" command="cmd_SidebarModoki"/>
+      </keyset>
       <hbox id="browser">
-      <tabbox id="SM_toolbox"
-            ordinal="0"
-            insertBefore="sidebar-box"
-            command="SidebarModoki">
-        <tabs id="SM_tabs">
-          <tab id="SM_tab0" label="{tab0-label}"/>
-          <tab id="SM_tab1" label="{tab1-label}"/>
-          <tab id="SM_tab2" label="{tab2-label}"/>
-        </tabs>
-        <tabpanels id="SM_tabpanels" flex="1" style="border: none;">
-          <tabpanel id="SM_tab0-container" orient="vertical" flex="1">
-            <browser id="SM_tab0-browser" flex="1" autoscroll="false" src="{tab0-src}"/>
-          </tabpanel>
-          
-          <tabpanel id="SM_tab1-container" orient="vertical" flex="1">
-            <browser id="SM_tab1-browser" flex="1" autoscroll="false" src="{tab1-src}"/>
-          </tabpanel>
-          
-          <tabpanel id="SM_tab2-container" orient="vertical" flex="1">
-            <browser id="SM_tab2-browser" flex="1" autoscroll="false" src="{tab2-src}"/>
-          </tabpanel>
-        </tabpanels>
-      </tabbox>
+      <vbox id="SM_toolbox"
+              ordinal="0">
+        <hbox id="SM_header" align="center">
+          <label>SidebarModoki</label>
+          <spacer flex="1000"/>
+          <toolbarbutton id="SM_closeButton" class="tabbable"
+                         tooltiptext="Close SidebarModoki"
+                         oncommand="SidebarModoki.close();"/>
+        </hbox>
+        <tabbox flex="1">
+          <tabs id="SM_tabs">
+            <tab id="SM_tab0" label="{tab0-label}"/>
+            <tab id="SM_tab1" label="{tab1-label}"/>
+            <tab id="SM_tab2" label="{tab2-label}"/>
+          </tabs>
+          <tabpanels id="SM_tabpanels" flex="1" style="border: none;">
+            <tabpanel id="SM_tab0-container" orient="vertical" flex="1">
+              <browser id="SM_tab0-browser" flex="1" autoscroll="false" src="{tab0-src}"/>
+            </tabpanel>
+            
+            <tabpanel id="SM_tab1-container" orient="vertical" flex="1">
+              <browser id="SM_tab1-browser" flex="1" autoscroll="false" src="{tab1-src}"/>
+            </tabpanel>
+            
+            <tabpanel id="SM_tab2-container" orient="vertical" flex="1">
+              <browser id="SM_tab2-browser" flex="1" autoscroll="false" src="{tab2-src}"/>
+            </tabpanel>
+          </tabpanels>
+        </tabbox>
+      </vbox>
       <splitter ordinal="0"
                 id = "SM_splitter"
                 state = "open"
                 collapse = "before"
                 resizebefore = "closest"
                 resizeafter = "closest" >
-
         <grippy></grippy>
       </splitter>
       </hbox>
@@ -227,8 +294,6 @@ var SidebarModoki = {
         }
       }.bind(this));
     }.bind(this));
-    // configuration of the observer:
-    var config = { attributes: true, subtree: false};
     // pass in the target node, as well as the observer options
     this.SM_Observer.observe(document.getElementById("appcontent"),
                              {attribute: true, attributeFilter: ["ordinal"]});
