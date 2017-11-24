@@ -7,6 +7,7 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2017/11/24 19:20 change close button icon style to 57
 // @version        2017/11/24 19:10 add key(accel(ctrl)+alt+s) and close button
 // @version        2017/11/24 19:00 hack for DL manager
 // @version        2017/11/24 15:00 remove unused variable
@@ -129,17 +130,7 @@ var SidebarModoki = {
       {
         list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANklEQVQ4jWP4TyFg+P///38GBgayMHUNwEdjdTrVDcDnTKJdgEsRSV5ACaBRF9DZBQObFygBAMeIxVdCQIJTAAAAAElFTkSuQmCC');
       }
-      #SM_closeButton
-      {
-        -moz-appearance: none;
-        list-style-image: url(chrome://browser/skin/sidebar/close.svg);
-        margin: 0;
-        padding: 4px;
-        border-radius: 4px;
-      }
-      #SM_closeButton:hover {
-        background: hsla(240, 5%, 5%, 0.05);
-      }
+
      `;
 
     style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH);
@@ -195,7 +186,7 @@ var SidebarModoki = {
         <hbox id="SM_header" align="center">
           <label>SidebarModoki</label>
           <spacer flex="1000"/>
-          <toolbarbutton id="SM_closeButton" class="tabbable"
+          <toolbarbutton id="SM_closeButton" class="close-icon tabbable"
                          tooltiptext="Close SidebarModoki"
                          oncommand="SidebarModoki.close();"/>
         </hbox>
