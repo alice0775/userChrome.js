@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 31+
 // @author         Alice0775
+// @version        2017/12/10 12:00 remove workaround Bug 1279329. Disable btn while clear list is doing
 // @version        2016/06/10 00:00 Workaround Bug 1279329
 // @version        2016/05/04 20:30 remove typo
 // @version        2016/05/04 20:00 remove in-content css, add preference for Taskbar Progress
@@ -236,6 +237,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
                  xmlns:html="http://www.w3.org/1999/xhtml"> \
           <hbox> \
             <button label="Clear List" \
+                    id="ucjs_clearListButton" \
                     accesskey="C" \
                     oncommand="ucjs_downloadManagerMain.clearDownloads();"/> \
             <spacer flex="1"/> \
@@ -253,12 +255,14 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
     observe: function() {
       this.originalTitle = document.title;
 
+/*
       // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
       var listBox = document.getElementById("downloadsRichListBox");
       var placesView = listBox._placesView;
       var place = placesView.place;
       placesView.place= null;
       placesView.place = place;
+*/
 
       setTimeout(function(){this._wait = true}.bind(this), 0);
 
@@ -434,7 +438,10 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
           }
         }
       }
+      var btn = document.getElementById("ucjs_clearListButton");
+      btn.setAttribute("disabled", true);
       moveDownloads2History(0);
+      btn.removeAttribute("disabled");
     },
 
     doSearch: function ucjs_doSearch(filterString) {
