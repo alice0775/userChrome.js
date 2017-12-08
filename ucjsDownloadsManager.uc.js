@@ -4,8 +4,9 @@
 // @description    Donloads Manager
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
-// @compatibility  Firefox 31+
+// @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2017/12/10 12:00 fix error when DO_NOT_DELETE_HISTORY = true
 // @version        2017/12/10 12:00 remove workaround Bug 1279329. Disable btn while clear list is doing
 // @version        2016/06/10 00:00 Workaround Bug 1279329
 // @version        2016/05/04 20:30 remove typo
@@ -192,6 +193,7 @@ if (location.href == "chrome://browser/content/browser.xul") {
 
 
 if (window.opener && location.href == "chrome://browser/content/downloads/contentAreaDownloadsView.xul") {
+  
   Cu.import("resource://gre/modules/Services.jsm");
   Cu.import("resource://gre/modules/DownloadIntegration.jsm");
 
@@ -400,6 +402,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
     clearDownloads: function ucjs_clearDownloads() {
       var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
+      var richListBox = document.getElementById("downloadsRichListBox");
 
       var places = [];
       function addPlace(aURI, aTitle, aVisitDate) {
@@ -407,23 +410,19 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
           uri: aURI,
           title: aTitle,
           visits: [{
-            visitDate: aVisitDate,
+            visitDate: (aVisitDate || Date.now()) * 1000,
             transitionType: Ci.nsINavHistoryService.TRANSITION_LINK
           }]
         });
       }
       function moveDownloads2History(d) {
-        var richListBox = document.getElementById("downloadsRichListBox");
-
         if (DO_NOT_DELETE_HISTORY) {
-          var cont = richListBox._placesView.result.root;
-          cont.containerOpen = true;
-          for (let i = cont.childCount - 1; i > -1; i--) {
-              let node = cont.getChild(i);
-              let aURI = makeURI(node.uri);
-              let aTitle = node.title;
-              let aVisitDate = node.time;
-              addPlace(aURI, aTitle, aVisitDate)
+          for (let element of richListBox.childNodes) {
+            let download = element._shell.download;
+            let aURI = makeURI(download.source.url);
+            let aTitle = document.getAnonymousElementByAttribute(element, "class", "downloadTarget").value
+            let aVisitDate = download.endTime || download.startTime;
+            addPlace(aURI, aTitle, aVisitDate)
           }
         }
 

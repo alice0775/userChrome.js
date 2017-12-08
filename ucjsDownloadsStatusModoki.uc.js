@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Downloads Status Modoki
 // @include        main
-// @compatibility  Firefox 26+
+// @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2017/12/10 12:00 fix error when DO_NOT_DELETE_HISTORY = true
+// @version        2017/12/10 12:00 remove workaround Bug 1279329. Disable btn while clear list is doing, close button styling for 57.
 // @version        2016/06/10 12:00 modify style independent of font-family
 // @version        2016/06/10 07:00 modify style of close button, fix typo
 // @version        2016/06/10 00:00 Workaround Bug 1279329. adjust some padding
@@ -43,14 +45,14 @@ var ucjsDownloadsStatusModoki = {
     XPCOMUtils.defineLazyModuleGetter(window, "Downloads",
               "resource://gre/modules/Downloads.jsm");
 
-    var style = ' \
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
-      #ucjsDownloadsStatusModoki { \
-        width: 100%; \
-        max-height: 100px; \
-        height: 35px; \
-      } \
-     '.replace(/\s+/g, " ");
+    var style = ` 
+      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); 
+      #ucjsDownloadsStatusModoki { 
+        width: 100%; 
+        max-height: 100px; 
+        height: 35px; 
+      } 
+     `.replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -179,118 +181,101 @@ var ucjsDownloadsStatusModoki = {
     var doc = event.originalTarget;
     var win = doc.defaultView;
  
-    var style = ' \
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
-      #contentAreaDownloadsView { \
-        -moz-box-orient: horizontal; \
-        padding: 0; \
-      } \
- \
-      #downloadsRichListBox { \
-        max-height:35px; \
-        background-color: -moz-dialog; \
-      } \
- \
-      #downloadsRichListBox .scrollbox-innerbox { \
-        display:inline !important; \
-      } \
- \
-      richlistitem { \
-        min-width:200px; \
-        max-width:200px; \
-        max-height:33px; \
-        font-size: 13px; \
-        padding-right: 1px; \
-      } \
- \
-      richlistitem vbox { \
-      } \
- \
-      .downloadTypeIcon { \
-        height:16px; \
-        width: 16px; \
-        -moz-margin-end: 0px; \
-        -moz-margin-start: 1px; \
-         padding-right: 0; \
-         padding-left: 1px; \
-      } \
- \
-      .downloadTarget { \
-        margin-top:2px; \
-        padding-bottom:16px; \
-        max-width: calc(100% - 50px) !important; \
-        min-width: calc(100% - 50px) !important; \
-      } \
- \
-      .downloadTarget:-moz-system-metric(windows-default-theme) { \
-        margin-top:2px; \
-        padding-bottom:10px; \
-      } \
- \
-      .downloadProgress { \
-        margin-top:-16px; \
-        margin-bottom: -1px; \
-      } \
- \
-      .progress-bar { \
-        -moz-appearance:none !important; \
-        background-color: lime !important; \
-      } \
- \
-      .progress-remainder { \
-      } \
- \
-      .downloadDetails { \
-        margin-top:-17px; \
-      } \
- \
-      richlistitem[selected] .downloadDetails { \
-      opacity: 1; \
-      } \
- \
-      .downloadButton { \
-        padding: 0; \
-        margin: 0; \
-      } \
- \
-     button > .button-box { \
-        -moz-padding-start: 0px; \
-        -moz-padding-end: 1px; \
-        padding-right: 0 !important; \
-        padding-left: 0 !important; \
-      } \
- \
-     #downloadFilter { \
-       width: 150px; \
-     } \
- \
-     #ucjsDownloadsStatusModoki-closebutton { \
-        border: none; \
-        width:20px;\
-        padding: 0 5px; \
-        list-style-image: url("chrome://global/skin/icons/close.png"); \
-        -moz-appearance: none; \
-        -moz-image-region: rect(0, 20px, 20px, 0); \
-      } \
- \
-        #ucjsDownloadsStatusModoki-closebutton:hover { \
-          -moz-image-region: rect(0px, 40px, 20px, 20px); \
-      } \
- \
-      @media (-moz-windows-classic) { \
-       #ucjsDownloadsStatusModoki-closebutton { \
-          border: none; \
-          padding: 0 5px; \
-          list-style-image: url("chrome://global/skin/icons/close.png"); \
-          -moz-appearance: none; \
-          -moz-image-region: rect(0, 16px, 16px, 0); \
-        } \
- \
-        #ucjsDownloadsStatusModoki-closebutton:hover { \
-          -moz-image-region: rect(0px, 32px, 16px, 16px); \
-        } \
-    } \
-     '.replace(/\s+/g, " ");
+    var style = ` 
+      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); 
+      #contentAreaDownloadsView { 
+        -moz-box-orient: horizontal; 
+        background-color: -moz-dialog; 
+        padding: 0; 
+      } 
+ 
+      #downloadsRichListBox { 
+        max-height:35px; 
+        background-color: -moz-dialog; 
+      } 
+ 
+      #downloadsRichListBox .scrollbox-innerbox { 
+        display:inline !important; 
+      } 
+ 
+      richlistitem { 
+        min-width:200px; 
+        max-width:200px; 
+        max-height:33px; 
+        font-size: 13px; 
+        border-width: 0 1px 0 0;
+        border-style: solid;
+        border-color: black;
+       } 
+ 
+      richlistitem vbox { 
+      } 
+ 
+      .downloadTypeIcon { 
+        height:16px; 
+        width: 16px; 
+        -moz-margin-end: 0px; 
+        -moz-margin-start: 1px; 
+         padding-right: 0; 
+         padding-left: 1px; 
+      } 
+ 
+      .downloadTarget { 
+        margin-top:1px; 
+        padding-bottom:16px; 
+        max-width: calc(100% - 50px) !important; 
+        min-width: calc(100% - 50px) !important; 
+      } 
+ 
+      .downloadTarget:-moz-system-metric(windows-default-theme) { 
+        margin-top:2px; 
+        /*padding-bottom:10px; */ windows7 ?
+      } 
+ 
+      .downloadProgress { 
+        margin-top:-16px; 
+        margin-bottom: -1px;
+        height:12px;
+        margin-inline-end: 0 !important;
+      } 
+ 
+      .progress-bar { 
+        -moz-appearance:none !important; 
+        background-color: lime !important; 
+      } 
+ 
+      .progress-remainder { 
+      } 
+ 
+      .downloadDetails { 
+        margin-top:-12px; 
+      } 
+
+       .download-state:not(:-moz-any([state="-1"], [state="5"], [state="0"], [state="4"], [state="7"]))      .downloadDetails {
+         margin-top:-17px; 
+      }
+
+      richlistitem[selected] .downloadDetails { 
+      opacity: 1; 
+      } 
+ 
+      .downloadButton { 
+        padding: 0; 
+        margin: 0; 
+      } 
+ 
+     button > .button-box { 
+        -moz-padding-start: 0px; 
+        -moz-padding-end: 1px; 
+        padding-right: 0 !important; 
+        padding-left: 0 !important; 
+      } 
+ 
+     #downloadFilter { 
+       width: 150px; 
+     } 
+ 
+     `.replace(/\s+/g, " ");
     var sspi = doc.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -302,6 +287,7 @@ var ucjsDownloadsStatusModoki = {
 
     var button = doc.createElement("button");
     button.setAttribute("label", "Clear");
+    button.setAttribute("id", "ucjs_clearListButton");
     button.setAttribute("accesskey", "C");
     button.setAttribute("oncommand", "ucjsDownloadsStatusModoki_clearDownloads();");
     var ref = doc.getElementById("downloadCommands");
@@ -318,11 +304,13 @@ var ucjsDownloadsStatusModoki = {
     box.appendChild(textbox);
     var closebtn = doc.createElement("toolbarbutton");
     closebtn.setAttribute("id", "ucjsDownloadsStatusModoki-closebutton");
+    closebtn.setAttribute("class", "close-icon");
     closebtn.setAttribute("tooltiptext", "Close this bar");
     closebtn.setAttribute("oncommand", "ucjsDownloadsStatusModoki_doClose();");
     box.appendChild(closebtn);
     ref.parentNode.insertBefore(vbox, ref);
 
+/*
     // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
     var listBox = doc.getElementById("downloadsRichListBox");
     var placesView = listBox._placesView;
@@ -331,9 +319,10 @@ var ucjsDownloadsStatusModoki = {
       placesView.place= null;
       placesView.place = place;
     }
-
+*/
     win.ucjsDownloadsStatusModoki_clearDownloads = function ucjs_clearDownloads() {
       var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
+      var richListBox = doc.getElementById("downloadsRichListBox");
 
       Cu.import("resource://gre/modules/Services.jsm");
       var places = [];
@@ -342,23 +331,19 @@ var ucjsDownloadsStatusModoki = {
           uri: aURI,
           title: aTitle,
           visits: [{
-            visitDate: aVisitDate,
+            visitDate: (aVisitDate || Date.now()) * 1000,
             transitionType: Ci.nsINavHistoryService.TRANSITION_LINK
           }]
         });
       }
       function moveDownloads2History() {
-        var richListBox = doc.getElementById("downloadsRichListBox");
-
         if (DO_NOT_DELETE_HISTORY) {
-          var cont = richListBox._placesView.result.root;
-          cont.containerOpen = true;
-          for (let i = cont.childCount - 1; i > -1; i--) {
-              let node = cont.getChild(i);
-              let aURI = makeURI(node.uri);
-              let aTitle = node.title;
-              let aVisitDate = node.time;
-              addPlace(aURI, aTitle, aVisitDate)
+          for (let element of richListBox.childNodes) {
+            let download = element._shell.download;
+            let aURI = makeURI(download.source.url);
+            let aTitle = document.getAnonymousElementByAttribute(element, "class", "downloadTarget").value
+            let aVisitDate = download.endTime || download.startTime;
+            addPlace(aURI, aTitle, aVisitDate)
           }
         }
 
@@ -373,7 +358,10 @@ var ucjsDownloadsStatusModoki = {
           }
         }
       }
+      var btn = doc.getElementById("ucjs_clearListButton");
+      btn.setAttribute("disabled", true);
       moveDownloads2History();
+      btn.removeAttribute("disabled");
 
       // close toolbar
       var closeWhenDone = false;
