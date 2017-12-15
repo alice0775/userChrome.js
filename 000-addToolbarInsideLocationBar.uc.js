@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    add a Toolbar inside LocationBar
 // @include        main
-// @compatibility  Firefox 29+
+// @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2017/12/15 17:00 57
 // @version        2016/01/23 1$:00 fix unexpectedly open url when reorder bookmarks
 // @version        2015/08/11 18:00 fix icon size due to bug Bug 1147702
 // @version        2015/04/11 12:00 fix icon size due to bug 1147702
@@ -114,7 +115,7 @@ var addToolbarInsideLocationBar = {
       } catch(e) {}
 
     let ref = this.getInsertPoint();
-    ref.parentNode.insertBefore(toolbar, ref);
+    ref.appendChild(toolbar);
     // xxxx toDo removing dirty hack
     gURLBar.onDrop_addToolbarInsideLocationBar = gURLBar.onDrop;
     gURLBar.onDrop = function(event) {
@@ -135,7 +136,9 @@ var addToolbarInsideLocationBar = {
   },
 
   getInsertPoint: function() {
-    return document.getElementById("urlbar-icons").firstChild;
+    return (document.getElementById("urlbar-icons")
+            || document.getElementById("page-action-buttons")
+           );
   },
 
   handleEvent: function(event) {
