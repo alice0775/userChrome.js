@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2017/12/16 15:00 stop-reload button hack default/lightweight theme
 // @version        2017/12/15 17:00 57
 // @version        2016/01/23 1$:00 fix unexpectedly open url when reorder bookmarks
 // @version        2015/08/11 18:00 fix icon size due to bug Bug 1147702
@@ -28,53 +29,87 @@
 // ==/UserScript==
 var addToolbarInsideLocationBar = {
   init: function() {
-    let style = ' \
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
-      #ucjs-Locationbar-toolbar { \
-        -moz-appearance: none; \
-        background-color: transparent; \
-        background-image: none; \
-        padding: 0px 2px; \
-        border: none; \
-      } \
- \
-      #main-window[customizing] #ucjs-Locationbar-toolbar { \
-        min-width :30px; \
-        border: 1px dotted rgba(255,0,0,0.6) ; \
-      } \
- \
-      /*default theme*/ \
-      #nav-bar #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{ \
-        width: 18px; \
-        padding: 0 !important; \
-      } \
- \
-      #nav-bar .toolbarbutton-1[type=menu]:not(#back-button):not(#forward-button):not(#feed-button):not(#social-provider-button):not(#PanelUI-menu-button) { \
-        padding-left: 0; \
-        padding-right: 0; \
-      } \
- \
-      #ucjs-Locationbar-toolbar .toolbarbutton-1:not([type=menu-button]), \
-      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button, \
-      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker { \
-        padding: 0; \
-      } \
- \
-      #ucjs-Locationbar-toolbar .toolbarbutton-1:not(#bookmarks-menu-button) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon { \
-        padding: 5px 2px 4px 2px; \
-      } \
- \
-      #ucjs-Locationbar-toolbar #bookmarks-menu-button[cui-areatype="toolbar"]:not(.bookmark-item):not([overflowedItem=true]) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon { \
-        padding-top: 0; \
-        padding-bottom: 0; \
-        padding-left: 2px; \
-        padding-right: 2px; \
-        width: 23px; \
-      } \
-      #ucjs-Locationbar-toolbar:not([customizing="true"]) #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-button > .toolbarbutton-icon { \
-        width: 18px; \
-      } \
-      '.replace(/\s+/g, " ");
+    let style = `
+      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+      #ucjs-Locationbar-toolbar {
+        -moz-appearance: none;
+        background-color: transparent;
+        background-image: none;
+        padding: 0px 2px;
+        border: none;
+      }
+
+      #main-window[customizing] #ucjs-Locationbar-toolbar {
+        min-width :30px;
+        border: 1px dotted rgba(255,0,0,0.6) ;
+      }
+
+      /*default theme*/
+      #nav-bar #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{
+        width: 18px;
+        padding: 0 !important;
+      }
+
+      #nav-bar .toolbarbutton-1[type=menu]:not(#back-button):not(#forward-button):not(#feed-button):not(#social-provider-button):not(#PanelUI-menu-button) {
+        padding-left: 0;
+        padding-right: 0;
+      }
+
+      #ucjs-Locationbar-toolbar .toolbarbutton-1:not([type=menu-button]),
+      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button,
+      #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
+        padding: 0;
+      }
+
+      #ucjs-Locationbar-toolbar .toolbarbutton-1:not(#bookmarks-menu-button) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
+        padding: 5px 2px 4px 2px;
+      }
+
+      #ucjs-Locationbar-toolbar #bookmarks-menu-button[cui-areatype="toolbar"]:not(.bookmark-item):not([overflowedItem=true]) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
+        padding-top: 0;
+        padding-bottom: 0;
+        padding-left: 2px;
+        padding-right: 2px;
+        width: 23px;
+      }
+      #ucjs-Locationbar-toolbar:not([customizing="true"]) #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
+        width: 18px;
+      }
+
+      // xxx stop-reload button hack default theme
+      #ucjs-Locationbar-toolbar:not(:-moz-lwtheme) #stop-reload-button > #reload-button > .toolbarbutton-icon,
+      #ucjs-Locationbar-toolbar:not(:-moz-lwtheme) #stop-reload-button > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
+      {
+        fill: rgb(0, 0, 0);
+      }
+      #ucjs-Locationbar-toolbar:not(:-moz-lwtheme) #stop-reload-button[animate] > #reload-button > .toolbarbutton-icon,
+      #ucjs-Locationbar-toolbar:not(:-moz-lwtheme) #stop-reload-button[animate] > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
+      {
+        fill: rgb(0, 0, 0);
+      }
+      // xxx stop-reload button hack lightweight theme (bright theme)
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-darktext #stop-reload-button > #reload-button > .toolbarbutton-icon,
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-darktext #stop-reload-button > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
+      {
+        fill: rgb(0, 0, 0);
+      }
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-darktext #stop-reload-button[animate] > #reload-button > .toolbarbutton-icon,
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-darktext #stop-reload-button[animate] > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
+      {
+        fill: rgb(0, 0, 0);
+      }
+      // xxx stop-reload button hack lightweight theme (dark theme)
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-brighttext #stop-reload-button > #reload-button > .toolbarbutton-icon,
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-brighttext #stop-reload-button > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
+      {
+        fill: rgb(255, 255, 255);
+      }
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-brighttext #stop-reload-button[animate] > #reload-button > .toolbarbutton-icon,
+      #ucjs-Locationbar-toolbar:-moz-lwtheme-brighttext #stop-reload-button[animate] > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
+      {
+        fill: rgb(255, 255, 255);
+      }      
+      `.replace(/\s+/g, " ");
 
     let sspi = document.createProcessingInstruction(
       'xml-stylesheet',
