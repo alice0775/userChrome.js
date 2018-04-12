@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/04/14 00:00 de XUL overlay
 // @version        2017/12/10 12:00 fix error when DO_NOT_DELETE_HISTORY = true
 // @version        2017/12/10 12:00 remove workaround Bug 1279329. Disable btn while clear list is doing
 // @version        2016/06/10 00:00 Workaround Bug 1279329
@@ -51,25 +52,25 @@ if (location.href == "chrome://browser/content/browser.xul") {
     _summary: null,
     _list: null,
 
+    createElement: function(localName, arryAttribute) {
+      let elm = document.createElement(localName);
+      for(let i = 0; i < arryAttribute.length; i++) {
+        elm.setAttribute(arryAttribute[i].attr, arryAttribute[i].value);
+      }
+      return elm;
+    },
+
     init: function() {
       window.addEventListener("unload", this, false);
 
-      var overlay = ' \
-        <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
-                 xmlns:html="http://www.w3.org/1999/xhtml"> \
-            <menupopup  id="menu_ToolsPopup"> \
-                  <menuitem \
-                    insertbefore="menu_openDownloads" \
-                    label="Open Download Manager" \
-                    accesskey="D" \
-                    oncommand="ucjs_downloadManager.openDownloadManager(true);" /> \
-            </menupopup> \
-        </overlay>';
-      overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-      window.userChrome_js.loadOverlay(overlay, this);
-    },
+      let ref = document.getElementById("menu_openDownloads");
+      let menu = ref.parentNode.insertBefore(
+        this.createElement("menuitem",
+          [{attr: "label", value:"Open Download Manager"},
+           {attr: "accesskey", value:"D"},
+           {attr : "oncommand", value: "ucjs_downloadManager.openDownloadManager(true);"}
+          ]), ref);
 
-    observe: function() {
       XPCOMUtils.defineLazyModuleGetter(this, "Downloads",
                 "resource://gre/modules/Downloads.jsm");
       // Ensure that the DownloadSummary object will be created asynchronously.
@@ -203,6 +204,14 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
     _list: null,
     _wait:false,
 
+    createElement: function(localName, arryAttribute) {
+      let elm = document.createElement(localName);
+      for(let i = 0; i < arryAttribute.length; i++) {
+        elm.setAttribute(arryAttribute[i].attr, arryAttribute[i].value);
+      }
+      return elm;
+    },
+
     init: function() {
       window.addEventListener("unload", this, false);
 
@@ -234,27 +243,24 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         return document.documentElement.getAttribute(name);
       };
 
-      var overlay = ' \
-        <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
-                 xmlns:html="http://www.w3.org/1999/xhtml"> \
-          <hbox> \
-            <button label="Clear List" \
-                    id="ucjs_clearListButton" \
-                    accesskey="C" \
-                    oncommand="ucjs_downloadManagerMain.clearDownloads();"/> \
-            <spacer flex="1"/> \
-            <textbox clickSelectsAll="true" \
-                     type="search" \
-                     placeholder="Search..." \
-                     oncommand="ucjs_downloadManagerMain.doSearch(this.value);" \
-                     aria-autocomplete="list"/> \
-            </hbox> \
-        </overlay>';
-      overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-      window.userChrome_js.loadOverlay(overlay, this);
-    },
+      let ref = document.documentElement;
+      ref = ref.appendChild(this.createElement("hbox", []));
+      ref.appendChild(this.createElement("button",
+        [{attr: "id", value: "ucjs_clearListButton"},
+         {attr: "label", value: "Clear List"},
+         {attr: "accesskey", value: "C"},
+         {attr: "oncommand", value: "ucjs_downloadManagerMain.clearDownloads();"}
+        ]));
+      ref.appendChild(this.createElement("spacer",
+        [{attr: "flex", value: "1"}]));
+      ref.appendChild(this.createElement("textbox",
+        [{attr: "clickSelectsAll", value: "true"},
+         {attr: "type", value: "search"},
+         {attr: "placeholder", value: "Search..."},
+         {attr: "aria-autocomplete", value: "list"},
+         {attr: "oncommand", value: "ucjs_downloadManagerMain.doSearch(this.value);"}
+        ]));
 
-    observe: function() {
       this.originalTitle = document.title;
 
 /*
