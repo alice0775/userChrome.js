@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/04/14 21:45 workaround for SearchEngineWheelScroll.uc.js()
 // @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
 // @version        2018/04/13 17:00 initial wip
 // ==/UserScript==
@@ -48,7 +49,7 @@ var serachWP_modoki = {
   init: function() {
     window.addEventListener("unload", this, false);
     setTimeout((function(){
-      this._textbox.addEventListener("DOMMouseScroll", this, false);
+      this._textbox.addEventListener("DOMMouseScroll", this, true);
       this._textbox.addEventListener("click", this, false);
       this._textbox.addEventListener("blur", this, false);
     }).bind(this), 1000)
@@ -56,7 +57,7 @@ var serachWP_modoki = {
 
   uninit: function() {
     window.removeEventListener("unload", this, false);
-    this._textbox.removeEventListener("unload", this, false);
+    this._textbox.removeEventListener("DOMMouseScroll", this, true);
     this._textbox.removeEventListener("click", this, false);
     this._textbox.removeEventListener("blur", this, false);
   },
@@ -160,6 +161,9 @@ var serachWP_modoki = {
     let term = this._getTokenOnMousePosition(event);
 
     if (!!term) {
+      event.preventDefault();
+      event.stopPropagation();
+
       var findBackwards = event.detail < 0 ? true : false;
       var matchCase = event.altKey || event.ctrlKey;
       this._findFast( term, findBackwards,  matchCase);
