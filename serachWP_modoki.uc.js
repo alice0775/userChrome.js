@@ -2,9 +2,11 @@
 // @name           serachWP_modoki.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    serachWPもどき  まだまだtodo未実装だらけ
+// @charset        utf-8
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
 // @version        2018/04/13 17:00 initial wip
 // ==/UserScript==
 // usage(使い方)
@@ -18,7 +20,8 @@
 //   トークンの分割表示
 var serachWP_modoki = {
   // config
-  AUTOHIGHLIGHT: true,
+  AUTOHIGHLIGHT: true,  // 強調表示 デフォルト on
+  TOKENSJAPANESE: true, // 日本語のトークンを自動判定 on
   // end config
 
   get _findField2(){
@@ -378,8 +381,6 @@ TinySegmenter.prototype.segment = function(input) {
  * ***** END LICENSE BLOCK ***** */
 
 var ucjs_Tokenizer = new function() {
-  this.TOKENSJAPANESE = true;
-
 
   this.getByOffset = function( input, offset ) {
     var terms = this.createTokensArray( input );
@@ -417,7 +418,7 @@ var ucjs_Tokenizer = new function() {
       return aSearchString.split(/[ 　,/(){}[\]+*「」]/);
     }
 
-    if (!this.TOKENSJAPANESE){
+    if (!serachWP_modoki.TOKENSJAPANESE){
       return parseTerms(aSearchString);
     } else {
       var DELIMITER = 'ក';//Character used rarely

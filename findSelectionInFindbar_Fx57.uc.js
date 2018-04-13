@@ -2,11 +2,13 @@
 // @name           findSelectionInFindbar.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    FindBarの選択テキスト上でマウスホイールによる選択テキスでの検索を可能にする。選択なき場合は日本語のトークンを自動判定する
+// @charset        utf-8
 // @include        main
 // @include        chrome://global/content/viewSource.xul
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
 // @version        2016/05/15 23:00 fix selection
 // @version        2016/05/15 23:00 RetryHistoryFindbar
 // @version        2013/11/22 19:00 historyFindbar
