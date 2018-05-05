@@ -5,6 +5,7 @@
 // @include        *
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/05/05 23:00 cleanup (fix ancestor click event)
 // @version        2018/05/04 22:00 Make link handling of locked tab more safer
 // @version        2018/05/04 21:00 xxxx for <a href = ""> something
 // @version        2018/05/04 12:00 cleanup for 60
@@ -518,13 +519,16 @@ patch: {
   'use strict';
 
   let frameScript = function() {
-    addEventListener("click", onClick, false);
+    addEventListener("click", onClick, false);  /*先祖要素のclick eventListener 優先, trueの場合 無視されるので*/
 
     function onClick(event) {
       if (event.button !== 0) return;
       if (event.altKey || event.ctrlKey || event.shiftKey) return;
 
       if (!sendSyncMessage("linkclick_isLockedTab", {  })[0].isLockedTab)
+        return;
+      /*先祖要素のclick eventListener 優先*/
+      if (event.defaultPrevented)
         return;
 
       let [url, node, principal] = _hrefAndLinkNodeForClickEvent(event);
@@ -547,6 +551,9 @@ patch: {
       if (target)
         return;
   
+      event.preventDefault();
+      event.stopPropagation();
+
       let referrerPolicy = ownerDoc.referrerPolicy;
       if (node) {
         let referrerAttrValue = Services.netUtils.parseAttributePolicyString(node.
@@ -566,8 +573,6 @@ patch: {
         userContextId = ownerDoc.nodePrincipal.originAttributes.userContextId;
       }
 
-      event.preventDefault();
-      event.stopPropagation();
       sendAsyncMessage('openLinkByLockTab', 
         {url: url, 
          target: target,
@@ -647,16 +652,7 @@ patch: {
           originPrincipal: message.data.originPrincipal,
           triggeringPrincipal: message.data.triggeringPrincipal
       };
-      
-      if (gBrowser.selectedTab.hasAttribute('tabLock')) {
-        if (gBrowser.isHashLink(message.data.url, message.data.documentURI)) {
-          window.openLinkIn(message.data.url, "current", params);
-          return;
-        }
-        window.openLinkIn(message.data.url, "tab", params);
-        return;
-      }
-      window.openLinkIn(message.data.url, "current", params);
+      window.openLinkIn(message.data.url, "tab", params);
     }
   );
 
