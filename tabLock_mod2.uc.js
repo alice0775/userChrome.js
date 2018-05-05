@@ -5,6 +5,7 @@
 // @include        *
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/05/04 21:00 xxxx for <a href = ""> something
 // @version        2018/05/04 12:00 cleanup for 60
 // @version        2018/05/04 00:00 for 60
 // ==/UserScript==
@@ -525,7 +526,8 @@ patch: {
       let [url, node, principal] = _hrefAndLinkNodeForClickEvent(event);
       let ownerDoc = event.originalTarget.ownerDocument;
 
-      if (!url || /^\s*(javascript:|data:|moz-extension:)/.test(url))
+      if (!url || !node || node.getAttribute("href") == "" ||    /*xxxx fix ""*/
+           /^\s*(javascript:|data:|moz-extension:)/.test(url))
         return;
 
       if (node.hasAttribute("onclick"))
