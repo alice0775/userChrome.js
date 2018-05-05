@@ -5,6 +5,7 @@
 // @include        *
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/05/04 12:00 cleanup for 60
 // @version        2018/05/04 00:00 for 60
 // ==/UserScript==
 // @Note           about:configの設定
@@ -195,34 +196,42 @@ patch: {
       };
 
       //起動時のタブ状態復元
-      var that = this;
-      setTimeout(function(){that.restoreForTab(gBrowser.selectedTab);},0);
-      setTimeout(init, 2000, 0);
-      function init(i){
-        if(i < gBrowser.tabs.length){
-          var aTab = gBrowser.tabs[i];
-          if(false && (aTab.linkedBrowser.docShell.busyFlags
-            || aTab.linkedBrowser.docShell.restoringDocument)) {
-            setTimeout(arguments.callee, 1000, i);
-          }else{
-            that.restoreForTab(aTab);
-            i++;
-            setTimeout(arguments.callee, 10, i);
-          }
-        }else{
-        }
-      }
+      Services.obs.addObserver(this, "sessionstore-restoring-on-startup");
+      Services.obs.addObserver(this, "sessionstore-initiating-manual-restore");
 
       gBrowser.tabContainer.addEventListener('TabMove', tabLock.TabMove, false);
       gBrowser.tabContainer.addEventListener('SSTabRestoring', tabLock.restore,false);
       window.addEventListener('unload',function(){ tabLock.uninit();},false)
     },
 
+    restoreAll: function() {
+      var that = this;
+      that.restoreForTab(gBrowser.selectedTab);
+      setTimeout(init, 2000, 0);
+      function init(i){
+        if(i < gBrowser.tabs.length){
+          var aTab = gBrowser.tabs[i];
+          that.restoreForTab(aTab);
+          i++;
+          arguments.callee(i);
+        }else{
+        }
+      }
+    },
+
+    observe(aEngine, aTopic, aVerb) {
+      if (aTopic == "sessionstore-restoring-on-startup" ||
+          aTopic == "sessionstore-initiating-manual-restore") {
+        this.restoreAll();
+      }
+    },
+
     uninit: function(){
+      Services.obs.removeObserver(this, "sessionstore-restoring-on-startup");
+      Services.obs.removeObserver(this, "sessionstore-initiating-manual-restore");
       gBrowser.tabContainer.removeEventListener('drop', this.onDrop, true);
       gBrowser.tabContainer.removeEventListener('TabMove', tabLock.TabMove, false);
       gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabLock.restore,false);
-    // document.documentElement.removeEventListener('SubBrowserFocusMoved', function(){ tabLock.init(); }, false);
     },
 /*
      //acync to sync
@@ -341,14 +350,6 @@ patch: {
       gBrowser.lockTabIcon(aTab);
     },
 
-    checkCachedSessionDataExpiration : function(aTab) {
-      var data = aTab.linkedBrowser.__SS_data; // Firefox 3.6-
-      if (data &&
-         data._tabStillLoading &&
-         aTab.getAttribute('busy') != 'true')
-        data._tabStillLoading = false;
-    },
-
     toggle: function(event){
       var aTab =  TabContextMenu.contextTab;
       if (!aTab)
@@ -455,7 +456,6 @@ patch: {
   gBrowser.lockTab = function (aTab){
     if ( aTab.hasAttribute("tabLock") ){
       aTab.removeAttribute("tabLock");
-      tabLock.checkCachedSessionDataExpiration(aTab);
       try {
         tabLock.sessionStore.deleteTabValue(aTab, "tabLock");
       } catch(e) {}
@@ -477,8 +477,6 @@ patch: {
     if ( aTab.hasAttribute("tabLock") ){
       if(!image){
         var stack = document.getAnonymousElementByAttribute(
-                               aTab, "class", "tab-icon") ||
-                    document.getAnonymousElementByAttribute(
                                aTab, "class", "tab-stack");
         var image = document.createElementNS(kXULNS,'image');
         image.setAttribute('class','tab-icon-lock');

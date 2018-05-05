@@ -7,6 +7,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  60
+// @version        2018/05/04 12:00 cleanup for 60
 // @version        2018/05/04 23:00 for 60
 // ==/UserScript==
 
@@ -87,30 +88,39 @@ var tabProtect = {
     };
 
     //起動時のタブ状態復元
-    var that = this;
-    setTimeout(function(){that.restoreForTab(gBrowser.selectedTab);},0);
-    setTimeout(init, 2000, 0);
-    function init(i){
-      if(i < gBrowser.tabs.length){
-        var aTab = gBrowser.tabs[i];
-        if(false && (aTab.linkedBrowser.docShell.busyFlags
-            || aTab.linkedBrowser.docShell.restoringDocument)) {
-          setTimeout(arguments.callee, 1000, i);
-        }else{
-          that.restoreForTab(aTab);
-          i++;
-          setTimeout(arguments.callee, 10, i);
-        }
-      }else{
-      }
-    }
+    Services.obs.addObserver(this, "sessionstore-restoring-on-startup");
+    Services.obs.addObserver(this, "sessionstore-initiating-manual-restore");
 
     gBrowser.tabContainer.addEventListener('SSTabRestoring', tabProtect.restore,false);
     window.addEventListener('unload',function(){ tabProtect.uninit();},false)
 
   },
 
+  restoreAll: function() {
+    var that = this;
+    that.restoreForTab(gBrowser.selectedTab);
+    setTimeout(init, 2000, 0);
+    function init(i){
+      if(i < gBrowser.tabs.length){
+        var aTab = gBrowser.tabs[i];
+        that.restoreForTab(aTab);
+        i++;
+        arguments.callee(i);
+      }else{
+      }
+    }
+  },
+
+  observe(aEngine, aTopic, aVerb) {
+    if (aTopic == "sessionstore-restoring-on-startup" ||
+        aTopic == "sessionstore-initiating-manual-restore") {
+      this.restoreAll();
+    }
+  },
+
   uninit: function(){
+    Services.obs.removeObserver(this, "sessionstore-restoring-on-startup");
+    Services.obs.removeObserver(this, "sessionstore-initiating-manual-restore");
     window.removeEventListener('unload',function(){ tabProtect.uninit();},false)
     gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabProtect.restore,false);
   },
@@ -173,14 +183,6 @@ var tabProtect = {
     }else{
       menuitem.setAttribute('checked', false);
     }
-  },
-
-  checkCachedSessionDataExpiration: function(aTab) {
-    var data = aTab.linkedBrowser.__SS_data; // Firefox 3.6-
-    if (data &&
-       data._tabStillLoading &&
-       aTab.getAttribute('busy') != 'true')
-      data._tabStillLoading = false;
   }
 }
 if(!('TM_init' in window)) {
@@ -191,7 +193,6 @@ if(!('TM_init' in window)) {
   gBrowser.protectTab = function (aTab){
     if ( aTab.hasAttribute("tabProtect") ){
       aTab.removeAttribute("tabProtect");
-      tabProtect.checkCachedSessionDataExpiration(aTab);
       try {
         tabProtect.sessionStore.deleteTabValue(aTab, "tabProtect");
       } catch(e) {}
@@ -216,8 +217,6 @@ if(!('TM_init' in window)) {
       closeButton.setAttribute('hidden',true);
       if(!image){
         var stack = document.getAnonymousElementByAttribute(
-                               aTab, "class", "tab-icon") ||
-                    document.getAnonymousElementByAttribute(
                                aTab, "class", "tab-stack");
         var image = document.createElementNS(kXULNS,'image');
         image.setAttribute('class','tab-icon-protect');
