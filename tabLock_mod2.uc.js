@@ -5,6 +5,7 @@
 // @include        *
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/05/04 22:00 Make link handling of locked tab more safer
 // @version        2018/05/04 21:00 xxxx for <a href = ""> something
 // @version        2018/05/04 12:00 cleanup for 60
 // @version        2018/05/04 00:00 for 60
@@ -517,17 +518,23 @@ patch: {
   'use strict';
 
   let frameScript = function() {
-    addEventListener("click", onClick, true);
+    addEventListener("click", onClick, false);
 
     function onClick(event) {
       if (event.button !== 0) return;
       if (event.altKey || event.ctrlKey || event.shiftKey) return;
+
+      if (!sendSyncMessage("linkclick_isLockedTab", {  })[0].isLockedTab)
+        return;
 
       let [url, node, principal] = _hrefAndLinkNodeForClickEvent(event);
       let ownerDoc = event.originalTarget.ownerDocument;
 
       if (!url || !node || node.getAttribute("href") == "" ||    /*xxxx fix ""*/
            /^\s*(javascript:|data:|moz-extension:)/.test(url))
+        return;
+
+     if (sendSyncMessage("linkclickByLockTab_isHash", {url: url, documentURI: ownerDoc.documentURI})[0].isHash)
         return;
 
       if (node.hasAttribute("onclick"))
@@ -612,6 +619,16 @@ patch: {
 
   let frameScriptURI = 'data:,(' + frameScript.toString() + ')()';
   window.messageManager.loadFrameScript(frameScriptURI, true);
+  window.messageManager.addMessageListener("linkclick_isLockedTab",
+    function(message) {
+        return { isLockedTab: gBrowser.selectedTab.hasAttribute('tabLock') };
+    }
+  );
+  window.messageManager.addMessageListener("linkclickByLockTab_isHash",
+    function(message) {
+      return { isHash: gBrowser.isHashLink(message.data.url, message.data.documentURI) };
+    }
+  );
   window.messageManager.addMessageListener('openLinkByLockTab',
     function(message) {
       let referrerURI = message.data.referrerURI;
