@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.50mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.52mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,7 +14,9 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
-// Date 2018/03/20 21:00 editBookmarkPanel etc
+// Date 2018/05/06 22:00 remove workaround for editBookmarkPanel
+// Date 2018/03/21 08:00 revert USE_0_63_FOLDER
+// Date 2018/03/20 21:00 editBookmarkPanel etc Bug 1444228 - Remove editBookmarkOverlay.xul
 // Date 2015/06/28 13:00 about:preferences#privacy etc
 // Date 2014/12/28 19:00 workaround loading xul on second browser
 // Date 2014/12/13 21:00 remove a debug log
@@ -65,7 +67,7 @@
   // -- config --
   const EXPERIMENT = false; //実験:するtrue, しない[false]
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
-  const USE_0_63_FOLDER = false; //0.63のフォルダ規則を使う[true], 使わないfalse
+  const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
   const REPLACECACHE = false; //スクリプトの更新日付によりキャッシュを更新する: true , しない:[false]
@@ -100,6 +102,9 @@
                         +-userCrome.js.0.8-+-*.uc.jsまたは*.uc.xul群 (綴りが変なのはなぜかって? )
  */
 
+      Components.classes["@mozilla.org/consoleservice;1"]
+        .getService(Components.interfaces.nsIConsoleService)
+        .logStringMessage("0 "+location.href);
 
   //chrome/aboutでないならスキップ
   if(!/^(chrome:|about:)/i.test(location.href)) return;
