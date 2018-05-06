@@ -7,6 +7,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  60
+// @version        2018/05/06 14:00 workaround for tab move
 // @version        2018/05/04 12:00 cleanup for 60
 // @version        2018/05/04 23:00 for 60
 // ==/UserScript==
@@ -66,18 +67,20 @@ var tabProtect = {
     // CSSを適用
     var stack = document.getAnonymousElementByAttribute(
                             gBrowser.tabContainer.firstChild, "class", "tab-stack");
-      var style = " \
-      .tab-close-button[hidden='true'] image { \
-        width: 0px; \
-      } \
-      .tab-icon-protect{ \
-        margin-top: 10px; /*要調整*/ \
-        margin-left: 10px; /*要調整*/ \
-        list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQUlEQVQ4jWNgGAXDADASUvDvOsN/fPJMlLqAhRhFTJqo/H/XKXQBsoFEuQDDVnIMQPcGXJxYA3C5hiwvUOwCZAAAlRcK7m+YgB4AAAAASUVORK5CYII='); \
-      } \
-      .tab-icon-protect[hidden='true'] { \
-        display: none; \
-      }";
+      var style = `
+      .tab-close-button[hidden='true'] image {
+        width: 0px;
+      }
+      .tab-icon-protect{
+        margin-top: 10px; /*要調整*/
+        margin-left: 10px; /*要調整*/
+        list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQUlEQVQ4jWNgGAXDADASUvDvOsN/fPJMlLqAhRhFTJqo/H/XKXQBsoFEuQDDVnIMQPcGXJxYA3C5hiwvUOwCZAAAlRcK7m+YgB4AAAAASUVORK5CYII=');
+      }
+      .tab-icon-protect[hidden='true'] {
+        display: none;
+      }
+
+      `;
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -91,6 +94,7 @@ var tabProtect = {
     Services.obs.addObserver(this, "sessionstore-restoring-on-startup");
     Services.obs.addObserver(this, "sessionstore-initiating-manual-restore");
 
+    gBrowser.tabContainer.addEventListener('TabMove', tabProtect.TabMove, false);
     gBrowser.tabContainer.addEventListener('SSTabRestoring', tabProtect.restore,false);
     window.addEventListener('unload',function(){ tabProtect.uninit();},false)
 
@@ -123,8 +127,14 @@ var tabProtect = {
     Services.obs.removeObserver(this, "sessionstore-initiating-manual-restore");
     window.removeEventListener('unload',function(){ tabProtect.uninit();},false)
     gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabProtect.restore,false);
+    gBrowser.tabContainer.removeEventListener('TabMove', tabProtect.TabMove, false);
   },
 
+
+  TabMove: function(aEvent){
+    var aTab = aEvent.target;
+    gBrowser.protectTabIcon(aTab);
+  },
 
   tabContextMenu: function(){
     //tab context menu
