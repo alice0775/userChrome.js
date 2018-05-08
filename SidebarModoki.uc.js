@@ -7,6 +7,8 @@
 // @compatibility  Firefox 57
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2018/05/08 19:00 get rid loadoverlay
+// @version        2017/11/24 19:50 do nothing if window is popup(window.open)
 // @version        2017/11/24 19:20 change close button icon style to 57
 // @version        2017/11/24 19:10 add key(accel(ctrl)+alt+s) and close button
 // @version        2017/11/24 19:00 hack for DL manager
@@ -82,7 +84,19 @@ var SidebarModoki = {
     return this.prefs = Services.prefs;
   },
 
+  createElement: function(name, attr) {
+  	var el = document.createElement(name);
+  	if (attr) {
+      Object.keys(attr).forEach(function(n){ el.setAttribute(n, attr[n])});
+    }
+  	return el;
+  },
+
   init: function() {
+    let chromehidden = document.getElementById("main-window").hasAttribute("chromehidden");
+    if (chromehidden &&
+        document.getElementById("main-window").getAttribute("chromehidden").includes("extrachrome")) {      return; // do nothing
+    }
 
     let style = `
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
@@ -171,67 +185,41 @@ var SidebarModoki = {
       });
     }catch(e){}
 
-    var overlay = `
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
-                 xmlns:html="http://www.w3.org/1999/xhtml">
-      <commandset id="mainCommandSet">
-        <command id="cmd_SidebarModoki" oncommand="SidebarModoki.toggle()"/>
-      </commandset>
-      <keyset id="mainKeyset">
-        <key id="key_SidebarModoki" key="s" modifiers="accel,alt" command="cmd_SidebarModoki"/>
-      </keyset>
-      <hbox id="browser">
-      <vbox id="SM_toolbox"
-              ordinal="0">
-        <hbox id="SM_header" align="center">
-          <label>SidebarModoki</label>
-          <spacer flex="1000"/>
-          <toolbarbutton id="SM_closeButton" class="close-icon tabbable"
-                         tooltiptext="Close SidebarModoki"
-                         oncommand="SidebarModoki.close();"/>
-        </hbox>
-        <tabbox flex="1">
-          <tabs id="SM_tabs">
-            <tab id="SM_tab0" label="{tab0-label}"/>
-            <tab id="SM_tab1" label="{tab1-label}"/>
-            <tab id="SM_tab2" label="{tab2-label}"/>
-          </tabs>
-          <tabpanels id="SM_tabpanels" flex="1" style="border: none;">
-            <tabpanel id="SM_tab0-container" orient="vertical" flex="1">
-              <browser id="SM_tab0-browser" flex="1" autoscroll="false" src="{tab0-src}"/>
-            </tabpanel>
-            
-            <tabpanel id="SM_tab1-container" orient="vertical" flex="1">
-              <browser id="SM_tab1-browser" flex="1" autoscroll="false" src="{tab1-src}"/>
-            </tabpanel>
-            
-            <tabpanel id="SM_tab2-container" orient="vertical" flex="1">
-              <browser id="SM_tab2-browser" flex="1" autoscroll="false" src="{tab2-src}"/>
-            </tabpanel>
-          </tabpanels>
-        </tabbox>
-      </vbox>
-      <splitter ordinal="0"
-                id = "SM_splitter"
-                state = "open"
-                collapse = "before"
-                resizebefore = "closest"
-                resizeafter = "closest" >
-        <grippy></grippy>
-      </splitter>
-      </hbox>
-    </overlay>
-    `;
+    document.getElementById("mainCommandSet").appendChild(
+      this.createElement("command", { id: "cmd_SidebarModoki", oncommand: "SidebarModoki.toggle()" })
+    );
+    document.getElementById("mainKeyset").appendChild(
+      this.createElement("key", { id: "key_SidebarModoki", key: "s", modifiers: "accel,alt", command: "cmd_SidebarModoki" })
+    );
 
-    overlay = overlay.replace(/\{tab0-src\}/g, this.TAB0_SRC)
-                     .replace(/\{tab1-src\}/g, this.TAB1_SRC)
-                     .replace(/\{tab2-src\}/g, this.TAB2_SRC)
-                     .replace(/\{tab0-label\}/g, this.TAB0_LABEL)
-                     .replace(/\{tab1-label\}/g, this.TAB1_LABEL)
-                     .replace(/\{tab2-label\}/g, this.TAB2_LABEL)
-                     .replace(/\s+/g, " ");
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-    window.userChrome_js.loadOverlay(overlay, this);
+    let sidebar = document.getElementById("sidebar-box");
+    let SM_toolbox = sidebar.parentNode.insertBefore(this.createElement("vbox", { id: "SM_toolbox", ordinal: "0"}), sidebar);
+    let SM_header = SM_toolbox.appendChild(this.createElement("hbox", { id: "SM_header", align: "center"}));
+    SM_header.appendChild(this.createElement("label", null)).textContent = "SidebarModoki";
+    SM_header.appendChild(this.createElement("spacer", { flex: "1000"}));
+    SM_header.appendChild(this.createElement("toolbarbutton", { id: "SM_closeButton",  class: "close-icon tabbable", tooltiptext: "Close SidebarModoki", oncommand: "SidebarModoki.close();"}));
+
+    let tabbox = SM_toolbox.appendChild(this.createElement("tabbox", { flex: "1"}));
+    let SM_tabs = tabbox.appendChild(this.createElement("tabs", { id: "SM_tabs"}));
+    SM_tabs.appendChild(this.createElement("tab", { id: "SM_tab0",  label: this.TAB0_LABEL}));
+    SM_tabs.appendChild(this.createElement("tab", { id: "SM_tab1",  label: this.TAB1_LABEL}));
+    SM_tabs.appendChild(this.createElement("tab", { id: "SM_tab2",  label: this.TAB2_LABEL}));
+
+    let SM_tabpanels = tabbox.appendChild(this.createElement("tabpanels", { id: "SM_tabpanels", flex: "1", style: "border: none;"}));
+    let tabpanel = SM_tabpanels.appendChild(this.createElement("tabpanel", { id: "SM_tab0-container", flex: "1", orient: "vertical"}));
+    tabpanel.appendChild(this.createElement("browser", { id: "SM_tab0-browser", flex: "1", autoscroll: "false", src: this.TAB0_SRC}));
+
+    tabpanel = SM_tabpanels.appendChild(this.createElement("tabpanel", { id: "SM_tab1-container", flex: "1", orient: "vertical"}));
+    tabpanel.appendChild(this.createElement("browser", { id: "SM_tab1-browser", flex: "1", autoscroll: "false", src: this.TAB1_SRC}));
+
+    tabpanel = SM_tabpanels.appendChild(this.createElement("tabpanel", { id: "SM_tab2-container", flex: "1", orient: "vertical"}));
+    tabpanel.appendChild(this.createElement("browser", { id: "SM_tab2-browser", flex: "1", autoscroll: "false", src: this.TAB2_SRC}));
+
+
+    let SM_splitter = sidebar.parentNode.insertBefore(this.createElement("splitter", { id: "SM_splitter", ordinal: "0", state: "open", collapse: "before", resizebefore: "closest", resizeafter: "closest"}), sidebar);
+    SM_splitter.appendChild(this.createElement("grippy", null));
+
+    setTimeout(function(){this.observe();}.bind(this), 0);
 
     //F11 fullscreen
     FullScreen.showNavToolbox_org = FullScreen.showNavToolbox;
