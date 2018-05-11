@@ -4,9 +4,11 @@
 // @description    TST
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM
-// @compatibility  Firefox 57
+// @compatibility  Firefox 61-
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2018/05/10 00:00 for 61 wip Bug 1448810 - Rename the Places sidebar files
+// @version        2018/05/08 21:00 use jsonToDOM(https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Overlay_Extensions/XUL_School/DOM_Building_and_HTML_Insertion)
 // @version        2018/05/08 19:00 get rid loadoverlay
 // @version        2017/11/24 19:50 do nothing if window is popup(window.open)
 // @version        2017/11/24 19:20 change close button icon style to 57
@@ -59,15 +61,13 @@ if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.
     throw 'not an error, just load contentAreaDownloadsView.xul';
 }
 
-
-
 var SidebarModoki = {
   // -- config --
   SM_WIDTH : 130,
   SM_AUTOHIDE : false,  //F11 Fullscreen
-  TAB0_SRC   : "chrome://browser/content/bookmarks/bookmarksPanel.xul",
+  TAB0_SRC   : "chrome://browser/content/places/bookmarksSidebar.xul", //"chrome://browser/content/bookmarks/bookmarksPanel.xul",
   TAB0_LABEL : "Bookmarks",
-  TAB1_SRC   : "chrome://browser/content/history/history-panel.xul",
+  TAB1_SRC   : "chrome://browser/content/places/historySidebar.xul", //"chrome://browser/content/history/history-panel.xul",
   TAB1_LABEL : "History",
   TAB2_SRC   : "chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM",
   TAB2_LABEL : "DL",
@@ -84,12 +84,67 @@ var SidebarModoki = {
     return this.prefs = Services.prefs;
   },
 
-  createElement: function(name, attr) {
-  	var el = document.createElement(name);
-  	if (attr) {
-      Object.keys(attr).forEach(function(n){ el.setAttribute(n, attr[n])});
+  jsonToDOM: function(jsonTemplate, doc, nodes) {
+    jsonToDOM.namespaces = {
+    html: "http://www.w3.org/1999/xhtml",
+    xul: "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    };
+    jsonToDOM.defaultNamespace = jsonToDOM.namespaces.xul;
+    function jsonToDOM(jsonTemplate, doc, nodes) {
+      function namespace(name) {
+          var reElemNameParts = /^(?:(.*):)?(.*)$/.exec(name);
+          return { namespace: jsonToDOM.namespaces[reElemNameParts[1]], shortName: reElemNameParts[2] };
+      }
+
+      // Note that 'elemNameOrArray' is: either the full element name (eg. [html:]div) or an array of elements in JSON notation
+      function tag(elemNameOrArray, elemAttr) {
+        // Array of elements?  Parse each one...
+        if (Array.isArray(elemNameOrArray)) {
+          var frag = doc.createDocumentFragment();
+          Array.forEach(arguments, function(thisElem) {
+            frag.appendChild(tag.apply(null, thisElem));
+          });
+          return frag;
+        }
+
+        // Single element? Parse element namespace prefix (if none exists, default to defaultNamespace), and create element
+        var elemNs = namespace(elemNameOrArray);
+        var elem = doc.createElementNS(elemNs.namespace || jsonToDOM.defaultNamespace, elemNs.shortName);
+
+        // Set element's attributes and/or callback functions (eg. onclick)
+        for (var key in elemAttr) {
+          var val = elemAttr[key];
+          if (nodes && key == "key") {
+              nodes[val] = elem;
+              continue;
+          }
+
+          var attrNs = namespace(key);
+          if (typeof val == "function") {
+            // Special case for function attributes; don't just add them as 'on...' attributes, but as events, using addEventListener
+            elem.addEventListener(key.replace(/^on/, ""), val, false);
+          } else {
+            // Note that the default namespace for XML attributes is, and should be, blank (ie. they're not in any namespace)
+            elem.setAttributeNS(attrNs.namespace || "", attrNs.shortName, val);
+          }
+        }
+
+        // Create and append this element's children
+        var childElems = Array.slice(arguments, 2);
+        childElems.forEach(function(childElem) {
+          if (childElem != null) {
+            elem.appendChild(
+                childElem instanceof doc.defaultView.Node ? childElem :
+                    Array.isArray(childElem) ? tag.apply(null, childElem) :
+                        doc.createTextNode(childElem));
+          }
+        });
+        return elem;
+      }
+      return tag.apply(null, jsonTemplate);
     }
-  	return el;
+
+    return jsonToDOM(jsonTemplate, doc, nodes);
   },
 
   init: function() {
@@ -144,7 +199,6 @@ var SidebarModoki = {
       {
         list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANklEQVQ4jWP4TyFg+P///38GBgayMHUNwEdjdTrVDcDnTKJdgEsRSV5ACaBRF9DZBQObFygBAMeIxVdCQIJTAAAAAElFTkSuQmCC');
       }
-
      `;
 
     style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH);
@@ -171,9 +225,8 @@ var SidebarModoki = {
             class: "toolbarbutton-1 chromeclass-toolbar-additional",
             tooltiptext: "Sidebar Modoki",
             oncommand: "SidebarModoki.toggle();",
-            type: "checkbox",
+            type: "button",
             label: "Sidebar Modoki",
-            autoCheck: "false",
             removable: "true"
           };
           for (var p in props) {
@@ -185,39 +238,46 @@ var SidebarModoki = {
       });
     }catch(e){}
 
-    document.getElementById("mainCommandSet").appendChild(
-      this.createElement("command", { id: "cmd_SidebarModoki", oncommand: "SidebarModoki.toggle()" })
-    );
-    document.getElementById("mainKeyset").appendChild(
-      this.createElement("key", { id: "key_SidebarModoki", key: "s", modifiers: "accel,alt", command: "cmd_SidebarModoki" })
-    );
+    let template = ["command", {id: "cmd_SidebarModoki", oncommand: "SidebarModoki.toggle()"}];
+    document.getElementById("mainCommandSet").appendChild(this.jsonToDOM(template, document, {}));
 
+    template = ["key", {id: "key_SidebarModoki", key: "B", modifiers: "accel,alt", command: "cmd_SidebarModoki",}];
+    document.getElementById("mainKeyset").appendChild(this.jsonToDOM(template, document, {}));
+
+    template =
+      ["vbox", {id: "SM_toolbox", ordinal: "0"},
+        ["hbox", {id: "SM_header", align: "center"},
+          ["label", {}, "SidebarModoki"],
+          ["spacer", {flex: "1000"}],
+          ["toolbarbutton", {id: "SM_closeButton", class: "close-icon tabbable", tooltiptext: "Close SidebarModoki", oncommand: "SidebarModoki.close();"}]
+        ],
+        ["tabbox", {flex: "1"},
+          ["tabs", {id: "SM_tabs"},
+            ["tab", {id: "SM_tab0", label: this.TAB0_LABEL}],
+            ["tab", {id: "SM_tab1", label: this.TAB1_LABEL}],
+            ["tab", {id: "SM_tab2", label: this.TAB2_LABEL}]
+          ],
+          ["tabpanels", {id: "SM_tabpanels", flex: "1", style: "border: none;"},
+            ["tabpanel", {id: "SM_tab0-container", orient: "vertical", flex: "1"},
+              ["browser", {id: "SM_tab0-browser", flex: "1", autoscroll: "false", src: this.TAB0_SRC}]
+            ],
+            ["tabpanel", {id: "SM_tab1-container", orient: "vertical", flex: "1"},
+              ["browser", {id: "SM_tab1-browser", flex: "1", autoscroll: "false", src: this.TAB1_SRC}]
+            ],
+            ["tabpanel", {id: "SM_tab2-container", orient: "vertical", flex: "1"},
+              ["browser", {id: "SM_tab2-browser", flex: "1", autoscroll: "false", src: this.TAB2_SRC}]
+            ]
+          ]
+        ]
+      ];
     let sidebar = document.getElementById("sidebar-box");
-    let SM_toolbox = sidebar.parentNode.insertBefore(this.createElement("vbox", { id: "SM_toolbox", ordinal: "0"}), sidebar);
-    let SM_header = SM_toolbox.appendChild(this.createElement("hbox", { id: "SM_header", align: "center"}));
-    SM_header.appendChild(this.createElement("label", null)).textContent = "SidebarModoki";
-    SM_header.appendChild(this.createElement("spacer", { flex: "1000"}));
-    SM_header.appendChild(this.createElement("toolbarbutton", { id: "SM_closeButton",  class: "close-icon tabbable", tooltiptext: "Close SidebarModoki", oncommand: "SidebarModoki.close();"}));
+    sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
-    let tabbox = SM_toolbox.appendChild(this.createElement("tabbox", { flex: "1"}));
-    let SM_tabs = tabbox.appendChild(this.createElement("tabs", { id: "SM_tabs"}));
-    SM_tabs.appendChild(this.createElement("tab", { id: "SM_tab0",  label: this.TAB0_LABEL}));
-    SM_tabs.appendChild(this.createElement("tab", { id: "SM_tab1",  label: this.TAB1_LABEL}));
-    SM_tabs.appendChild(this.createElement("tab", { id: "SM_tab2",  label: this.TAB2_LABEL}));
-
-    let SM_tabpanels = tabbox.appendChild(this.createElement("tabpanels", { id: "SM_tabpanels", flex: "1", style: "border: none;"}));
-    let tabpanel = SM_tabpanels.appendChild(this.createElement("tabpanel", { id: "SM_tab0-container", flex: "1", orient: "vertical"}));
-    tabpanel.appendChild(this.createElement("browser", { id: "SM_tab0-browser", flex: "1", autoscroll: "false", src: this.TAB0_SRC}));
-
-    tabpanel = SM_tabpanels.appendChild(this.createElement("tabpanel", { id: "SM_tab1-container", flex: "1", orient: "vertical"}));
-    tabpanel.appendChild(this.createElement("browser", { id: "SM_tab1-browser", flex: "1", autoscroll: "false", src: this.TAB1_SRC}));
-
-    tabpanel = SM_tabpanels.appendChild(this.createElement("tabpanel", { id: "SM_tab2-container", flex: "1", orient: "vertical"}));
-    tabpanel.appendChild(this.createElement("browser", { id: "SM_tab2-browser", flex: "1", autoscroll: "false", src: this.TAB2_SRC}));
-
-
-    let SM_splitter = sidebar.parentNode.insertBefore(this.createElement("splitter", { id: "SM_splitter", ordinal: "0", state: "open", collapse: "before", resizebefore: "closest", resizeafter: "closest"}), sidebar);
-    SM_splitter.appendChild(this.createElement("grippy", null));
+    template =
+      ["splitter", {id: "SM_splitter", ordinal: "0", state: "open", collapse: "before", resizebefore: "closest", resizeafter: "closest"},
+        ["grippy", {}]
+      ];
+    sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
     setTimeout(function(){this.observe();}.bind(this), 0);
 
@@ -259,7 +319,7 @@ var SidebarModoki = {
     } else {
       this.close();
     }
-    document.getElementById("SM_tabs").setAttribute("onselect", "SidebarModoki.onSelect();");
+    document.getElementById("SM_tabs").addEventListener("focus", this, true);
     window.addEventListener("aftercustomization", this, false);
 
     // xxxx native sidebar changes ordinal when change position of the native sidebar and open/close
@@ -278,7 +338,7 @@ var SidebarModoki = {
                              {attribute: true, attributeFilter: ["ordinal"]});
   },
 
-  onSelect: function() {
+  onSelect: function(event) {
     let aIndex = document.getElementById("SM_tabpanels").selectedIndex;
     this.prefs.setIntPref(this.kSM_lastSelectedTabIndex, aIndex);
     width = this.getPref(this.kSM_lastSelectedTabWidth + aIndex, "int", this.SM_WIDTH);
@@ -295,8 +355,8 @@ var SidebarModoki = {
       document.getElementById("SM_tabs").selectedIndex = index;
       width = this.getPref(this.kSM_lastSelectedTabWidth + index, "int", this.SM_WIDTH);
       document.getElementById("SM_toolbox").width = width;
-     this.prefs.setBoolPref(this.kSM_Open, true)
-     addEventListener("resize", this, false);
+      this.prefs.setBoolPref(this.kSM_Open, true)
+      addEventListener("resize", this, false);
     } else {
       this.close();
     }
@@ -321,6 +381,9 @@ var SidebarModoki = {
 
   handleEvent: function(event) {
     switch(event.type) {
+      case 'focus':
+        this.onSelect(event);
+        break;
       case 'resize':
         this.onResize(event);
         break;
