@@ -5,6 +5,7 @@
 // @include        *
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/05/12 15:30 workaround restore session for all window
 // @version        2018/05/05 23:00 cleanup (fix ancestor click event)
 // @version        2018/05/04 22:00 Make link handling of locked tab more safer
 // @version        2018/05/04 21:00 xxxx for <a href = ""> something
@@ -199,9 +200,7 @@ patch: {
       };
 
       //起動時のタブ状態復元
-      Services.obs.addObserver(this, "sessionstore-restoring-on-startup");
-      Services.obs.addObserver(this, "sessionstore-initiating-manual-restore");
-
+      this.restoreAll();
       gBrowser.tabContainer.addEventListener('TabMove', tabLock.TabMove, false);
       gBrowser.tabContainer.addEventListener('SSTabRestoring', tabLock.restore,false);
       window.addEventListener('unload',function(){ tabLock.uninit();},false)
@@ -209,7 +208,6 @@ patch: {
 
     restoreAll: function() {
       var that = this;
-      that.restoreForTab(gBrowser.selectedTab);
       setTimeout(init, 2000, 0);
       function init(i){
         if(i < gBrowser.tabs.length){
@@ -222,16 +220,8 @@ patch: {
       }
     },
 
-    observe(aEngine, aTopic, aVerb) {
-      if (aTopic == "sessionstore-restoring-on-startup" ||
-          aTopic == "sessionstore-initiating-manual-restore") {
-        this.restoreAll();
-      }
-    },
-
     uninit: function(){
-      Services.obs.removeObserver(this, "sessionstore-restoring-on-startup");
-      Services.obs.removeObserver(this, "sessionstore-initiating-manual-restore");
+      window.removeEventListener('unload',function(){ tabLock.uninit();},false)
       gBrowser.tabContainer.removeEventListener('drop', this.onDrop, true);
       gBrowser.tabContainer.removeEventListener('TabMove', tabLock.TabMove, false);
       gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabLock.restore,false);

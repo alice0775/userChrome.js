@@ -7,6 +7,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  60
+// @version        2018/05/12 15:30 workaround restore session for all window
 // @version        2018/05/06 14:00 workaround for tab move
 // @version        2018/05/04 12:00 cleanup for 60
 // @version        2018/05/04 23:00 for 60
@@ -91,9 +92,7 @@ var tabProtect = {
     };
 
     //起動時のタブ状態復元
-    Services.obs.addObserver(this, "sessionstore-restoring-on-startup");
-    Services.obs.addObserver(this, "sessionstore-initiating-manual-restore");
-
+    this.restoreAll();
     gBrowser.tabContainer.addEventListener('TabMove', tabProtect.TabMove, false);
     gBrowser.tabContainer.addEventListener('SSTabRestoring', tabProtect.restore,false);
     window.addEventListener('unload',function(){ tabProtect.uninit();},false)
@@ -102,7 +101,6 @@ var tabProtect = {
 
   restoreAll: function() {
     var that = this;
-    that.restoreForTab(gBrowser.selectedTab);
     setTimeout(init, 2000, 0);
     function init(i){
       if(i < gBrowser.tabs.length){
@@ -115,16 +113,7 @@ var tabProtect = {
     }
   },
 
-  observe(aEngine, aTopic, aVerb) {
-    if (aTopic == "sessionstore-restoring-on-startup" ||
-        aTopic == "sessionstore-initiating-manual-restore") {
-      this.restoreAll();
-    }
-  },
-
   uninit: function(){
-    Services.obs.removeObserver(this, "sessionstore-restoring-on-startup");
-    Services.obs.removeObserver(this, "sessionstore-initiating-manual-restore");
     window.removeEventListener('unload',function(){ tabProtect.uninit();},false)
     gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabProtect.restore,false);
     gBrowser.tabContainer.removeEventListener('TabMove', tabProtect.TabMove, false);
