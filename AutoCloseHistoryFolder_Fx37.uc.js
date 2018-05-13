@@ -3,10 +3,12 @@
 // @namespace     http://www.sephiroth-j.de/mozilla/
 // @description   Autoclose History Folders
 // @include       chrome://browser/content/history/history-panel.xul
+// @include       chrome://browser/content/places/historySidebar.xul
 // @compatibility Firefox 3.7
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2018/08/13 61+
 // @version       2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version       2008/11/28 Firefox3.1b3pre tboの初期化に時間が掛かるようでsetTimeoutするようにした
 // @Note          http://space.geocities.yahoo.co.jp/gl/alice0775
@@ -192,7 +194,7 @@ var acHistoryFolder = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsIFile); break;
         case 'str':
           return xpPref.getCharPref(aPrefString).toString(); break;
         case 'int':

@@ -3,11 +3,12 @@
 // @namespace     http://www.sephiroth-j.de/mozilla/
 // @description   Autoclose BookMark Folders
 // @include       chrome://browser/content/bookmarks/bookmarksPanel.xul
+// @include       chrome://browser/content/places/bookmarksSidebar.xul
 // @compatibility Firefox 3.7
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
-// @version       2017/11/18 nsIPrefBranch2 to nsIPrefBranch
+// @version       2018/08/13 61+
 // @version       2012/12/07 //aEvent.preventDefault();
 // @Note          http://space.geocities.yahoo.co.jp/gl/alice0775
 // @Note          I got permission to open this script to the public from Mr.Sephiroth on July 28,2007.
@@ -48,7 +49,9 @@ var acBookMarkTreeFolder = {
     document.addEventListener('unload', this, false);
     this._BTree.addEventListener('click', this, false);
     //this._BTree.addEventListener('dragover',function(event){acBookMarkTreeFolder.onClick(event);},false);
-    document.getElementById("bookmarks-view-children").addEventListener("scroll", this, false);
+    (document.getElementById("bookmarks-view") ||
+     document.getElementById("bookmarks-view-children"))
+    .addEventListener("scroll", this, false);
     this.viewbox = this._BTree.boxObject;
 
     this.loadPrefs();
