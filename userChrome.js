@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.53mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.54mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2018/05/13 18:00 removed sidebar hack
 // Date 2018/05/06 22:00 fix wrong commit
 // Date 2018/05/06 22:00 remove workaround for editBookmarkPanel
 // Date 2018/03/21 08:00 revert USE_0_63_FOLDER
@@ -66,7 +67,6 @@
 (function(){
   "use strict";
   // -- config --
-  const EXPERIMENT = false; //実験:するtrue, しない[false]
   const EXCLUDE_CHROMEHIDDEN = false; //chromehiddenなwindow(popup等)ではロード: しないtrue, する[false]
   const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
@@ -122,22 +122,6 @@
     BROWSERCHROME: BROWSERCHROME,
     EXCLUDE_CHROMEHIDDEN: EXCLUDE_CHROMEHIDDEN,
     REPLACECACHE: REPLACECACHE,
-    EXPERIMENT: EXPERIMENT,
-    get hackVersion () {
-      delete this.hackVersion;
-      return this.hackVersion = "0.8";
-      //拡張のバージョン違いを吸収
-      this.baseUrl = /^(chrome:\/\/\S+\/content\/)\S+/i.test( Error().fileName).$1;
-      if (!/^(chrome:\/\/\S+\/content\/)\S+/i.test( Error().fileName) ){
-      } else if (Error().fileName.indexOf("chrome://uc_js/content/uc_js.xul") > -1 ||
-           "chrome://userchrome_js_cache/content/userChrome.js" == Error().fileName ){  //0.8.0+ or 0.7
-        return this.hackVersion = "0.8+";
-      } else if (Error().fileName.indexOf("chrome://browser/content/browser.xul -> ") == 0) {
-        return this.hackVersion = "0.8.1";
-      } else {
-        return this.hackVersion = "0.8mod";
-      }
-    },
 
     //スクリプトデータを作成
     getScripts: function(){
@@ -737,131 +721,8 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       document.documentElement.getAttribute("chromehidden") !="" )
     return;
 
-  if( that.getVer()<3 ){
-    setTimeout(function(doc){that.runScripts(doc);
-      setTimeout(function(doc){that.runOverlays(doc);},0, doc);
-    },0, doc);
-  }else{
-    if (!that.EXPERIMENT) {
-      setTimeout(function(doc){
-        that.runScripts(doc);
-        //面倒だからFirefox 3 の場合はeditBookmarkOverlay.xulを先読みしておく
-        var delay = 500;
-        /*
-        if (location.href === that.BROWSERCHROME &&
-            typeof StarUI != 'undefined' && typeof StarUI._bookmarkPopupInitialized != 'boolean' &&
-            !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
-          // xxxx bug 726440
-          StarUI._overlayLoading = true;
-          that.loadOverlay(
-            "chrome://browser/content/places/editBookmarkOverlay.xul",
-            (function (aSubject, aTopic, aData) {
-              //XXX We just caused localstore.rdf to be re-applied (bug 640158)
-              if ("retrieveToolbarIconsizesFromTheme" in window)
-                retrieveToolbarIconsizesFromTheme();
-
-              // Move the header (star, title, button) into the grid,
-              // so that it aligns nicely with the other items (bug 484022).
-              let header = this._element("editBookmarkPanelHeader");
-              let rows = this._element("editBookmarkPanelGrid").lastChild;
-              rows.insertBefore(header, rows.firstChild);
-              header.hidden = false;
-
-              this._overlayLoading = false;
-              this._overlayLoaded = true;
-              //this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
-            }).bind(StarUI)
-          );
-          delay = 0;
-        }
-        */
-        setTimeout(function(doc){that.runOverlays(doc);}, delay, doc);
-      },500, doc);
-    } else {
-      that.runScripts(doc);
-      /*
-      //面倒だからFirefox 3 の場合はeditBookmarkOverlay.xulを先読みしておく
-      if (location.href === that.BROWSERCHROME &&
-          typeof StarUI != 'undefined' &&
-          !(StarUI._overlayLoading || StarUI._overlayLoaded)) {
-        // xxxx bug 726440
-        StarUI._overlayLoading = true;
-        that.loadOverlay(
-          "chrome://browser/content/places/editBookmarkOverlay.xul",
-          (function (aSubject, aTopic, aData) {
-            //XXX We just caused localstore.rdf to be re-applied (bug 640158)
-            if ("retrieveToolbarIconsizesFromTheme" in window)
-              retrieveToolbarIconsizesFromTheme();
-
-            // Move the header (star, title, button) into the grid,
-            // so that it aligns nicely with the other items (bug 484022).
-            let header = this._element("editBookmarkPanelHeader");
-            let rows = this._element("editBookmarkPanelGrid").lastChild;
-            rows.insertBefore(header, rows.firstChild);
-            header.hidden = false;
-
-            this._overlayLoading = false;
-            this._overlayLoaded = true;
-            //this._doShowEditBookmarkPanel(aItemId, aAnchorElement, aPosition);
-          }).bind(StarUI)
-        );
-      }
-      */
-      that.runOverlays(doc);
-    }
-  }
-  //Sidebar for Trunc
-  if(location.href != that.BROWSERCHROME) return;
-  if(that.getVer()>2 ){
-    window.document.addEventListener("load",
-      function(event){
-        if (!event.originalTarget.location) return;
-        if(/^(about:(blank|newtab|home))/i.test(event.originalTarget.location.href)) return;
-        if( !/^(about:|chrome:)/.test(event.originalTarget.location.href) )return;
-        var doc = event.originalTarget;
-        var href = doc.location.href;
-        if (that.INFO) that.debug("load Sidebar " +  href);
-        setTimeout(function(doc){that.runScripts(doc);
-          setTimeout(function(doc){that.runOverlays(doc);}, 0, doc);
-        },0, doc);
-        if (href != "chrome://browser/content/web-panels.xul") return;
-        if (!window.document.getElementById("sidebar")) return;
-        var sidebarWindow = window.document.getElementById("sidebar").contentWindow;
-          if (sidebarWindow){
-            loadInWebpanel.init(sidebarWindow);
-          }
-      }
-    , true);
-  }
-  var loadInWebpanel = {
-    sidebarWindow: null,
-    init: function(sidebarWindow){
-      this.sidebarWindow = sidebarWindow;
-      this.sidebarWindow.document.getElementById("web-panels-browser").addEventListener("load", this, true);
-      this.sidebarWindow.addEventListener("unload", this, false);
-    },
-    handleEvent: function(event){
-      switch (event.type) {
-        case "unload":
-          this.uninit(event);
-          break;
-        case "load":
-          this.load(event);
-          break;
-      }
-    },
-    uninit: function(event){
-      this.sidebarWindow.document.getElementById("web-panels-browser").removeEventListener("load", this, true);
-      this.sidebarWindow.removeEventListener("unload", this, false);
-    },
-    load: function(event){
-      var doc = event.originalTarget;
-      var href = doc.location.href;
-        if( !/^chrome:/.test(href) )return;
-        if (that.INFO) that.debug("load Webpanel " +  href);
-        setTimeout(function(doc){that.runScripts(doc);
-          setTimeout(function(doc){that.runOverlays(doc);},0, doc);
-        },0, doc);
-    }
-  }
+  setTimeout(function(doc){
+    that.runScripts(doc);
+    setTimeout(function(doc){that.runOverlays(doc);}, 800, doc);
+  },500, doc);
 })();
