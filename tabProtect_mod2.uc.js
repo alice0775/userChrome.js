@@ -7,6 +7,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  60
+// @version        2018/05/23 00:00 Fixed typo(status is undeled when unprotect)
 // @version        2018/05/12 15:30 workaround restore session for all window
 // @version        2018/05/06 14:00 workaround for tab move
 // @version        2018/05/04 12:00 cleanup for 60
@@ -44,7 +45,7 @@ var tabProtect = {
         return this.ss.setTabValue(aTab, aKey, aValue);
 
     },
-    deleteTabValue : function(aTab, aKeye) {
+    deleteTabValue : function(aTab, aKey) {
       if (typeof SessionStore.deleteCustomTabValue == "function")
         return SessionStore.deleteCustomTabValue(aTab, aKey);
       else

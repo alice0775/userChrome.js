@@ -5,6 +5,7 @@
 // @include        *
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/05/23 00:00 Fixed typo(status is undeled when unlock)
 // @version        2018/05/12 15:30 workaround restore session for all window
 // @version        2018/05/05 23:00 cleanup (fix ancestor click event)
 // @version        2018/05/04 22:00 Make link handling of locked tab more safer
@@ -67,7 +68,7 @@ patch: {
           return this.ss.setTabValue(aTab, aKey, aValue);
 
       },
-      deleteTabValue : function(aTab, aKeye) {
+      deleteTabValue : function(aTab, aKey) {
         if (typeof SessionStore.deleteCustomTabValue == "function")
           return SessionStore.deleteCustomTabValue(aTab, aKey);
         else
