@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.54mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.55mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2018/05/30 18:00 ALWAYSEXECUTE  .uc.js
 // Date 2018/05/13 18:00 removed sidebar hack
 // Date 2018/05/06 22:00 fix wrong commit
 // Date 2018/05/06 22:00 remove workaround for editBookmarkPanel
@@ -76,7 +77,7 @@
   var UCJS      = new Array("UCJSFiles","userContent","userMenu"); //UCJS Loader 仕様を適用 (NoScriptでfile:///を許可しておく)
   var arrSubdir = new Array("", "xul","TabMixPlus","withTabMixPlus", "SubScript", "UCJSFiles", "userCrome.js.0.8","userContent","userMenu");    //スクリプトはこの順番で実行される
   //===================================================================
-  const ALWAYSEXECUTE   = 'rebuild_userChrome.uc.xul'; //常に実行するスクリプト
+  const ALWAYSEXECUTE   = ['rebuild_userChrome.uc.xul', 'rebuild_userChrome.uc.js']; //常に実行するスクリプト
   var INFO = true;
   var BROWSERCHROME = "chrome://browser/content/browser.xul"; //Firfox
   //var BROWSERCHROME = "chrome://navigator/content/navigator.xul"; //SeaMonkey:
@@ -506,7 +507,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       if( !this.EXPERIMENT && true ){ //← uc.jsでのloadOverlayに対応
         for(var m=0,len=this.overlays.length; m<len; m++){
           overlay = this.overlays[m];
-          if( overlay.filename != this.ALWAYSEXECUTE
+          if(this.ALWAYSEXECUTE.indexOf(overlay.filename) < 0
             && ( !!this.dirDisable['*']
                  || !!this.dirDisable[overlay.dir]
                  || !!this.scriptDisable[overlay.filename]) ) continue;
@@ -522,7 +523,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         var count =0;
         for(var m=0,len=this.overlays.length; m<len; m++){
           overlay = this.overlays[m];
-          if( overlay.filename != this.ALWAYSEXECUTE
+          if(this.ALWAYSEXECUTE.indexOf(overlay.filename) < 0
             && ( !!this.dirDisable['*']
                  || !!this.dirDisable[overlay.dir]
                  || !!this.scriptDisable[overlay.filename]) ) continue;
@@ -552,7 +553,6 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       }
       if (!(doc instanceof XULDocument))
           return;
-      if(!!this.dirDisable['*']) return;
 
       var script, aScript, url;
       const Cc = Components.classes;
@@ -580,8 +580,10 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
 
       for(var m=0,len=this.scripts.length; m<len; m++){
         script = this.scripts[m];
-      if(!!this.dirDisable[script.dir]) continue;
-      if(!!this.scriptDisable[script.filename]) continue;
+      if (this.ALWAYSEXECUTE.indexOf(script.filename) < 0
+        && (!!this.dirDisable['*']
+          || !!this.dirDisable[script.dir]
+          || !!this.scriptDisable[script.filename]) ) continue;
       if( !script.regex.test(dochref)) continue;
         if( script.ucjs ){ //for UCJS_loader
             if (this.INFO) this.debug("loadUCJSSubScript: " + script.filename);
