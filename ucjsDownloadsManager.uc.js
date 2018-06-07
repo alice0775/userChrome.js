@@ -4,8 +4,9 @@
 // @description    Donloads Manager
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
-// @compatibility  Firefox 57
+// @compatibility  Firefox 61
 // @author         Alice0775
+// @version        2018/06/07 12:00 fix file name for history
 // @version        2018/04/14 00:00 de XUL overlay
 // @version        2017/12/10 12:00 fix error when DO_NOT_DELETE_HISTORY = true
 // @version        2017/12/10 12:00 remove workaround Bug 1279329. Disable btn while clear list is doing
@@ -426,7 +427,11 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
           for (let element of richListBox.childNodes) {
             let download = element._shell.download;
             let aURI = makeURI(download.source.url);
-            let aTitle = document.getAnonymousElementByAttribute(element, "class", "downloadTarget").value
+            // let aTitle = document.getAnonymousElementByAttribute(element, "class", "downloadTarget").value
+            let aTitle = download.target.path;
+            aTitle = aTitle.match( /[^\\]+$/i )[0];
+            aTitle = aTitle.match( /[^/]+$/i )[0];
+
             let aVisitDate = download.endTime || download.startTime;
             addPlace(aURI, aTitle, aVisitDate)
           }
