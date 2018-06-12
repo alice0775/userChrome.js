@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 61
 // @author         Alice0775
+// @version        2018/06/12 21:00 fix for private window mode
 // @version        2018/06/07 12:00 fix file name for history
 // @version        2018/04/14 00:00 de XUL overlay
 // @version        2017/12/10 12:00 fix error when DO_NOT_DELETE_HISTORY = true
@@ -110,10 +111,13 @@ if (location.href == "chrome://browser/content/browser.xul") {
     },
 
     openDownloadManager: function ucjs_openDownloadManager(aForceFocus) {
+      Services.prefs.setBoolPref("browser.download.manager.showing", true);
       var enumerator = Services.wm.getEnumerator(null);
       while(enumerator.hasMoreElements()) {
         var win = enumerator.getNext();
-        if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xul") {
+        if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xul"
+          && PrivateBrowsingUtils.isWindowPrivate(window) ==
+             PrivateBrowsingUtils.isWindowPrivate(win)) {
           if (aForceFocus)
             win.focus();
           return;
@@ -132,7 +136,9 @@ if (location.href == "chrome://browser/content/browser.xul") {
         screenY = 0;
       }
       var win = window.open("chrome://browser/content/downloads/contentAreaDownloadsView.xul",
-                            "Download",
+                            "Download" +
+                              (PrivateBrowsingUtils.isWindowPrivate(window) ? " - Private Window"
+                                                                            : ""),
                             "outerWidth=" + width + ",outerHeight=" + height +
                             ",left=" + screenX + ",top=" + screenY +
                             ",chrome,toolbar=yes,dialog=no,resizable");
@@ -262,7 +268,9 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
          {attr: "oncommand", value: "ucjs_downloadManagerMain.doSearch(this.value);"}
         ]));
 
-      this.originalTitle = document.title;
+      this.originalTitle = document.title +
+                           (PrivateBrowsingUtils.isWindowPrivate(window) ? " - Private Window"
+                                                                         : "");
 
 /*
       // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
@@ -423,7 +431,8 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         });
       }
       function moveDownloads2History(d) {
-        if (DO_NOT_DELETE_HISTORY) {
+        if (DO_NOT_DELETE_HISTORY &&
+            !PrivateBrowsingUtils.isWindowPrivate(window)) {
           for (let element of richListBox.childNodes) {
             let download = element._shell.download;
             let aURI = makeURI(download.source.url);
@@ -440,7 +449,8 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         // Clear List
         richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
 
-        if (DO_NOT_DELETE_HISTORY) {
+        if (DO_NOT_DELETE_HISTORY &&
+            !PrivateBrowsingUtils.isWindowPrivate(window)) {
           if (places.length > 0) {
             var asyncHistory = Components.classes["@mozilla.org/browser/history;1"]
                      .getService(Components.interfaces.mozIAsyncHistory);

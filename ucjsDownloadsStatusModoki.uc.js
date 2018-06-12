@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/06/12 21:00 fix for private window mode
 // @version        2018/06/07 12:00 fix file name for history
 // @version        2018/02/10 12:00 try catch error when DO_NOT_DELETE_HISTORY = true
 // @version        2017/12/10 12:00 fix error when DO_NOT_DELETE_HISTORY = true
@@ -339,7 +340,8 @@ var ucjsDownloadsStatusModoki = {
         });
       }
       function moveDownloads2History() {
-        if (DO_NOT_DELETE_HISTORY) {
+        if (DO_NOT_DELETE_HISTORY &&
+            !PrivateBrowsingUtils.isWindowPrivate(window)) {
           try {
             for (let element of richListBox.childNodes) {
               let download = element._shell.download;
@@ -358,7 +360,8 @@ var ucjsDownloadsStatusModoki = {
         // Clear List
         richListBox._placesView.doCommand('downloadsCmd_clearDownloads');
 
-        if (DO_NOT_DELETE_HISTORY) {
+        if (DO_NOT_DELETE_HISTORY &&
+            !PrivateBrowsingUtils.isWindowPrivate(window)) {
           try {
             if (places.length > 0) {
               var asyncHistory = Components.classes["@mozilla.org/browser/history;1"]
