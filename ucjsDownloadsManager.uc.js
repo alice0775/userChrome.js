@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 61
 // @author         Alice0775
+// @version        2018/06/12 21:30 remove unused
 // @version        2018/06/12 21:00 fix for private window mode
 // @version        2018/06/07 12:00 fix file name for history
 // @version        2018/04/14 00:00 de XUL overlay
@@ -111,7 +112,6 @@ if (location.href == "chrome://browser/content/browser.xul") {
     },
 
     openDownloadManager: function ucjs_openDownloadManager(aForceFocus) {
-      Services.prefs.setBoolPref("browser.download.manager.showing", true);
       var enumerator = Services.wm.getEnumerator(null);
       while(enumerator.hasMoreElements()) {
         var win = enumerator.getNext();
