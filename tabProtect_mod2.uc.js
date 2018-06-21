@@ -7,6 +7,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  60
+// @version        2018/06/21 19:50 workaround regression
 // @version        2018/06/21 19:40 fix restore session if *.restore_on_demand is enabled
 // @version        2018/06/10 00:00 workaround restore session
 // @version        2018/05/23 00:00 Fixed typo(status is undeled when unprotect)
@@ -94,14 +95,12 @@ var tabProtect = {
     return document.documentElement.getAttribute(name);
     };
 
+    this.restoreAll(0);
     gBrowser.tabContainer.addEventListener('TabMove', tabProtect.TabMove, false);
     gBrowser.tabContainer.addEventListener('SSTabRestoring', tabProtect.restore,false);
     window.addEventListener('unload',function(){ tabProtect.uninit();},false)
 
   },
-
-  //起動時のタブ状態復元用
-  mustRestoreAll: 0,
 
   restoreAll: function(delay = 0) {
     var that = this;
@@ -144,16 +143,10 @@ var tabProtect = {
   },
 
   restore: function(event){
-    var aTab =  event.originalTarget;
-    tabProtect.restoreForTab(aTab);
+    tabProtect.restoreAll(0);
   },
 
   restoreForTab: function(aTab){
-    if (this.mustRestoreAll < 2) {
-      this.mustRestoreAll++;
-      this.restoreAll(0);
-      return;
-    }
     var retrievedData = this.sessionStore.getTabValue(aTab, "tabProtect") == "true";
     if(retrievedData){
       aTab.setAttribute('tabProtect',true);
