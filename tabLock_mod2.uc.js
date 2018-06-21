@@ -5,6 +5,8 @@
 // @include        *
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/06/21 19:40 fix restore session if *.restore_on_demand is enabled
+// @version        2018/06/10 00:00 workaround restore session
 // @version        2018/05/23 00:00 Fixed typo(status is undeled when unlock)
 // @version        2018/05/12 15:30 workaround restore session for all window
 // @version        2018/05/05 23:00 cleanup (fix ancestor click event)
@@ -75,7 +77,7 @@ patch: {
           return this.ss.deleteTabValue(aTab, aKey);
       }
     },
-  
+
     init: function(){
 
       //BrowserBack/Forward
@@ -183,8 +185,8 @@ patch: {
 
         var style = " \
         .tab-icon-lock{ \
-          margin-top: 6px; /*要調整*/  \
-          margin-left: 6px; /*要調整*/ \
+          margin-top: 0px; /*要調整*/  \
+          margin-left: 0px; /*要調整*/ \
           list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjElEQVQ4je3RsQ7CMAyE4S9pURl5/6csGxKJw1AKFBARK+IkD3Fyv86OQouHOhNBqzQcdJSPzCKIEMgkKFTMXcDmMI6LGzuGnvkFoBRQiWtn/x1g5dwBpx4gnalDxAZUcm4jad3HxwTpzaNxmtZef4RMkrNbDQPTtN53AanSniM0S6y8/ES82v76MV0AlREpDobXTpUAAAAASUVORK5CYII='); \
         } \
         .tab-icon-lock[hidden='true'] { \
@@ -200,16 +202,17 @@ patch: {
       return document.documentElement.getAttribute(name);
       };
 
-      //起動時のタブ状態復元
-      this.restoreAll();
       gBrowser.tabContainer.addEventListener('TabMove', tabLock.TabMove, false);
       gBrowser.tabContainer.addEventListener('SSTabRestoring', tabLock.restore,false);
       window.addEventListener('unload',function(){ tabLock.uninit();},false)
     },
 
-    restoreAll: function() {
+    //起動時のタブ状態復元用
+    mustRestoreAll: 0,
+
+    restoreAll: function(delay = 0) {
       var that = this;
-      setTimeout(init, 2000, 0);
+      setTimeout(init, delay, 0);
       function init(i){
         if(i < gBrowser.tabs.length){
           var aTab = gBrowser.tabs[i];
@@ -336,6 +339,11 @@ patch: {
     },
 
     restoreForTab: function(aTab){
+      if (this.mustRestoreAll < 2) {
+        this.mustRestoreAll++;
+        this.restoreAll(0);
+        return;
+      }
       var retrievedData = this.sessionStore.getTabValue(aTab, "tabLock") == "true";
       if(retrievedData)
         aTab.setAttribute('tabLock',true);
