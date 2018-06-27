@@ -3,11 +3,12 @@
 // @description    サイドバーの自動開閉
 // @namespace      http://forums.mozillazine.org/viewtopic.php?p=2592073#2592073
 // @include        chrome://browser/content/browser.xul
-// @compatibility  Firefox 58
+// @compatibility  Firefox 58 61
 // @author         Alice0775
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2018/06/25 Fx61 wip
 // @version        2018/01/25 Fx58 wip
 // @version        2017/11/18 Fx57
 // @version        2017/11/18 nsIPrefBranch2 to nsIPrefBranch
@@ -372,8 +373,8 @@ var ucjs_expand_sidebar = {
       window.addEventListener("resize", this, false);
 
     if (this._SIDEBARPOSITION == "R"){
-      gBrowser.mPanelContainer.addEventListener("mouseup", this, true);
-      gBrowser.mPanelContainer.addEventListener("mousedown", this, true);
+      (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mouseup", this, true);
+      (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousedown", this, true);
     }
 
     //this._content.addEventListener("mouseover", ucjs_expand_sidebar._mousemove, true);
@@ -396,8 +397,8 @@ var ucjs_expand_sidebar = {
       window.removeEventListener("resize", this, false);
 
     if (this._SIDEBARPOSITION == "R"){
-      gBrowser.mPanelContainer.removeEventListener("mouseup", this, true);
-      gBrowser.mPanelContainer.removeEventListener("mousedown", this, true);
+      (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mouseup", this, true);
+      (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mousedown", this, true);
     }
 
     //this._content.removeEventListener("mouseover", ucjs_expand_sidebar._mousemove, true);
@@ -739,8 +740,8 @@ var ucjs_expand_sidebar = {
     }
 */
     //コンテンツエリアの上下範囲外かどうか
-    var y = event.screenY - gBrowser.mPanelContainer.boxObject.screenY;
-    if(y < 0 || y > gBrowser.mPanelContainer.boxObject.height){
+    var y = event.screenY - (gBrowser.mPanelContainer || gBrowser.tabpanels).boxObject.screenY;
+    if(y < 0 || y > (gBrowser.mPanelContainer || gBrowser.tabpanels).boxObject.height){
       this._clearOpenCloseTimer();
       return
     }
@@ -806,7 +807,7 @@ var ucjs_expand_sidebar = {
       return false;
     if (/^(splitter|grippy|menu|panel|notification)/.test(aEvent.target.localName))
       return true;
-    var box = gBrowser.mPanelContainer.boxObject;
+    var box = (gBrowser.mPanelContainer || gBrowser.tabpanels).boxObject;
     var bx = box.screenX;
     var by = box.screenY;
     if (bx <= x && x <= bx + box.width &&
@@ -843,7 +844,7 @@ var ucjs_expand_sidebar = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsIFile, aValue); break;
         case 'str':
           return xpPref.setCharPref(aPrefString, aValue); break;
         case 'int':
