@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
 // @compatibility  Firefox 61
 // @author         Alice0775
+// @version        2018/07/01 16:30 revert Disable btn
 // @version        2018/06/12 21:30 remove unused
 // @version        2018/06/12 21:00 fix for private window mode
 // @version        2018/06/07 12:00 fix file name for history
@@ -459,9 +460,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         }
       }
       var btn = document.getElementById("ucjs_clearListButton");
-      btn.setAttribute("disabled", true);
       moveDownloads2History(0);
-      btn.removeAttribute("disabled");
     },
 
     doSearch: function ucjs_doSearch(filterString) {
