@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2018/07/03 Fx61 remove loadoverlay
 // @version        2018/06/25 Fx61 wip
 // @version        2018/01/25 Fx58 wip
 // @version        2017/11/18 Fx57
@@ -83,6 +84,69 @@ var ucjs_expand_sidebar = {
   sizes:[],
   prefKeepItSizes: "userChrome.expandSidebar.keepItSizes",
 
+  jsonToDOM: function(jsonTemplate, doc, nodes) {
+    jsonToDOM.namespaces = {
+    html: "http://www.w3.org/1999/xhtml",
+    xul: "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+    };
+    jsonToDOM.defaultNamespace = jsonToDOM.namespaces.xul;
+    function jsonToDOM(jsonTemplate, doc, nodes) {
+      function namespace(name) {
+          var reElemNameParts = /^(?:(.*):)?(.*)$/.exec(name);
+          return { namespace: jsonToDOM.namespaces[reElemNameParts[1]], shortName: reElemNameParts[2] };
+      }
+
+      // Note that 'elemNameOrArray' is: either the full element name (eg. [html:]div) or an array of elements in JSON notation
+      function tag(elemNameOrArray, elemAttr) {
+        // Array of elements?  Parse each one...
+        if (Array.isArray(elemNameOrArray)) {
+          var frag = doc.createDocumentFragment();
+          Array.forEach(arguments, function(thisElem) {
+            frag.appendChild(tag.apply(null, thisElem));
+          });
+          return frag;
+        }
+
+        // Single element? Parse element namespace prefix (if none exists, default to defaultNamespace), and create element
+        var elemNs = namespace(elemNameOrArray);
+        var elem = doc.createElementNS(elemNs.namespace || jsonToDOM.defaultNamespace, elemNs.shortName);
+
+        // Set element's attributes and/or callback functions (eg. onclick)
+        for (var key in elemAttr) {
+          var val = elemAttr[key];
+          if (nodes && key == "key") {
+              nodes[val] = elem;
+              continue;
+          }
+
+          var attrNs = namespace(key);
+          if (typeof val == "function") {
+            // Special case for function attributes; don't just add them as 'on...' attributes, but as events, using addEventListener
+            elem.addEventListener(key.replace(/^on/, ""), val, false);
+          } else {
+            // Note that the default namespace for XML attributes is, and should be, blank (ie. they're not in any namespace)
+            elem.setAttributeNS(attrNs.namespace || "", attrNs.shortName, val);
+          }
+        }
+
+        // Create and append this element's children
+        var childElems = Array.slice(arguments, 2);
+        childElems.forEach(function(childElem) {
+          if (childElem != null) {
+            elem.appendChild(
+                childElem instanceof doc.defaultView.Node ? childElem :
+                    Array.isArray(childElem) ? tag.apply(null, childElem) :
+                        doc.createTextNode(childElem));
+          }
+        });
+        return elem;
+      }
+      return tag.apply(null, jsonTemplate);
+    }
+
+    return jsonToDOM(jsonTemplate, doc, nodes);
+  },
+
   init: function(){
     if ("EzSidebarService" in window)
       return;
@@ -143,7 +207,7 @@ var ucjs_expand_sidebar = {
         #sidebar-box #sidebar \
         { \
         position: fixed ; \
-        height: calc(100vh - 180px); \
+        height: calc(100vh - 210px); \
         border-left:3px solid -moz-dialog; \
         border-right:3px solid -moz-dialog; \
         border-bottom:3px solid -moz-dialog; \
@@ -193,23 +257,16 @@ var ucjs_expand_sidebar = {
       sspi.getAttribute = function(name) {
       return document.documentElement.getAttribute(name);
       };
-
-      var overlay = ' \
-        <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
-                 xmlns:html="http://www.w3.org/1999/xhtml"> \
-          <vbox id="sidebar-box"> \
-            <hbox id="sidebarpopuppanel-bottom"> \
-              <spacer flex="1"/> \
-              <image class="PopupResizerGripper" \
-                   onmousedown="if (event.target == this) sidebarpopuppanelResize.start(event);"/> \
-            </hbox> \
-          </vbox> \
-        </overlay>';
-      overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-      window.userChrome_js.loadOverlay(overlay, this);
+      let template = 
+        ["hbox", {id: "sidebarpopuppanel-bottom"},
+          ["spacer", {flex: "1"}],
+          ["image", {class: "PopupResizerGripper",
+             onmousedown: "if (event.target == this) sidebarpopuppanelResize.start(event);"}]
+        ];
+      document.getElementById('sidebar-box')
+              .appendChild(this.jsonToDOM(template, document, {}));
+      this.observe();
     }
-
-
 
     if (this._sidebar_box.hasAttribute('hidden') ||
         this._CLOSE_AT_STARTUP) {
