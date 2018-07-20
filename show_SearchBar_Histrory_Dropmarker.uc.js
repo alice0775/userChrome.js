@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 58
+// @version        2018-07-21 add button style open state
 // @version        1.0
 // @original       https://u6.getuploader.com/script/download/1670
 // ==/UserScript==
@@ -18,32 +19,21 @@ var showSearchBarHistroryDropmarker = {
     btn.setAttribute("class", "searchBar-history-dropmarker chromeclass-toolbar-additional");
     btn.setAttribute("tooltiptext", "Show history");
     btn.setAttribute("inherits", "open,parentfocused=focused,usertyping");
-    btn.setAttribute("onclick", "this.showHistory();");
     btn.setAttribute("ordinal", "99");
     btn.setAttribute("type", "checkbox");
     btn.setAttribute("autoCheck", "false");
     let ref = bar._textbox;
-    ref.appendChild(btn);
-    btn.showHistory = function() {
-      if (this.hasAttribute("checked")) {
-        this.removeAttribute("checked");
-        return;
-      }
-      this.setAttribute("checked", true);
-    	let v = '';
-    	let bar = document.getElementById("searchbar");
-  		if(bar._textbox.value)
-  		  v = bar._textbox.value;
-  		bar._textbox.value = '';
-  		bar._textbox.showHistoryPopup();
-  		bar._textbox.value = v;
-  	}
+    this.btn = ref.appendChild(btn);
+    btn.addEventListener("mousedown", this, true);
   },
 
   init: function() {
     window.addEventListener("unload", this, false);
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
+    this.popup = document.getElementById("PopupSearchAutoComplete");
+    this.popup.addEventListener("popupshown", this, false);
+    this.popup.addEventListener("popuphidden", this, false);
     
     this.init2();
     let style = `
@@ -52,9 +42,12 @@ var showSearchBarHistroryDropmarker = {
         list-style-image: url(chrome://global/skin/icons/arrow-dropdown-16.svg);
         opacity: 0.6;
       }
-      .searchBar-history-dropmarker:hover,
-      .searchBar-history-dropmarker:hover:active{
-        background-color: hsla(0,0%,80%,.8);
+      .searchBar-history-dropmarker:active,
+      .searchBar-history-dropmarker[checked] {
+        background-color: var(--toolbarbutton-active-background);
+      }
+      .searchBar-history-dropmarker:hover {
+        background-color: var(--toolbarbutton-hover-background);
       }
       toolbar[brighttext] .searchBar-history-dropmarker {
         -moz-context-properties: fill, fill-opacity;
@@ -78,6 +71,29 @@ var showSearchBarHistroryDropmarker = {
     window.removeEventListener('aftercustomization', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
   },
+
+  showHistory: function(event) {
+    event.stopPropagation();
+    if (event.target.hasAttribute("checked")) {
+      this.popup.closePopup();
+      return;
+    }
+  	let v = '';
+  	let bar = document.getElementById("searchbar");
+		if(bar._textbox.value)
+		  v = bar._textbox.value;
+		bar._textbox.value = '';
+		bar._textbox.showHistoryPopup();
+		bar._textbox.value = v;
+	},
+
+  popupshown: function(event) {
+    this.btn.setAttribute("checked", true);
+  },
+
+  popuphidden: function(event) {
+    this.btn.removeAttribute("checked");
+  },
   
   observe(aSubject, aTopic, aPrefstring) {
       if (aTopic == 'nsPref:changed') {
@@ -90,6 +106,16 @@ var showSearchBarHistroryDropmarker = {
     switch(event.type) {
       case "aftercustomization":
         this.init2();
+        break;
+      case "mousedown":
+        this.showHistory(event);
+        break;
+        
+      case "popupshown":
+        this.popupshown(event);
+        break;
+      case "popuphidden":
+        this.popuphidden(event);
         break;
       case "unload":
         this.uninit();
