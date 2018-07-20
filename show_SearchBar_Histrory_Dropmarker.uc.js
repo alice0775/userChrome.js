@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 58
+// @version        2018-07-21 add button toggle popup when click
 // @version        2018-07-21 add button style open state
 // @version        1.0
 // @original       https://u6.getuploader.com/script/download/1670
@@ -24,7 +25,7 @@ var showSearchBarHistroryDropmarker = {
     btn.setAttribute("autoCheck", "false");
     let ref = bar._textbox;
     this.btn = ref.appendChild(btn);
-    btn.addEventListener("mousedown", this, true);
+    btn.addEventListener("mousedown", this, false);
   },
 
   init: function() {
@@ -74,12 +75,12 @@ var showSearchBarHistroryDropmarker = {
 
   showHistory: function(event) {
     event.stopPropagation();
+  	let bar = document.getElementById("searchbar");
     if (event.target.hasAttribute("checked")) {
-      this.popup.closePopup();
+      bar._textbox.closePopup();
       return;
     }
   	let v = '';
-  	let bar = document.getElementById("searchbar");
 		if(bar._textbox.value)
 		  v = bar._textbox.value;
 		bar._textbox.value = '';
@@ -92,7 +93,7 @@ var showSearchBarHistroryDropmarker = {
   },
 
   popuphidden: function(event) {
-    this.btn.removeAttribute("checked");
+    setTimeout(function(){this.btn.removeAttribute("checked");}.bind(this), 0);
   },
   
   observe(aSubject, aTopic, aPrefstring) {
