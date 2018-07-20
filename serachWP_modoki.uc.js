@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/07*20 23:00 Fix change option > search
 // @version        2018/04/14 21:45 workaround for SearchEngineWheelScroll.uc.js()
 // @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
 // @version        2018/04/13 17:00 initial wip
@@ -47,23 +48,41 @@ var serachWP_modoki = {
   _prevHighLitedTerm: "",
 
   init: function() {
+    window.addEventListener('aftercustomization', this, false);
+    Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     window.addEventListener("unload", this, false);
-    setTimeout((function(){
-      this._textbox.addEventListener("DOMMouseScroll", this, true);
-      this._textbox.addEventListener("click", this, false);
-      this._textbox.addEventListener("blur", this, false);
-    }).bind(this), 1000)
+    this.patch();
   },
 
   uninit: function() {
+    window.removeEventListener('aftercustomization', this, false);
+    Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
     window.removeEventListener("unload", this, false);
     this._textbox.removeEventListener("DOMMouseScroll", this, true);
     this._textbox.removeEventListener("click", this, false);
     this._textbox.removeEventListener("blur", this, false);
   },
 
+  patch: function() {
+    setTimeout((function(){
+      this._textbox.addEventListener("DOMMouseScroll", this, true);
+      this._textbox.addEventListener("click", this, false);
+      this._textbox.addEventListener("blur", this, false);
+    }).bind(this), 1000)
+  },
+  
+  observe(aSubject, aTopic, aPrefstring) {
+      if (aTopic == 'nsPref:changed') {
+        // 設定が変更された時の処理
+        setTimeout(function(){serachWP_modoki.patch();}, 0);
+      }
+  },
+
   handleEvent: function(event) {
     switch(event.type) {
+      case "aftercustomization":
+        this.patch();
+        break;
       case "DOMMouseScroll":
         this.onDOMMouseScroll(event);
         break;
