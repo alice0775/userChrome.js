@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/07/21 20:00 change to click outside searchber to unhighlightall
 // @version        2018/07*20 23:00 Fix change option > search
 // @version        2018/04/14 21:45 workaround for SearchEngineWheelScroll.uc.js()
 // @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
@@ -50,6 +51,7 @@ var serachWP_modoki = {
   init: function() {
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
+    window.addEventListener("click", this, true);
     window.addEventListener("unload", this, false);
     this.patch();
   },
@@ -59,14 +61,13 @@ var serachWP_modoki = {
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
     window.removeEventListener("unload", this, false);
     this._textbox.removeEventListener("DOMMouseScroll", this, true);
-    this._textbox.removeEventListener("click", this, false);
+    window.removeEventListener("click", this, true);
     this._textbox.removeEventListener("blur", this, false);
   },
 
   patch: function() {
     setTimeout((function(){
       this._textbox.addEventListener("DOMMouseScroll", this, true);
-      this._textbox.addEventListener("click", this, false);
       this._textbox.addEventListener("blur", this, false);
     }).bind(this), 1000)
   },
@@ -79,14 +80,41 @@ var serachWP_modoki = {
   },
 
   handleEvent: function(event) {
+    let target;
     switch(event.type) {
       case "aftercustomization":
         this.patch();
         break;
       case "DOMMouseScroll":
+        var textbox = event.originalTarget.parentNode;
+        if (document.commandDispatcher.focusedElement != textbox) {
+          var a = textbox.selectionStart;
+          var b = textbox.selectionEnd;
+          if (a != b) {
+            textbox.selectionStart = a;
+            textbox.selectionEnd = b;
+          }
+        }
         this.onDOMMouseScroll(event);
         break;
       case "click":
+        target = event.originalTarget;
+        while(target) {
+          if (target == this._textbox)
+            break;
+          if (target.localName == "tab")
+            return;
+          if (target.id == "alltabs-button"
+           || target.id == "sidebar-button"
+           || target.id == "SM_Button"
+           || target.classList && target.classList.contains("all-tabs-button"))
+            return;
+          target = target.parentNode;
+        }
+        if (!target) {
+          this.clearHighlight(event);
+          return;
+        }
         if (event.button == 1)
           this.toggleHighlight(event);
         if (event.button == 0 || event.button == 2)
@@ -111,7 +139,6 @@ var serachWP_modoki = {
     var offset = event.rangeOffset;
     var a = textbox.selectionStart;
     var b = textbox.selectionEnd;
-//userChrome_js.debug(textbox.value.length+" "+offset+" "+a+" "+b);
     if (offset < a || b <= offset) {
       // gSearchWP
       var match = ucjs_Tokenizer.getByOffset( textbox.value, offset );
@@ -134,21 +161,14 @@ var serachWP_modoki = {
   toggleHighlight: function(event) {
     let finder = this.finder;
     let term = this._getTokenOnMousePosition(event);
-    if (this._prevHighLitedTerm == term) {
-      this._highlightAll = !this._highlightAll;
-    } else {
-      this._highlightAll = true;
-    }
-    finder.onHighlightAllChange(this._highlightAll);
-    finder.highlight(this._highlightAll, term, false);
-    this._prevHighLitedTerm = term;
-    //finder.findAgain(false, false, false);
+    this._highlightAll = this.AUTOHIGHLIGHT = !this.AUTOHIGHLIGHT;
+    finder.onHighlightAllChange(this.AUTOHIGHLIGHT);
+    finder.highlight(this.AUTOHIGHLIGHT, term, false);
   },
 
   clearHighlight: function(event) {
     let finder = this.finder;
-    this._highlightAll = false;
-    finder.onHighlightAllChange(this._highlightAll);
+    finder.onHighlightAllChange(false);
   },
 
 
@@ -156,19 +176,14 @@ var serachWP_modoki = {
     let finder = this.finder;
     finder.caseSensitive = aMatchCase;
 
-    var result = Components.interfaces.nsITypeAheadFind.FIND_NOTFOUND;
     if (finder.searchString != aWord) {
       result = finder.fastFind(aWord,);
-      //result = fastFind.find(aWord, false);
     }
     else {
-      result = finder.findAgain(aFindBackwards, false);
+      result = finder.findAgain(aFindBackwards, false, false);
     }
-    if (this.AUTOHIGHLIGHT && aWord != this._prevHighLitedTerm) {
-      this._highlightAll = true;
-      finder.onHighlightAllChange(this._highlightAll);
-      finder.highlight(this._highlightAll, aWord, false);
-      this._prevHighLitedTerm = aWord;
+    if (this.AUTOHIGHLIGHT) {
+      finder.highlight(true, aWord, false);
     }
     // a
     if(typeof ucjsFind != 'undefined') ucjsFind._dispSelectionCenter(result);
