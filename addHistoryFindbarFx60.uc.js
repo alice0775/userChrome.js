@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/07/21 01:40 fix tab order
+// @version        2018/07/21 01:30 fix find selection word
 // @version        2018/07/21 01:10 fix clear formhistory
 // @version        2018/07/20 00:30
 // ==/UserScript==
@@ -222,6 +224,7 @@ const addHistoryFindbar = {
       case 'focus':
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
+        textbox2. value = gFindBar._findField.value;
         textbox2.focus();
         // xxx do not hide findbar when FAYT is starting
         gFindBar.removeAttribute('hidden');
@@ -281,6 +284,7 @@ const addHistoryFindbar = {
         }
        break;
       case "command":
+      console.log("command", event.originalTarget);
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
         if (event.originalTarget == document.getElementById("cmd_find")){
@@ -418,11 +422,12 @@ const addHistoryFindbar = {
         gFindBar._findMode == gFindBar.FIND_NORMAL) {
       aEvent.preventDefault();
       if (aEvent.shiftKey) {
+        gBrowser.selectedBrowser.focus();
       } else {
-        if (document.getAnonymousElementByAttribute(gFindBar, "anonid", "find-next").disabled)
+        if (document.getAnonymousElementByAttribute(gFindBar, "anonid", "find-previous").disabled)
           document.getAnonymousElementByAttribute(gFindBar, "anonid", "find-case-sensitive").focus();
         else
-          document.getAnonymousElementByAttribute(gFindBar, "anonid", "find-next").focus();
+          document.getAnonymousElementByAttribute(gFindBar, "anonid", "find-previous").focus();
       }
     } else if (shouldHandle &&
         gFindBar._findMode != gFindBar.FIND_NORMAL) {
