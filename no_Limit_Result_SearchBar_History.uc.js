@@ -3,6 +3,7 @@
 // @description  履歴表示件数を上限なしにする
 // @charset      UTF-8
 // @include      main
+// @version      2018-07-21 fix at startup
 // @version      2018-07-20
 // ==/UserScript==
 const no_Limit_Result_SearchBar_History = {
@@ -10,6 +11,7 @@ const no_Limit_Result_SearchBar_History = {
     window.addEventListener('unload', this, false);
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
+    this.patch();
   },
 
   uninit: function() {
