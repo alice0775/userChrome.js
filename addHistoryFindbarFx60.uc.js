@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/07/21 01:10 fix clear formhistory
 // @version        2018/07/20 00:30
 // ==/UserScript==
 const addHistoryFindbar = {
@@ -104,7 +105,6 @@ const addHistoryFindbar = {
   },
 
   initFindBar: function() {
-    console.log(!/pending/.test(gBrowser.getFindBar.toString()));
     if (!/pending/.test(gBrowser.getFindBar.toString())) {
       //Fx60
       gFindBar = gBrowser.getFindBar();
@@ -387,14 +387,15 @@ const addHistoryFindbar = {
       if (PrivateBrowsingUtils.isWindowPrivate(window))
         return;
     } catch(ex) {}
-      let textbox2 = document.getAnonymousElementByAttribute(textbox,
-                        "anonid", "findbar-history-textbox");
-      textbox2.FormHistory.update(
-        { op: "remove",
-          fieldname: "findbar-history"},
-        { handleError(aError) {
-            Cu.reportError("Saving search to form history failed: " + aError.message);
-        }});
+    let textbox = gFindBar._findField;
+    let textbox2 = document.getAnonymousElementByAttribute(textbox,
+                      "anonid", "findbar-history-textbox");
+    textbox2.FormHistory.update(
+      { op: "remove",
+        fieldname: "findbar-history"},
+      { handleError(aError) {
+          Cu.reportError("Saving search to form history failed: " + aError.message);
+      }});
   },
 
   showHistory: function(event) {
