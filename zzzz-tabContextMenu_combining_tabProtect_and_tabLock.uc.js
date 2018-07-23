@@ -17,8 +17,8 @@ const tabLockProtect = {
       tabContext.insertBefore(menuitem, document.getElementById("tabLock"));
 
       // hide individual menu
-      document.getElementById("tabLock").style.setProperty("visibility", "collapse", "important");
-      document.getElementById("tabProtect").style.setProperty("visibility", "collapse", "important");
+      document.getElementById("tabLock").style.setProperty("display", "none", "important");
+      document.getElementById("tabProtect").style.setProperty("display", "none", "important");
     }
   },
 
