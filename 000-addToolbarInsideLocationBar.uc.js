@@ -76,7 +76,7 @@ var addToolbarInsideLocationBar = {
         width: 18px;
       }
 
-      // xxx stop-reload button hack default theme
+      /* xxx stop-reload button hack default theme*/
       #ucjs-Locationbar-toolbar:not(:-moz-lwtheme) #stop-reload-button > #reload-button > .toolbarbutton-icon,
       #ucjs-Locationbar-toolbar:not(:-moz-lwtheme) #stop-reload-button > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
       {
@@ -87,7 +87,7 @@ var addToolbarInsideLocationBar = {
       {
         fill: rgb(0, 0, 0);
       }
-      // xxx stop-reload button hack lightweight theme (bright theme)
+      /* xxx stop-reload button hack lightweight theme (bright theme)*/
       #ucjs-Locationbar-toolbar:-moz-lwtheme-darktext #stop-reload-button > #reload-button > .toolbarbutton-icon,
       #ucjs-Locationbar-toolbar:-moz-lwtheme-darktext #stop-reload-button > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
       {
@@ -98,7 +98,7 @@ var addToolbarInsideLocationBar = {
       {
         fill: rgb(0, 0, 0);
       }
-      // xxx stop-reload button hack lightweight theme (dark theme)
+      /* xxx stop-reload button hack lightweight theme (dark theme)*/
       #ucjs-Locationbar-toolbar:-moz-lwtheme-brighttext #stop-reload-button > #reload-button > .toolbarbutton-icon,
       #ucjs-Locationbar-toolbar:-moz-lwtheme-brighttext #stop-reload-button > #reload-button[displaystop] + #stop-button > .toolbarbutton-icon 
       {
@@ -167,7 +167,7 @@ var addToolbarInsideLocationBar = {
     };
     //
     window.addEventListener("beforecustomization", this, true);
-    BookmarkingUI._updateCustomizationState();
+    //BookmarkingUI._updateCustomizationState();
   },
 
   getInsertPoint: function() {

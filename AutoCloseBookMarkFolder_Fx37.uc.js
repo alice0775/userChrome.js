@@ -221,7 +221,7 @@ var acBookMarkTreeFolder = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsIFile); break;
         case 'str':
           return xpPref.getCharPref(aPrefString).toString(); break;
         case 'int':
@@ -241,7 +241,7 @@ var acBookMarkTreeFolder = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsIFile, aValue); break;
         case 'str':
           return xpPref.setCharPref(aPrefString, aValue); break;
         case 'int':

@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/07/30 21:30 fix drop selected text
 // @version        2018/07/21 01:40 fix tab order
 // @version        2018/07/21 01:30 fix find selection word
 // @version        2018/07/21 01:10 fix clear formhistory
@@ -102,6 +103,7 @@ const addHistoryFindbar = {
     gBrowser.tabContainer.addEventListener('TabClose', this, false);
 
     //cmd_findの監視して, 逆転送する
+		document.addEventListener('drop', this, true);
     window.addEventListener("keypress", this, true);
     window.addEventListener("command", this, false);
   },
@@ -119,7 +121,7 @@ const addHistoryFindbar = {
           (ChromeUtils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
 
         gFindBar._findField.addEventListener("focus", this, false);
-        gFindBar._findField.addEventListener("input", this, false); 
+        gFindBar._findField.addEventListener("input", this, false);
       }
     } else {
       //Fx61
@@ -177,8 +179,7 @@ const addHistoryFindbar = {
     btn.addEventListener("mousedown", this, false);
 
     //文字列ドラッグドロップの時保存する
-    textbox2.addEventListener("drop", this, true);
-    textbox2.addEventListener("change", this, true);    
+    textbox2.addEventListener("change", this, true);
 
     // コンテキストメニュー
     let inputbox = document.getAnonymousElementByAttribute( textbox2, "anonid", "textbox-input-box")
@@ -203,12 +204,15 @@ const addHistoryFindbar = {
     gBrowser.tabContainer.removeEventListener('TabSelect', this, false);
     gBrowser.tabContainer.removeEventListener('TabOpen', this, false);
     gBrowser.tabContainer.removeEventListener('TabClose', this, false);
+		document.removeEventListener('drop', this, true);
     window.removeEventListener("keypress", this, true);
     window.removeEventListener("command", this, false);
   },
 
   handleEvent: function(event){
+    //console.log("event ", event.type);
     let textbox2;
+
     switch (event.type) {
       case 'unload':
         this.uninit();
@@ -217,11 +221,25 @@ const addHistoryFindbar = {
         this.initFindBar();
         break;
       case 'TabClose':
+        if (typeof gFindBar == "undefined")
+          break;
         let btn = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "historydropmarker");
         btn.removeEventListener("mousedown", this, false);
         break;
+      case 'drop': //fx3.1 more
+        if (typeof gFindBar == "undefined")
+          break;
+        if(event.target != gFindBar)
+	    	  return;
+        event.stopPropagation();
+        event.preventDefault();
+
+        this.drop(event);
+        break;
       case 'focus':
+        if (typeof gFindBar == "undefined")
+          break;
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
         textbox2. value = gFindBar._findField.value;
@@ -230,6 +248,8 @@ const addHistoryFindbar = {
         gFindBar.removeAttribute('hidden');
         break;
       case 'keypress':
+        if (typeof gFindBar == "undefined")
+          break;
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
         if (event.originalTarget == textbox2.inputField &&
@@ -284,7 +304,8 @@ const addHistoryFindbar = {
         }
        break;
       case "command":
-      console.log("command", event.originalTarget);
+        if (typeof gFindBar == "undefined")
+          break;
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
         if (event.originalTarget == document.getElementById("cmd_find")){
@@ -295,6 +316,8 @@ const addHistoryFindbar = {
         }
         break;
       case 'input':
+        if (typeof gFindBar == "undefined")
+          break;
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
         if ( gFindBar._findField.value != textbox2.value){
@@ -303,10 +326,12 @@ const addHistoryFindbar = {
             textbox2.select();
           textbox2.focus();
           if (gFindBar._findMode == gFindBar.FIND_NORMAL)
-            this.addToHistory(ttextbox2.value);
+            this.addToHistory(textbox2.value);
         }
         break;
       case 'change':
+        if (typeof gFindBar == "undefined")
+          break;
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                         "anonid", "findbar-history-textbox");
         textbox2.select();
@@ -314,6 +339,8 @@ const addHistoryFindbar = {
         this.addToHistory(textbox2.value);
         break;
       case 'mousedown':
+        if (typeof gFindBar == "undefined")
+          break;
         this.showHistory(event);
         break;
     }
@@ -435,29 +462,14 @@ const addHistoryFindbar = {
     }
   },
 
-  onDrop: function (aEvent, aXferData, aDragSession) {
-    if ("findBarOnDropUseTextContent" in gFindBar._findField) {
-      this.seachbarOnDropUseTextContent_drop(aEvent);
-      return;
-    }
-    var data = transferUtils.retrieveURLFromData(aXferData.data,
-                   aXferData.flavour.contentType);
-    //window.userChrome_js.debug("onDrop " + data);
-    if (data) {
-      let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
-                          "anonid", "findbar-history-textbox");
-      textbox2.value  = data;
-      this.copyToFindfield(aEvent);
-      this.addToHistory(data);
-    }
-  },
-
   drop: function (aEvent) {
-    if ("findBarOnDropUseTextContent" in gFindBar._findField) {
-      this.seachbarOnDropUseTextContent_drop(aEvent);
-      return;
-    }
-    var data = aEvent.dataTransfer.getData("text/plain");
+		let data = aEvent.dataTransfer.getData('text/x-moz-url').split(/\r\n|\n/)[1];
+		data = data? data : aEvent.dataTransfer.getData('text/plain');
+		// タブをドロップした場合はタブのラベル
+		if(aEvent.dataTransfer.mozTypesAt(0)[0] == "application/x-moz-tabbrowser-tab"){
+			draggedTab = aEvent.dataTransfer.mozGetDataAt(TAB_DROP_TYPE, 0);
+			data = draggedTab.getAttribute('label');
+		}
     //window.userChrome_js.debug("onDrop " + data);
     if (data) {
       let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,

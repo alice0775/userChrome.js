@@ -3,17 +3,19 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    UndoListInTabmenuToo.uc.js
 // @include        main
-// @compatibility  Firefox 4.0
+// @compatibility  Firefox 61.0
 // @author         Alice0775
+// @version        2018/05/10 60
 // @version        2017/11/18 nsIPrefBranch to nsIPrefBranch
 // @version        2010/09/18 00:00 4.0b7pre
 // @version        2009/02/03 13:00 ツールチップにタブ内履歴を表示するようにした
 // @Note           タブやコンテキストメニューにもUndoClose Tab Listを追加するもの
 // @OriginalCode   browser.jsからpopulateUndoSubmenuを拝借し, ごにょごにょした
+// @version        2018/05/09 15:00 61
+// ==/UserScript==
 // @version        2010/03/26 13:00  Minefield/3.7a4pre Bug 554991 -  allow tab context menu to be modified by normal XUL overlays
 // @version        2010/03/15 00:00  Minefield/3.7a4pre Bug 347930 -  Tab strip should be a toolbar instead
 // @version        2009/09/09 15:00 中クリック処理
-// ==/UserScript==
 // @version        2009/09/03 22:00 Firegox3.7a1preで動かなくなっていたのを修正(Bug 489925. getElementById should not return anonymous nodes)
 // @version        2009/08/22 00:00 Firegox3.6 stringbandleの変更による
 // @version        2009/04/24 00:00 #394759 [Firefox:Session Restore]-Add undo close window feature
@@ -28,9 +30,7 @@ var UndoListInTabmenu = {
   ss: null,
 
   get tabContext() {
-    return document.getAnonymousElementByAttribute(
-                        gBrowser, "anonid", "tabContextMenu")||
-           gBrowser.tabContainer.contextMenu;
+    return gBrowser.tabContainer.contextMenu;
 ;
   },
 
@@ -48,16 +48,20 @@ var UndoListInTabmenu = {
       this.makePopup(contextMenu, refItem, "ContextUndoList");
     }
     // get closed-tabs from nsSessionStore
-    this._ss = Cc["@mozilla.org/browser/sessionstore;1"].
-               getService(Ci.nsISessionStore);
+    try {
+      this._ss = Cc["@mozilla.org/browser/sessionstore;1"].
+                 getService(Ci.nsISessionStore);
+    } catch(x) {
+      this._ss = SessionStore;
+    }
 
   },
 
   makePopup: function(popup, refItem, id){
     var menu;
     //label
-    const locale = Components.classes["@mozilla.org/preferences-service;1"]
-                   .getService(Components.interfaces.nsIPrefBranch).getCharPref("general.useragent.locale");
+    const locale = "en";
+    
     if (this.getVer() > 3.0) {
       // "Recently Closed Windows"
       menu = document.createElement("menu");
@@ -350,8 +354,13 @@ var UndoListInTabmenu = {
    * @returns a reference to the reopened window.
    */
   undoCloseWindow: function (aIndex) {
-    let ss = Cc["@mozilla.org/browser/sessionstore;1"].
-             getService(Ci.nsISessionStore);
+    // get closed-tabs from nsSessionStore
+    try {
+      ss = Cc["@mozilla.org/browser/sessionstore;1"].
+                 getService(Ci.nsISessionStore);
+    } catch(x) {
+      ss = SessionStore;
+    }
     let window = null;
     if (ss.getClosedWindowCount() > (aIndex || 0))
       window = ss.undoCloseWindow(aIndex || 0);
@@ -365,7 +374,7 @@ var UndoListInTabmenu = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsILocalFile); break;
+          return xpPref.getComplexValue(aPrefString, Components.interfaces.nsIFile); break;
         case 'str':
           return xpPref.getCharPref(aPrefString).toString(); break;
         case 'int':
@@ -385,7 +394,7 @@ var UndoListInTabmenu = {
     try{
       switch (aPrefType){
         case 'complex':
-          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsILocalFile, aValue); break;
+          return xpPref.setComplexValue(aPrefString, Components.interfaces.nsIFile, aValue); break;
         case 'str':
           return xpPref.setCharPref(aPrefString, aValue); break;
         case 'int':

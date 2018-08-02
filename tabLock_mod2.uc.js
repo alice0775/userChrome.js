@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    tabLock
 // @include        *
+// @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/08/02 12:30 exclude about:*
 // @version        2018/06/21 19:50 workaround regression
 // @version        2018/06/21 19:40 fix restore session if *.restore_on_demand is enabled
 // @version        2018/06/10 00:00 workaround restore session
