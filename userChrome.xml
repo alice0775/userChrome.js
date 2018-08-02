@@ -3,6 +3,9 @@
 Available for use under the MIT License:
 https://opensource.org/licenses/MIT
  -->
+<!-- modified by alice0775 2018/08/02
+  removed unused line.
+ -->
 <!-- modified by alice0775 2018/07/27
   added support for chrome window other than main browser.
   removed support for optional .css file.
@@ -24,7 +27,8 @@ https://opensource.org/licenses/MIT
 
         const mFileURL = Services.io.getProtocolHandler('file')
         .QueryInterface(Components.interfaces.nsIFileProtocolHandler)
-        .getURLSpecFromFile(file) + "?" + this._getLastModifiedTime(file);
+        .getURLSpecFromFile(file) + "?" + file.lastModifiedTime;
+
 
         try {
           Components.utils.import('resource://gre/modules/Services.jsm');
@@ -83,18 +87,6 @@ https://opensource.org/licenses/MIT
           }
         }
       ]]></constructor>
-      <method name="_getLastModifiedTime">
-        <parameter name="aScriptFile"/>
-        <body><![CDATA[
-          try {
-              var aLocalfile = Components.classes["@mozilla.org/file/local;1"]
-              .createInstance(Components.interfaces.nsILocalFile);
-              aLocalfile.initWithPath(aScriptFile.path);
-              return aLocalfile.lastModifiedTime;
-          } catch(e) {}
-          return "";
-        ]]></body>
-      </method>
     </implementation>
   </binding>
 </bindings>
