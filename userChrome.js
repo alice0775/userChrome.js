@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.55mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.56mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,8 +14,8 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2018/08/02 19:30 for userChrome.xml
 // Date 2018/05/30 18:00 ALWAYSEXECUTE  .uc.js
-// Date 2018/05/13 18:00 removed sidebar hack
 // Date 2018/05/06 22:00 fix wrong commit
 // Date 2018/05/06 22:00 remove workaround for editBookmarkPanel
 // Date 2018/03/21 08:00 revert USE_0_63_FOLDER
@@ -72,7 +72,7 @@
   const USE_0_63_FOLDER = true; //0.63のフォルダ規則を使う[true], 使わないfalse
   const FORCESORTSCRIPT = false; //強制的にスクリプトをファイル名順でソートするtrue, しない[false]
   const AUTOREMOVEBOM   = false;  //BOMを自動的に, 取り除く:true, 取り除かない[false](元ファイルは.BOMとして残る)
-  const REPLACECACHE = false; //スクリプトの更新日付によりキャッシュを更新する: true , しない:[false]
+  const REPLACECACHE = true; //スクリプトの更新日付によりキャッシュを更新する: true , しない:[false]
   //=====================USE_0_63_FOLDER = falseの時===================
   var UCJS      = new Array("UCJSFiles","userContent","userMenu"); //UCJS Loader 仕様を適用 (NoScriptでfile:///を許可しておく)
   var arrSubdir = new Array("", "xul","TabMixPlus","withTabMixPlus", "SubScript", "UCJSFiles", "userCrome.js.0.8","userContent","userMenu");    //スクリプトはこの順番で実行される
@@ -123,6 +123,22 @@
     BROWSERCHROME: BROWSERCHROME,
     EXCLUDE_CHROMEHIDDEN: EXCLUDE_CHROMEHIDDEN,
     REPLACECACHE: REPLACECACHE,
+
+    get hackVersion () {
+      delete this.hackVersion;
+      return this.hackVersion = "0.8";
+      //拡張のバージョン違いを吸収
+      this.baseUrl = /^(chrome:\/\/\S+\/content\/)\S+/i.test( Error().fileName).$1;
+      if (!/^(chrome:\/\/\S+\/content\/)\S+/i.test( Error().fileName) ){
+      } else if (Error().fileName.indexOf("chrome://uc_js/content/uc_js.xul") > -1 ||
+           "chrome://userchrome_js_cache/content/userChrome.js" == Error().fileName ){  //0.8.0+ or 0.7
+        return this.hackVersion = "0.8+";
+      } else if (Error().fileName.indexOf("chrome://browser/content/browser.xul -> ") == 0) {
+        return this.hackVersion = "0.8.1";
+      } else {
+        return this.hackVersion = "0.8mod";
+      }
+    },
 
     //スクリプトデータを作成
     getScripts: function(){
@@ -191,7 +207,6 @@ var Start = new Date().getTime();
                               ,file);
               script.dir = dir;
               if(/\.uc\.js$/i.test(script.filename)){
-                script.url = convURL(script.url);
                 script.ucjs = checkUCJS(script.file.path);
                 s.push(script);
               }else{
@@ -209,21 +224,6 @@ var Start = new Date().getTime();
         [].push.apply(this.overlays, o);
       }
 this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
-
-      //拡張のバージョン違いを吸収
-      function convURL(url){
-        switch (userChrome_js.hackVersion) {
-          case "0.8":
-            return url;
-           case "0.8+":  // or 0.7
-            return url;
-          case "0.8.1":
-            return url;
-          case "0.8mod":
-            return userChrome_js.baseUrl + url.substr(url.indexOf("chrome") + 7);
-        }
-        return url;
-      }
 
       //nameを比較する関数
       function cmp_name(a, b) {
@@ -429,15 +429,9 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     },
 
     getLastModifiedTime: function(aScriptFile) {
-      try {
-        if (this.REPLACECACHE) {
-          var aLocalfile = Components.classes["@mozilla.org/file/local;1"]
-          .createInstance(Components.interfaces.nsILocalFile);
-          aLocalfile.initWithPath(aScriptFile.path);
-          return aLocalfile.lastModifiedTime;
-        }
+      if (this.REPLACECACHE) {
         return aScriptFile.lastModifiedTime;
-      } catch(e) {}
+      }
       return "";
     },
 
@@ -504,42 +498,17 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
 
       var overlay;
 
-      if( !this.EXPERIMENT && true ){ //← uc.jsでのloadOverlayに対応
-        for(var m=0,len=this.overlays.length; m<len; m++){
-          overlay = this.overlays[m];
-          if(this.ALWAYSEXECUTE.indexOf(overlay.filename) < 0
-            && ( !!this.dirDisable['*']
-                 || !!this.dirDisable[overlay.dir]
-                 || !!this.scriptDisable[overlay.filename]) ) continue;
+      for(var m=0,len=this.overlays.length; m<len; m++){
+        overlay = this.overlays[m];
+        if(this.ALWAYSEXECUTE.indexOf(overlay.filename) < 0
+          && ( !!this.dirDisable['*']
+               || !!this.dirDisable[overlay.dir]
+               || !!this.scriptDisable[overlay.filename]) ) continue;
 
-          // decide whether to run the script
-          if(overlay.regex.test(dochref)){
-            if (this.INFO) this.debug("loadOverlay: " + overlay.filename);
-            this.loadOverlay(overlay.url + "?" + this.getLastModifiedTime(overlay.file), null, doc);
-          }
-        }
-      }else{
-        var XUL = '<?xml version="1.0"?>\n';
-        var count =0;
-        for(var m=0,len=this.overlays.length; m<len; m++){
-          overlay = this.overlays[m];
-          if(this.ALWAYSEXECUTE.indexOf(overlay.filename) < 0
-            && ( !!this.dirDisable['*']
-                 || !!this.dirDisable[overlay.dir]
-                 || !!this.scriptDisable[overlay.filename]) ) continue;
-          // decide whether to run the script
-          if(overlay.regex.test(dochref)){
-            XUL += overlay.xul;
-            count++;
-          }
-        }
-        if(count==0) return;
-        XUL += '<overlay id="userChrome.uc.js-overlay" xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" xmlns:html="http://www.w3.org/1999/xhtml">\n</overlay>\n';
-        try{
-            if (this.INFO) this.debug("loadOverlay: " + XUL);
-            this.loadOverlay("data:application/vnd.mozilla.xul+xml;charset=utf-8," + XUL, null, doc);
-        }catch(ex){
-            this.error(XUL, ex);
+        // decide whether to run the script
+        if(overlay.regex.test(dochref)){
+          if (this.INFO) this.debug("loadOverlay: " + overlay.filename);
+          this.loadOverlay(overlay.url + "?" + this.getLastModifiedTime(overlay.file), null, doc);
         }
       }
     },
@@ -611,30 +580,6 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           }
         }
       }
-    },
-
-    /**
-      * 指定したバージョン文字列と現在の Gecko のバージョンを比較する
-      * @param {String} aVersion バージョン文字列(e.g. "1.8" "1.7.5")
-      * @return {Number}
-      * 実際のバージョンより指定したバージョンの方が新しければ 1、同じなら 0、古ければ -1
-      * @see nsIVersionComparator
-      * 例Gecko 1.9.0の環境で geckoVersionCompare("1.9.1") とすれば1
-      * 例Gecko 1.9.0の環境で geckoVersionCompare("1.8.5") とすれば-11が返される
-    */
-    geckoVersionCompare: function ChaikaBrowser_geckoVersionCompare(aVersion){
-      var versionComparator = Cc["@mozilla.org/xpcom/version-comparator;1"]
-          .getService(Ci.nsIVersionComparator);
-      var appInfo = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULAppInfo);
-      return versionComparator.compare(aVersion, appInfo.platformVersion);
-    },
-
-    //Fxのバージョンを 数値で返す 3.0 3.5 とか 3.6とか
-    getVer: function(){
-      var info = Components.classes["@mozilla.org/xre/app-info;1"]
-                 .getService(Components.interfaces.nsIXULAppInfo);
-      var ver = parseInt(info.version.substr(0,3) * 10,10) / 10;
-      return ver;
     },
 
     debug: function(aMsg){
@@ -723,8 +668,60 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       document.documentElement.getAttribute("chromehidden") !="" )
     return;
 
-  setTimeout(function(doc){
-    that.runScripts(doc);
-    setTimeout(function(doc){that.runOverlays(doc);}, 800, doc);
-  },500, doc);
+  that.runScripts(doc);
+  setTimeout(function(doc){that.runOverlays(doc);},0, doc);
+
+  //Sidebar for Trunc
+  if(location.href != that.BROWSERCHROME) return;
+  window.document.addEventListener("load",
+    function(event){
+      if (!event.originalTarget.location) return;
+      if(/^(about:(blank|newtab|home))/i.test(event.originalTarget.location.href)) return;
+      if( !/^(about:|chrome:)/.test(event.originalTarget.location.href) )return;
+      var doc = event.originalTarget;
+      var href = doc.location.href;
+      if (that.INFO) that.debug("load Sidebar " +  href);
+      setTimeout(function(doc){that.runScripts(doc);
+        setTimeout(function(doc){that.runOverlays(doc);}, 0, doc);
+      },0, doc);
+      if (href != "chrome://browser/content/web-panels.xul") return;
+      if (!window.document.getElementById("sidebar")) return;
+      var sidebarWindow = window.document.getElementById("sidebar").contentWindow;
+        if (sidebarWindow){
+          loadInWebpanel.init(sidebarWindow);
+        }
+    }
+  , true);
+
+  var loadInWebpanel = {
+    sidebarWindow: null,
+    init: function(sidebarWindow){
+      this.sidebarWindow = sidebarWindow;
+      this.sidebarWindow.document.getElementById("web-panels-browser").addEventListener("load", this, true);
+      this.sidebarWindow.addEventListener("unload", this, false);
+    },
+    handleEvent: function(event){
+      switch (event.type) {
+        case "unload":
+          this.uninit(event);
+          break;
+        case "load":
+          this.load(event);
+          break;
+      }
+    },
+    uninit: function(event){
+      this.sidebarWindow.document.getElementById("web-panels-browser").removeEventListener("load", this, true);
+      this.sidebarWindow.removeEventListener("unload", this, false);
+    },
+    load: function(event){
+      var doc = event.originalTarget;
+      var href = doc.location.href;
+        if( !/^chrome:/.test(href) )return;
+        if (that.INFO) that.debug("load Webpanel " +  href);
+        setTimeout(function(doc){that.runScripts(doc);
+          setTimeout(function(doc){that.runOverlays(doc);},0, doc);
+        },0, doc);
+    }
+  }
 })();
