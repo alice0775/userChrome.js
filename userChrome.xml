@@ -3,6 +3,9 @@
 Available for use under the MIT License:
 https://opensource.org/licenses/MIT
  -->
+<!-- modified by alice0775 2018/08/03
+  wirking with Sub-Script/Overlay Loader v3.0.56mod
+ -->
 <!-- modified by alice0775 2018/08/02
   removed unused line.
  -->
@@ -24,8 +27,10 @@ https://opensource.org/licenses/MIT
         .QueryInterface(Components.interfaces.nsIFileProtocolHandler)
         .getURLSpecFromFile(file) + "?" + file.lastModifiedTime;
 
+
         try {
           Components.utils.import('resource://gre/modules/Services.jsm');
+
           let maybeneed = true
           let enumerator = Services.wm.getEnumerator("navigator:browser");
           while(enumerator.hasMoreElements()) {
@@ -35,8 +40,37 @@ https://opensource.org/licenses/MIT
               break;
             }
           }
-          if (!maybeneed) {
-            return;
+
+          if (maybeneed) {
+            new class {
+              constructor() {
+                Services.obs.addObserver(this, 'domwindowopened', false);
+              }
+
+              observe(aSubject, aTopic, aData) {
+                switch (aTopic) {
+                  case 'domwindowopened':
+                    aSubject.addEventListener('load', this, true);
+                    break;
+                }
+              }
+
+              handleEvent(aEvent) {
+                if (!Services.appinfo.inSafeMode) {
+                  const document = aEvent.originalTarget;
+                  if (document.location
+                      && document.location.protocol === 'chrome:'
+                      && !(document.location.href == "chrome://browser/content/browser.xul") ) {
+                    try {
+                        console.log("chrome window opened")
+                        Services.scriptloader.loadSubScript(mFileURL, document.defaultView, 'UTF-8');
+                    } catch (ex) {
+                      Components.utils.reportError(ex);
+                    }
+                  }
+                }
+              }
+            }();
           }
         } catch (exception) {
           displayError(exception);
