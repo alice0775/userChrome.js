@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/08/10 01:30 fix 63.0a1
+// @version        2018/07/30 21:30 fix cursor
 // @version        2018/07/30 21:30 fix drop selected text
 // @version        2018/07/21 01:40 fix tab order
 // @version        2018/07/21 01:30 fix find selection word
@@ -73,6 +75,7 @@ const addHistoryFindbar = {
         -moz-appearance: none;
         list-style-image: url(chrome://global/skin/icons/arrow-dropdown-16.svg);
         opacity: 0.6;
+        cursor: default;
       }
       .findBar-history-dropmarker:active,
       .findBar-history-dropmarker[checked] {
@@ -182,8 +185,13 @@ const addHistoryFindbar = {
     textbox2.addEventListener("change", this, true);
 
     // コンテキストメニュー
-    let inputbox = document.getAnonymousElementByAttribute( textbox2, "anonid", "textbox-input-box")
-    let cxmenu = document.getAnonymousElementByAttribute(inputbox, "anonid", "input-box-contextmenu");
+    let inputbox = document.getAnonymousElementByAttribute(textbox2, "anonid", "textbox-input-box");
+    if (inputbox) {
+      let cxmenu = document.getAnonymousElementByAttribute(inputbox, "anonid", "input-box-contextmenu");
+    } else {
+      inputbox = document.getAnonymousElementByAttribute(textbox2, "anonid", "moz-input-box");
+      cxmenu = document.getAnonymousElementByAttribute(textbox2, "class", "textbox-contextmenu");
+    }
     let element, label, akey;
 
     element = document.createElementNS(kNSXUL, "menuseparator");
@@ -197,6 +205,7 @@ const addHistoryFindbar = {
     element.setAttribute("oncommand", "addHistoryFindbar.clearHistory();");
 
     cxmenu.appendChild(element);
+
     return textbox2;
   },
 
