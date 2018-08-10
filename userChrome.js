@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.56mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.57mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2018/08/10 01:30 fix 63.0a1
 // Date 2018/08/02 19:30 for userChrome.xml
 // Date 2018/05/30 18:00 ALWAYSEXECUTE  .uc.js
 // Date 2018/05/06 22:00 fix wrong commit
@@ -668,8 +669,9 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       document.documentElement.getAttribute("chromehidden") !="" )
     return;
 
-  that.runScripts(doc);
-  setTimeout(function(doc){that.runOverlays(doc);},0, doc);
+  setTimeout(function(doc){that.runScripts(doc);
+    setTimeout(function(doc){that.runOverlays(doc);},0, doc);
+  },0, doc);
 
   //Sidebar for Trunc
   if(location.href != that.BROWSERCHROME) return;
