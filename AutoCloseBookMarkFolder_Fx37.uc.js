@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2018/08/10 fix target scroll listener
 // @version       2018/08/13 61+
 // @version       2012/12/07 //aEvent.preventDefault();
 // @Note          http://space.geocities.yahoo.co.jp/gl/alice0775
@@ -49,8 +50,8 @@ var acBookMarkTreeFolder = {
     document.addEventListener('unload', this, false);
     this._BTree.addEventListener('click', this, false);
     //this._BTree.addEventListener('dragover',function(event){acBookMarkTreeFolder.onClick(event);},false);
-    (document.getElementById("bookmarks-view") ||
-     document.getElementById("bookmarks-view-children"))
+    (document.getElementById("bookmarks-view-children") ||
+     document.getElementById("bookmarks-view").childNodes[1])
     .addEventListener("scroll", this, false);
     this.viewbox = this._BTree.boxObject;
 
