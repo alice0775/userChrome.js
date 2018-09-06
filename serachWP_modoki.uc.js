@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/06 16:00 workaround do not open findbar if not found
 // @version        2018/07/21 20:00 change to click outside searchber to unhighlightall
 // @version        2018/07*20 23:00 Fix change option > search
 // @version        2018/04/14 21:45 workaround for SearchEngineWheelScroll.uc.js()
@@ -32,6 +33,8 @@ var serachWP_modoki = {
   },
 
   get _textbox(){
+    if(!this.searchbar)
+      return null;
     return this.searchbar.textbox;
   },
 
@@ -60,13 +63,17 @@ var serachWP_modoki = {
     window.removeEventListener('aftercustomization', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
     window.removeEventListener("unload", this, false);
-    this._textbox.removeEventListener("DOMMouseScroll", this, true);
     window.removeEventListener("click", this, true);
+    if (!this._textbox)
+      return;
+    this._textbox.removeEventListener("DOMMouseScroll", this, true);
     this._textbox.removeEventListener("blur", this, false);
   },
 
   patch: function() {
     setTimeout((function(){
+      if (!this.searchbar)
+        return;
       this._textbox.addEventListener("DOMMouseScroll", this, true);
       this._textbox.addEventListener("blur", this, false);
     }).bind(this), 1000)
@@ -176,12 +183,29 @@ var serachWP_modoki = {
     let finder = this.finder;
     finder.caseSensitive = aMatchCase;
 
+    // xxx
+    let findbar_hidden = gFindBar.hidden;
+    if (findbar_hidden) {
+      gFindBar.setAttribute("noanim", true);
+      gFindBar.style.setProperty("display", "none", "important");
+    }
+    
     if (finder.searchString != aWord) {
-      result = finder.fastFind(aWord,);
+      result = finder.fastFind(aWord, false);
     }
     else {
       result = finder.findAgain(aFindBackwards, false, false);
     }
+
+    //xxx
+    if (findbar_hidden) {
+      setTimeout(function() {
+        gFindBar.close(true);
+        gFindBar.style.removeProperty("display");
+        gFindBar.removeAttribute("noanim");
+      }, 250)
+    }
+
     if (this.AUTOHIGHLIGHT) {
       finder.highlight(true, aWord, false);
     }
