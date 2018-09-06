@@ -5,7 +5,8 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
-// @compatibility  60
+// @compatibility  62
+// @version        2018/09/01 19:00 removed unneccesary class name
 // @version        2018/08/02 12:30 exclude about:*
 // @version        2018/06/21 19:50 workaround regression
 // @version        2018/06/21 19:40 fix restore session if *.restore_on_demand is enabled
@@ -482,12 +483,10 @@ patch: {
         if(stack) stack.appendChild(image);
       }
       image.removeAttribute('hidden');
-      aTab.setAttribute('class',aTab.getAttribute('class')+' tabLock');
     }else{
       if(image){
         image.setAttribute('hidden', true);
       }
-      aTab.setAttribute('class',aTab.getAttribute('class').replace(/\stabLock/g,''));
     }
   }
 
