@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2018/09/03 regression resize width
 // @version        2018/07/03 Fx61 fix regression from remove loadoverlay
 // @version        2018/07/03 Fx61 remove loadoverlay
 // @version        2018/06/25 Fx61 wip
@@ -1036,7 +1037,7 @@ var sidebarpopuppanelResize = {
     var y = this.sidebar.boxObject.screenY;
     if (w && w <= screen.width && w >= 100) {
       this.sidebar.style.setProperty('width', w + "px", "important");
-      //this.sidebarbox.width = w;
+      this.sidebarbox.style.setProperty('width', w + "px", "important");
     }
   }
 };
