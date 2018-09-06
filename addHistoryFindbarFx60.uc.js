@@ -5,6 +5,9 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/09/06 14:30 fix unnecessary findbar popup
+// @version        2018/08/25 12:30 fix save formhistory
+// @version        2018/08/14 12:30 fix unnecessary findbar popup
 // @version        2018/08/10 01:30 fix 63.0a1
 // @version        2018/07/30 21:30 fix cursor
 // @version        2018/07/30 21:30 fix drop selected text
@@ -185,11 +188,14 @@ const addHistoryFindbar = {
     textbox2.addEventListener("change", this, true);
 
     // コンテキストメニュー
-    let inputbox = document.getAnonymousElementByAttribute(textbox2, "anonid", "textbox-input-box");
-    if (inputbox) {
-      let cxmenu = document.getAnonymousElementByAttribute(inputbox, "anonid", "input-box-contextmenu");
+    let cxmenu;
+    let inputbox = document.getAnonymousElementByAttribute(textbox2, "anonid", "moz-input-box");
+    if (!inputbox) {
+      // -fx62
+      inputbox = document.getAnonymousElementByAttribute(textbox2, "anonid", "textbox-input-box");
+      cxmenu = document.getAnonymousElementByAttribute(inputbox, "anonid", "input-box-contextmenu");
     } else {
-      inputbox = document.getAnonymousElementByAttribute(textbox2, "anonid", "moz-input-box");
+      // fx63+
       cxmenu = document.getAnonymousElementByAttribute(textbox2, "class", "textbox-contextmenu");
     }
     let element, label, akey;
@@ -230,11 +236,13 @@ const addHistoryFindbar = {
         this.initFindBar();
         break;
       case 'TabClose':
+        /*
         if (typeof gFindBar == "undefined")
           break;
         let btn = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "historydropmarker");
         btn.removeEventListener("mousedown", this, false);
+        */
         break;
       case 'drop': //fx3.1 more
         if (typeof gFindBar == "undefined")
@@ -251,10 +259,13 @@ const addHistoryFindbar = {
           break;
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
-        textbox2. value = gFindBar._findField.value;
+        if ( gFindBar._findField.value != textbox2.value) {
+            textbox2.value = gFindBar._findField.value;
+            this.addToHistory(textbox2.value);
+        }
         textbox2.focus();
         // xxx do not hide findbar when FAYT is starting
-        gFindBar.removeAttribute('hidden');
+        // gFindBar.removeAttribute('hidden');
         break;
       case 'keypress':
         if (typeof gFindBar == "undefined")
