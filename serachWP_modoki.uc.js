@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/07 16:30 changed to use the ALT key to trigger Togglehighlight
 // @version        2018/09/07 16:00 fix initialize gFindBar
 // @version        2018/09/06 16:00 workaround do not open findbar if not found
 // @version        2018/07/21 20:00 change to click outside searchber to unhighlightall
@@ -16,7 +17,7 @@
 // ==/UserScript==
 // usage(使い方)
 // 選択語句ある場合は選択語句で,  なき場合は日本語のトークンを自動判定した語句でそれぞれ以下を実行
-// 語句上で中クリック : 強調表示 on/off
+// 語句上で alt+中クリック : 強調表示 on/off
 // 検索バーフォーカス解除で強調表示off
 // 語句上でマウスホイール回転 : 次/前の語を検索
 //
@@ -123,7 +124,7 @@ var serachWP_modoki = {
           this.clearHighlight(event);
           return;
         }
-        if (event.button == 1)
+        if (event.button == 1 && event.altKey)
           this.toggleHighlight(event);
         if (event.button == 0 || event.button == 2)
           this.clearHighlight(event);
