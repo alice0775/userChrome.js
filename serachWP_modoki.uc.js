@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/07 16:00 fix initialize gFindBar
 // @version        2018/09/06 16:00 workaround do not open findbar if not found
 // @version        2018/07/21 20:00 change to click outside searchber to unhighlightall
 // @version        2018/07*20 23:00 Fix change option > search
@@ -179,11 +180,20 @@ var serachWP_modoki = {
   },
 
 
-  _findFast: function(aWord, aFindBackwards, aMatchCase) {
+  _findFast: async function(aWord, aFindBackwards, aMatchCase) {
     let finder = this.finder;
     finder.caseSensitive = aMatchCase;
 
     // xxx
+    if (typeof gFindBar == "undefined") {
+      if (!/pending/.test(gBrowser.getFindBar.toString())) {
+      //Fx60
+      gFindBar = gBrowser.getFindBar();
+      } else {
+        //Fx61
+        await gBrowser.getFindBar();
+      }
+    }
     let findbar_hidden = gFindBar.hidden;
     if (findbar_hidden) {
       gFindBar.setAttribute("noanim", true);
@@ -213,6 +223,7 @@ var serachWP_modoki = {
     if(typeof ucjsFind != 'undefined') ucjsFind._dispSelectionCenter(result);
 
     //window.getBrowser().getFindBar()._updateStatusUI(result, aFindBackwards);
+    return 1;
   },
 
   onDOMMouseScroll: function(event) {
@@ -224,7 +235,7 @@ var serachWP_modoki = {
 
       var findBackwards = event.detail < 0 ? true : false;
       var matchCase = event.altKey || event.ctrlKey;
-      this._findFast( term, findBackwards,  matchCase);
+      this._findFast( term, findBackwards,  matchCase).then(result=>{});
     }
   },
 
