@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/07 17:00 changed to default off Togglehighlight
 // @version        2018/09/07 16:30 changed to use the ALT key to trigger Togglehighlight
 // @version        2018/09/07 16:00 fix initialize gFindBar
 // @version        2018/09/06 16:00 workaround do not open findbar if not found
@@ -26,7 +27,7 @@
 //   トークンの分割表示
 var serachWP_modoki = {
   // config
-  AUTOHIGHLIGHT: true,  // 強調表示 デフォルト on
+  AUTOHIGHLIGHT: false,  // 強調表示 デフォルト on
   TOKENSJAPANESE: true, // 日本語のトークンを自動判定 on
   // end config
 
