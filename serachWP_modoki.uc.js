@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/07 23:00 fix comment && Togglehighlight
 // @version        2018/09/07 17:00 changed to default off Togglehighlight
 // @version        2018/09/07 16:30 changed to use the ALT key to trigger Togglehighlight
 // @version        2018/09/07 16:00 fix initialize gFindBar
@@ -27,7 +28,7 @@
 //   トークンの分割表示
 var serachWP_modoki = {
   // config
-  AUTOHIGHLIGHT: false,  // 強調表示 デフォルト on
+  AUTOHIGHLIGHT: true,  // 強調表示 デフォルト off
   TOKENSJAPANESE: true, // 日本語のトークンを自動判定 on
   // end config
 
@@ -170,7 +171,8 @@ var serachWP_modoki = {
 
   toggleHighlight: function(event) {
     let finder = this.finder;
-    let term = this._getTokenOnMousePosition(event);
+    let term = this.searchbar.value.includes(finder.searchString)
+               ? finder.searchString : "";
     this._highlightAll = this.AUTOHIGHLIGHT = !this.AUTOHIGHLIGHT;
     finder.onHighlightAllChange(this.AUTOHIGHLIGHT);
     finder.highlight(this.AUTOHIGHLIGHT, term, false);
