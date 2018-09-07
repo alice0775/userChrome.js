@@ -6,9 +6,14 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/07 23:00 fix initial visual status
 // @version        2018/09/07 17:00 changed to default off Togglehighlight
 // ==/UserScript==
 var SWPhighlightbutton = {
+  get SWP_highlightbutton(){
+    return document.getElementById("SWP_highlightbutton");
+  },
+
   init: function() {
     let style = `
       #SWP_highlightbutton {
@@ -16,16 +21,18 @@ var SWPhighlightbutton = {
       }
      `.replace(/\s+/g, " ");
 
-    var sspi = document.createProcessingInstruction(
-      'xml-stylesheet',
-      'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
-    );
-    document.insertBefore(sspi, document.documentElement);
-    sspi.getAttribute = function(name) {
-      return document.documentElement.getAttribute(name);
-    };
+    let sss = Components.classes['@mozilla.org/content/style-sheet-service;1']
+                .getService(Components.interfaces.nsIStyleSheetService);
+    let newURIParam = {
+        aURL: 'data:text/css,' + encodeURIComponent(style),
+        aOriginCharset: null,
+        aBaseURI: null
+    }
+    let cssUri = Services.io.newURI(newURIParam.aURL, newURIParam.aOriginCharset, newURIParam.aBaseURI);
+    sss.loadAndRegisterSheet(cssUri, sss.AUTHOR_SHEET);
 
     Components.utils.import("resource:///modules/CustomizableUI.jsm");
+    CustomizableUI.addListener(SWPhighlightbutton);
     try {
       CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
         id: 'SWP_highlightbutton',
@@ -40,7 +47,7 @@ var SWPhighlightbutton = {
             oncommand: "serachWP_modoki.toggleHighlight(event);",
             type: "checkbox",
             label: "Toggle Search WP Modoki Highlight",
-            autoCheck: "true",
+            autoCheck: "false",
             removable: "true"
           };
           for (var p in props) {
@@ -48,9 +55,33 @@ var SWPhighlightbutton = {
           }
           
           return toolbaritem;
-        }
+        },
       });
     } catch(ee) {}
+
+    let AUTOHIGHLIGHT = serachWP_modoki.AUTOHIGHLIGHT;
+    Object.defineProperty(serachWP_modoki, 'AUTOHIGHLIGHT', {
+      get() { return AUTOHIGHLIGHT; },
+      set(newValue) { 
+        AUTOHIGHLIGHT = newValue; 
+        if (newValue) {
+          SWPhighlightbutton.SWP_highlightbutton.setAttribute("checked", newValue);
+        } else {
+          SWPhighlightbutton.SWP_highlightbutton.removeAttribute("checked");
+        }
+      },
+      enumerable: true,
+      configurable: true
+    });
+  },
+
+  onWidgetAdded: function(aWidgetId, aArea, aPosition) {
+    switch(aWidgetId) {
+      case "SWP_highlightbutton":
+        if (aArea && serachWP_modoki.AUTOHIGHLIGHT)
+          this.SWP_highlightbutton.setAttribute("checked", serachWP_modoki.AUTOHIGHLIGHT);
+        break;
+    }
   }
 }
 if ("serachWP_modoki" in window)
