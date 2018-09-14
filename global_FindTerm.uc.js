@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 45-
 // @author         Alice0775
+// @version        2018/09/10 18:00 e10s
 // @version        2016/03/31 18:00 Bug 1134769
 // @version        2016/03/07 08:00 Bug 1134769
 // @version        2015/08/07 08:00 fix a bug copy term
@@ -38,6 +39,21 @@ var global_FindTerm = {
       }.bind(this));
     }
 
+
+    function frameScript() {
+      addMessageListener("global_FindTerm_getSelectedText", messageListener);
+      function messageListener() {
+        //Services.console.logStringMessage("messageListener global_FindTerm_getSelectedText");
+        let sel = content.getSelection();
+        let data = {text: sel.toString()}
+        //Services.console.logStringMessage("sendSyncMessage global_FindTerm_selectionData");
+        sendSyncMessage("global_FindTerm_selectionData", data);
+      }
+    }
+    let frameScriptURI = 'data:application/javascript,'
+      + encodeURIComponent('(' + frameScript.toString() + ')()');
+    window.messageManager.loadFrameScript(frameScriptURI, true);
+    window.messageManager.addMessageListener("global_FindTerm_selectionData", this);
   },
 
   handleEvent: function(event){
@@ -59,6 +75,16 @@ var global_FindTerm = {
       case 'click':
         this.copyToandClearFindbar(event);
     }
+  },
+
+  receiveMessage: function(message) {
+     switch (message.name) {
+       case 'global_FindTerm_selectionData':
+         //Services.console.logStringMessage("receiveMessage global_FindTerm_selectionData");
+         this.copySelectedTextToFindbar(message);
+         return {};
+    }
+    return {};
   },
 
 	onFndbarOpen: function() {
@@ -115,9 +141,9 @@ var global_FindTerm = {
     var sel;
     switch (event.button) {
       case 0:
-	      sel = BrowserUtils.getSelectionDetails(window, 150).text
-		    if (!sel)
-		      return;
+        //Services.console.logStringMessage("sendAsyncMessage global_FindTerm_getSelectedText");
+        gBrowser.selectedTab.linkedBrowser.messageManager.sendAsyncMessage("global_FindTerm_getSelectedText");
+       return;
        break;
       case 1:
        return;
@@ -133,6 +159,12 @@ var global_FindTerm = {
     evt.initUIEvent("input", true, false, window, 0);
     gFindBar._findField.dispatchEvent(evt);
     */
+  },
+
+  copySelectedTextToFindbar: function(message) {
+    this.findTerm = message.data.text;
+    this.setTerm(this.findTerm);
+    this.selectFindField();
   },
 
   setTerm: function(val) {
