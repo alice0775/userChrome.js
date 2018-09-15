@@ -5,8 +5,10 @@
 // @include        main
 // @include        chrome://global/content/viewPartialSource.xul
 // @include        chrome://global/content/viewSource.xul
-// @compatibility  Firefox 25
+// @compatibility  Firefox 56+
 // @author         Alice0775
+// @version        2018/09/15 08:00 Bug 1411707 - Switch findbar and findbar-textbox from XBL bindings into a Custom Element
+// @version        2018/09/08 08:00 event.preventDefault();
 // @version        2014/10/25 12:00 Fix viewsource
 // @version        2014/10/19 20:00 Fix sometime not initialized
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
@@ -37,17 +39,19 @@ var findNextPrevByMouseWheel = {
   },
 
   patch: function(aFindBar) {
-    document.getAnonymousElementByAttribute(aFindBar, "anonid", "find-next")
+    gFindBar.getElement("find-next")
     .addEventListener("DOMMouseScroll", function(event) {
       if (!aFindBar._findField.value)
         return;
       var findBackwards = event.detail < 0 ? true : false;
       aFindBar.onFindAgainCommand(findBackwards);
     }, false);
-    document.getAnonymousElementByAttribute(aFindBar, "anonid", "find-previous")
+    gFindBar.getElement("find-previous")
     .addEventListener("DOMMouseScroll", function(event) {
       if (!aFindBar._findField.value)
         return;
+      event.preventDefault();
+      event.stopPropagation();
       var findBackwards = event.detail < 0 ? true : false;
       aFindBar.onFindAgainCommand(findBackwards);
     }, false);
