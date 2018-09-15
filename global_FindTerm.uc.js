@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 45-
 // @author         Alice0775
+// @version        2018/09/15 18:00 clean
 // @version        2018/09/15 15:00 fix quickfind
 // @version        2018/09/10 18:00 e10s
 // @version        2016/03/31 18:00 Bug 1134769
@@ -19,35 +20,28 @@
 // ==/UserScript==
 
 var global_FindTerm = {
+  ENABLE_GLOBAL_FINDTERM : true,
+  
   findTerm:"",
 
   init : function() {
-    gBrowser.tabContainer.addEventListener("TabSelect", this, false);
-    window.addEventListener("findbaropen", this, false);
-    window.addEventListener("find", this, false);
-    window.addEventListener("findagain", this, false);
+    if (this.ENABLE_GLOBAL_FINDTERM) {
+      gBrowser.tabContainer.addEventListener("TabSelect", this, false);
+      window.addEventListener("findbaropen", this, false);
+      window.addEventListener("find", this, false);
+      window.addEventListener("findagain", this, false);
+    }
 
-    //fx25 for existing findbar
-    if ("gBrowser" in window && "getFindBar" in gBrowser) {
-      if (gBrowser.selectedTab._findBar) {
-        this.injectButton(gBrowser.selectedTab._findBar);
-      }
-    }
-    //fx25 for newly created findbar
-    if ("gBrowser" in window && "getFindBar" in gBrowser) {
-      gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
-        this.injectButton(event.target._findBar);
-      }.bind(this));
-    }
+    gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
+      this.injectButton(event.target._findBar);
+    }.bind(this));
 
 
     function frameScript() {
       addMessageListener("global_FindTerm_getSelectedText", messageListener);
       function messageListener() {
-        //Services.console.logStringMessage("messageListener global_FindTerm_getSelectedText");
         let sel = content.getSelection();
         let data = {text: sel.toString()}
-        //Services.console.logStringMessage("sendSyncMessage global_FindTerm_selectionData");
         sendSyncMessage("global_FindTerm_selectionData", data);
       }
     }
@@ -113,7 +107,6 @@ var global_FindTerm = {
     }
   },
 
-
   injectButton: function(findBar) {
     let container = findBar.getElement("findbar-container");
     let label = container.firstChild;
@@ -133,24 +126,12 @@ var global_FindTerm = {
     gFindBar._updateFindUI();
     if ("historyFindbar" in window)
       historyFindbar.adjustSize();
-
-    if ("XMigemoUI" in window) {
-			window.setTimeout(function() {
-	      XMigemoUI.updatingFindBar = true;
-			  XMigemoUI.updateFloatingFindBarAppearance({type:'XMigemoFindBarUpdateRequest'});
-				XMigemoUI.onChangeFindBarSize({type:'XMigemoFindBarUpdateRequest'});
-				window.setTimeout(function(aSelf) {
-					aSelf.updatingFindBar = false;
-				}, 100, XMigemoUI);
-      }, 100);
-    }
   },
 
   copyToandClearFindbar: function(event) {
     var sel;
     switch (event.button) {
       case 0:
-        //Services.console.logStringMessage("sendAsyncMessage global_FindTerm_getSelectedText");
         gBrowser.selectedTab.linkedBrowser.messageManager.sendAsyncMessage("global_FindTerm_getSelectedText");
        return;
        break;
@@ -163,11 +144,6 @@ var global_FindTerm = {
     this.findTerm = sel;
     this.setTerm(this.findTerm);
     this.selectFindField();
-    /*
-    var evt = document.createEvent("UIEvents");
-    evt.initUIEvent("input", true, false, window, 0);
-    gFindBar._findField.dispatchEvent(evt);
-    */
   },
 
   copySelectedTextToFindbar: function(message) {
@@ -180,10 +156,6 @@ var global_FindTerm = {
     var oldVal= gFindBar._findField.value;
     if (oldVal != val) {
 	    gFindBar._findField.value = val;
-	    /*
-      gFindBar.browser.finder.fastFind(val, gFindBar._findMode == gFindBar.FIND_LINKS,
-	                             gFindBar._findMode != gFindBar.FIND_NORMAL);
-	    */
       gFindBar._updateFindUI();
     }
     if ("historyFindbar" in window) {
@@ -194,8 +166,8 @@ var global_FindTerm = {
   selectFindField: function() {
     setTimeout(function() {
 	    if ("historyFindbar" in window) {
-	       historyFindbar._findField2.focus();
-	       historyFindbar._findField2.select();
+	      historyFindbar._findField2.focus();
+	      historyFindbar._findField2.select();
 	    } else {
 		    gFindBar._findField.focus();
 		    gFindBar._findField.select();

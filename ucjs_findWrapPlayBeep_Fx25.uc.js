@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 56+
 // @author         Alice0775
+// @version        2018/09/15 18:00 cleanup
 // @version        2018/09/15 15:00 fix too much recursion
 // @version        2018/09/15 14:00 fix for newly created findbar
 // @version        2018/09/15 10:00 56+
@@ -12,27 +13,11 @@
 
 var findWrapPlayBeep = {
   init: function() {
-      if (!/pending/.test(gBrowser.getFindBar.toString())) {
-        //-Fx60
-        findbar = gBrowser.getFindBar();
-        this.patch(findbar);
-      } else {
-        //Fx61+
-        if (typeof gFindBar == "undefined") {
-          setTimeout(() => {
-          gBrowser.getFindBar().then((findbar) => {
-            this.patch(findbar);
-          });
-          }, 1000); /// xxx workarroundfor Bug 1411707
-        }
-      }
-      //for newly created findbar
-      gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
-        setTimeout(() => {
-          findWrapPlayBeep.patch(event.target._findBar);
-        }, 100);
-      });
-
+    gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
+      setTimeout(() => {
+        findWrapPlayBeep.patch(event.target._findBar);
+      }, 100);
+    });
   },
 
   patch: function(aFindBar) {
