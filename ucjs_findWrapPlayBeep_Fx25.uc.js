@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 56+
 // @author         Alice0775
+// @version        2018/09/15 14:00 fux for newly created findbar
 // @version        2018/09/15 10:00 56+
 // ==/UserScript==
 
@@ -24,6 +25,13 @@ var findWrapPlayBeep = {
           }, 1000); /// xxx workarroundfor Bug 1411707
         }
       }
+      //for newly created findbar
+      gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
+        setTimeout(() => {
+          findWrapPlayBeep.patch(event.target._findBar);
+        }, 100);
+      });
+
   },
 
   patch: function(aFindBar) {
