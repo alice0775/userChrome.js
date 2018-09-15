@@ -4,10 +4,9 @@
 // @description    FindBarの選択テキスト上でマウスホイールによる選択テキスでの検索を可能にする。選択なき場合は日本語のトークンを自動判定する
 // @charset        utf-8
 // @include        main
-// @include        chrome://global/content/viewSource.xul
-// @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/15 18:00 cleanup
 // @version        2018/09/15 15:00 fix error
 // @version        2018/09/08 08:00 event.preventDefault();
 // @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
@@ -30,38 +29,15 @@ var findSelectionInFindbar = {
   _timer: null,
 
   init: function() {
-    this._timer = setInterval(function(){
-      if (typeof historyFindbar != "undefined" && this._findField2) {
-        this._findField2.addEventListener("DOMMouseScroll", this, false);
-        clearInterval(this._timer);
-        return;
-      }
-      if (!this._maxRetryHistoryFindbarCont--)
-        clearInterval(this._timer);
-    }.bind(this), 2000);
-
-    //fx25 for  existing findbar
-    let findBars = document.querySelectorAll("findbar");
-    if (findBars.length > 0) {
-      Array.forEach(findBars, function (aFindBar) {
-        findSelectionInFindbar.patch(aFindBar);
-      });
-    } else if ("gBrowser" in window && "getFindBar" in gBrowser) {
-      if (gBrowser.selectedTab._findBar)
-        findSelectionInFindbar.patch(gBrowser.selectedTab._findBar);
-    }
-    //fx25 for newly created findbar
-    if ("gBrowser" in window && "getFindBar" in gBrowser) {
       gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
-        findSelectionInFindbar.patch(event.target._findBar);
+        findSelectionInFindbar.patch();
       });
-    }
   },
 
-  patch: function(aFindBar) {
+  patch: function() {
     window.addEventListener("unload", this, false);
     setTimeout((function(){
-      var target = aFindBar._findField;
+      var target = gFindBar._findField;
       target.addEventListener("DOMMouseScroll", this, false);
     }).bind(this), 1000)
   },
