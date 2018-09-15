@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/09/15 17:00 remove logging
 // @version        2018/09/15 15:00 fix dop. and use TabFindInitialized instead TabSelect
 // @version        2018/09/15 07:30 workarround for Bug 1411707 Switch findbar and findbar-textbox from XBL bindings 
 // @version        2018/09/06 14:30 fix unnecessary findbar popup
@@ -208,7 +209,6 @@ const addHistoryFindbar = {
   },
 
   handleEvent: function(event){
-    console.log("event ", event.type);
     let textbox2;
 
     switch (event.type) {
@@ -230,7 +230,6 @@ const addHistoryFindbar = {
       case 'drop': //fx3.1 more
         if (typeof gFindBar == "undefined")
           break;
-        console.log(event.target);
         if(event.target != gFindBar && event.target.getAttribute("anonid") != "findbar-history-textbox")
 	    	  break;
         event.stopPropagation();
@@ -312,7 +311,6 @@ const addHistoryFindbar = {
       case "command":
         if (typeof gFindBar == "undefined")
           break;
-        console.log(event.target);
         if (gFindBar.hidden) {
           gBrowser.selectedTab.linkedBrowser.focus();
           break;
@@ -482,7 +480,6 @@ const addHistoryFindbar = {
 			data = draggedTab.getAttribute('label');
 		}
     //window.userChrome_js.debug("onDrop " + data);
-    console.log(data);
     if (data) {
       let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
