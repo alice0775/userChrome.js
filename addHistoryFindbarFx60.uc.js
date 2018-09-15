@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/09/15 07:30 workarround for Bug 1411707 Switch findbar and findbar-textbox from XBL bindings 
 // @version        2018/09/06 14:30 fix unnecessary findbar popup
 // @version        2018/08/25 12:30 fix save formhistory
 // @version        2018/08/14 12:30 fix unnecessary findbar popup
@@ -115,51 +116,36 @@ const addHistoryFindbar = {
   },
 
   initFindBar: function() {
+    setTimeout(() => {
     if (!/pending/.test(gBrowser.getFindBar.toString())) {
       //Fx60
       gFindBar = gBrowser.getFindBar();
       let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
       if (!textbox2) {
-        textbox2 = this.addDropMarker(gFindBar._findField);
-        gFindBar._findField.lastInputValue = "";
-        textbox2.FormHistory =
-          (ChromeUtils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
-
-        gFindBar._findField.addEventListener("focus", this, false);
-        gFindBar._findField.addEventListener("input", this, false);
+        textbox2 = this.addDropMarker(gFindBar);
       }
     } else {
       //Fx61
       if (typeof gFindBar == "undefined") {
         gBrowser.getFindBar().then(findbar => {
-          let textbox2 = this.addDropMarker(findbar._findField);
-          findbar._findField.lastInputValue = "";
-          textbox2.FormHistory =
-            (ChromeUtils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
-
-          findbar._findField.addEventListener("focus", this, false);
-          findbar._findField.addEventListener("input", this, false); 
+          let textbox2 = this.addDropMarker(findbar);
         });
       } else {
         let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                             "anonid", "findbar-history-textbox");
         if (!textbox2) {
-          textbox2 = this.addDropMarker(gFindBar._findField);
-          gFindBar._findField.lastInputValue = "";
-          textbox2.FormHistory =
-            (ChromeUtils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
-
-          gFindBar._findField.addEventListener("focus", this, false);
-          gFindBar._findField.addEventListener("input", this, false); 
+          textbox2 = this.addDropMarker(gFindBar);
         }
       }
     }
+    }, 1000); /// xxx workarroundfor Bug 1411707
   },
 
-  addDropMarker: function(textbox) {
+  addDropMarker: function(findbar) {
     const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
     let textbox2 = document.createElementNS(kNSXUL, "textbox");
+    findbar._findField.appendChild(textbox2);
     textbox2.setAttribute("anonid", "findbar-history-textbox");
     textbox2.setAttribute("type", "autocomplete");
     textbox2.setAttribute("autocompletesearch", "form-history");
@@ -173,6 +159,7 @@ const addHistoryFindbar = {
     textbox2.setAttribute("onclick", "addHistoryFindbar.copyToFindfield(event);");
 
     let btn = document.createElementNS(kNSXUL, "dropmarker");
+    textbox2.appendChild(btn);
     btn.setAttribute("anonid", "historydropmarker");
     btn.setAttribute("class", "findBar-history-dropmarker chromeclass-toolbar-additional");
     btn.setAttribute("tooltiptext", "Show history");
@@ -180,14 +167,20 @@ const addHistoryFindbar = {
     btn.setAttribute("ordinal", "99");
     btn.setAttribute("type", "checkbox");
     btn.setAttribute("autoCheck", "false");
-    textbox2.appendChild(btn);
-    textbox.appendChild(textbox2);
     btn.addEventListener("mousedown", this, false);
 
     //文字列ドラッグドロップの時保存する
     textbox2.addEventListener("change", this, true);
 
+    textbox2.FormHistory =
+      (ChromeUtils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
+
+    gFindBar._findField.lastInputValue = "";
+    gFindBar._findField.addEventListener("focus", this, false);
+    gFindBar._findField.addEventListener("input", this, false);
+
     // コンテキストメニュー
+    setTimeout(() => {
     let cxmenu;
     let inputbox = document.getAnonymousElementByAttribute(textbox2, "anonid", "moz-input-box");
     if (!inputbox) {
@@ -211,7 +204,7 @@ const addHistoryFindbar = {
     element.setAttribute("oncommand", "addHistoryFindbar.clearHistory();");
 
     cxmenu.appendChild(element);
-
+    }, 1000); /// xxx
     return textbox2;
   },
 
