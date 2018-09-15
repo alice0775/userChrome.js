@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 45-
 // @author         Alice0775
+// @version        2018/09/15 15:00 fix quickfind
 // @version        2018/09/10 18:00 e10s
 // @version        2016/03/31 18:00 Bug 1134769
 // @version        2016/03/07 08:00 Bug 1134769
@@ -67,6 +68,8 @@ var global_FindTerm = {
       case 'find':
         // no break here;
       case 'findagain':
+        if (gFindBar._findMode != gFindBar.FIND_NORMAL)
+          break;
         this.findTerm = gFindBar._findField.value;
         break;
       case 'TabSelect':
@@ -88,6 +91,9 @@ var global_FindTerm = {
   },
 
 	onFndbarOpen: function() {
+    if (gFindBar._findMode != gFindBar.FIND_NORMAL)
+      return;
+
     let sel = BrowserUtils.getSelectionDetails(window).text
 
     if (!!sel)
@@ -100,6 +106,9 @@ var global_FindTerm = {
 
   copyTerm: function() {
     if(gBrowser.isFindBarInitialized(gBrowser.selectedTab) && !gFindBar.hidden) {
+      if (gFindBar._findMode != gFindBar.FIND_NORMAL)
+        return;
+
       this.setTerm(this.findTerm);
     }
   },

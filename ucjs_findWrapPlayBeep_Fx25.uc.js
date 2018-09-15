@@ -5,7 +5,8 @@
 // @include        main
 // @compatibility  Firefox 56+
 // @author         Alice0775
-// @version        2018/09/15 14:00 fux for newly created findbar
+// @version        2018/09/15 15:00 fix too much recursion
+// @version        2018/09/15 14:00 fix for newly created findbar
 // @version        2018/09/15 10:00 56+
 // ==/UserScript==
 
@@ -35,6 +36,8 @@ var findWrapPlayBeep = {
   },
 
   patch: function(aFindBar) {
+    if (/updateStatusUI_org/.test(aFindBar._updateStatusUI.toString()))
+      return;
     aFindBar._updateStatusUI_org =  aFindBar._updateStatusUI;
     aFindBar._updateStatusUI = function(res, aFindPrevious) {
        switch (res) {

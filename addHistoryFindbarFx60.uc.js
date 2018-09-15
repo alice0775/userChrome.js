@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/09/15 15:00 fix dop. and use TabFindInitialized instead TabSelect
 // @version        2018/09/15 07:30 workarround for Bug 1411707 Switch findbar and findbar-textbox from XBL bindings 
 // @version        2018/09/06 14:30 fix unnecessary findbar popup
 // @version        2018/08/25 12:30 fix save formhistory
@@ -104,9 +105,7 @@ const addHistoryFindbar = {
       return document.documentElement.getAttribute(name);
     };
 
-    this.initFindBar();
-    gBrowser.tabContainer.addEventListener('TabSelect', this, false);
-    gBrowser.tabContainer.addEventListener('TabOpen', this, false);
+    gBrowser.tabContainer.addEventListener('TabFindInitialized', this, false);
     gBrowser.tabContainer.addEventListener('TabClose', this, false);
 
     //cmd_findの監視して, 逆転送する
@@ -116,30 +115,22 @@ const addHistoryFindbar = {
   },
 
   initFindBar: function() {
-    setTimeout(() => {
-    if (!/pending/.test(gBrowser.getFindBar.toString())) {
-      //Fx60
+    if (/pending/.test(gBrowser.getFindBar.toString()) &&
+        typeof gFindBar == "undefined") {
+      setTimeout(() => {
+        gBrowser.getFindBar().then(findbar => {
+          this.addDropMarker(findbar);
+        });
+      }, 1000); /// xxx workarroundfor Bug 1411707
+      return;
+    } else {
       gFindBar = gBrowser.getFindBar();
       let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
       if (!textbox2) {
-        textbox2 = this.addDropMarker(gFindBar);
-      }
-    } else {
-      //Fx61
-      if (typeof gFindBar == "undefined") {
-        gBrowser.getFindBar().then(findbar => {
-          let textbox2 = this.addDropMarker(findbar);
-        });
-      } else {
-        let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
-                            "anonid", "findbar-history-textbox");
-        if (!textbox2) {
-          textbox2 = this.addDropMarker(gFindBar);
-        }
+        this.addDropMarker(gFindBar);
       }
     }
-    }, 1000); /// xxx workarroundfor Bug 1411707
   },
 
   addDropMarker: function(findbar) {
@@ -209,8 +200,7 @@ const addHistoryFindbar = {
   },
 
   uninit: function() {
-    gBrowser.tabContainer.removeEventListener('TabSelect', this, false);
-    gBrowser.tabContainer.removeEventListener('TabOpen', this, false);
+    gBrowser.tabContainer.removeEventListener('TabFindInitialized', this, false);
     gBrowser.tabContainer.removeEventListener('TabClose', this, false);
 		document.removeEventListener('drop', this, true);
     window.removeEventListener("keypress", this, true);
@@ -218,14 +208,14 @@ const addHistoryFindbar = {
   },
 
   handleEvent: function(event){
-    //console.log("event ", event.type);
+    console.log("event ", event.type);
     let textbox2;
 
     switch (event.type) {
       case 'unload':
         this.uninit();
         break;
-      case 'TabSelect':
+      case 'TabFindInitialized':
         this.initFindBar();
         break;
       case 'TabClose':
@@ -240,8 +230,9 @@ const addHistoryFindbar = {
       case 'drop': //fx3.1 more
         if (typeof gFindBar == "undefined")
           break;
-        if(event.target != gFindBar)
-	    	  return;
+        console.log(event.target);
+        if(event.target != gFindBar && event.target.getAttribute("anonid") != "findbar-history-textbox")
+	    	  break;
         event.stopPropagation();
         event.preventDefault();
 
@@ -257,6 +248,7 @@ const addHistoryFindbar = {
             this.addToHistory(textbox2.value);
         }
         textbox2.focus();
+        textbox2.select();
         // xxx do not hide findbar when FAYT is starting
         // gFindBar.removeAttribute('hidden');
         break;
@@ -271,6 +263,7 @@ const addHistoryFindbar = {
           break;
         }
         if (event.keyCode == KeyEvent.DOM_VK_ESCAPE) {
+          gBrowser.selectedTab.linkedBrowser.focus();
           gFindBar.close();
           break;
         }
@@ -319,9 +312,14 @@ const addHistoryFindbar = {
       case "command":
         if (typeof gFindBar == "undefined")
           break;
+        console.log(event.target);
+        if (gFindBar.hidden) {
+          gBrowser.selectedTab.linkedBrowser.focus();
+          break;
+        }
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
-        if (event.originalTarget == document.getElementById("cmd_find")){
+        if (event.target == document.getElementById("cmd_find")){
           if ( gFindBar._findField.value != textbox2.value){
             textbox2.value = gFindBar._findField.value;
             this.addToHistory(textbox2.value);
@@ -484,6 +482,7 @@ const addHistoryFindbar = {
 			data = draggedTab.getAttribute('label');
 		}
     //window.userChrome_js.debug("onDrop " + data);
+    console.log(data);
     if (data) {
       let textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");

@@ -8,6 +8,8 @@
 // @include        chrome://global/content/viewPartialSource.xul
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2018/09/15 15:00 fix error
+// @version        2018/09/08 08:00 event.preventDefault();
 // @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
 // @version        2016/05/15 23:00 fix selection
 // @version        2016/05/15 23:00 RetryHistoryFindbar
@@ -104,7 +106,7 @@ var findSelectionInFindbar = {
     // a
     if(typeof ucjsFind != 'undefined') ucjsFind._dispSelectionCenter(result);
 
-    window.getBrowser().getFindBar()._updateStatusUI(result, aFindBackwards);
+    //window.getBrowser().getFindBar()._updateStatusUI(result, aFindBackwards);
   },
 
   onDOMMouseScroll: function(event) {
@@ -136,6 +138,8 @@ var findSelectionInFindbar = {
     }
 
     if (!!term) {
+      event.preventDefault();
+      event.stopPropagation();
       var findBackwards = event.detail < 0 ? true : false;
       var matchCase = event.altKey || event.ctrlKey;
       this._findFast( term, findBackwards,  matchCase);
