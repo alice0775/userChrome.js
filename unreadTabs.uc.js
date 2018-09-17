@@ -1,11 +1,13 @@
 // ==UserScript==
 // @name           unreadTabs.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    タブの移動後もタブの選択状態(未読状態)を維持する。 The selected attribute (unread state) of tabs after moving a tab is preserved.
+// @description    未読のタブの色を変えるだけ
 // @author         Alice0775
 // @include        main
 // @modified by    Alice0775
-// @compatibility  4.0b8pre - 9
+// @compatibility  56+
+// @version        2018/09/16 22:00 e10s
+// @version        2018/05/06 12:00 treat pending tab
 // @version        2016/01/30 18:00 fix Bug 1220564
 // @version        2015/03/30 11:00 Force unread whwn tab title changed
 // @version        2014/06/21 07:00 Fixed due to Bug 996053 
@@ -30,7 +32,7 @@
 // @version        2009/08/05 CSSは最後に実行するようにした userChrome.css二記述しておくのがいいかも
 // @version        2009/07/19 コンテンツの未読判定に文書のmd5を見るかどうか追加
 // @version        2009/07/19
-var unreadTabs = {
+const unreadTabs = {
   // -- config --
   CONTENT_LOAD: true,     // [true]:コンテントの読み込み, false:新規タブの時のみ, を未読とする
   CHECK_MD5:    true,     // CONTENT_LOAD=trueの時,
@@ -42,6 +44,8 @@ var unreadTabs = {
   TABCONTEXTMENU: true,   // タブのコンテキスト"Remove UnRead For All Tabs"を表示 [ture]:する, false:しない
   READ_TIMER: 600,        // タブが選択されてから READ_TIMER(msec)後には強制既読とする
 
+  PENDING_COLOR: 'gray',   // unloadedタブの文字色
+  PENDING_STYLE: 'italic', // unloadedのタブの文スタイル
   UNREAD_COLOR: 'red',    // 未読のタブの文字色
   UNREAD_STYLE: 'italic', // 未読のタブの文スタイル
   LOADING_COLOR:'blue',   // 読み込み中のタブの文字色
@@ -49,113 +53,64 @@ var unreadTabs = {
   WATCHURLS: /mail\.yahoo\.co\.jp|reader\.livedoor\.com\/reader/  , // タブのラベル変更のチェックするURL正規表現
   // -- config --
 
-  ss: null,
+  ss: {
+    get ss_old() {
+      try { 
+        return Components.classes["@mozilla.org/browser/sessionstore;1"].
+                               getService(Components.interfaces.nsISessionStore)
+      } catch(e) {
+        return;
+      }
+    },
+    getTabValue : function(aTab, aKey) {
+      if (typeof SessionStore.getCustomTabValue == "function")
+        return SessionStore.getCustomTabValue(aTab, aKey);
+      else
+        return this.ss_old.getTabValue(aTab, aKey);
+    },
+    setTabValue : function(aTab, aKey, aValue) {
+      if (typeof SessionStore.setCustomTabValue == "function")
+        return SessionStore.setCustomTabValue(aTab, aKey, aValue);
+      else
+        return this.ss_old.setTabValue(aTab, aKey, aValue);
 
-  init: function(){
-    if('TM_init' in window ||
-       'InformationalTabService' in window)
-      return;
+    },
+    deleteTabValue : function(aTab, aKey) {
+      if (typeof SessionStore.deleteCustomTabValue == "function")
+        return SessionStore.deleteCustomTabValue(aTab, aKey);
+      else
+        return this.ss_old.deleteTabValue(aTab, aKey);
+    }
+  },
 
+  init: function() {
     this.CHECK_MD5 = this.CHECK_MD5 && this.CONTENT_LOAD;
 
-    this.ss = Components.classes["@mozilla.org/browser/sessionstore;1"].
-                           getService(Components.interfaces.nsISessionStore);
-
-    if (this.TABCONTEXTMENU)
-      this.tabContextMenu();
-
-    window.addEventListener('unload', this, false);
-    gBrowser.tabContainer.addEventListener('TabOpen', this, false);
-    gBrowser.tabContainer.addEventListener('TabClose', this, false);
-    gBrowser.tabContainer.addEventListener('TabSelect', this, false);
-    gBrowser.tabContainer.addEventListener('SSTabRestoring', this, false);
-    gBrowser.tabContainer.addEventListener('SSTabRestored', this, false);
-
-    // 既にあるタブに対して
-    var that = this;
-    init(0);
-    function init(i){
-      if(i < gBrowser.mTabs.length) {
-        var aTab = gBrowser.mTabs[i];
-        if(aTab.linkedBrowser.docShell.busyFlags
-          || aTab.linkedBrowser.docShell.restoringDocument) {
-          setTimeout(arguments.callee, 250, i);
-        }else{
-          that.initTab(aTab);
-          if (!(aTab.hasAttribute('unreadTabs-restoring') ||
-                aTab.hasAttribute('unreadTab')) ){
-            that.restoreUnreadForTab(aTab);
-            that.restoreMD5ForTab(aTab);
-          }
-          if (aTab.selected) {
-              aTab.removeAttribute('unreadTabs-restoring')
-            if (aTab.hasAttribute('unreadTab'))
-              that.setReadForTab(aTab);
-          }
-          i++;
-          arguments.callee(i);
-        }
-      }else{
+    var style = `
+    @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+      /*未読のタブの文字色*/
+      .tabbrowser-tab[unreadTab] .tab-text,
+      .alltabs-item[unreadTab]
+      {
+        color: %UNREAD_COLOR%;
+        font-style: %UNREAD_STYLE%;
       }
-    }
-
-    var func;
-    // Tree Stryle Tab
-    if ("treeStyleTab" in gBrowser &&
-        "performDrop" in gBrowser.treeStyleTab) {
-      func = gBrowser.treeStyleTab.performDrop.toString();
-        func = func.replace(
-        'targetBrowser.swapBrowsersAndCloseOther(tab, aTab);',
-        " \
-        if (aTab.hasAttribute('unreadTab')) { \
-          tab.setAttribute('unreadTab', true); \
-        } else { \
-          tab.removeAttribute('unreadTab'); \
-        } \
-        $&"
-        );
-      eval("gBrowser.treeStyleTab.performDrop = "+ func);
-
-    } else if ("_onDrop" in gBrowser) {
-      func = gBrowser._onDrop.toString();
-        func = func.replace(
-        'this.swapBrowsersAndCloseOther(newTab, draggedTab);',
-        " \
-        if (draggedTab.hasAttribute('unreadTab')) { \
-          newTab.setAttribute('unreadTab', true); \
-        } else { \
-          newTab.removeAttribute('unreadTab'); \
-        } \
-        $& "
-        );
-      eval("gBrowser._onDrop = "+ func);
-    }
-    //Multiple Tab Handler
-    var menupopup = document.getElementById('multipletab-selection-menu');
-    if (menupopup){
-      var menuitem = document.createElement('menuitem');
-      menuitem.setAttribute('label', 'Toggle Unread Selected Tabs');
-      menuitem.setAttribute('oncommand', 'unreadTabs.toggleUnreadSelectedTabs();');
-      menupopup.appendChild(menuitem);
-    }
-
-    var style = ' \
-    @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); \
-      /*未読のタブの文字色*/ \
-      .tabbrowser-tab[unreadTab] .tab-text, \
-      .alltabs-item[unreadTab] \
-      { \
-        color: %UNREAD_COLOR%; \
-        font-style: %UNREAD_STYLE%; \
-      } \
- \
-      /*読み込み中のタブの文字色*/ \
-      .tabbrowser-tab[busy] .tab-text, \
-      .alltabs-item[busy] \
-      { \
-        color: %LOADING_COLOR%; \
-        font-style: %LOADING_STYLE%; \
-      } '.
+      /*Pendingのタブの文字色*/
+      .tabbrowser-tab[pending] .tab-text,
+      .alltabs-item[pending]
+      {
+        color: %PENDING_COLOR%;
+        font-style: %PENDING_STYLE%;
+      }
+      /*読み込み中のタブの文字色*/
+      .tabbrowser-tab[busy] .tab-text,
+      .alltabs-item[busy]
+      {
+        color: %LOADING_COLOR%;
+        font-style: %LOADING_STYLE%;
+      } `.
+                  replace(/%PENDING_STYLE%/g, this.PENDING_STYLE).
+                  replace(/%PENDING_COLOR%/g, this.PENDING_COLOR).
                   replace(/%UNREAD_STYLE%/g, this.UNREAD_STYLE).
                   replace(/%UNREAD_COLOR%/g, this.UNREAD_COLOR).
                   replace(/%LOADING_STYLE%/g, this.LOADING_STYLE).
@@ -168,6 +123,57 @@ var unreadTabs = {
     sspi.getAttribute = function(name) {
       return document.documentElement.getAttribute(name);
     };
+
+    if (this.TABCONTEXTMENU)
+      this.tabContextMenu();
+
+    var func;
+    if ("_onDrop" in gBrowser) {
+      func = gBrowser._onDrop.toString();
+        func = func.replace(
+        'this.swapBrowsersAndCloseOther(newTab, draggedTab);',
+        `
+        if (draggedTab.hasAttribute('unreadTab')) {
+          newTab.setAttribute('unreadTab', true);
+        } else {
+          newTab.removeAttribute('unreadTab');
+        }
+        $& `
+        );
+      eval("gBrowser._onDrop = "+ func);
+    }
+
+    window.addEventListener('unload', this, false);
+    gBrowser.tabContainer.addEventListener('TabOpen', this, false);
+    gBrowser.tabContainer.addEventListener('TabClose', this, false);
+    gBrowser.tabContainer.addEventListener('TabSelect', this, false);
+    gBrowser.tabContainer.addEventListener('SSTabRestoring', this, false);
+    gBrowser.tabContainer.addEventListener('SSTabRestored', this, false);
+
+
+    // 既にあるタブに対して
+    var that = this;
+    setTimeout( () => { init(0); }, 2000); /// xxx
+    function init(i) {
+      if(i < gBrowser.tabs.length) {
+        var aTab = gBrowser.tabs[i];
+        that.initTab(aTab);
+        //if (!aTab.hasAttribute('pending')) {
+          if (!(aTab.hasAttribute('unreadTabs-restoring') ||
+                aTab.hasAttribute('unreadTab')) ) {
+            that.restoreUnreadForTab(aTab);
+            that.restoreMD5ForTab(aTab);
+          }
+          if (aTab.selected) {
+              aTab.removeAttribute('unreadTabs-restoring')
+            if (aTab.hasAttribute('unreadTab'))
+              that.setReadForTab(aTab);
+          }
+        //}
+        i++;
+        arguments.callee(i);
+      }
+    }
   },
 
   uninit: function(){
@@ -193,9 +199,8 @@ var unreadTabs = {
 
   tabContextMenu: function(){
     //tab context menu
-    var tabContext = document.getAnonymousElementByAttribute(
-                        gBrowser, "anonid", "tabContextMenu") ||
-                     gBrowser.tabContainer.contextMenu;
+    var tabContext = gBrowser.tabContainer.contextMenu ||
+                     document.getAnonymousElementByAttribute(gBrowser, "anonid", "tabContextMenu");
     var menuitem = tabContext.appendChild(
                         document.createElement("menuitem"));
     menuitem.id = "removeunreadalltabs";
@@ -266,6 +271,8 @@ var unreadTabs = {
 
   // タブのMD5をセッションデータから復元
   restoreMD5ForTab: function(aTab){
+    if (aTab.hasAttribute('pending') || aTab.hasAttribute('busy'))
+      return;
     if (!this.CHECK_MD5)
       return;
     var retrievedData = this.ss.getTabValue(aTab, "md5");
@@ -362,6 +369,7 @@ var unreadTabs = {
     }
   }
 }
+unreadTabs.init();
 
 
 
@@ -376,8 +384,6 @@ unreadTabsEventListener.prototype = {
   init : function() {
     //window.userChrome_js.debug('init');
     //this.mTab = aTab;
-    if (unreadTabs.CONTENT_LOAD)
-      this.mTab.linkedBrowser.addEventListener('DOMContentLoaded', this, false);
     if (unreadTabs.READ_SCROLLCLICK) {
       this.mTab.linkedBrowser.addEventListener('scroll', this, false);
       this.mTab.linkedBrowser.addEventListener('mousedown', this, false);
@@ -397,7 +403,7 @@ unreadTabsEventListener.prototype = {
           return;
         if (tab.selected)
           return
-        if(unreadTabs.WATCHURLS.test(tab.linkedBrowser.contentDocument.documentURI)) {
+        if(unreadTabs.WATCHURLS.test(tab.linkedBrowser.currentURI.spec)) {
           unreadTabs.setUnreadForTab(tab);
         }
 		  });    
@@ -409,8 +415,6 @@ unreadTabsEventListener.prototype = {
   },
 
   destroy : function() {
-    if (unreadTabs.CONTENT_LOAD)
-      this.mTab.linkedBrowser.removeEventListener('DOMContentLoaded', this, false);
     if (unreadTabs.READ_SCROLLCLICK) {
       this.mTab.linkedBrowser.removeEventListener('scroll', this, false);
       this.mTab.linkedBrowser.removeEventListener('mousedown', this, false);
@@ -422,11 +426,6 @@ unreadTabsEventListener.prototype = {
   },
   handleEvent: function(aEvent) {
     switch (aEvent.type) {
-      case 'DOMContentLoaded':
-        //window.userChrome_js.debug('DOMContentLoaded');
-        this.contentLoad(aEvent);
-        break;
-
       case 'scroll':
       case 'mousedown':
         aTab = this.mTab;
@@ -438,95 +437,152 @@ unreadTabsEventListener.prototype = {
 
     }
   },
-
-  // コンテント読み込み時の処理
-  contentLoad: function(aEvent){
-      var aTab = this.mTab;
-/**/
-
-      if (aTab.unreadtimer)
-        clearTimeout(aTab.unreadtimer);
-      if (aTab.hasAttribute('busy') && unreadTabs.CONTENT_LOAD && unreadTabs.CHECK_MD5) {
-        aTab.unreadtimer = setTimeout(function(aEvent, self){self.contentLoad(aEvent);}, 10, aEvent, this);
-        return;
-      }
-
-      // コンテントの文書のMD5
-      var doc = aTab.linkedBrowser.contentDocument;
-      var md5 = null;
-      var prevmd5 = null;
-      if (unreadTabs.CHECK_MD5 && !aTab.hasAttribute('pending')) {
-        md5 = this.calculateHashFromStr(this.getTextContentForDoc(doc)).toString();
-        if (aTab.hasAttribute('md5')) {
-          prevmd5 = aTab.getAttribute('md5');
-        }
-        aTab.setAttribute('md5', md5);
-      }
-
-      // コンテントを読み込んだのが前面のタブなら既読にセット
-      if (aTab.selected) {
-          aTab.removeAttribute('unreadTabs-restoring')
-        if (!aTab.hasAttribute('unreadTab'))
-          return;
-        unreadTabs.setReadForTab(aTab);
-        return;
-      }
-
-      // タブの復元中なら何もしない
-      if (aTab.hasAttribute('unreadTabs-restoring')) {
-        //aTab.removeAttribute('unreadTabs-restoring')
-        return;
-      }
-
-      // コンテントを読み込んだのが背面のタブなら未読にセット
-      if (unreadTabs.CONTENT_LOAD) {
-        if (!unreadTabs.CHECK_MD5 || md5 != prevmd5) {
-          unreadTabs.setUnreadForTab(aTab);
-        }
-      }
-  },
-
-  getTextContentForDoc: function(aDocument) {
-    try {
-      if (aDocument.body) {
-        var str = aDocument.body.textContent;
-        return str.replace(/\b\d{1,2}\b/g,'').replace(/\b\d{1,16}\b/g,'');
-      }
-    } catch(e) {
-    }
-    return "";
-  },
-
-  calculateHashFromStr: function(str) {
-    var converter = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"]
-                              .createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
-    // ここでは UTF-8 を使います。他のエンコーディングも選ぶこともできます。
-    converter.charset = "UTF-8";
-    // result は出力用パラメータです。
-    // result.value は配列の長さを保持します。
-    var result = {};
-    // data はバイトの配列です。
-    var data = converter.convertToByteArray(str, result);
-    var ch = Components.classes["@mozilla.org/security/hash;1"]
-                       .createInstance(Components.interfaces.nsICryptoHash);
-    str = null;
-    ch.init(ch.MD5);
-    ch.update(data, data.length);
-    var hash = ch.finish(false);
-    str = data = ch = null;
-    // 1 バイトに対して 2 つの 16 進数コードを返す。
-    function toHexString(charCode)
-    {
-      return ("0" + charCode.toString(16)).slice(-2);
-    }
-
-    // バイナリのハッシュデータを 16 進数文字列に変換する。
-    // return [toHexString(hash.charCodeAt(i)) for (i in hash)].join("");
-    return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join(""); // due to Bug 1220564
-  }
-
-
 };
 
+// 新たなコンテントの読み込みを未読と見なす
+const unreadTabs_getContentMD5 = {
+  init: function() {
+    
+    function frameScript() {
+      function load(event) {
+        /*Services.console.logStringMessage("Send to chrome: unreadTabs_ContentMD5\n" + content.document.location.href);*/
 
-unreadTabs.init();
+        let doc = event.originalTarget;
+        let win = doc.defaultView;
+        if (doc.location.href == "about:blank")
+          return;
+        if (!(doc instanceof win.HTMLDocument))
+          return;
+        
+        if (win.frameElement)
+          return;
+
+        sendSyncMessage("unreadTabs_ContentMD5",
+        {
+          details : "MD5",
+          MD5: calMD5(doc)
+        });
+      }
+      
+      function calMD5(aDocument) {
+        let win = aDocument.defaultView;
+        if (win.frameElement)
+          return "";
+
+        return calculateHashFromStr(getTextContentForDoc(aDocument)).toString();
+      }
+      function getTextContentForDoc(aDocument) {
+        try {
+          if (aDocument.body) {
+            var str = aDocument.body.textContent.replace(/\n/g,' ');
+            return str.replace(/\b\d{1,2}\b/g,'').replace(/\b\d{1,16}\b/g,'');
+          }
+        } catch(e) {
+        }
+        return "";
+      }
+
+      function calculateHashFromStr(str) {
+        var converter = Components.classes["@mozilla.org/intl/scriptableunicodeconverter"]
+                                  .createInstance(Components.interfaces.nsIScriptableUnicodeConverter);
+        /* ここでは UTF-8 を使います。他のエンコーディングも選ぶこともできます。*/
+        converter.charset = "UTF-8";
+        /* result は出力用パラメータです。*/
+        /* result.value は配列の長さを保持します。*/
+        var result = {};
+        /* data はバイトの配列です。*/
+        var data = converter.convertToByteArray(str, result);
+        var ch = Components.classes["@mozilla.org/security/hash;1"]
+                           .createInstance(Components.interfaces.nsICryptoHash);
+        str = null;
+        ch.init(ch.MD5);
+        ch.update(data, data.length);
+        var hash = ch.finish(false);
+        str = data = ch = null;
+        /* 1 バイトに対して 2 つの 16 進数コードを返す。*/
+        function toHexString(charCode)
+        {
+          return ("0" + charCode.toString(16)).slice(-2);
+        }
+
+        /* バイナリのハッシュデータを 16 進数文字列に変換する。*/
+        /* return [toHexString(hash.charCodeAt(i)) for (i in hash)].join("");*/
+        return Array.from(hash, (c, i) => toHexString(hash.charCodeAt(i))).join(""); /* due to Bug 1220564*/
+      }
+
+      addEventListener('load', load, true);
+
+    } /* /frameScript */ 
+
+    let frameScriptURI = 'data:application/javascript,'
+      + encodeURIComponent('(' + frameScript.toString() + ')()');
+    window.messageManager.loadFrameScript(frameScriptURI, true);
+
+    window.messageManager.addMessageListener("unreadTabs_ContentMD5", this);
+    window.addEventListener('unload', unreadTabs_getContentMD5.uninit, false);
+  },
+
+  uninit: function() {
+    window.messageManager.removeMessageListener("unreadTabs_ContentMD5", this);
+    window.removeEventListener('unload', unreadTabs_getContentMD5.uninit, false);
+  },
+
+  handleEvent: function(event) {
+    switch (event.type) {
+      case 'uninit':
+        this.uninit();
+        break;
+    }
+  },
+
+  receiveMessage: function(message) {
+    switch (message.name) {
+      case 'unreadTabs_ContentMD5':
+        this.contentLoaded(message);
+        return {};
+    }
+    return {};
+  },
+
+  contentLoaded: function(message) {
+    let browser = message.target;
+    if (!browser)
+      return;
+    let md5 = null;
+    let aTab = gBrowser.getTabForBrowser(browser);
+    if (!aTab)
+      return;
+      
+    var prevmd5 = null;
+    if (unreadTabs.CHECK_MD5 && !aTab.hasAttribute('pending')) {
+      md5 = message.data.MD5;
+      if (aTab.hasAttribute('md5')) {
+        prevmd5 = aTab.getAttribute('md5');
+      }
+      aTab.setAttribute('md5', md5);
+    }
+
+    // コンテントを読み込んだのが前面のタブなら既読にセット
+    if (aTab.selected) {
+        aTab.removeAttribute('unreadTabs-restoring')
+      if (!aTab.hasAttribute('unreadTab'))
+        return;
+      unreadTabs.setReadForTab(aTab);
+      return;
+    }
+
+    // タブの復元中なら何もしない
+    if (aTab.hasAttribute('unreadTabs-restoring')) {
+      //aTab.removeAttribute('unreadTabs-restoring')
+      return;
+    }
+
+    // コンテントを読み込んだのが背面のタブなら未読にセット
+    if (!unreadTabs.CHECK_MD5 || md5 != prevmd5) {
+      unreadTabs.setUnreadForTab(aTab);
+    }
+  }
+}
+
+if (unreadTabs.CONTENT_LOAD)
+  unreadTabs_getContentMD5.init();
