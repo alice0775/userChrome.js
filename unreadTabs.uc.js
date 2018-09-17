@@ -6,6 +6,7 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  56+
+// @version        2018/09/17 06:00 some fix
 // @version        2018/09/16 22:00 e10s
 // @version        2018/05/06 12:00 treat pending tab
 // @version        2016/01/30 18:00 fix Bug 1220564
@@ -226,21 +227,12 @@ const unreadTabs = {
     //} catch(e) {}
   },
 
-  checkCachedSessionDataExpiration : function(aTab) {
-    var data = aTab.linkedBrowser.__SS_data; // Firefox 3.6-
-    if (data &&
-       data._tabStillLoading &&
-       aTab.getAttribute('busy') != 'true')
-      data._tabStillLoading = false;
-  },
-
   // タブの状態をセッションデータに保存
-  saveUnreadForTab: function (aTab){
+  saveUnreadForTab: function (aTab) {
     if (aTab.hasAttribute("unreadTab"))
       this.ss.setTabValue(aTab, "unreadTab", "true");
     else {
       //try {
-        this.checkCachedSessionDataExpiration(aTab);
         this.ss.deleteTabValue(aTab, "unreadTab");
       //} catch(e) {}
     }
@@ -264,15 +256,12 @@ const unreadTabs = {
     if (aTab.hasAttribute('md5'))
       this.ss.setTabValue(aTab, "md5", aTab.getAttribute('md5'));
     else {
-      this.checkCachedSessionDataExpiration(aTab);
       this.ss.deleteTabValue(aTab, "md5");
     }
   },
 
   // タブのMD5をセッションデータから復元
   restoreMD5ForTab: function(aTab){
-    if (aTab.hasAttribute('pending') || aTab.hasAttribute('busy'))
-      return;
     if (!this.CHECK_MD5)
       return;
     var retrievedData = this.ss.getTabValue(aTab, "md5");
@@ -287,14 +276,12 @@ const unreadTabs = {
 //window.userChrome_js.debug("setUnreadForTab");
     aTab.setAttribute('unreadTab', true);
     this.saveUnreadForTab(aTab);
-    this.saveMD5ForTab(aTab);
   },
 
   setReadForTab: function(aTab){
 //window.userChrome_js.debug("setReadForTab");
     aTab.removeAttribute('unreadTab');
     this.saveUnreadForTab(aTab);
-    this.saveMD5ForTab(aTab);
   },
 
   toggleUnreadSelectedTabs: function(){
@@ -353,7 +340,6 @@ const unreadTabs = {
       case 'TabClose':
         this.uninitTab(event.target);
         this.saveUnreadForTab(event.target);
-        this.saveMD5ForTab(event.target);
         break;
       case 'SSTabRestoring':
         event.target.setAttribute('unreadTabs-restoring', true)
@@ -449,26 +435,25 @@ const unreadTabs_getContentMD5 = {
 
         let doc = event.originalTarget;
         let win = doc.defaultView;
-        if (doc.location.href == "about:blank")
-          return;
         if (!(doc instanceof win.HTMLDocument))
+          return;
+        if (doc.location.href == "about:blank")
           return;
         
         if (win.frameElement)
           return;
 
-        sendSyncMessage("unreadTabs_ContentMD5",
+        sendAsyncMessage("unreadTabs_ContentMD5",
         {
           details : "MD5",
           MD5: calMD5(doc)
+        },
+        {
+           target : event.target
         });
       }
       
       function calMD5(aDocument) {
-        let win = aDocument.defaultView;
-        if (win.frameElement)
-          return "";
-
         return calculateHashFromStr(getTextContentForDoc(aDocument)).toString();
       }
       function getTextContentForDoc(aDocument) {
@@ -548,33 +533,34 @@ const unreadTabs_getContentMD5 = {
     let browser = message.target;
     if (!browser)
       return;
-    let md5 = null;
+
+
+    for (let i = 0; i < gBrowser.tabs.length; i++) {
+      if (gBrowser.getBrowserAtIndex(i) == browser) {
+        Services.console.logStringMessage("tab:"+ i + " md5:"+ message.data.MD5);
+        break;
+      }
+    }
+
+      
     let aTab = gBrowser.getTabForBrowser(browser);
     if (!aTab)
       return;
       
-    var prevmd5 = null;
-    if (unreadTabs.CHECK_MD5 && !aTab.hasAttribute('pending')) {
+    let md5 = null;
+    let prevmd5 = null;
+    if (unreadTabs.CHECK_MD5) {
       md5 = message.data.MD5;
-      if (aTab.hasAttribute('md5')) {
-        prevmd5 = aTab.getAttribute('md5');
-      }
+      prevmd5 = unreadTabs.ss.getTabValue(aTab, "md5");
       aTab.setAttribute('md5', md5);
+      unreadTabs.saveMD5ForTab(aTab);
     }
 
     // コンテントを読み込んだのが前面のタブなら既読にセット
     if (aTab.selected) {
         aTab.removeAttribute('unreadTabs-restoring')
-      if (!aTab.hasAttribute('unreadTab'))
-        return;
-      unreadTabs.setReadForTab(aTab);
-      return;
-    }
-
-    // タブの復元中なら何もしない
-    if (aTab.hasAttribute('unreadTabs-restoring')) {
-      //aTab.removeAttribute('unreadTabs-restoring')
-      return;
+       unreadTabs.setReadForTab(aTab);
+     return;
     }
 
     // コンテントを読み込んだのが背面のタブなら未読にセット
@@ -584,5 +570,4 @@ const unreadTabs_getContentMD5 = {
   }
 }
 
-if (unreadTabs.CONTENT_LOAD)
-  unreadTabs_getContentMD5.init();
+unreadTabs_getContentMD5.init();
