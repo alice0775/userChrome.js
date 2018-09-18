@@ -6,6 +6,8 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  56+
+// @version        2018/09/17 16:00 remove logging, change pending color/style
+// @version        2018/09/17 06:00 add twitter, treeherder, remove ldr
 // @version        2018/09/17 06:00 some fix
 // @version        2018/09/16 22:00 e10s
 // @version        2018/05/06 12:00 treat pending tab
@@ -46,12 +48,12 @@ const unreadTabs = {
   READ_TIMER: 600,        // タブが選択されてから READ_TIMER(msec)後には強制既読とする
 
   PENDING_COLOR: 'gray',   // unloadedタブの文字色
-  PENDING_STYLE: 'italic', // unloadedのタブの文スタイル
+  PENDING_STYLE: 'normal', // unloadedのタブの文スタイル
   UNREAD_COLOR: 'red',    // 未読のタブの文字色
   UNREAD_STYLE: 'italic', // 未読のタブの文スタイル
   LOADING_COLOR:'blue',   // 読み込み中のタブの文字色
   LOADING_STYLE:'normal', // 読み込み中のタブの文スタイル
-  WATCHURLS: /mail\.yahoo\.co\.jp|reader\.livedoor\.com\/reader/  , // タブのラベル変更のチェックするURL正規表現
+  WATCHURLS: /mail\.yahoo\.co\.jp|twitter.\com/  , // タブのラベル変更のチェックするURL正規表現
   // -- config --
 
   ss: {
@@ -316,7 +318,8 @@ const unreadTabs = {
 
     this._timer = setTimeout(function(self, aTab){
       //try {
-        self.setReadForTab(aTab);
+        if (aTab.selected)
+          self.setReadForTab(aTab);
       //} catch(e) {}
     }, Math.max(this.READ_TIMER - ((new Date()).getTime()-Start), 0), this, aTab);
   },
@@ -429,7 +432,7 @@ unreadTabsEventListener.prototype = {
 const unreadTabs_getContentMD5 = {
   init: function() {
     
-    function frameScript() {
+    function frameScript(CHECK_MD5) {
       function load(event) {
         /*Services.console.logStringMessage("Send to chrome: unreadTabs_ContentMD5\n" + content.document.location.href);*/
 
@@ -446,7 +449,7 @@ const unreadTabs_getContentMD5 = {
         sendAsyncMessage("unreadTabs_ContentMD5",
         {
           details : "MD5",
-          MD5: calMD5(doc)
+          MD5: CHECK_MD5 ? calMD5(doc) : ""
         },
         {
            target : event.target
@@ -500,7 +503,7 @@ const unreadTabs_getContentMD5 = {
     } /* /frameScript */ 
 
     let frameScriptURI = 'data:application/javascript,'
-      + encodeURIComponent('(' + frameScript.toString() + ')()');
+      + encodeURIComponent('(' + frameScript.toString() + ')(' + unreadTabs.CHECK_MD5 + ')');
     window.messageManager.loadFrameScript(frameScriptURI, true);
 
     window.messageManager.addMessageListener("unreadTabs_ContentMD5", this);
@@ -534,15 +537,6 @@ const unreadTabs_getContentMD5 = {
     if (!browser)
       return;
 
-
-    for (let i = 0; i < gBrowser.tabs.length; i++) {
-      if (gBrowser.getBrowserAtIndex(i) == browser) {
-        Services.console.logStringMessage("tab:"+ i + " md5:"+ message.data.MD5);
-        break;
-      }
-    }
-
-      
     let aTab = gBrowser.getTabForBrowser(browser);
     if (!aTab)
       return;
@@ -569,5 +563,6 @@ const unreadTabs_getContentMD5 = {
     }
   }
 }
+
 
 unreadTabs_getContentMD5.init();
