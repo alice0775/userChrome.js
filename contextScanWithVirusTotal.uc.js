@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 56+
 // @author         Alice0775
+// @version        2018/09/20 scan with clipboard
 // @version        2018/09/18 e10s and remove overlay
 // @version        2013/09/03 open child tab if tree style tab installed
 // @version        2012/01/07
@@ -42,6 +43,7 @@ var scanWithVirusTotal = {
   },
 
   onpopupshowing: function(event) {
+    this.linkURL = this.getTextLink(readFromClipboard());
     if (gContextMenu.onLink) {
       this.linkURL = gContextMenu.linkURL;
     } else if (gContextMenu.onCanvas || gContextMenu.onImage ||
@@ -49,9 +51,6 @@ var scanWithVirusTotal = {
       this.linkURL = gContextMenu.mediaURL;
     } else if (gContextMenu.isTextSelected) {
       this.linkURL = this.getTextLink(gContextMenu.selectionInfo.fullText);
-    }
-    if (!this.linkURL) {
-      this.linkURL = this.getTextLink(readFromClipboard());
     }
     let menuitem = document.getElementById("context-scanWithVirusTotal");
     menuitem.hidden = !this.linkURL;
