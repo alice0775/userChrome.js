@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    scan with Virus Total
 // @include        main
-// @compatibility  Firefox 23
+// @compatibility  Firefox 56+
 // @author         Alice0775
+// @version        2018/09/18 e10s and remove overlay
 // @version        2013/09/03 open child tab if tree style tab installed
 // @version        2012/01/07
 // @Note
@@ -22,22 +23,15 @@ var scanWithVirusTotal = {
   },
 
   init: function() {
-    let overlay = ' \
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
-               xmlns:html="http://www.w3.org/1999/xhtml"> \
-        <menupopup id="contentAreaContextMenu"> \
-          <menuitem id="context-scanWithVirusTotal" label="Scan with VirusTotal" \
-                    tooltip="aHTMLTooltip" \
-                    accesskey="V" \
-                    oncommand="scanWithVirusTotal.scan();" \
-                    insertbefore="context-bookmarklink"/> \
-        </menupopup> \
-      </overlay>';
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-    window.userChrome_js.loadOverlay(overlay, scanWithVirusTotal);
-  },
+    let menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("id", "context-scanWithVirusTotal");
+    menuitem.setAttribute("label", "Scan with VirusTotal");
+    menuitem.setAttribute("tooltip", "aHTMLTooltip");
+    menuitem.setAttribute("accesskey", "V");
+    menuitem.setAttribute("oncommand", "scanWithVirusTotal.scan();");
+    let ref = document.getElementById("context-bookmarklink");
+    ref.parentNode.insertBefore(menuitem, ref);
 
-  observe: function(){
     document.getElementById("contentAreaContextMenu").addEventListener("popupshowing", this, false);
     window.addEventListener("unload", this, false);
   },
@@ -48,29 +42,20 @@ var scanWithVirusTotal = {
   },
 
   onpopupshowing: function(event) {
-    this.linkURL = this.getPlainTextLink();
     if (gContextMenu.onLink) {
       this.linkURL = gContextMenu.linkURL;
     } else if (gContextMenu.onCanvas || gContextMenu.onImage ||
                gContextMenu.onVideo || gContextMenu.onAudio) {
       this.linkURL = gContextMenu.mediaURL;
+    } else if (gContextMenu.isTextSelected) {
+      this.linkURL = this.getTextLink(gContextMenu.selectionInfo.fullText);
+    }
+    if (!this.linkURL) {
+      this.linkURL = this.getTextLink(readFromClipboard());
     }
     let menuitem = document.getElementById("context-scanWithVirusTotal");
     menuitem.hidden = !this.linkURL;
     menuitem.setAttribute("tooltiptext", "Scan: " + this.linkURL);
-  },
-
-  getPlainTextLink: function() {
-    if (!(gContextMenu.onLink || gContextMenu.onCanvas || gContextMenu.onImage ||
-          gContextMenu.onVideo || gContextMenu.onAudio)) {
-      // Ok, we have some text, let's figure out if it looks like a URL.
-      let selection =  document.commandDispatcher.focusedWindow
-                               .getSelection();
-      let linkText = selection.toString().trim() || readFromClipboard().trim();
-      if (!!linkText)
-        return this.getTextLink(linkText);
-    }
-    return null;
   },
 
   getTextLink: function(linkText) {
