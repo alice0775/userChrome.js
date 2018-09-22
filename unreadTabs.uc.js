@@ -6,6 +6,7 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  56+
+// @version        2018/09/22 22:00 fix bug
 // @version        2018/09/17 16:00 remove logging, change pending color/style
 // @version        2018/09/17 06:00 add twitter, treeherder, remove ldr
 // @version        2018/09/17 06:00 some fix
@@ -450,9 +451,6 @@ const unreadTabs_getContentMD5 = {
         {
           details : "MD5",
           MD5: CHECK_MD5 ? calMD5(doc) : ""
-        },
-        {
-           target : event.target
         });
       }
       
@@ -507,12 +505,12 @@ const unreadTabs_getContentMD5 = {
     window.messageManager.loadFrameScript(frameScriptURI, true);
 
     window.messageManager.addMessageListener("unreadTabs_ContentMD5", this);
-    window.addEventListener('unload', unreadTabs_getContentMD5.uninit, false);
+    window.addEventListener('unload', this, false);
   },
 
   uninit: function() {
     window.messageManager.removeMessageListener("unreadTabs_ContentMD5", this);
-    window.removeEventListener('unload', unreadTabs_getContentMD5.uninit, false);
+    window.removeEventListener('unload', this, false);
   },
 
   handleEvent: function(event) {
