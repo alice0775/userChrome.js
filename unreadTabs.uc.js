@@ -6,6 +6,7 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  56+
+// @version        2018/09/23 09:00 add style pending and unread, reduce text color flickering
 // @version        2018/09/22 23:00 fix bug
 // @version        2018/09/22 22:00 fix bug
 // @version        2018/09/17 16:00 remove logging, change pending color/style
@@ -51,6 +52,8 @@ const unreadTabs = {
 
   PENDING_COLOR: 'gray',   // unloadedタブの文字色
   PENDING_STYLE: 'normal', // unloadedのタブの文スタイル
+  PENDING_UNREAD_COLOR: 'rgba(255, 0, 0, 0.6)',    // unloaded&未読のタブの文字色
+  PENDING_UNREAD_STYLE: 'normal', // unloaded&未読のタブの文スタイル
   UNREAD_COLOR: 'red',    // 未読のタブの文字色
   UNREAD_STYLE: 'italic', // 未読のタブの文スタイル
   LOADING_COLOR:'blue',   // 読み込み中のタブの文字色
@@ -94,32 +97,33 @@ const unreadTabs = {
     var style = `
     @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
       /*未読のタブの文字色*/
-      .tabbrowser-tab[unreadTab] .tab-text,
+      .tabbrowser-tab[unreadTab]:not([pending]):not([busy]) .tab-text,
       .alltabs-item[unreadTab]
       {
-        color: %UNREAD_COLOR%;
-        font-style: %UNREAD_STYLE%;
+        color: ${this.UNREAD_COLOR};
+        font-style: ${this.UNREAD_STYLE};
+      }
+      .tabbrowser-tab[unreadTab][pending]:not([busy]) .tab-text,
+      .alltabs-item[unreadTab][pending]:not([busy])
+      {
+        color: ${this.PENDING_UNREAD_COLOR};
+        font-style: ${this.PENDING_UNREAD_STYLE};
       }
       /*Pendingのタブの文字色*/
-      .tabbrowser-tab[pending] .tab-text,
-      .alltabs-item[pending]
+      .tabbrowser-tab[pending]:not([unreadTab]) .tab-text,
+      .alltabs-item[pending]:not([unreadTab])
       {
-        color: %PENDING_COLOR%;
-        font-style: %PENDING_STYLE%;
+        color: ${this.PENDING_COLOR};
+        font-style: ${this.PENDING_STYLE};
       }
       /*読み込み中のタブの文字色*/
       .tabbrowser-tab[busy] .tab-text,
       .alltabs-item[busy]
       {
-        color: %LOADING_COLOR%;
-        font-style: %LOADING_STYLE%;
-      } `.
-                  replace(/%PENDING_STYLE%/g, this.PENDING_STYLE).
-                  replace(/%PENDING_COLOR%/g, this.PENDING_COLOR).
-                  replace(/%UNREAD_STYLE%/g, this.UNREAD_STYLE).
-                  replace(/%UNREAD_COLOR%/g, this.UNREAD_COLOR).
-                  replace(/%LOADING_STYLE%/g, this.LOADING_STYLE).
-                  replace(/%LOADING_COLOR%/g, this.LOADING_COLOR).replace(/\s+/g, " ");
+        color: ${this.LOADING_COLOR};
+        font-style: ${this.LOADING_STYLE};
+      } `
+      .replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -331,6 +335,8 @@ const unreadTabs = {
   handleEvent: function(event){
     var aTab;
 //window.userChrome_js.debug(event.type);
+    if (event.type != "unload")
+      Services.console.logStringMessage(event.type + " "+ event.target._tPos);
     switch (event.type) {
       case 'unload':
         this.uninit();
@@ -340,7 +346,7 @@ const unreadTabs = {
         break;
       case 'TabOpen':
         this.initTab(event.target);
-        this.setUnreadForTab(event.target);
+        //this.setUnreadForTab(event.target);
         break;
       case 'TabClose':
         this.uninitTab(event.target);
@@ -354,8 +360,8 @@ const unreadTabs = {
       case 'SSTabRestored':
         this.initTab(event.target);
         event.target.removeAttribute('unreadTabs-restoring')
-        this.restoreUnreadForTab(event.target);
-        this.restoreMD5ForTab(event.target);
+        //this.restoreUnreadForTab(event.target);
+        //this.restoreMD5ForTab(event.target);
         break;
     }
   }
