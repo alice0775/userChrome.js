@@ -6,6 +6,7 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  56+
+// @version        2018/09/22 23:00 fix bug
 // @version        2018/09/22 22:00 fix bug
 // @version        2018/09/17 16:00 remove logging, change pending color/style
 // @version        2018/09/17 06:00 add twitter, treeherder, remove ldr
@@ -194,9 +195,9 @@ const unreadTabs = {
     gBrowser.tabContainer.removeEventListener('SSTabRestored', this, false);
 
     // タブのイベントリスナを削除
-    for (var i = 0; i < gBrowser.mTabs.length; i++) {
+    for (var i = 0; i < gBrowser.tabs.length; i++) {
       try {
-        gBrowser.mTabs[i].unreadTabsEventListener.destroy();
+        gBrowser.tabs[i].unreadTabsEventListener.destroy();
       } catch(e) {}
     }
   },
@@ -300,8 +301,8 @@ const unreadTabs = {
   },
 
   removeUnreadForAllTabs: function(){
-    for (var i= 0; i < gBrowser.mTabs.length; i++) {
-      var aTab = gBrowser.mTabs[i];
+    for (var i= 0; i < gBrowser.tabs.length; i++) {
+      var aTab = gBrowser.tabs[i];
       if (!aTab.hasAttribute('busy') &&
           aTab.hasAttribute('unreadTab'))
         this.setReadForTab(aTab);
