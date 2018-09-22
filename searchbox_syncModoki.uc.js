@@ -3,6 +3,7 @@
 // @description  Synchronize the searchbox content ウェブで検索をした際に検索バーに検索語句を取り込む
 // @charset      utf-8
 // @include      main
+// @version		   2018/09/23 remove some regexp, add duckduckgo and ecosia
 // @version		   2018/09/22
 // ==/UserScript==
 
@@ -14,22 +15,27 @@ let searchboxsync = {
   //urlに対する語句の正規表現(RegExp.lastParen にマッチする物を検索語句と見なす)
   rules: 
   [
-  "^http[s]?://search\.yahoo\.([a-z]+\.?)+/.*[?&]p=([^&]+)",
-  "^http[s]?://([^.]+\.)?youtube\.([a-z]+\.?)+.*[?&]search_query=([^&]+)",
-  "^http[s]?://.+\.wikipedia\.org/wiki/([^&?#]*)", /*wikipedia*/
-  "^http[s]?://(www\.)?amazon\.([a-z]+\.?)+/s/.*field-keywords=([^&]+)", /*amazon*/
-  "^http[s]?://kakaku\.com/search_results/(.*query=)?([^/&]+)",
-  "^http[s]?://kakaku\.com/search_results/([^/]+)", /*価格com*/
-  "^http[s]?://search\.rakuten\.co\.jp/search/mall/([^/&?]+)", /*楽天*/
-  "^http[s]?://recipe\.rakuten\.co\.jp/search/([^/&?]+)", /*楽天レシピ*/
-  "^http[s]?://[^/]*\.rakuten\.co\.jp/.*[&?]sitem=([^&]+)",
-  "^http[s]?://cookpad\.com/search/([^/&?]+)", /*クックパッド*/
+  "^http[s]?://www\.google\.(co\.jp|com)/search.*[?&]q=([^&]*)",  /*google*/
+  "^http[s]?://search\.yahoo\.([a-z]+\.?)+/.*[?&]p=([^&]+)", /*yahoo*/
+  "https://www\.ecosia\.org/search.*[?&]q=([^&]*)", /*ecosia*/
+  "https://www\.bing\.com/search.*[?&]q=([^&]*)", /*bing*/
+  "https://duckduckgo\.com/.*[?&]q=([^&]*)", /*duckduckgo*/
+  /*"^http[s]?://([^.]+\.)?youtube\.([a-z]+\.?)+.*[?&]search_query=([^&]+)",*/ /*youtube*/
+  /*"^http[s]?://.+\.wikipedia\.org/wiki/([^&?#]*)",*/ /*wikipedia*/
+  /*"^http[s]?://(www\.)?amazon\.([a-z]+\.?)+/s/.*field-keywords=([^&]+)",*/ /*amazon*/
+  /*"^http[s]?://kakaku\.com/search_results/(.*query=)?([^/&]+)",*/
+  /*"^http[s]?://kakaku\.com/search_results/([^/]+)",*/ /*価格com*/
+  /*"^http[s]?://search\.rakuten\.co\.jp/search/mall/([^/&?]+)", /*楽天*/
+  /*"^http[s]?://recipe\.rakuten\.co\.jp/search/([^/&?]+)",*/ /*楽天レシピ*/
+  /*"^http[s]?://[^/]*\.rakuten\.co\.jp/.*[&?]sitem=([^&]+)",*/
+  /*"^http[s]?://cookpad\.com/search/([^/&?]+)",*/ /*クックパッド*/
   "^http[s]?://.+\.goo\..+\?.*MT=([^&]+)", /*goo*/
   "^http[s]?://dictionary\.goo\.ne\.jp/srch/[^/]*/(.*)/m0u/", /*goo辞書*/
   "^http[s]?://bugzilla\.mozilla\.org/buglist\.cgi[?]quicksearch=([^&]+)",
   "^http[s]?://bugzilla\.mozilla\.org/buglist\.cgi[?]short_desc=([^&]+)",
-  "[#&?]q=([^&]*)",
-  "[#&?]word=([^&]*)",
+  "^http[s]?://searchfox\.org/.*[?&]q=([^&]*)",
+  /*"[#&?]q=([^&]*)",*/
+  /*"[#&?]word=([^&]*)",*/
   ],
 
   // ==/config==
