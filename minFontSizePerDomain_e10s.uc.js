@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60+
 // @author         Alice0775
+// @version        2018/09/23 01:00 fix bug take 2
 // @version        2018/09/23 01:00 fix bug
 // @version        2018/09/21 19:00 remove loadoverlay. And change ProgressListener to TabsProgressListener
 // @version        2014/10/15 12:00 36
@@ -42,7 +43,7 @@ var minFontSizePerDomain = {
         break;
       case "TabSelect":
         // mmm
-        this.setMinFontSize(event.target);
+        this.setMinFontSize(gBrowser.getBrowserForTab(event.target));
         break;
     }
   },
