@@ -1,31 +1,40 @@
 // ==UserScript==
 // @name           workaround_window_gap.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    TEST: workaround, window gaps(left/right edge) when restoring previous sessions. And workaround, browser size increases every restart if quit browser in maximized mode.
+// @description    workaround, Bug 1489439 window gaps(left/right edge) when restoring previous sessions
+// @description    workaround, Bug 1493472 Firefox not remembering window position in windows 10
 // @include        main
 // @compatibility  Firefox 62, 63beta, 64a1
+// @version        2018/09/24 07:00 add workaround Bug 1493472
+// @version        2018/09/24 07:00 remove workaround bug 1489852
 // @version        2018/09/09 22:00
 // @version        2018/09/01 19:00
 // ==/UserScript==
 
 var noWindowGap = {
   //--configure--
+  // workaround bug 1493472
+  TOP_BORDER_WIDTH : 3, // ?? Adjust according to the environment
   // workaround bug 1489439
   BORDER_WIDTH : 8, // ?? Adjust according to the environment
-
+  /*
   // workaround bug 1489852
   ADJUST_WIDTH : 16,  // ?? 2*BORDER_WIDTH   Adjust according to the environment 
   ADJUST_HEIGHT : 39, // ?? 2*BORDER_WIDTH+13    Adjust according to the environment
+  */
   //--/configure--
 
   NEED_RESIZE: false,
   
   init : function () {
     this.moveWindow(); // initial
+    /* bug 1489852 was already fixed
     if (Services.appinfo.version.split(".")[0] >= 61 &&
+        Services.appinfo.version.split(".")[0] <= 62 &&
         window.windowState == window.STATE_MAXIMIZED) {
       this.NEED_RESIZE = !window.opener ? true : window.opener.noWindowGap.NEED_RESIZE;
     }
+    */
     // xxx todo: Use something else instead of SSTabRestoring
     gBrowser.tabContainer.addEventListener('SSTabRestoring', this, false);
     window.addEventListener('resize', this, false);
@@ -59,6 +68,13 @@ var noWindowGap = {
       if (window.screen.availWidth <= xr && xr < window.screen.availWidth + this.BORDER_WIDTH) {
         window.moveTo(window.screen.availWidth - window.outerWidth + this.BORDER_WIDTH, y);
       }
+
+
+      // workaround Bug 1493472
+      if (-this.BORDER_WIDTH < y && y <= 0) {
+        window.moveTo(x, -3);
+      }
+
     }
   }
 }
