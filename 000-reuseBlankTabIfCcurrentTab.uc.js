@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/09/23 23:30 fix variable name
 // @version        2018/09/23 23:00 check tab busy flag
 // @version        2018/09/23 16:00 
 // ==/UserScript==
@@ -13,8 +14,8 @@ if (window.openLinkIn && !/reuseBlankTabIfCcurrentTab_org/.test(window.openLinkI
   window.openLinkIn_reuseBlankTabIfCcurrentTab_org = window.openLinkIn;
   window.openLinkIn = function(url, where, params) {
     var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
-    let url = mainWindow.gBrowser.webNavigation.currentURI.spec;
-    if ((url == "about:blank" /*|| url == "about:home"*/ || url == "about:newtab")
+    let url_000 = mainWindow.gBrowser.webNavigation.currentURI.spec;
+    if ((url_000 == "about:blank" /*|| url_000 == "about:home"*/ || url_000 == "about:newtab")
       && !mainWindow.gBrowser.selectedTab.hasAttribute("busy")
       && (where == "tab" || where == "tabshifted")) {
       where  = "current";
@@ -35,8 +36,8 @@ if (window.gBrowser && !/reuseBlankTabIfCcurrentTab_org/.test(window.gBrowser.lo
       userContextId,
     }){
     var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
-    let url = mainWindow.gBrowser.webNavigation.currentURI.spec;
-    if ((url == "about:blank" /*|| url == "about:home"*/ ||  url == "about:newtab")
+    let url_000 = mainWindow.gBrowser.webNavigation.currentURI.spec;
+    if ((url_000 == "about:blank" /*|| url_000 == "about:home"*/ ||  url_000 == "about:newtab")
        && !mainWindow.gBrowser.selectedTab.hasAttribute("busy")) {
       replace  = true;
     }
