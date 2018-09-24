@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 38
 // @author         Alice0775
+// @version        2018/09/24 23:00 Fix warning from nsIBrowserSearchService
 // @version        2018/07*20 23:00 Fix change option > search
 // @version        2017/11/17 02:00 Fx57
 // @version        2015/09/08 02:00 Bug 827546
@@ -12,7 +13,11 @@
 var searchengineicon = {
 
   init: function() {
-    this.toggleImage();
+    Services.search.init(rv => {
+      if (Components.isSuccessCode(rv)) {
+        this.toggleImage();
+      }
+    });
 
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
@@ -29,6 +34,8 @@ var searchengineicon = {
   
   toggleImage: function() {
       var searchbar = window.document.getElementById("searchbar");
+      if (!searchbar)
+        return;
       var searchbutton = window.document.getAnonymousElementByAttribute(searchbar, "class", "searchbar-search-icon");
       var uri = Services.search.currentEngine.iconURI.spec;
       //var icon = PlacesUtils.getImageURLForResolution(window, uri);
