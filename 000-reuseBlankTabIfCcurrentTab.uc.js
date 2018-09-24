@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/09/24 22:30 fix conflict with other eval, use isTabEmpty()
 // @version        2018/09/23 23:30 fix variable name
 // @version        2018/09/23 23:00 check tab busy flag
 // @version        2018/09/23 16:00 
@@ -14,42 +15,29 @@ if (window.openLinkIn && !/reuseBlankTabIfCcurrentTab_org/.test(window.openLinkI
   window.openLinkIn_reuseBlankTabIfCcurrentTab_org = window.openLinkIn;
   window.openLinkIn = function(url, where, params) {
     var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
-    let url_000 = mainWindow.gBrowser.webNavigation.currentURI.spec;
-    if ((url_000 == "about:blank" /*|| url_000 == "about:home"*/ || url_000 == "about:newtab")
-      && !mainWindow.gBrowser.selectedTab.hasAttribute("busy")
-      && (where == "tab" || where == "tabshifted")) {
+    if (mainWindow.isTabEmpty(mainWindow.gBrowser.selectedTab)
+      && (where == "tab" || where == "tabshifted")
+      && !mainWindow.isBlankPageURL(url)) {
       where  = "current";
+      Services.console.logStringMessage("======REUSE EMPTY TAB======");
     }
-    window.openLinkIn_reuseBlankTabIfCcurrentTab_org(url, where, params);
+    openLinkIn_reuseBlankTabIfCcurrentTab_org(url, where, params);
   }
 }
-if (window.gBrowser && !/reuseBlankTabIfCcurrentTab_org/.test(window.gBrowser.loadTabs.toString())) {
-  window.gBrowser.loadTabs_reuseBlankTabIfCcurrentTab_org = window.gBrowser.loadTabs;
-  gBrowser.loadTabs = function (aURIs, {
-      allowThirdPartyFixup,
-      inBackground,
-      newIndex,
-      postDatas,
-      replace,
-      targetTab,
-      triggeringPrincipal,
-      userContextId,
-    }){
-    var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
-    let url_000 = mainWindow.gBrowser.webNavigation.currentURI.spec;
-    if ((url_000 == "about:blank" /*|| url_000 == "about:home"*/ ||  url_000 == "about:newtab")
-       && !mainWindow.gBrowser.selectedTab.hasAttribute("busy")) {
-      replace  = true;
+
+if (location.href == "chrome://browser/content/browser.xul") {
+  let func;
+  if (gBrowser && !/reuseBlankTabIfCcurrentTab/.test(gBrowser.loadTabs.toString())) {
+    func =  gBrowser.loadTabs.toString();
+    if (!/justCreated/.test(func)) {
+      func = func.replace('if (!aURIs.length) {',
+                          `if (isTabEmpty(gBrowser.selectedTab)) {
+                             /*reuseBlankTabIfCcurrentTab*/
+                             replace  = true;
+                           }
+                           $&`
+                         );
+      eval("gBrowser.loadTabs = function " + func.replace(/^function/, ''));
     }
-    gBrowser.loadTabs_reuseBlankTabIfCcurrentTab_org(aURIs, {
-      allowThirdPartyFixup,
-      inBackground,
-      newIndex,
-      postDatas,
-      replace,
-      targetTab,
-      triggeringPrincipal,
-      userContextId,
-    })
   }
 }
