@@ -2,6 +2,7 @@
 // @name           ZZZ_tabContextMenu_combining_tabProtect_and_tabLock.uc.js
 // @description    Tab context menu combining tabProtect and tabLock
 // @include        main
+// @version        2018/09/25 22:30 reduce cpu
 // @version        2018/09/25 21:30 working with tab multi selection, add config hide individual menu
 // @version        2018/07/23
 // @note           require tabLock_mod2.uc.js and tabProtect_mod2.uc.js
@@ -59,12 +60,12 @@ const tabLockProtect = {
       tabLock.toggle(aTab);
       tabProtect.toggle(aTab);
     } else if(gBrowser.isProtectTab(aTab)) {
-      tabProtect.toggle(aTab);
+      gBrowser.protectTab(aTab, false);
       //fallback
       tabLock.toggle(aTab);
       tabProtect.toggle(aTab);
     } else {
-      tabLock.toggle(aTab);
+      gBrowser.lockTab(aTab, false);
       //fallback
       tabLock.toggle(aTab);
       tabProtect.toggle(aTab);
