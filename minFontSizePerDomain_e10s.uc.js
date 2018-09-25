@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60+
 // @author         Alice0775
+// @version        2018/09/25 19:00 add menu "Default" and 0
 // @version        2018/09/23 01:00 fix bug take 2
 // @version        2018/09/23 01:00 fix bug
 // @version        2018/09/21 19:00 remove loadoverlay. And change ProgressListener to TabsProgressListener
@@ -50,6 +51,8 @@ var minFontSizePerDomain = {
 
   init: function() {
     minFontSizePerDomain_storage.initDB();
+    this.ioService = Cc["@mozilla.org/network/io-service;1"]
+                      .getService(Ci.nsIIOService);
 
     // cache to minimize accessing sqlite db
     this.initCache();
@@ -111,13 +114,18 @@ var minFontSizePerDomain = {
     return this.defaultMinSize;
   },
 
+  /*
+  return null if error
+  return defaultMinSize if url is not match DB/SITEINFO
+  return minFontSize
+  */
   getMinFontSize: function(aURI) {
     try {
       if (!/https?|ftp|file/.test(aURI.scheme)) {
-        return 0;
+        return null;
       }
     } catch(e) {
-      return 0;
+      return null;
     }
 
     try {
@@ -127,7 +135,7 @@ var minFontSizePerDomain = {
           let tmp = aURI.spec.split('/');
           tmp.pop();
           url = tmp.join('/');
-          url = ioService.newURI(url, null, null).spec;
+          url = this.ioService.newURI(url, null, null).spec;
         }
       }
     } catch(e) {
@@ -157,10 +165,16 @@ var minFontSizePerDomain = {
   setMinFontSize: function(browser) {
     if (!browser.currentURI)
       return;
-    let minFontSize = this.getMinFontSize(browser.currentURI);
-    if (!minFontSize)
-      return
 
+    let minFontSize = this.getMinFontSize(browser.currentURI);
+    // error (not https?|ftp|file or not valid url)
+    if (minFontSize == null)
+      minFontSize = 0;
+    // fall back
+    if (minFontSize < 0)
+      minFontSize = 0;
+
+    //userChrome_js.debug(minFontSize);
     if (!browser.getAttribute("remote"))
       browser.markupDocumentViewer.minFontSize = Math.floor(minFontSize / 0.016674);
     else
@@ -253,6 +267,11 @@ var minFontSizePerDomain_storage = {
   },
 
   insertSizeByUrl: function(url, minFontSize) {
+    if (typeof url != "string" || !url)
+      return;
+    if (typeof minFontSize != "number")
+      return;
+    
     let stmt = this.db.createStatement(
       "INSERT INTO minFontSize (url, size) VALUES (:url, :size)"
     );
@@ -266,6 +285,11 @@ var minFontSizePerDomain_storage = {
   },
 
   updateSizeByUrl: function(url, minFontSize) {
+    if (typeof url != "string" || !url)
+      return;
+    if (typeof minFontSize != "number")
+      return;
+
     let stmt = this.db.createStatement(
       "UPDATE minFontSize SET size = :size WHERE url = :url"
     );
@@ -279,6 +303,9 @@ var minFontSizePerDomain_storage = {
   },
 
   deleteByUrl: function(url) {
+    if (typeof url != "string" || !url)
+      return;
+
     let stmt = this.db.createStatement(
       "DELETE FROM minFontSize WHERE url = :url"
     );
@@ -360,7 +387,9 @@ var minFontSizePerDomain_menu = {
 
   init :function() {
     minFontSizePerDomain.init();
-    
+    this.ioService = Cc["@mozilla.org/network/io-service;1"]
+                      .getService(Ci.nsIIOService);
+
     let template = 
         ["menu", {id: "minFontSizePerDomain", label: "Minimum Font Size", accesskey:"M"},
           ["menupopup", {id :"minFontSizePerDomainMenupopup",
@@ -421,8 +450,16 @@ var minFontSizePerDomain_menu = {
                           id: "minFontSizePerDomain9", label: "9",
                           oncommand: "minFontSizePerDomain_menu.setSize(9);",
                           accesskey:"9"}],
+            ["menuitem", {type: "radio", name: "minFontSizePerDomain",
+                          id: "minFontSizePerDomain0", label: "0",
+                          oncommand: "minFontSizePerDomain_menu.setSize(0);",
+                          accesskey:"z"}],
             ["menuseparator",  {id: "minFontSizePerDomainMenuseparator2"}],
-            ["menuitem", {id:"minFontSizePerDomainDefault", label:"Change Default",
+            ["menuitem", {type: "radio", name: "minFontSizePerDomain",
+                          id: "minFontSizePerDomainnDefault", label: "Default",
+                          oncommand: "minFontSizePerDomain_menu.setSize(minFontSizePerDomain.defaultMinSize);",
+                          accesskey:"u"}],
+            ["menuitem", {id:"minFontSizePerDomainChangeDefault", label:"Change Default",
                           oncommand: "minFontSizePerDomain_menu.changeDefaultSize();",
                           accesskey: "t"}]
           ]
@@ -446,7 +483,7 @@ var minFontSizePerDomain_menu = {
           let tmp = gBrowser.currentURI.spec.split('/');
           tmp.pop();
           url = tmp.join('/');
-          url = encodeURIComponent(ioService.newURI(url, null, null).spec);
+          url = encodeURIComponent(this.ioService.newURI(url, null, null).spec);
         }
       }
     } catch(e) {
@@ -454,7 +491,8 @@ var minFontSizePerDomain_menu = {
     }
 
     minFontSizePerDomain.aUrlMinSize[url] = val;
-    if (val == 0) {
+    if (val == null || val == minFontSizePerDomain.defaultMinSize) {
+      // delete DB, use default
       delete minFontSizePerDomain.aUrlMinSize[url];
       minFontSizePerDomain_storage.deleteByUrl(url);
     } else
