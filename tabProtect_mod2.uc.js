@@ -3,11 +3,12 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    tabProtect
 // @include        main
+// @exclude        about:*
 // @author         Alice0775
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
-// @compatibility  62
-// @version        2018/09/01 19:00 removed unneccesary class name
+// @compatibility  60
+// @version        2018/09/25 21:30 working with tab multi selection
 // @version        2018/06/21 19:50 workaround regression
 // @version        2018/06/21 19:40 fix restore session if *.restore_on_demand is enabled
 // @version        2018/06/10 00:00 workaround restore session
@@ -97,9 +98,9 @@ var tabProtect = {
     };
 
     this.restoreAll(0);
-    gBrowser.tabContainer.addEventListener('TabMove', tabProtect.TabMove, false);
-    gBrowser.tabContainer.addEventListener('SSTabRestoring', tabProtect.restore,false);
-    window.addEventListener('unload',function(){ tabProtect.uninit();},false)
+    gBrowser.tabContainer.addEventListener('TabMove', this, false);
+    gBrowser.tabContainer.addEventListener('SSTabRestoring', this, false);
+    window.addEventListener('unload', this, false)
 
   },
 
@@ -118,11 +119,29 @@ var tabProtect = {
   },
 
   uninit: function(){
-    window.removeEventListener('unload',function(){ tabProtect.uninit();},false)
-    gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabProtect.restore,false);
-    gBrowser.tabContainer.removeEventListener('TabMove', tabProtect.TabMove, false);
+    window.removeEventListener('unload', this, false)
+    gBrowser.tabContainer.removeEventListener('SSTabRestoring', this, false);
+    gBrowser.tabContainer.removeEventListener('TabMove', this, false);
+    gBrowser.tabContainer.contextMenu.removeEventListener('popupshowing', this, false);
+
   },
 
+  handleEvent: function(event) {
+    switch(event.type) {
+      case "unload":
+        this.uninit(event);
+        break;
+      case "SSTabRestoring":
+        this.restore(event);
+        break;
+      case "TabMove":
+        this.TabMove(event);
+        break;
+      case "popupshowing":
+        this.popupshowing(event);
+        break;
+    }
+  },
 
   TabMove: function(aEvent){
     var aTab = aEvent.target;
@@ -137,10 +156,17 @@ var tabProtect = {
                         document.createElement("menuitem"));
     menuitem.id = "tabProtect";
     menuitem.setAttribute("type", "checkbox");
-    menuitem.setAttribute("label", "Protect This Tab");
+    if (Services.appinfo.version.split(".")[0] >= 63)
+      menuitem.setAttribute("label", "Protect This Tab(s)");
+    else
+      menuitem.setAttribute("label", "Protect This Tab");
     menuitem.setAttribute("accesskey", "P");
-    menuitem.setAttribute("oncommand","tabProtect.toggle(event);");
-    tabContext.addEventListener('popupshowing',function(event){tabProtect.setCheckbox(event);},false);
+    menuitem.setAttribute("oncommand","tabProtect.toggle(TabContextMenu.contextTab);");
+    tabContext.addEventListener('popupshowing', this, false);
+  },
+
+  popupshowing: function(event) {
+    this.setCheckbox(event);
   },
 
   restore: function(event){
@@ -158,18 +184,34 @@ var tabProtect = {
     gBrowser.protectTabIcon(aTab);
   },
 
-  toggle: function(event){
-    var aTab = TabContextMenu.contextTab;
-    if( !aTab || aTab.localName !='tab') return;
-    gBrowser.protectTab(aTab);
+  toggle: function(aTab){
+    if (typeof gBrowser.selectedTabs != "undefined") {
+      this.toggleProtectSelectedTabs(this.getSelectedTabs(aTab));
+    } else {
+      gBrowser.protectTab(aTab);
+    }
   },
 
-  toggleProtectSelectedTabs: function(){
-    var tabs = MultipleTabService.getSelectedTabs();
-    gBrowser.protectTab(tabs[0]);
-    for (var i= 1; i < tabs.length; i++){
-        gBrowser.protectTab(tabs[i]);
+  toggleProtectSelectedTabs: function(tabs){
+    if (tabs.length < 1)
+      return;
+    let isProtect = gBrowser.isProtectTab(tabs[0]);
+    for (let tab of tabs) {
+        gBrowser.protectTab(tab, !isProtect);
     }
+  },
+
+  getSelectedTabs: function(aTab){
+    let contextTab = aTab;
+    let selectedTabs = [contextTab];
+    if (gBrowser.selectedTabs.indexOf(contextTab) < 0)
+      return selectedTabs;
+
+    for (let tab of gBrowser.selectedTabs) {
+      if (contextTab != tab)
+        selectedTabs.push(tab);
+    }
+    return selectedTabs;
   },
 
   setCheckbox: function(event){
@@ -187,53 +229,63 @@ var tabProtect = {
     }
   }
 }
-if(!('TM_init' in window)) {
-  gBrowser.isProtectTab = function (aTab){
-    return aTab.hasAttribute("tabProtect");
-  }
 
-  gBrowser.protectTab = function (aTab){
+gBrowser.isProtectTab = function (aTab){
+  return aTab.hasAttribute("tabProtect");
+}
+
+gBrowser.protectTab = function (aTab, state) {
+  let isProtected;
+  if (typeof state == "undefined") {
     if ( aTab.hasAttribute("tabProtect") ){
-      aTab.removeAttribute("tabProtect");
-      try {
-        tabProtect.sessionStore.deleteTabValue(aTab, "tabProtect");
-      } catch(e) {}
-      var isProtected = false;
+      state = false;
     } else {
-      aTab.setAttribute("tabProtect", "true");
-      tabProtect.sessionStore.setTabValue(aTab, "tabProtect", "true");
-      var isProtected = true;
+      state = true;
     }
-    this.protectTabIcon(aTab);
-    return isProtected;
   }
+  if (state) {
+    aTab.setAttribute("tabProtect", "true");
+    tabProtect.sessionStore.setTabValue(aTab, "tabProtect", "true");
+    isProtected = true;
+  } else {
+    aTab.removeAttribute("tabProtect");
+    try {
+      tabProtect.sessionStore.deleteTabValue(aTab, "tabProtect");
+    } catch(e) {}
+    isProtected = false;
+  }
+  this.protectTabIcon(aTab);
+  return isProtected;
+}
 
-  gBrowser.protectTabIcon = function (aTab){
-    const kXULNS =
-             "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    var closeButton = document.getAnonymousElementByAttribute(
-                    aTab, "anonid", "close-button");
-    var image = document.getAnonymousElementByAttribute(
-                             aTab, "class", "tab-icon-protect");
-    if ( aTab.hasAttribute("tabProtect") ){
-      closeButton.setAttribute('hidden',true);
-      if(!image){
-        var stack = document.getAnonymousElementByAttribute(
-                               aTab, "class", "tab-stack");
-        var image = document.createElementNS(kXULNS,'image');
-        image.setAttribute('class','tab-icon-protect');
-        image.setAttribute('left',0);
-        image.setAttribute('top',0);
-        if(stack) stack.appendChild(image);
-      }
-      image.removeAttribute('hidden');
-    }else{
-      closeButton.setAttribute('hidden',false);
-      if(image){
-        image.setAttribute('hidden', true);
-      }
+gBrowser.protectTabIcon = function (aTab){
+  const kXULNS =
+           "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+  var closeButton = document.getAnonymousElementByAttribute(
+                  aTab, "anonid", "close-button");
+  var image = document.getAnonymousElementByAttribute(
+                           aTab, "class", "tab-icon-protect");
+  if ( aTab.hasAttribute("tabProtect") ){
+    closeButton.setAttribute('hidden',true);
+    if(!image){
+      var stack = document.getAnonymousElementByAttribute(
+                             aTab, "class", "tab-stack");
+      var image = document.createElementNS(kXULNS,'image');
+      image.setAttribute('class','tab-icon-protect');
+      image.setAttribute('left',0);
+      image.setAttribute('top',0);
+      if(stack) stack.appendChild(image);
     }
+    aTab.setAttribute('class',aTab.getAttribute('class')+' tabProtect');
+    image.removeAttribute('hidden');
+  }else{
+    closeButton.setAttribute('hidden',false);
+    if(image){
+      image.setAttribute('hidden', true);
+    }
+    aTab.setAttribute('class',aTab.getAttribute('class').replace(/\stabProtect/g,''));
   }
 }
 
-if(!('TM_init' in window)) tabProtect.init();
+
+tabProtect.init();

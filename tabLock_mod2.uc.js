@@ -5,8 +5,9 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
-// @compatibility  62
-// @version        2018/09/01 19:00 removed unneccesary class name
+// @compatibility  60
+// @version        2018/09/25 21:30 working with tab multi selection
+// @version        2018/09/23 12:30 use BrowserWindowTracker
 // @version        2018/08/02 12:30 exclude about:*
 // @version        2018/06/21 19:50 workaround regression
 // @version        2018/06/21 19:40 fix restore session if *.restore_on_demand is enabled
@@ -31,7 +32,7 @@ patch: {
     if (!/isLockTab/.test(window.openLinkIn.toString())) {
       window.openLinkIn_lockorg = window.openLinkIn;
       window.openLinkIn = function(url, where, params) {
-        var mainWindow = Services.wm.getMostRecentWindow("navigator:browser");
+        var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
         if (url && where  == "current" && "isLockTab" in mainWindow.gBrowser &&
             mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) &&
             !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
@@ -207,9 +208,9 @@ patch: {
       };
 
       this.restoreAll(0);
-      gBrowser.tabContainer.addEventListener('TabMove', tabLock.TabMove, false);
-      gBrowser.tabContainer.addEventListener('SSTabRestoring', tabLock.restore,false);
-      window.addEventListener('unload',function(){ tabLock.uninit();},false)
+      gBrowser.tabContainer.addEventListener('TabMove', this, false);
+      gBrowser.tabContainer.addEventListener('SSTabRestoring', this,false);
+      window.addEventListener('unload', this, false)
     },
 
     restoreAll: function(delay = 0) {
@@ -227,92 +228,26 @@ patch: {
     },
 
     uninit: function(){
-      window.removeEventListener('unload',function(){ tabLock.uninit();},false)
-      gBrowser.tabContainer.removeEventListener('drop', this.onDrop, true);
-      gBrowser.tabContainer.removeEventListener('TabMove', tabLock.TabMove, false);
-      gBrowser.tabContainer.removeEventListener('SSTabRestoring', tabLock.restore,false);
+      window.removeEventListener('unload', this, false)
+      gBrowser.tabContainer.removeEventListener('TabMove', this, false);
+      gBrowser.tabContainer.removeEventListener('SSTabRestoring', this,false);
+      gBrowser.tabContainer.contextMenu.removeEventListener('popupshowing', this, false);
     },
-/*
-     //acync to sync
-    getShortcutOrURI : function getShortcutOrURI(aURI) {
-      // Firefox 24 and older
-      if ("getShortcutOrURI" in window)
-        return getShortcutOrURI(aURI);
 
-      // Firefox 25 and later
-      var getShortcutOrURIAndPostData = window.getShortcutOrURIAndPostData;
-      var done = false;
-      Task.spawn(function() {
-        var data = yield getShortcutOrURIAndPostData(aURI);
-        aURI = data.url;
-        done = true;
-      });
-
-      // this should be rewritten in asynchronous style...
-      setTimeout(function(){done = true;}, 1000);
-      var thread = Cc['@mozilla.org/thread-manager;1'].getService().mainThread;
-      while (!done)
-      {
-        thread.processNextEvent(true);
-      }
-
-      return aURI;
-    },
-*/
-    //TAB D&D
-    onDrop: function(aEvent) {
-      function _getDropIndex(aEvent){
-        var tabs = gBrowser.tabContainer.childNodes;
-        var tab = gBrowser.tabContainer._getDragTargetTab(aEvent);
-        for (let i = tab ? tab._tPos : 0; i < tabs.length; i++)
-          if (aEvent.screenX > tabs[i].boxObject.screenX &&
-              aEvent.screenX < tabs[i].boxObject.screenX + tabs[i].boxObject.width &&
-              aEvent.screenY > tabs[i].boxObject.screenY &&
-              aEvent.screenY < tabs[i].boxObject.screenY + tabs[i].boxObject.height)
-            return i;
-        return -1;
-      }
-
-      var newIndex = _getDropIndex(aEvent);
-
-      if (newIndex >= 0 && newIndex < gBrowser.tabContainer.childNodes.length) {
-        if (gBrowser.isLockTab(gBrowser.tabContainer.childNodes[newIndex])) {
-          var dt = aEvent.dataTransfer;
-          var url;
-          for (var i=0; i < gBrowser.tabContainer._supportedLinkDropTypes.length; i++) {
-            let dataType = gBrowser.tabContainer._supportedLinkDropTypes[i];
-            // uri-list: for now, support dropping of the first URL
-            // only
-            var isURLList = dataType == "text/uri-list";
-            let urlData = isURLList ?
-                          dt.mozGetDataAt("URL", 0) : dt.mozGetDataAt(dataType, 0);
-            if (urlData) {
-              url = transferUtils.retrieveURLFromData(urlData, isURLList ? "text/plain" : dataType);
-              break;
-            }
-          }
-          NS_ASSERT(url, "In the drop event, at least one mime-type should match our supported types");
-
-          // valid urls don't contain spaces ' '; if we have a space it isn't a valid url.
-          // Also disallow dropping javascript: or data: urls--bail out
-          if (!url || !url.length || url.indexOf(" ", 0) != -1 ||
-              /^\s*(javascript:|data:|moz-extension:)/.test(url))
-            return;
-
-          // urlSecurityCheck
-          urlSecurityCheck(url, gBrowser.tabContainer.childNodes[0].linkedBrowser.contentPrincipal,
-                           Components.interfaces.nsIScriptSecurityManager.DISALLOW_INHERIT_PRINCIPAL);
-
-          var bgLoad = true;
-          try {
-            bgLoad = Services.prefs.getBoolPref("browser.tabs.loadInBackground");
-          }
-          catch (e) { }
-          aEvent.stopPropagation();
-          aEvent.preventDefault();
-          gBrowser.loadOneTab(getShortcutOrURI(url), null, null, null, bgLoad, false);
-          return;
-        }
+    handleEvent: function(event) {
+      switch(event.type) {
+        case "unload":
+          this.uninit(event);
+          break;
+        case "SSTabRestoring":
+          this.restore(event);
+          break;
+        case "TabMove":
+          this.TabMove(event);
+          break;
+        case "popupshowing":
+          this.popupshowing(event);
+          break;
       }
     },
 
@@ -329,10 +264,17 @@ patch: {
                           document.createElement("menuitem"));
       menuitem.id = "tabLock";
       menuitem.setAttribute("type", "checkbox");
-      menuitem.setAttribute("label", "Lock This Tab");
+      if (Services.appinfo.version.split(".")[0] >= 63)
+        menuitem.setAttribute("label", "Lock This Tab(s)");
+      else
+        menuitem.setAttribute("label", "Lock This Tab");
       menuitem.setAttribute("accesskey", "L");
-      menuitem.setAttribute("oncommand","tabLock.toggle(event);");
-      tabContext.addEventListener('popupshowing',function(event){tabLock.setCheckbox(event);},false);
+      menuitem.setAttribute("oncommand","tabLock.toggle(TabContextMenu.contextTab);");
+      tabContext.addEventListener('popupshowing', this, false);
+    },
+
+    popupshowing: function(event) {
+      this.setCheckbox(event);
     },
 
     restore: function(event){
@@ -348,25 +290,34 @@ patch: {
       gBrowser.lockTabIcon(aTab);
     },
 
-    toggle: function(event){
-      var aTab =  TabContextMenu.contextTab;
-      if (!aTab)
-        aTab = event.target;
-      while( aTab && aTab instanceof XULElement && aTab.localName !='tab'){
-        aTab = aTab.parentNode;
+    toggle: function(aTab){
+      if (typeof gBrowser.selectedTabs != "undefined") {
+        this.toggleLockSelectedTabs(this.getSelectedTabs(aTab));
+      } else {
+        gBrowser.lockTab(aTab);
       }
-      if( !aTab || aTab.localName !='tab') return;
-      gBrowser.lockTab(aTab);
     },
 
-    toggleLockSelectedTabs: function(){
-      var tabs = MultipleTabService.getSelectedTabs();
-      gBrowser.lockTab(tabs[0]);
-      //var isLockFirstTab = gBrowser.isLockTab(tabs[0]);
-      for (var i= 1; i < tabs.length; i++){
-        //if (isLockFirstTab != gBrowser.isLockTab(tabs[i]))
-          gBrowser.lockTab(tabs[i]);
+    toggleLockSelectedTabs: function(tabs){
+      if (tabs.length < 1)
+        return;
+      let isLock = gBrowser.isLockTab(tabs[0]);
+      for (let tab of tabs) {
+          gBrowser.lockTab(tab, !isLock);
       }
+    },
+
+    getSelectedTabs: function(aTab){
+      let contextTab = aTab;
+      let selectedTabs = [contextTab];
+      if (gBrowser.selectedTabs.indexOf(contextTab) < 0)
+        return selectedTabs;
+
+      for (let tab of gBrowser.selectedTabs) {
+        if (contextTab != tab)
+          selectedTabs.push(tab);
+      }
+      return selectedTabs;
     },
 
     setCheckbox: function(event){
@@ -451,17 +402,25 @@ patch: {
      return aTab.hasAttribute("tabLock");
   }
 
-  gBrowser.lockTab = function (aTab){
-    if ( aTab.hasAttribute("tabLock") ){
+  gBrowser.lockTab = function (aTab, state){
+    let isLocked;
+    if (typeof state == "undefined") {
+      if ( aTab.hasAttribute("tabLock") ){
+        state = false;
+      }else{
+        state = true;
+      }
+    }
+    if (state) {
+      aTab.setAttribute("tabLock", "true");
+      tabLock.sessionStore.setTabValue(aTab, "tabLock", "true");
+      isLocked = true;
+    } else {
       aTab.removeAttribute("tabLock");
       try {
         tabLock.sessionStore.deleteTabValue(aTab, "tabLock");
       } catch(e) {}
-      var isLocked = false;
-    }else{
-      aTab.setAttribute("tabLock", "true");
-      tabLock.sessionStore.setTabValue(aTab, "tabLock", "true");
-      var isLocked = true;
+      isLocked = false;
     }
     this.lockTabIcon(aTab);
     return isLocked;
@@ -483,10 +442,12 @@ patch: {
         if(stack) stack.appendChild(image);
       }
       image.removeAttribute('hidden');
+      aTab.setAttribute('class',aTab.getAttribute('class')+' tabLock');
     }else{
       if(image){
         image.setAttribute('hidden', true);
       }
+      aTab.setAttribute('class',aTab.getAttribute('class').replace(/\stabLock/g,''));
     }
   }
 
