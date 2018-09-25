@@ -8,6 +8,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  60
+// @version        2018/09/26 07:30 support tab detach
 // @version        2018/09/25 21:30 working with tab multi selection
 // @version        2018/06/21 19:50 workaround regression
 // @version        2018/06/21 19:40 fix restore session if *.restore_on_demand is enabled
@@ -102,6 +103,19 @@ var tabProtect = {
     gBrowser.tabContainer.addEventListener('SSTabRestoring', this, false);
     window.addEventListener('unload', this, false)
 
+    // detach tab
+    let func =  gBrowser.swapBrowsersAndCloseOther.toString();
+    if (gBrowser && !/copytabProtect/.test(func)) {
+      func = func.replace(
+        'if (closeWindow) {',
+        `if (aOtherTab.hasAttribute("tabProtect")) {
+           aOurTab.ownerGlobal.gBrowser.protectTab(aOurTab, true);
+           /*copytabProtect*/
+         }
+         $&`
+       );
+      eval("gBrowser.swapBrowsersAndCloseOther = function " + func.replace(/^function/, ''));
+    }
   },
 
   restoreAll: function(delay = 0) {

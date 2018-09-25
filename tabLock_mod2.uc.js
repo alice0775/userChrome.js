@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/09/26 07:30 support tab detach
 // @version        2018/09/25 21:30 working with tab multi selection
 // @version        2018/09/23 12:30 use BrowserWindowTracker
 // @version        2018/08/02 12:30 exclude about:*
@@ -85,102 +86,19 @@ patch: {
 
     init: function(){
 
-      //BrowserBack/Forward
-      window.BrowserForward_org = BrowserForward;
-      BrowserForward = function(aEvent, aIgnoreAlt){
-        try{
-          var ignoreBrowserBackForward = Services.prefs.getIntPref("userChrome.tabLock.ignoreBrowserBack_Forward");
-        }catch(ex){
-          var ignoreBrowserBackForward = tabLock.ignoreBrowserBackForward;
-        }
-        if(ignoreBrowserBackForward == 2 &&
-          (gBrowser.selectedTab.hasAttribute("locked") ||
-           typeof gBrowser.isLockTab !='undefined' && gBrowser.isLockTab(gBrowser.selectedTab))) return;
-        if(ignoreBrowserBackForward !=0 &&
-          (gBrowser.selectedTab.hasAttribute("locked") ||
-           typeof gBrowser.isLockTab !='undefined' && gBrowser.isLockTab(gBrowser.selectedTab)) ) {
-          var sessionHistory = getWebNavigation().sessionHistory;
-          var currentIndex = sessionHistory.index;
-          var entry = sessionHistory.getEntryAtIndex(currentIndex + 1, false);
-          var url = entry.URI.spec;
-          try{
-            var loadInBackground = Services.prefs.getBoolPref("browser.tabs.loadUrlInBackground");
-          }catch(ex){
-            var loadInBackground = false;
+      // detach tab
+      let func =  gBrowser.swapBrowsersAndCloseOther.toString();
+      if (gBrowser && !/copytabLock/.test(func)) {
+        func = func.replace(
+          'if (closeWindow) {',
+          `if (aOtherTab.hasAttribute("tabLock")) {
+              aOurTab.ownerGlobal.gBrowser.lockTab(aOurTab, true);
+            /*copytabLock*/
           }
-          if (ignoreBrowserBackForward == 1)
-            gBrowser.loadOneTab(url, null, null, null, loadInBackground, true);
-          return;
-        }
-        BrowserForward_org(aEvent, aIgnoreAlt);
-      };
-
-      window.BrowserBack_org = BrowserBack;
-      BrowserBack = function(aEvent, aIgnoreAlt){
-        try{
-          var ignoreBrowserBackForward = Services.prefs.getIntPref("userChrome.tabLock.ignoreBrowserBack_Forward");
-        }catch(ex){
-          var ignoreBrowserBackForward = tabLock.ignoreBrowserBackForward;
-        }
-        if(ignoreBrowserBackForward == 2 &&
-          (gBrowser.selectedTab.hasAttribute("locked") ||
-           typeof gBrowser.isLockTab !='undefined' && gBrowser.isLockTab(gBrowser.selectedTab))) return;
-        if(ignoreBrowserBackForward != 0 &&
-          (gBrowser.selectedTab.hasAttribute("locked") ||
-           typeof gBrowser.isLockTab !='undefined' && gBrowser.isLockTab(gBrowser.selectedTab)) ) {
-          var sessionHistory = getWebNavigation().sessionHistory;
-          var currentIndex = sessionHistory.index;
-          var entry = sessionHistory.getEntryAtIndex(currentIndex - 1, false);
-          var url = entry.URI.spec;
-          try{
-            var loadInBackground = Services.prefs.getBoolPref("browser.tabs.loadUrlInBackground");
-          }catch(ex){
-            var loadInBackground = false;
-          }
-          if (ignoreBrowserBackForward == 1)
-            gBrowser.loadOneTab(url, null, null, null, loadInBackground, true);
-          return;
-        }
-        BrowserBack_org(aEvent, aIgnoreAlt);
-      };
-
-      //dropDown
-      window.gotoHistoryIndex_org = gotoHistoryIndex;
-      gotoHistoryIndex = function(aEvent){
-        var index = aEvent.target.getAttribute("index");
-        if (!index)
-          return false;
-        try{
-          var ignoreBrowserBackForward = Services.prefs.getIntPref("userChrome.tabLock.ignoreBrowserBack_Forward");
-        }catch(ex){
-          var ignoreBrowserBackForward = tabLock.ignoreBrowserBackForward;
-        }
-        if(ignoreBrowserBackForward == 2 &&
-          (gBrowser.selectedTab.hasAttribute("locked") ||
-           typeof gBrowser.isLockTab !='undefined' && gBrowser.isLockTab(gBrowser.selectedTab))) return false;
-
-        if(ignoreBrowserBackForward != 0 &&
-          (gBrowser.selectedTab.hasAttribute("locked") ||
-           typeof gBrowser.isLockTab !='undefined' && gBrowser.isLockTab(gBrowser.selectedTab)) ) {
-          var where = whereToOpenLink(aEvent);
-          var sessionHistory = getWebNavigation().sessionHistory;
-          var entry = sessionHistory.getEntryAtIndex(index, false);
-          var url = entry.URI.spec;
-          try{
-            var loadInBackground = Services.prefs.getBoolPref("browser.tabs.loadUrlInBackground");
-          }catch(ex){
-            var loadInBackground = false;
-          }
-          if (ignoreBrowserBackForward == 1)
-            gBrowser.loadOneTab(url, null, null, null, loadInBackground, true);
-          return true;
-        }
-        return gotoHistoryIndex_org(aEvent);
+          $&`
+         );
+        eval("gBrowser.swapBrowsersAndCloseOther = function " + func.replace(/^function/, ''));
       }
-
-      //D&D on TAB
-      gBrowser.tabContainer.addEventListener('drop', this.onDrop, true);
-
 
       this.tabContextMenu();
 
