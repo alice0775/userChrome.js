@@ -5,6 +5,8 @@
 // @include       main
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/26 20:40 add find command (wip)
+// @version       2018/09/26 20:30 fix page scrolled when Wheel Gesture (wip)
 // @version       2018/09/26 19:10 fix author; (wip)
 // @version       2018/09/26 19:10 fix missing break; (wip)
 // @version       2018/09/26 19:00 fix statusinfo (wip)
@@ -30,6 +32,7 @@ var ucjsMouseGestures = {
   _imgSRC: "",
   _mediaSRC: "",
   _selectedTXT: "",
+  _version: "",
 
   _isMac: false,  // for Mac
 
@@ -44,7 +47,7 @@ var ucjsMouseGestures = {
   },
 
   init: function() {
-
+    this._version = Services.appinfo.version.split(".")[0];
     this._isMac = navigator.platform.indexOf("Mac") == 0;
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousedown", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousemove", this, false);
@@ -53,7 +56,7 @@ var ucjsMouseGestures = {
     if (this.enableRockerGestures)
       (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("draggesture", this, true);
     if (this.enableWheelGestures)
-      (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("DOMMouseScroll", this, false);
+      window.addEventListener('wheel', this, true);
 
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURLs_stop", this);
@@ -69,7 +72,7 @@ var ucjsMouseGestures = {
     if (this.enableRockerGestures)
       (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("draggesture", this, true);
     if (this.enableWheelGestures)
-      (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("DOMMouseScroll", this, false);
+      window.removeEventListener('wheel', this, true);
 
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURLs_stop", this);
@@ -155,12 +158,13 @@ var ucjsMouseGestures = {
           }
         }
         break;
-      case "DOMMouseScroll": 
+      case "wheel": 
         if (this.enableWheelGestures && this._isMouseDownR) {
+          //Cancel scrolling
           event.preventDefault();
           event.stopPropagation();
           this._suppressContext = true;
-          this._directionChain = "W" + (event.detail > 0 ? "+" : "-");
+          this._directionChain = "W" + (event.deltaY > 0 ? "+" : "-");
           this._stopGesture(event);
         }
         break;
@@ -374,6 +378,16 @@ var ucjsMouseGestures = {
       case "DR":
         if (BrowserSearch.searchBar)
           BrowserSearch.searchBar.value = this._selectedTXT;
+        break;
+      // Find selected text in page
+      case "DL":
+        if (this._version <= "60") {
+          gBrowser.getFindBar();
+          gFindBar.onFindCommand();
+        } else {
+          // 61+
+          gBrowser.getFindBar().then(findbar => {findbar.onFindCommand();});
+        }
         break;
       // Unknown Gesture
       //case "L>R":
