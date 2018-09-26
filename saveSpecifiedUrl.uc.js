@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    urlを指定して保存
 // @include        main
-// @compatibility  Firefox 3.0 more
+// @compatibility  Firefox 60+
 // @author         Alice0775
+// @version        2019/09/26 23:00 60+
 // @version        2013/01/19 23:20 Bug 795065 Add privacy status to nsDownload
 // @version        2012/12/08 22:30 Bug 788290 Bug 788293 Remove E4X 
 // @version        2009/12/12
