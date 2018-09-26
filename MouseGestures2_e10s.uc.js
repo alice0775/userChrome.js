@@ -3,8 +3,9 @@
 // @namespace     http://www.xuldev.org/
 // @description   Lightweight customizable mouse gestures.
 // @include       main
-// @author        Gomita, Alice9775 since 2018/09/26
+// @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/26 19:10 fix author; (wip)
 // @version       2018/09/26 19:10 fix missing break; (wip)
 // @version       2018/09/26 19:00 fix statusinfo (wip)
 // @version       2018/09/26 18:30 e10s (wip)
