@@ -11,19 +11,13 @@
 // ==/UserScript==
 var saveSpecifiedUrl = {
   init: function() {
-    var overlay = ' \
-      <overlay xmlns="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul" \
-               xmlns:html="http://www.w3.org/1999/xhtml"> \
-        <menupopup id="menu_FilePopup"> \
-          <menuitem id="menu_saveSpecifiedUrl" \
-                    label="Save Specified Url" \
-                    accesskey="U" \
-                    oncommand="saveSpecifiedUrl.doSaveSpecifiedUrl();" \
-                    insertbefore="menu_sendLink"/> \
-        </menupopup> \
-      </overlay>';
-    overlay = "data:application/vnd.mozilla.xul+xml;charset=utf-8," + encodeURI(overlay);
-    window.userChrome_js.loadOverlay(overlay, null);
+    let menuitem = document.createElement("menuitem");
+    menuitem.setAttribute("id", "menu_saveSpecifiedUrl");
+    menuitem.setAttribute("label", "Save Specified Url");
+    menuitem.setAttribute("accesskey", "U");
+    menuitem.setAttribute("oncommand", "saveSpecifiedUrl.doSaveSpecifiedUrl();");
+    let ref = document.getElementById("menu_sendLink");
+    ref.parentNode.insertBefore(menuitem, ref);
   },
 
   doSaveSpecifiedUrl: function() {
@@ -40,7 +34,9 @@ var saveSpecifiedUrl = {
     if (!url)
       return;
 
-    saveURL(url, null, null, true, false, null, document)
+    saveURL(url, null, null, true, false, null, null,
+            PrivateBrowsingUtils.isWindowPrivate(window),
+            Services.scriptSecurityManager.createNullPrincipal({}));
   }
 }
 
