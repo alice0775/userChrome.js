@@ -5,6 +5,7 @@
 // @include       main
 // @author        Gomita, Alice9775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/26 19:10 fix missing break; (wip)
 // @version       2018/09/26 19:00 fix statusinfo (wip)
 // @version       2018/09/26 18:30 e10s (wip)
 // @original      ver. 1.0.20080201
@@ -355,6 +356,7 @@ var ucjsMouseGestures = {
       // Zoom Out
       case "L<R":
         document.getElementById("cmd_fullZoomReset").doCommand();
+        break;
       // Full Screen
       case "LDRU":
        document.getElementById("View:FullScreen").doCommand();
@@ -371,6 +373,7 @@ var ucjsMouseGestures = {
       case "DR":
         if (BrowserSearch.searchBar)
           BrowserSearch.searchBar.value = this._selectedTXT;
+        break;
       // Unknown Gesture
       //case "L>R":
       default:
