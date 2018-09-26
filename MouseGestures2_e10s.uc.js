@@ -5,6 +5,7 @@
 // @include       main
 // @author        Gomita, Alice9775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/26 19:00 fix statusinfo (wip)
 // @version       2018/09/26 18:30 e10s (wip)
 // @original      ver. 1.0.20080201
 // @homepage      http://www.xuldev.org/misc/ucjs.php
@@ -30,13 +31,18 @@ var ucjsMouseGestures = {
 
   _isMac: false,  // for Mac
 
-  init: function() {
+  set statusinfo(val) {
     if ("StatusPanel" in window) {
       // fx61+
-      this.statusinfo_label = StatusPanel._label;
+      StatusPanel._label = val;
     } else {
-      this.statusinfo_label = XULBrowserWindow.statusTextField.label;
+      XULBrowserWindow.statusTextField = val
     }
+    return val;
+  },
+
+  init: function() {
+
     this._isMac = navigator.platform.indexOf("Mac") == 0;
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousedown", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousemove", this, false);
@@ -199,7 +205,7 @@ var ucjsMouseGestures = {
     var lastDirection = this._directionChain.charAt(this._directionChain.length - 1);
     if (direction != lastDirection) {
       this._directionChain += direction;
-      this.statusinfo_label = "Gesture: " + this._directionChain;
+      this.statusinfo = "Gesture: " + this._directionChain;
     }
 /*
     // ホバーしたリンクのURLを記憶
@@ -226,10 +232,10 @@ var ucjsMouseGestures = {
     try {
       if (this._directionChain)
         this._performAction(event);
-      this.statusinfo_label = "";
+      this.statusinfo = "";
     }
     catch(ex) {
-      this.statusinfo_label = ex;
+      this.statusinfo = ex;
     }
 /*
     this._directionChain = "";
