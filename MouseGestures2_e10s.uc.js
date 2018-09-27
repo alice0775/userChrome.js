@@ -5,6 +5,8 @@
 // @include       main
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/28 06:00 add library(ucjsMouseGestures_helper.hogehoge) (wip)
+// @version       2018/09/27 22:00 add outline for hover links (wip)
 // @version       2018/09/27 16:00 fix rocker gesture etc (wip)
 // @version       2018/09/26 20:40 fix statusinfo in fx60 (wip)
 // @version       2018/09/26 20:40 add find command (wip)
@@ -54,7 +56,6 @@ var ucjsMouseGestures = {
     this._version = Services.appinfo.version.split(".")[0];
     this._isMac = navigator.platform.indexOf("Mac") == 0;
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousedown", this, false);
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousemove", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mouseup", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
@@ -92,6 +93,7 @@ var ucjsMouseGestures = {
     switch(message.name) {
       case "ucjsMouseGestures_linkURL_start":
         this._docURL = message.data.docURL;
+        this._docCHARSET = message.data.docCHARSET;
         this._linkURL = message.data.linkURL;
         this._linkTXT = message.data.linkTXT;
         this._imgSRC = message.data.imgSRC;
@@ -115,6 +117,7 @@ var ucjsMouseGestures = {
     switch (event.type) {
       case "mousedown": 
         if (event.button == 2) {
+          (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousemove", this, false);
           this._isMouseDownR = true;
           this._suppressContext = false;
           this._startGesture(event);
@@ -141,6 +144,7 @@ var ucjsMouseGestures = {
         break;
       case "mouseup": 
         gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_mouseup");
+        (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mousemove", this, false);
         if ((this._isMouseDownR && event.button == 2) ||
             (this._isMouseDownR && this._isMac && event.button == 0 && event.ctrlKey)) {
           this._isMouseDownR = false;
@@ -259,27 +263,8 @@ var ucjsMouseGestures = {
     // Any Gesture Sequence
     const dirSeq = "RUL";
     if (this._directionChain.substr(dirSeq.length * -1, dirSeq.length) == dirSeq) {
-      setTimeout(() => {
-        Services.console.logStringMessage("Any Gesture Sequence " + this._linkURLs);
-        for (let i = 0; i < this._linkURLs.length; i++) {
-          let docURL = this._linkdocURLs[i];
-          let linkURL = this._linkURLs[i];
-          if (!linkURL)
-            continue;
-          try {
-            //urlSecurityCheck(linkURL, docURL, Ci.nsIScriptSecurityManager.DISALLOW_SCRIPT);
-            gBrowser.loadOneTab(
-              linkURL, {
-              relatedToCurrent: true,
-              inBackground: true,
-              referrerURI: makeURI(docURL),
-              triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-            });
-
-          } catch(ex) {
-          }
-        }
-      }, 250)
+      // ホバーしたリンクをすべてタブで開く
+      ucjsMouseGestures_helper.openMouseHoverLinksInTabs();
       return;
     }
     // These are the mouse gesture mappings. Customize this as you like.
@@ -323,13 +308,12 @@ var ucjsMouseGestures = {
         document.getElementById("History:UndoCloseTab").doCommand();
         break;
       // ひとつ上の階層へ移動
-      case "RUL": var uri = gBrowser.currentURI;
-        if (uri.pathQueryRef == "/")
-          return;
-        var pathList = uri.pathQueryRef.split("/");
-        if (!pathList.pop())
-          pathList.pop();
-        loadURI(uri.prePath + pathList.join("/") + "/");
+      case "RULD":
+        ucjsMouseGestures_helper.goUpperLevel();
+        break;
+      // 数値を進めて移動
+      case "RULDR":
+        ucjsMouseGestures_helper.goNumericURL(+1);
         break;
       // Previous Tab
       case "UL":
@@ -384,6 +368,10 @@ var ucjsMouseGestures = {
         if (BrowserSearch.searchBar)
           BrowserSearch.searchBar.value = this._selectedTXT || this._linkTXT;
         break;
+      // Web search selected text with search engins popup
+      case "DRD":
+        ucjsMouseGestures_helper.webSearchPopup(this._selectedTXT || this._linkTXT);
+        break;
       // Find selected text in page
       case "DL":
         if (this._version <= "60") {
@@ -410,16 +398,19 @@ ucjsMouseGestures.init();
 
 
 
+
+
 let ucjsMouseGestures_framescript = {
   init: function() {
 
 
     let framescript = {
       _linkURLs: [],
+      _linkElts: [],
 
-      init: function() {
+      init: function(isMac) {
+        this._isMac = isMac;
         addMessageListener("ucjsMouseGestures_mouseup", this);
-        addMessageListener("ucjsMouseGestures_stop", this);
         addMessageListener("ucjsMouseGestures_linkURLs_request", this);
         addEventListener("mousedown", this, false);
       },
@@ -429,9 +420,10 @@ let ucjsMouseGestures_framescript = {
         switch(message.name) {
           case "ucjsMouseGestures_mouseup":
             removeEventListener("mousemove", this, false);
+            this.clearStyle();
             break;
           case "ucjsMouseGestures_linkURLs_request":
-            Services.console.logStringMessage(this._linkURLs);
+            this.clearStyle();
             let json = {
               linkdocURLs: this._linkdocURLs.join(" "),
               linkURLs: this._linkURLs.join(" ")
@@ -439,9 +431,6 @@ let ucjsMouseGestures_framescript = {
             sendSyncMessage("ucjsMouseGestures_linkURLs_stop",
               json
             );
-            break;
-          case "ucjsMouseGestures_stop":
-            removeEventListener("mousemove", this, false);
             break;
         }
         return {};
@@ -451,12 +440,16 @@ let ucjsMouseGestures_framescript = {
         Services.console.logStringMessage(event.type);
         switch(event.type) {
           case "mousedown":
-            addEventListener("mousemove", this, false);
+            if (event.button == 2) {
+              addEventListener("mousemove", this, false);
+            }
             addEventListener("dragstart", this, true);
             this._linkdocURLs = [];
             this._linkURLs = [];
+            this._linkElts = [];
             let json = {
               docURL: event.target.ownerDocument.location.href,
+              docCHARSET: event.target.ownerDocument.charset,
               linkURL: this._getLinkURL(event.target),
               linkTXT: this._getLinkTEXT(this.link),
               imgSRC: this._getImgSRC(event.target),
@@ -473,6 +466,8 @@ let ucjsMouseGestures_framescript = {
             if (linkURL && this._linkURLs.indexOf(linkURL) == -1) {
               this._linkdocURLs.push(event.target.ownerDocument.location.href);
               this._linkURLs.push(linkURL);
+              this._linkElts.push(event.target);
+              event.target.style.outline = "1px dashed darkorange";
             }
             break;
           case "dragstart":
@@ -574,13 +569,304 @@ let ucjsMouseGestures_framescript = {
         // Compress remaining whitespace.
         text = text.replace(/\s+/g, " ");
         return text;
+      },
+
+      clearStyle: function() {
+        this._linkElts.forEach((aElt) => {
+          aElt.style.outline = "";
+        });
       }
     }; // end framescript
 
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource() + ".init();")
+        + encodeURIComponent(framescript.toSource() + ".init(" + navigator.platform.indexOf("Mac") + ");")
       , true);
   }
 }
 ucjsMouseGestures_framescript.init();
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+let ucjsMouseGestures_helper = {
+
+  // Web search selected text with search engins popup
+  webSearchPopup: function(aText, screenX, screenY) {
+    Services.search.init(rv => {
+      if (Components.isSuccessCode(rv)) {
+        this._webSearchPopupBuild(aText, screenX, screenY);
+      }
+    });
+  },
+  _webSearchPopupBuild: function(aText, screenX, screenY) {
+    this.text = aText;
+    let that = ucjsMouseGestures;
+
+    if (typeof screenX == "undefined")
+      screenX = that._lastX;
+    if (typeof screenY == "undefined")
+      screenY = that._lastY;
+    let searchSvc = Services.search;
+		let engines = searchSvc.getVisibleEngines({});
+		if (engines.length < 1)
+			throw "No search engines installed.";
+
+    let popup = document.createElement("menupopup");
+    popup.setAttribute("id", "ucjsMouseGestures_popup");
+    document.getElementById("mainPopupSet").appendChild(popup);
+		popup.addEventListener("command", (event) => {
+				let engine = event.target.engine;
+				if (!engine)
+					return;
+				let submission = engine.getSubmission(this.text, null);
+				if (!submission)
+					return;
+
+				gBrowser.loadOneTab(submission.uri.spec, {
+					postData: submission.postData,
+					relatedToCurrent: true,
+					inBackground: (event.button == 1 || event.ctrlKey) ? true: false,
+          triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+				});
+    }, false);
+		popup.addEventListener("popuphiding", (event) => {
+      if (event.target == popup)
+        document.getElementById("mainPopupSet").removeChild(event.target);
+    }, false);
+
+		for (let i = engines.length - 1; i >= 0; --i) {
+			let menuitem = document.createElement("menuitem");
+			menuitem.setAttribute("label", engines[i].name);
+			menuitem.setAttribute("class", "menuitem-iconic searchbar-engine-menuitem menuitem-with-favicon");
+			if (engines[i].iconURI)
+				menuitem.setAttribute("src", engines[i].iconURI.spec);
+			popup.insertBefore(menuitem, popup.firstChild);
+			menuitem.engine = engines[i];
+		}
+
+		let ratio = 1;
+		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
+		if (os == "Darwin") {
+			ratio = popup.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
+		            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
+		}
+		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
+  },
+
+
+  // 再起動
+  restart: function() {
+    let cancelQuit = Cc["@mozilla.org/supports-PRBool;1"].
+                     createInstance(Ci.nsISupportsPRBool);
+    Services.obs.notifyObservers(cancelQuit, "quit-application-requested", "restart");
+    if (cancelQuit.data)
+      return;
+    let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"].
+                     getService(Ci.nsIAppStartup);
+    appStartup.quit(Ci.nsIAppStartup.eAttemptQuit |  Ci.nsIAppStartup.eRestart);
+  },
+
+  openBrowserConsole: function() {
+    document.getElementById("menu_browserConsole").doCommand();
+  },
+
+  // urlをコピー
+  copyURL: function() {
+    let that = ucjsMouseGestures;
+    let url = that._linkUR || that._imgSRC || 
+              that._docURL;
+    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+    clipboard.copyString(url);
+  },
+
+  // ホバーしたリンクをすべてタブで開く
+  openMouseHoverLinksInTabs: function() {
+    let that = ucjsMouseGestures;
+    setTimeout(() => {
+      for (let i = 0; i < that._linkURLs.length; i++) {
+        let docURL = that._linkdocURLs[i];
+        let linkURL = that._linkURLs[i];
+        if (!linkURL)
+          continue;
+        try {
+          gBrowser.loadOneTab(
+            linkURL, {
+            relatedToCurrent: true,
+            inBackground: true,
+            referrerURI: makeURI(docURL),
+            triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+          });
+
+        } catch(ex) {
+        }
+      }
+    }, 250)
+  },
+
+  // ホバーしたリンクをすべて保存
+  saveMouseHoverLinks: function() {
+    let that = ucjsMouseGestures;
+    setTimeout(() => {
+      let delay = 0;
+
+      for (let i = 0; i < that._linkURLs.length; i++) {
+        let docURL = that._linkdocURLs[i];
+        try {
+          let refURI =  makeURI(docURL);
+        } catch(e) {
+          refURI = null;
+        }
+        let linkURL = this._linkURLs[i];
+        if (!linkURL)
+          continue;
+        setTimeout(() => {
+          try {
+            //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+            //        aSkipPrompt, aReferrer, aSourceDocument,
+            //        aIsContentWindowPrivate,
+            //        aPrincipal)
+            saveURL(linkURL, null, null, false,
+                    true, refURI, null,
+                    PrivateBrowsingUtils.isWindowPrivate(window),
+                    Services.scriptSecurityManager.createNullPrincipal({}));
+          } catch(ex) {
+          }
+        }, delay);
+        delay += 1000;
+      }
+    }, 250)
+  },
+
+  // ホバーしたリンクをすべてコピー
+  copyMouseHoverLinks: function() {
+    let that = ucjsMouseGestures;
+    setTimeout(() => {
+      let newLine = navigator.platform.indexOf("Win") ? "\r\n" : "\n";
+			let urls = that._linkURLs.join(newLine);
+			if (that._linkURLs.length > 1)
+				urls += newLine;
+			let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+			clipboard.copyString(urls);
+    }, 250)
+  },
+
+  // ひとつ上の階層へ移動
+	goUpperLevel: function() {
+		let uri = gBrowser.currentURI;
+		if (uri.schemeIs("about")) {
+			loadURI("about:about", null, null, false, null,
+			        null, null, false,
+			        Services.scriptSecurityManager.getSystemPrincipal(), false);
+			return;
+		}
+		let path = uri.spec.slice(uri.prePath.length)
+		if (path == "/") {
+			if (/:\/\/[^\.]+\.([^\.]+)\./.test(uri.prePath))
+				loadURI(RegExp.leftContext + "://" + RegExp.$1 + "." + RegExp.rightContext + "/",
+				        null, null, false, null,
+			          null, null, false,
+			          Services.scriptSecurityManager.createNullPrincipal({}), false);
+			return;
+		}
+		let pathList = path.split("/");
+		if (!pathList.pop())
+			pathList.pop();
+		loadURI(uri.prePath + pathList.join("/") + "/",
+		        null, null, false, null,
+	          null, null, false,
+	          Services.scriptSecurityManager.createNullPrincipal({}), false);
+	},
+
+  // 数値を増減して移動
+	goNumericURL: function(aIncrement) {
+		let url = gBrowser.currentURI.spec;
+		if (!url.match(/(\d+)(\D*)$/))
+			throw "No numeric value in URL";
+		let num = RegExp.$1;
+		let digit = (num.charAt(0) == "0") ? num.length : null;
+		num = parseInt(num, 10) + aIncrement;
+		if (num < 0)
+			throw "Cannot decrement number in URL anymore";
+		num = num.toString();
+		digit = digit - num.length;
+		for (let i = 0; i < digit; i++)
+			num = "0" + num;
+		loadURI(RegExp.leftContext + num + RegExp.$2,
+		        null, null, false, null,
+	          null, null, false,
+	          Services.scriptSecurityManager.createNullPrincipal({}), false);
+	},
+
+  // 選択範囲のテキストリンクをすべてタブに開く
+	openURLsInSelection: function() {
+    let that = ucjsMouseGestures;
+		let sel = that._selectedTXT;
+		if (!sel)
+			throw "No selection";
+		let URLs = [];
+		sel.split("\n").forEach((str) => {
+			str = str.match(/([\w\+\-\=\$;:\?\.%,!#~\*\/@&]{8,})/);
+			if (!str || str[1].indexOf(".") < 0)
+				return;
+			if (str[1].split("/").length < 3 && str[1].split(".").length < 3)
+				return;
+			str = str[1];
+			if (str.indexOf("ttp://") == 0 || str.indexOf("ttps://") == 0)
+				str = "h" + str;
+			URLs.push(str);
+		});
+		if (URLs.length > 0)
+			this.openURLs(URLs);
+		else
+			BrowserSearch.loadSearch(sel, true);
+	},
+
+	openURLs: function(aURLs, aReferer, aCharset) {
+		for (let aURL of aURLs) {
+			gBrowser.loadOneTab(aURL, {
+				referrerURI: aReferer, charset: aCharset, 
+				inBackground: true, relatedToCurrent: true,
+				triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+			});
+		}
+	},
+
+  // 左側または右側のタブをすべて閉じる
+	closeMultipleTabs: function(aLeftRight) {
+		let tabs = gBrowser.visibleTabs.filter((tab) => !tab.pinned);
+		let pos = tabs.indexOf(gBrowser.selectedTab);
+		let start = aLeftRight == "left" ? 0   : pos + 1;
+		let stop  = aLeftRight == "left" ? pos : tabs.length;
+		tabs = tabs.slice(start, stop);
+		let shouldPrompt = Services.prefs.getBoolPref("browser.tabs.warnOnCloseOtherTabs");
+		if (shouldPrompt && tabs.length > 1) {
+			let ps = Services.prompt;
+			let bundle = gBrowser.mStringBundle;
+			let message = PluralForm.get(tabs.length, bundle.getString("tabs.closeWarningMultiple")).
+			              replace("#1", tabs.length);
+			window.focus();
+			let ret = ps.confirmEx(
+				window, bundle.getString("tabs.closeWarningTitle"), message, 
+				ps.BUTTON_TITLE_IS_STRING * ps.BUTTON_POS_0 + ps.BUTTON_TITLE_CANCEL * ps.BUTTON_POS_1, 
+				bundle.getString("tabs.closeButtonMultiple"), 
+				null, null, null, {}
+			);
+			if (ret != 0)
+				return;
+		}
+		tabs.reverse().forEach((tab) => gBrowser.removeTab(tab));
+	},
+
+}
