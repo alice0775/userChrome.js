@@ -5,6 +5,7 @@
 // @include       main
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/28 06:30 add some gesture (wip)
 // @version       2018/09/28 06:00 add library(ucjsMouseGestures_helper.hogehoge) (wip)
 // @version       2018/09/27 22:00 add outline for hover links (wip)
 // @version       2018/09/27 16:00 fix rocker gesture etc (wip)
@@ -32,6 +33,8 @@ var ucjsMouseGestures = {
   _directionChain: "",
   _linkdocURLs: [],
   _linkURLs: [],
+  _selLinkdocURLs: [],
+  _selLinkURLs: [],
   _docURL: "",
   _linkURL: "",
   _linkTXT: "",
@@ -104,6 +107,8 @@ var ucjsMouseGestures = {
         Services.console.logStringMessage("message from framescript: " + message.data.linkURLs);
         this._linkdocURLs = message.data.linkdocURLs.split(" ");
         this._linkURLs = message.data.linkURLs.split(" ");
+        this._selLinkdocURLs = message.data.selLinkdocURLs.split(" ");
+        this._selLinkURLs = message.data.selLinkURLs.split(" ");
         break;
       case "ucjsMouseGestures_linkURL_dragstart":
         if (this.enableRockerGestures)
@@ -198,6 +203,8 @@ var ucjsMouseGestures = {
     this._directionChain = "";
     this._linkdocURLs = [];
     this._linkURLs = [];
+    this._selLinkdocURLs = [];
+    this._selLinkURLs = [];
   },
 
   _progressGesture: function(event) {
@@ -264,7 +271,7 @@ var ucjsMouseGestures = {
     const dirSeq = "RUL";
     if (this._directionChain.substr(dirSeq.length * -1, dirSeq.length) == dirSeq) {
       // ホバーしたリンクをすべてタブで開く
-      ucjsMouseGestures_helper.openMouseHoverLinksInTabs();
+      ucjsMouseGestures_helper.openHoverLinksInTabs();
       return;
     }
     // These are the mouse gesture mappings. Customize this as you like.
@@ -311,9 +318,13 @@ var ucjsMouseGestures = {
       case "RULD":
         ucjsMouseGestures_helper.goUpperLevel();
         break;
-      // 数値を進めて移動
-      case "RULDR":
+      // 数値を増やして移動
+      case "ULDR":
         ucjsMouseGestures_helper.goNumericURL(+1);
+        break;
+      // 数値を減らして移動
+      case "DLUR":
+        ucjsMouseGestures_helper.goNumericURL(-1);
         break;
       // Previous Tab
       case "UL":
@@ -368,10 +379,17 @@ var ucjsMouseGestures = {
         if (BrowserSearch.searchBar)
           BrowserSearch.searchBar.value = this._selectedTXT || this._linkTXT;
         break;
-      // Web search selected text with search engins popup
+      // // 選択テキストで検索し結果を新しいタブに開く(検索エンジンリストがポップアップ)
       case "DRD":
         ucjsMouseGestures_helper.webSearchPopup(this._selectedTXT || this._linkTXT);
         break;
+      /*
+      // 選択テキストで検索し結果を新しいタブに開く
+      case "DRD":
+        BrowserSearch.loadSearchFromContext(this._selectedTXT || this._linkTXT,
+                    Services.scriptSecurityManager.createNullPrincipal({}));
+        break;
+      */
       // Find selected text in page
       case "DL":
         if (this._version <= "60") {
@@ -381,6 +399,10 @@ var ucjsMouseGestures = {
           // 61+
           gBrowser.getFindBar().then(findbar => {findbar.onFindCommand();});
         }
+        break;
+      // 選択範囲のリンクをすべてタブに開く
+      case "RDL":
+        ucjsMouseGestures_helper.openSelectedLinksInTabs();
         break;
       // case "L>R":
       // Unknown Gesture
@@ -424,9 +446,12 @@ let ucjsMouseGestures_framescript = {
             break;
           case "ucjsMouseGestures_linkURLs_request":
             this.clearStyle();
+            let [selLinkURLs, selLinkdocURLs] = this.gatherLinkURLsInSelection();
             let json = {
               linkdocURLs: this._linkdocURLs.join(" "),
-              linkURLs: this._linkURLs.join(" ")
+              linkURLs: this._linkURLs.join(" "),
+              selLinkdocURLs: selLinkdocURLs.join(" "),
+              selLinkURLs: selLinkURLs.join(" ")
             };
             sendSyncMessage("ucjsMouseGestures_linkURLs_stop",
               json
@@ -447,6 +472,9 @@ let ucjsMouseGestures_framescript = {
             this._linkdocURLs = [];
             this._linkURLs = [];
             this._linkElts = [];
+            this._selLinkdocURLs = [];
+            this._selLinkURLs = [];
+
             let json = {
               docURL: event.target.ownerDocument.location.href,
               docCHARSET: event.target.ownerDocument.charset,
@@ -575,7 +603,37 @@ let ucjsMouseGestures_framescript = {
         this._linkElts.forEach((aElt) => {
           aElt.style.outline = "";
         });
+      },
+
+      gatherLinkURLsInSelection: function() {
+        var win = content;
+        var sel = win.getSelection();
+        if (!sel || sel.isCollapsed)
+          return [[], []];
+        var doc = win.document;
+        var linkdocURLs = [];
+        var linkURLs = [];
+        for (var i = 0; i < sel.rangeCount; i++) {
+          var range = sel.getRangeAt(i);
+          var fragment = range.cloneContents();
+          var treeWalker = fragment.ownerDocument.createTreeWalker(fragment,
+                           content.NodeFilter.SHOW_ELEMENT, null, true);
+          while (treeWalker.nextNode()) {
+            var node = treeWalker.currentNode;
+            if ((node instanceof content.HTMLAnchorElement ||
+                 node instanceof content.HTMLAreaElement) && node.href) {
+              try {
+                linkdocURLs.push(fragment.ownerDocument.location.href);
+                linkURLs.push(node.href);
+              }
+              catch(ex) {
+              }
+            }
+          }
+        }
+        return [linkURLs, linkdocURLs]
       }
+
     }; // end framescript
 
     window.messageManager.loadFrameScript(
@@ -585,7 +643,6 @@ let ucjsMouseGestures_framescript = {
   }
 }
 ucjsMouseGestures_framescript.init();
-
 
 
 
@@ -623,28 +680,15 @@ let ucjsMouseGestures_helper = {
 		if (engines.length < 1)
 			throw "No search engines installed.";
 
+    if(document.getElementById("ucjsMouseGestures_popup")) {
+      document.getElementById("mainPopupSet").
+               removeChild(document.getElementById("ucjsMouseGestures_popup"));
+    }
     let popup = document.createElement("menupopup");
-    popup.setAttribute("id", "ucjsMouseGestures_popup");
     document.getElementById("mainPopupSet").appendChild(popup);
-		popup.addEventListener("command", (event) => {
-				let engine = event.target.engine;
-				if (!engine)
-					return;
-				let submission = engine.getSubmission(this.text, null);
-				if (!submission)
-					return;
-
-				gBrowser.loadOneTab(submission.uri.spec, {
-					postData: submission.postData,
-					relatedToCurrent: true,
-					inBackground: (event.button == 1 || event.ctrlKey) ? true: false,
-          triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-				});
-    }, false);
-		popup.addEventListener("popuphiding", (event) => {
-      if (event.target == popup)
-        document.getElementById("mainPopupSet").removeChild(event.target);
-    }, false);
+    popup.setAttribute("id", "ucjsMouseGestures_popup");
+    popup.setAttribute("oncommand", "ucjsMouseGestures_helper._loadSearch(event);");
+    popup.setAttribute("onclick", "checkForMiddleClick(this, event);");
 
 		for (let i = engines.length - 1; i >= 0; --i) {
 			let menuitem = document.createElement("menuitem");
@@ -664,7 +708,21 @@ let ucjsMouseGestures_helper = {
 		}
 		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
   },
+  _loadSearch: function(event) {
+		let engine = event.target.engine;
+		if (!engine)
+			return;
+		let submission = engine.getSubmission(this.text, null);
+		if (!submission)
+			return;
 
+		gBrowser.loadOneTab(submission.uri.spec, {
+			postData: submission.postData,
+			relatedToCurrent: true,
+			inBackground: (event.button == 1 || event.ctrlKey) ? true: false,
+      triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+		});
+  },
 
   // 再起動
   restart: function() {
@@ -678,88 +736,89 @@ let ucjsMouseGestures_helper = {
     appStartup.quit(Ci.nsIAppStartup.eAttemptQuit |  Ci.nsIAppStartup.eRestart);
   },
 
+  // ブラウザコンソールを開く
   openBrowserConsole: function() {
     document.getElementById("menu_browserConsole").doCommand();
   },
 
-  // urlをコピー
-  copyURL: function() {
-    let that = ucjsMouseGestures;
-    let url = that._linkUR || that._imgSRC || 
-              that._docURL;
-    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
-    clipboard.copyString(url);
-  },
-
-  // ホバーしたリンクをすべてタブで開く
-  openMouseHoverLinksInTabs: function() {
+  // ホバーしたリンクをすべて保存
+  saveHoverLinks: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      for (let i = 0; i < that._linkURLs.length; i++) {
-        let docURL = that._linkdocURLs[i];
-        let linkURL = that._linkURLs[i];
-        if (!linkURL)
-          continue;
-        try {
-          gBrowser.loadOneTab(
-            linkURL, {
-            relatedToCurrent: true,
-            inBackground: true,
-            referrerURI: makeURI(docURL),
-            triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-          });
+      this.saveLinks(that._linkURLs, that._linkdocURLs)
+		}, 500);
+  },
+  
+  // 選択範囲のリンクをすべて保存
+  saveHoverLinks: function() {
+    let that = ucjsMouseGestures;
+    setTimeout(() => {
+      this.saveLinks(that._selLinkURLs, that._selLinkdocURLs)
+		}, 500);
+  },
 
+  // リンクをすべて保存
+  saveLinks: function(linkURLs, linkdocURLs) {
+    let delay = 0;
+
+    for (let i = 0; i < linkURLs.length; i++) {
+      let docURL = linkdocURLs[i];
+      try {
+        let refURI =  makeURI(docURL);
+      } catch(e) {
+        refURI = null;
+      }
+      let linkURL = linkURLs[i];
+      if (!linkURL)
+        continue;
+      setTimeout(() => {
+        try {
+          //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+          //        aSkipPrompt, aReferrer, aSourceDocument,
+          //        aIsContentWindowPrivate,
+          //        aPrincipal)
+          saveURL(linkURL, null, null, false,
+                  true, refURI, null,
+                  PrivateBrowsingUtils.isWindowPrivate(window),
+                  Services.scriptSecurityManager.createNullPrincipal({}));
         } catch(ex) {
         }
-      }
-    }, 250)
+      }, delay);
+      delay += 1000;
+    }
   },
 
-  // ホバーしたリンクをすべて保存
-  saveMouseHoverLinks: function() {
-    let that = ucjsMouseGestures;
-    setTimeout(() => {
-      let delay = 0;
 
-      for (let i = 0; i < that._linkURLs.length; i++) {
-        let docURL = that._linkdocURLs[i];
-        try {
-          let refURI =  makeURI(docURL);
-        } catch(e) {
-          refURI = null;
-        }
-        let linkURL = this._linkURLs[i];
-        if (!linkURL)
-          continue;
-        setTimeout(() => {
-          try {
-            //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-            //        aSkipPrompt, aReferrer, aSourceDocument,
-            //        aIsContentWindowPrivate,
-            //        aPrincipal)
-            saveURL(linkURL, null, null, false,
-                    true, refURI, null,
-                    PrivateBrowsingUtils.isWindowPrivate(window),
-                    Services.scriptSecurityManager.createNullPrincipal({}));
-          } catch(ex) {
-          }
-        }, delay);
-        delay += 1000;
-      }
-    }, 250)
+  // textをクリップボードにコピー
+  copyText: function(text) {
+    let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+    clipboard.copyString(text);
   },
 
-  // ホバーしたリンクをすべてコピー
-  copyMouseHoverLinks: function() {
+  // ホバーしたリンクをすべてクリップボードにコピー
+  copyHoverLinks: function() {
     let that = ucjsMouseGestures;
+    let newLine = navigator.platform.indexOf("Win") ? "\r\n" : "\n";
     setTimeout(() => {
-      let newLine = navigator.platform.indexOf("Win") ? "\r\n" : "\n";
-			let urls = that._linkURLs.join(newLine);
-			if (that._linkURLs.length > 1)
-				urls += newLine;
-			let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
-			clipboard.copyString(urls);
-    }, 250)
+  		let urls = that._linkURLs.join(newLine);
+  		if (that._linkURLs.length > 1)
+  			urls += newLine;
+  		let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+  		clipboard.copyString(urls);
+		}, 500);
+  },
+
+  // 選択範囲のリンクをすべてクリップボードにコピー
+  copySelectedLinks: function() {
+    let that = ucjsMouseGestures;
+    let newLine = navigator.platform.indexOf("Win") ? "\r\n" : "\n";
+    setTimeout(() => {
+  		let urls = that._selLinkURLs.join(newLine);
+  		if (that._selLinkURLs.length > 1)
+  			urls += newLine;
+  		let clipboard = Cc["@mozilla.org/widget/clipboardhelper;1"].getService(Ci.nsIClipboardHelper);
+  		clipboard.copyString(urls);
+		}, 500);
   },
 
   // ひとつ上の階層へ移動
@@ -809,7 +868,7 @@ let ucjsMouseGestures_helper = {
 	          Services.scriptSecurityManager.createNullPrincipal({}), false);
 	},
 
-  // 選択範囲のテキストリンクをすべてタブに開く
+  // 選択範囲のテキストリンクをすべてタブに開く(選択範囲にリンク文字が無い場合は規定の検索エンジンで検索)
 	openURLsInSelection: function() {
     let that = ucjsMouseGestures;
 		let sel = that._selectedTXT;
@@ -830,9 +889,53 @@ let ucjsMouseGestures_helper = {
 		if (URLs.length > 0)
 			this.openURLs(URLs);
 		else
-			BrowserSearch.loadSearch(sel, true);
+      BrowserSearch.loadSearchFromContext(sel,
+                Services.scriptSecurityManager.createNullPrincipal({}));
 	},
 
+  // ホバーしたリンクをすべてタブで開く
+  openHoverLinksInTabs: function() {
+    let that = ucjsMouseGestures;
+    setTimeout(() => {
+      ucjsMouseGestures_helper.openURLsInTabs(that._linkURLs, that._linkdocURLs);
+    }, 500);
+  },
+
+  // 選択範囲のリンクをすべてタブに開く
+  openSelectedLinksInTabs: function() {
+    let that = ucjsMouseGestures;
+    setTimeout(() => {
+      ucjsMouseGestures_helper.openURLsInTabs(that._selLinkURLs, that._selLinkdocURLs);
+    }, 500);
+  },
+
+  // リンクをすべてタブに開く
+  openURLsInTabs: function(linkURLs, linkdocURLs) {
+      for (let i = 0; i < linkURLs.length; i++) {
+        let docURL = linkdocURLs[i];
+        let linkURL = linkURLs[i];
+        if (!linkURL)
+          continue;
+        try {
+          let refURI = makeURI(docURL);
+        } catch(e) {
+          refURI = null
+        }
+        try {
+          gBrowser.loadOneTab(
+            linkURL, {
+            relatedToCurrent: true,
+            inBackground: true,
+            referrerURI: refURI,
+            triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+          });
+
+        } catch(ex) {
+        }
+      }
+  },
+
+  // リンクをタブに開く
 	openURLs: function(aURLs, aReferer, aCharset) {
 		for (let aURL of aURLs) {
 			gBrowser.loadOneTab(aURL, {
