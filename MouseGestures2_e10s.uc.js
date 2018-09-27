@@ -5,6 +5,7 @@
 // @include       main
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/27 16:00 fix rocker gesture etc (wip)
 // @version       2018/09/26 20:40 fix statusinfo in fx60 (wip)
 // @version       2018/09/26 20:40 add find command (wip)
 // @version       2018/09/26 20:30 fix page scrolled when Wheel Gesture (wip)
@@ -15,6 +16,8 @@
 // @original      ver. 1.0.20080201
 // @homepage      http://www.xuldev.org/misc/ucjs.php
 // ==/UserScript==
+
+// @note          Linux and Mac are not supported.
 
 var ucjsMouseGestures = {
 
@@ -54,14 +57,13 @@ var ucjsMouseGestures = {
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousemove", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mouseup", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("contextmenu", this, true);
-    if (this.enableRockerGestures)
-      (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("draggesture", this, true);
     if (this.enableWheelGestures)
       window.addEventListener('wheel', this, true);
 
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURLs_stop", this);
-     
+     messageManager.addMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
+
      window.addEventListener("unload", this, false);
   },
 
@@ -70,13 +72,12 @@ var ucjsMouseGestures = {
     (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mousemove", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mouseup", this, false);
     (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("contextmenu", this, true);
-    if (this.enableRockerGestures)
-      (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("draggesture", this, true);
     if (this.enableWheelGestures)
       window.removeEventListener('wheel', this, true);
 
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURLs_stop", this);
+     messageManager.removeMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
 
      window.removeEventListener("unload", this, false);
   },
@@ -102,7 +103,12 @@ var ucjsMouseGestures = {
         this._linkdocURLs = message.data.linkdocURLs.split(" ");
         this._linkURLs = message.data.linkURLs.split(" ");
         break;
+      case "ucjsMouseGestures_linkURL_dragstart":
+        if (this.enableRockerGestures)
+          this._isMouseDownL = false;
+        break;
     }
+    return {};
   },
 
   handleEvent: function(event) {
@@ -134,9 +140,9 @@ var ucjsMouseGestures = {
         }
         break;
       case "mouseup": 
+        gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_mouseup");
         if ((this._isMouseDownR && event.button == 2) ||
             (this._isMouseDownR && this._isMac && event.button == 0 && event.ctrlKey)) {
-          gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_mouseup");
           this._isMouseDownR = false;
           if (this._directionChain)
             this._suppressContext = true;
@@ -168,9 +174,6 @@ var ucjsMouseGestures = {
           this._directionChain = "W" + (event.deltaY > 0 ? "+" : "-");
           this._stopGesture(event);
         }
-        break;
-      case "draggesture": 
-        this._isMouseDownL = false;
         break;
     }
   },
@@ -236,6 +239,7 @@ var ucjsMouseGestures = {
   },
 */
   _stopGesture: function(event) {
+    gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
     try {
       if (this._directionChain)
         this._performAction(event);
@@ -390,8 +394,8 @@ var ucjsMouseGestures = {
           gBrowser.getFindBar().then(findbar => {findbar.onFindCommand();});
         }
         break;
+      // case "L>R":
       // Unknown Gesture
-      //case "L>R":
       default:
         throw "Unknown Gesture: " + this._directionChain;
     }
@@ -416,8 +420,8 @@ let ucjsMouseGestures_framescript = {
       init: function() {
         addMessageListener("ucjsMouseGestures_mouseup", this);
         addMessageListener("ucjsMouseGestures_stop", this);
+        addMessageListener("ucjsMouseGestures_linkURLs_request", this);
         addEventListener("mousedown", this, false);
-        addEventListener("mouseup", this, false);
       },
 
       receiveMessage: function(message) {
@@ -425,6 +429,8 @@ let ucjsMouseGestures_framescript = {
         switch(message.name) {
           case "ucjsMouseGestures_mouseup":
             removeEventListener("mousemove", this, false);
+            break;
+          case "ucjsMouseGestures_linkURLs_request":
             Services.console.logStringMessage(this._linkURLs);
             let json = {
               linkdocURLs: this._linkdocURLs.join(" "),
@@ -436,7 +442,9 @@ let ucjsMouseGestures_framescript = {
             break;
           case "ucjsMouseGestures_stop":
             removeEventListener("mousemove", this, false);
+            break;
         }
+        return {};
       },
 
       handleEvent: function(event) {
@@ -444,6 +452,7 @@ let ucjsMouseGestures_framescript = {
         switch(event.type) {
           case "mousedown":
             addEventListener("mousemove", this, false);
+            addEventListener("dragstart", this, true);
             this._linkdocURLs = [];
             this._linkURLs = [];
             let json = {
@@ -465,6 +474,11 @@ let ucjsMouseGestures_framescript = {
               this._linkdocURLs.push(event.target.ownerDocument.location.href);
               this._linkURLs.push(linkURL);
             }
+            break;
+          case "dragstart":
+            sendSyncMessage("ucjsMouseGestures_linkURL_dragstart",{});
+            removeEventListener("mousemove", this, false);
+            removeEventListener("dragstart", this, true);
             break;
         }
       },
