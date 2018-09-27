@@ -382,7 +382,7 @@ var ucjsMouseGestures = {
       // Send selected text to Search Bar
       case "DR":
         if (BrowserSearch.searchBar)
-          BrowserSearch.searchBar.value = this._selectedTXT;
+          BrowserSearch.searchBar.value = this._selectedTXT || this._linkTXT;
         break;
       // Find selected text in page
       case "DL":
