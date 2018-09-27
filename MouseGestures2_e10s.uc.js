@@ -5,7 +5,8 @@
 // @include       main
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
-// @version       2018/09/28 06:30 add some gesture (wip)
+// @version       2018/09/28 06:30 fix regression (wip)
+// @version       2018/09/28 06:30 add/modify some gesture (wip)
 // @version       2018/09/28 06:00 add library(ucjsMouseGestures_helper.hogehoge) (wip)
 // @version       2018/09/27 22:00 add outline for hover links (wip)
 // @version       2018/09/27 16:00 fix rocker gesture etc (wip)
@@ -760,13 +761,12 @@ let ucjsMouseGestures_helper = {
   // リンクをすべて保存
   saveLinks: function(linkURLs, linkdocURLs) {
     let delay = 0;
-
+    let refURI = null;
     for (let i = 0; i < linkURLs.length; i++) {
       let docURL = linkdocURLs[i];
       try {
-        let refURI =  makeURI(docURL);
+        refURI =  makeURI(docURL);
       } catch(e) {
-        refURI = null;
       }
       let linkURL = linkURLs[i];
       if (!linkURL)
@@ -914,12 +914,12 @@ let ucjsMouseGestures_helper = {
       for (let i = 0; i < linkURLs.length; i++) {
         let docURL = linkdocURLs[i];
         let linkURL = linkURLs[i];
+        let refURI = null
         if (!linkURL)
           continue;
         try {
-          let refURI = makeURI(docURL);
+          refURI = makeURI(docURL);
         } catch(e) {
-          refURI = null
         }
         try {
           gBrowser.loadOneTab(
