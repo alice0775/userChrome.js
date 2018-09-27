@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/09/27 10:30 fix  tab detach
 // @version        2018/09/26 07:30 support tab detach
 // @version        2018/09/25 21:30 working with tab multi selection
 // @version        2018/09/23 12:30 use BrowserWindowTracker
@@ -90,7 +91,7 @@ patch: {
       let func =  gBrowser.swapBrowsersAndCloseOther.toString();
       if (gBrowser && !/copytabLock/.test(func)) {
         func = func.replace(
-          'if (closeWindow) {',
+          'let otherFindBar = aOtherTab._findBar;',
           `if (aOtherTab.hasAttribute("tabLock")) {
               aOurTab.ownerGlobal.gBrowser.lockTab(aOurTab, true);
             /*copytabLock*/

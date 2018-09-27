@@ -5,6 +5,7 @@
 // @author         Alice0775
 // @include        main
 // @compatibility  60+
+// @version        2018/09/27 10:30 fix  tab detach
 // @version        2018/09/27 01:00 
 // ==/UserScript==
 (function() {
@@ -25,7 +26,7 @@
     let func =  gBrowser.swapBrowsersAndCloseOther.toString();
     if (gBrowser && !/patchForBug1494354/.test(func)) {
       func = func.replace(
-        'if (closeWindow) {',
+        'let otherFindBar = aOtherTab._findBar;',
         `setTimeout((browser) => {
            browser.messageManager.sendAsyncMessage("contentfocus");
            /*patchForBug1494354*/

@@ -8,6 +8,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  60
+// @version        2018/09/27 10:30 fix  tab detach
 // @version        2018/09/26 07:30 support tab detach
 // @version        2018/09/25 21:30 working with tab multi selection
 // @version        2018/06/21 19:50 workaround regression
@@ -107,7 +108,7 @@ var tabProtect = {
     let func =  gBrowser.swapBrowsersAndCloseOther.toString();
     if (gBrowser && !/copytabProtect/.test(func)) {
       func = func.replace(
-        'if (closeWindow) {',
+        'let otherFindBar = aOtherTab._findBar;',
         `if (aOtherTab.hasAttribute("tabProtect")) {
            aOurTab.ownerGlobal.gBrowser.protectTab(aOurTab, true);
            /*copytabProtect*/
