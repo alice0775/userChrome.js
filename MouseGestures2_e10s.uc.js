@@ -5,6 +5,7 @@
 // @include       main
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/26 20:40 fix statusinfo in fx60 (wip)
 // @version       2018/09/26 20:40 add find command (wip)
 // @version       2018/09/26 20:30 fix page scrolled when Wheel Gesture (wip)
 // @version       2018/09/26 19:10 fix author; (wip)
@@ -41,7 +42,7 @@ var ucjsMouseGestures = {
       // fx61+
       StatusPanel._label = val;
     } else {
-      XULBrowserWindow.statusTextField = val
+      XULBrowserWindow.statusTextField.label = val
     }
     return val;
   },
