@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 60
+// @version       2018/09/28 22:50 fix bug forgot to overwrite
 // @version       2018/09/28 22:50 fix bug
 // @version       2018/09/28 22:00
 // ==/UserScript==
@@ -75,7 +76,7 @@ ucjsMouseGestures_menues = {
        ['', '左側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("left"); } ],
        ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
        ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
-       ['', '閉じたタブを元に戻す', function(){ ocument.getElementById("History:UndoCloseTab").doCommand(); } ],
+       ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
 
        ['', '最小化', function(){ window.minimize(); } ],
        ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
@@ -141,6 +142,7 @@ ucjsMouseGestures_menues = {
 
 
   load: function() {
+    this.defCommands();
     if (document.getElementById("ucjsMouseGestures_menues"))
       return;
     this.createMenu();
@@ -208,6 +210,9 @@ ucjsMouseGestures_menues = {
   },
 
   getLastModifiedTime: function(aFile) {
+    Components.classes["@mozilla.org/consoleservice;1"]
+        .getService(Components.interfaces.nsIConsoleService)
+        .logStringMessage(aFile.lastModifiedTime);
     return aFile.lastModifiedTime;
   }
 
