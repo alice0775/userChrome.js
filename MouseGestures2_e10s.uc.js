@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/28 23:00 add "Closed Tabs Popup" and "Session History Popup"
 // @version       2018/09/28 23:00 fix typo(wip)
 // @version       2018/09/28 22:40 fix Close other thabs(wip)
 // @version       2018/09/28 19:00 fix typo(wip)
@@ -51,6 +52,7 @@ var ucjsMouseGestures = {
    [
      ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
      ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
+     ['', 'タブの履歴をポップアップ', function(){ ucjsMouseGestures_helper.sessionHistoryPopup(); } ],
 
      ['RULD', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
      ['ULDR', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
@@ -90,6 +92,7 @@ var ucjsMouseGestures = {
      ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
      ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
      ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
+     ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
 
      ['', '最小化', function(){ window.minimize(); } ],
      ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
@@ -666,6 +669,163 @@ ucjsMouseGestures_framescript.init();
 
 
 let ucjsMouseGestures_helper = {
+
+  // Closed Tabs Popup
+    closedTabsPopup: function(aText, screenX, screenY) {
+    let that = ucjsMouseGestures;
+
+    if (typeof screenX == "undefined")
+      screenX = that._lastX;
+    if (typeof screenY == "undefined")
+      screenY = that._lastY;
+
+    if(document.getElementById("ucjsMouseGestures_popup")) {
+      document.getElementById("mainPopupSet").
+               removeChild(document.getElementById("ucjsMouseGestures_popup"));
+    }
+    let popup = document.createElement("menupopup");
+    document.getElementById("mainPopupSet").appendChild(popup);
+
+    populatePopup(popup);
+
+		let ratio = 1;
+		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
+		if (os == "Darwin") {
+			ratio = popup.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
+		            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
+		}
+		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
+
+		function populatePopup(undoPopup) {
+
+      // remove existing menu items
+      while (undoPopup.hasChildNodes())
+        undoPopup.removeChild(undoPopup.firstChild);
+
+      // "Open All in Tabs"
+      m = undoPopup.appendChild(document.createElement("menuitem"));
+      m.setAttribute("label", "Restore All Tabs");
+      //m.setAttribute("class", "menuitem-iconic bookmark-item");
+      m.setAttribute("accesskey", "R" /*strings.getString("menuRestoreAllTabs.accesskey")*/);
+      m.addEventListener("command", function() {
+        for (let i = 0; i < undoItems.length; i++)
+          undoCloseTab();
+      }, false);
+
+      undoPopup.appendChild(document.createElement("menuseparator"));
+
+      // populate menu
+      let undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
+      for (let i = 0; i < undoItems.length; i++) {
+        var entries = undoItems[i].state.entries;
+        var tooltiptext = "";
+        for (let j = entries.length - 1; j > -1; j--){
+          if (j != entries.length - 1)
+            tooltiptext += "\n";
+          tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
+        }
+        let m = document.createElement("menuitem");
+        m.setAttribute("tooltiptext", tooltiptext);
+        m.setAttribute("label", undoItems[i].title);
+        if (undoItems[i].image)
+          m.setAttribute("image", undoItems[i].image);
+        m.setAttribute("class", "menuitem-iconic bookmark-item");
+        m.setAttribute("value", i);
+        m.setAttribute("oncommand", "undoCloseTab(" + i + ");");
+        m.setAttribute("onclick", "UndoListInTabmenu._undoCloseMiddleClick(event);");
+        if (i == 0)
+          m.setAttribute("key", "key_undoCloseTab");
+        undoPopup.appendChild(m);
+      }
+
+      // "Clear undo close tb list"
+      undoPopup.appendChild(document.createElement("menuseparator"));
+
+      m = undoPopup.appendChild(document.createElement("menuitem"));
+      m.setAttribute("label", "Clear undo close tab list");
+      m.setAttribute("class", "menuitem-iconic bookmark-item");
+      m.setAttribute("accesskey", "C");
+      m.addEventListener("command", function() {
+        let max_undo = Services.prefs.getIntPref("browser.sessionstore.max_tabs_undo", 10);
+        Services.prefs.setIntPref("browser.sessionstore.max_tabs_undo", 0);
+        Services.prefs.setIntPref("browser.sessionstore.max_tabs_undo", "int", max_undo);
+        if (max_undo != Services.prefs.getIntPref("browser.sessionstore.max_tabs_undo", 10))
+          Services.prefs.setIntPref("browser.sessionstore.max_tabs_undo", max_undo);
+      }, false);
+    }
+
+  },
+
+  // Session History popup
+  sessionHistoryPopup: function(aText, screenX, screenY) {
+    let that = ucjsMouseGestures;
+
+    if (typeof screenX == "undefined")
+      screenX = that._lastX;
+    if (typeof screenY == "undefined")
+      screenY = that._lastY;
+
+    if(document.getElementById("ucjsMouseGestures_popup")) {
+      document.getElementById("mainPopupSet").
+               removeChild(document.getElementById("ucjsMouseGestures_popup"));
+    }
+    let popup = document.createElement("menupopup");
+    document.getElementById("mainPopupSet").appendChild(popup);
+    popup.setAttribute("id", "ucjsMouseGestures_popup");
+    popup.setAttribute("oncommand", "gotoHistoryIndex(event); event.stopPropagation();");
+    popup.setAttribute("onclick", "checkForMiddleClick(this, event);");
+    popup.setAttribute("context", "");
+
+    SessionStore.getSessionHistory(gBrowser.selectedTab, 
+
+				function callback(sessionHistory, initial) {
+					if (popup.firstChild)
+						return;
+					let count = sessionHistory.entries.length;
+					if (count < 1)
+						throw "No back/forward history for this tab.";
+					var curIdx = sessionHistory.index;
+					for (let i = 0; i < count; i++) {
+						let entry = sessionHistory.entries[i];
+						let menuitem = document.createElement("menuitem");
+						popup.insertBefore(menuitem, popup.firstChild);
+						menuitem.setAttribute("label", entry.title || entry.url);
+						menuitem.setAttribute("statustext", entry.url);
+						menuitem.setAttribute("index", i);
+						menuitem.setAttribute("historyindex", i - curIdx);
+						menuitem.index = i;
+						if (i == curIdx) {
+							menuitem.setAttribute("type", "radio");
+							menuitem.setAttribute("checked", "true");
+							menuitem.setAttribute("default", "true");
+							menuitem.setAttribute("tooltiptext", "Stay on this page");
+							menuitem.className = "unified-nav-current";
+						} else {
+							let entryURI = BrowserUtils.makeURI(entry.url, entry.charset, null);
+							PlacesUtils.favicons.getFaviconURLForPage(entryURI, function(aURI) {
+								if (!aURI)
+									return;
+								let iconURL = PlacesUtils.favicons.getFaviconLinkForIcon(aURI).spec;
+								menuitem.style.listStyleImage = "url(" + iconURL + ")";
+							});
+							menuitem.className = i < curIdx
+							                   ? "unified-nav-back menuitem-iconic menuitem-with-favicon"
+							                   : "unified-nav-forward menuitem-iconic menuitem-with-favicon";
+							menuitem.setAttribute("tooltiptext", i < curIdx
+							                   ? "Go back to this page"
+							                   : "Go forward to this page");
+						}
+					}
+				});
+
+		let ratio = 1;
+		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
+		if (os == "Darwin") {
+			ratio = popup.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
+		            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
+		}
+		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
+  },
 
   // Web search selected text with search engins popup
   webSearchPopup: function(aText, screenX, screenY) {
