@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/29 01:00 add commandsPopop
 // @version       2018/09/29 01:00 fix "Closed Tabs Popup" does not work if UndoListInTabmenuToo.uc.js is not installed
 // @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
 // @version       2018/09/28 23:00 add "Closed Tabs Popup" and "Session History Popup"
@@ -137,6 +138,7 @@ var ucjsMouseGestures = {
            BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
        } ],
 
+     ['', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
      ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
      ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
    ],
@@ -671,6 +673,49 @@ ucjsMouseGestures_framescript.init();
 
 
 let ucjsMouseGestures_helper = {
+
+// commandsPopop() 
+ commandsPopop: function(screenX, screenY) {
+    let that = ucjsMouseGestures;
+
+    if (typeof screenX == "undefined")
+      screenX = that._lastX;
+    if (typeof screenY == "undefined")
+      screenY = that._lastY;
+
+    if(document.getElementById("ucjsMouseGestures_popup")) {
+      document.getElementById("mainPopupSet").
+               removeChild(document.getElementById("ucjsMouseGestures_popup"));
+    }
+    let popup = document.createElement("menupopup");
+    document.getElementById("mainPopupSet").appendChild(popup);
+    popup.setAttribute("id", "ucjsMouseGestures_popup");
+    popup.setAttribute("oncommand", "ucjsMouseGestures_helper.doCommand(event);");
+    popup.setAttribute("onclick", "checkForMiddleClick(this, event);");
+
+		for (let i =0; i < that.commands.length; i++) {
+      let command = that.commands[i];
+			let menuitem = document.createElement("menuitem");
+			menuitem.setAttribute("label", command[1]);
+			menuitem.setAttribute("acceltext", command[0]);
+			menuitem.setAttribute("index", i);
+			menuitem.index = i;
+			popup.appendChild(menuitem);
+		}
+
+		let ratio = 1;
+		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
+		if (os == "Darwin") {
+			ratio = popup.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
+		            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
+		}
+		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
+  },
+  doCommand: function(aEvent) {
+    let index = aEvent.target.getAttribute("index");
+    ucjsMouseGestures.commands[index][2](aEvent);
+  },
+
 
   // Closed Tabs Popup
     closedTabsPopup: function(aText, screenX, screenY) {
