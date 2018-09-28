@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 60
+// @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
+// @version       2018/09/29 00:00 add commands list ("Closed Tabs Popup" and "Session History Popup")
 // @version       2018/09/28 23:20 fix, reload commands should be for all browser
 // @version       2018/09/28 22:50 fix bug forgot to overwrite
 // @version       2018/09/28 22:50 fix bug
@@ -39,6 +41,8 @@ ucjsMouseGestures_menues = {
      [
        ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
        ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
+
+       ['', 'タブの履歴をポップアップ', function(){ ucjsMouseGestures_helper.sessionHistoryPopup(); } ],
 
        ['RULD', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
        ['ULDR', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
@@ -78,6 +82,7 @@ ucjsMouseGestures_menues = {
        ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
        ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
        ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
+       ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
 
        ['', '最小化', function(){ window.minimize(); } ],
        ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
@@ -113,7 +118,7 @@ ucjsMouseGestures_menues = {
            BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
                   Services.scriptSecurityManager.createNullPrincipal({}));
          } ],
-       ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(); } ],
+       ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
        ['DR', '選択テキストを検索バーにコピー',
          function(){ 
            if (BrowserSearch.searchBar)
