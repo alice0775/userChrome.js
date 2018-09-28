@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/29 01:00 fix "Closed Tabs Popup" does not work if UndoListInTabmenuToo.uc.js is not installed
 // @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
 // @version       2018/09/28 23:00 add "Closed Tabs Popup" and "Session History Popup"
 // @version       2018/09/28 23:00 fix typo(wip)
@@ -687,6 +688,14 @@ let ucjsMouseGestures_helper = {
     let popup = document.createElement("menupopup");
     document.getElementById("mainPopupSet").appendChild(popup);
 
+    let ss;
+    try {
+      ss = Cc["@mozilla.org/browser/sessionstore;1"].
+                 getService(Ci.nsISessionStore);
+    } catch(x) {
+      ss = SessionStore;
+    }
+
     populatePopup(popup);
 
 		let ratio = 1;
@@ -716,7 +725,7 @@ let ucjsMouseGestures_helper = {
       undoPopup.appendChild(document.createElement("menuseparator"));
 
       // populate menu
-      let undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
+      let undoItems = eval("(" + ss.getClosedTabData(window) + ")");
       for (let i = 0; i < undoItems.length; i++) {
         var entries = undoItems[i].state.entries;
         var tooltiptext = "";
@@ -733,7 +742,7 @@ let ucjsMouseGestures_helper = {
         m.setAttribute("class", "menuitem-iconic bookmark-item");
         m.setAttribute("value", i);
         m.setAttribute("oncommand", "undoCloseTab(" + i + ");");
-        m.setAttribute("onclick", "UndoListInTabmenu._undoCloseMiddleClick(event);");
+        m.setAttribute("onclick", "ucjsMouseGestures_helper._undoCloseMiddleClick(event);");
         if (i == 0)
           m.setAttribute("key", "key_undoCloseTab");
         undoPopup.appendChild(m);
@@ -744,7 +753,6 @@ let ucjsMouseGestures_helper = {
 
       m = undoPopup.appendChild(document.createElement("menuitem"));
       m.setAttribute("label", "Clear undo close tab list");
-      m.setAttribute("class", "menuitem-iconic bookmark-item");
       m.setAttribute("accesskey", "C");
       m.addEventListener("command", function() {
         let max_undo = Services.prefs.getIntPref("browser.sessionstore.max_tabs_undo", 10);
@@ -756,7 +764,19 @@ let ucjsMouseGestures_helper = {
     }
 
   },
+  _undoCloseMiddleClick: function PHM__undoCloseMiddleClick(aEvent) {
+    if (aEvent.button != 1)
+      return;
 
+    undoCloseTab(aEvent.originalTarget.value);
+    gBrowser.moveTabToEnd();
+    if (!aEvent.ctrlKey)
+      aEvent.target.parentNode.hidePopup();
+  },
+
+
+
+  
   // Session History popup
   sessionHistoryPopup: function(aText, screenX, screenY) {
     let that = ucjsMouseGestures;
