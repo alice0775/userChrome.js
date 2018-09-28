@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 60
+// @version       2018/09/28 23:20 fix, reload commands should be for all browser
 // @version       2018/09/28 22:50 fix bug forgot to overwrite
 // @version       2018/09/28 22:50 fix bug
 // @version       2018/09/28 22:00
@@ -204,9 +205,14 @@ ucjsMouseGestures_menues = {
                               QueryInterface(Ci.nsIFileProtocolHandler);
     let path = fileProtocolHandler.getFileFromURLSpec(url).path;
     file.initWithPath(path);
-    Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
-             .loadSubScript(url + "?" + this.getLastModifiedTime(file),
-                            document.defaultView, "utf-8");
+
+    let enumerator = Services.wm.getEnumerator("navigator:browser");
+		while (enumerator.hasMoreElements()) { 
+      let win = enumerator.getNext();
+      Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
+               .loadSubScript(url + "?" + this.getLastModifiedTime(file),
+                              win, "utf-8");
+    }
   },
 
   getLastModifiedTime: function(aFile) {
