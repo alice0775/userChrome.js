@@ -6,7 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
-// @version       2018/09/28 18:50 gic gestures command(wip)
+// @version       2018/09/28 19:00 fix typo(wip)
+// @version       2018/09/28 18:50 fix gestures command(wip)
 // @version       2018/09/28 18:30 change gestures command(wip)
 // @version       2018/09/28 06:30 fix regression (wip)
 // @version       2018/09/28 06:30 add/modify some gesture (wip)
@@ -71,7 +72,7 @@ var ucjsMouseGestures = {
 
      ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
      ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
-     ['', '新しいタブを開く', function(){ ocument.getElementById("cmd_newNavigatorTab").doCommand(); } ],
+     ['', '新しいタブを開く', function(){ document.getElementById("cmd_newNavigatorTab").doCommand(); } ],
      ['', 'タブをピン留めトグル',
 			 function(){ var tab = gBrowser.selectedTab;
 			 	   tab.pinned ? gBrowser.unpinTab(tab) : gBrowser.pinTab(tab);
