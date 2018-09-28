@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
 // @version       2018/09/28 23:00 add "Closed Tabs Popup" and "Session History Popup"
 // @version       2018/09/28 23:00 fix typo(wip)
 // @version       2018/09/28 22:40 fix Close other thabs(wip)
@@ -128,7 +129,7 @@ var ucjsMouseGestures = {
          BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
                 Services.scriptSecurityManager.createNullPrincipal({}));
        } ],
-     ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(); } ],
+     ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
      ['DR', '選択テキストを検索バーにコピー',
        function(){ 
          if (BrowserSearch.searchBar)
