@@ -3,8 +3,10 @@
 // @namespace     http://www.xuldev.org/
 // @description   Lightweight customizable mouse gestures.
 // @include       main
+// @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/28 18:30 change gestures command(wip)
 // @version       2018/09/28 06:30 fix regression (wip)
 // @version       2018/09/28 06:30 add/modify some gesture (wip)
 // @version       2018/09/28 06:00 add library(ucjsMouseGestures_helper.hogehoge) (wip)
@@ -24,10 +26,112 @@
 // @note          Linux and Mac are not supported.
 
 var ucjsMouseGestures = {
-
+  // == config ==
   // options
-  enableWheelGestures: true,  // Wheel Gesturess (Scroll wheel with holding right-click)
-  enableRockerGestures: true,  // Rocker Gesturess (Left-click with holding right-click and vice versa)
+  enableWheelGestures: true,  // Wheel Gestures (Scroll wheel with holding right-click)
+  enableRockerGestures: true,  // Rocker Gestures (Left-click with holding right-click and vice versa)
+  // These are the mouse gesture mappings. Customize this as you like. 
+  // Gesture Sequence,  UDRL: right-click then move to up down right left
+  // Wheel Gestures,    W+ : right-click then wheel turn down , W- : left-click then wheel turn up
+  // Rocker Gestures,   L<R : right-click then left-click , L>R : left-click then right-click
+  // Any Gesture Sequence,  *hogehoge :  Gesture Sequence following that any faesture
+  // ucjsMouseGestures._lastX, ucjsMouseGestures._lastY  : start coordinates
+  // ucjsMouseGestures._linkURLs ,ucjsMouseGestures._linkdocURLs : link url hover, ownerDocument url
+  // ucjsMouseGestures._selLinkURLs ,ucjsMouseGestures._selLinkdocURLs: link url in selected, ownerDocument url
+  // ucjsMouseGestures._docURL : ownerDocument url
+  // ucjsMouseGestures._linkURL ,ucjsMouseGestures._linkTXT : ownerDocument url : link url, ownerDocument url
+  // ucjsMouseGestures._imgSRC ,ucjsMouseGestures._mediaSRC : image src, nedia src
+  // ucjsMouseGestures._selectedTXT : selected text
+  // ucjsMouseGestures._version : browser major version
+  commands : 
+   [
+     ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
+     ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
+
+     ['RULD', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
+     ['ULDR', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
+     ['DLUR', '数値を減らして移動', function(){ ucjsMouseGestures_helper.goNumericURL(-1); } ],
+
+     ['UD', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
+     ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
+     ['', 'すべてタブをリロード', function(){ gBrowser.reloadAllTabs(gBrowser.selectedTab); } ],
+
+
+     ['', 'リンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
+     ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
+     ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
+
+     ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
+     ['', '通過したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
+
+     ['', 'コピー', function(){ ucjsMouseGestures_helper.copyText(ucjsMouseGestures.selectedTXT); } ],
+     ['', '通過したリンクをコピー', function(){ ucjsMouseGestures_helper.copyHoverLinks(); } ],
+     ['', '選択したリンクをコピー', function(){ ucjsMouseGestures_helper.copySelectedLinks(); } ],
+
+     ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
+     ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
+     ['', '新しいタブを開く', function(){ ocument.getElementById("cmd_newNavigatorTab").doCommand(); } ],
+     ['', 'タブをピン留めトグル',
+			 function(){ var tab = gBrowser.selectedTab;
+			 	   tab.pinned ? gBrowser.unpinTab(tab) : gBrowser.pinTab(tab);
+       } ],
+     ['', 'タブを複製',
+			 function(){ 
+           var orgTab = gBrowser.selectedTab;
+			 	   var newTab = gBrowser.duplicateTab(orgTab);
+				   gBrowser.moveTabTo(newTab, orgTab._tPos + 1);
+       } ],
+     ['LD', 'タブを閉じる', function(){ document.getElementById("cmd_close").doCommand(); } ],
+     ['', '左側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("left"); } ],
+     ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
+     ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.mCurrentTab); } ],
+     ['', '閉じたタブを元に戻す', function(){ ocument.getElementById("History:UndoCloseTab").doCommand(); } ],
+
+     ['', '最小化', function(){ window.minimize(); } ],
+     ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
+     ['', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
+
+     ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
+     ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
+     ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
+     ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
+
+     ['W-', 'ズームイン', function(){ document.getElementById("cmd_fullZoomReduce").doCommand(); } ],
+     ['W+', 'ズームアウト', function(){ document.getElementById("cmd_fullZoomEnlarge").doCommand(); } ],
+     ['L<R', 'ズームリセット', function(){ document.getElementById("cmd_fullZoomReset").doCommand(); } ],
+
+     ['DL', 'ページ内検索バー',
+       function(){
+         if (ucjsMouseGestures._version <= "60") {
+           if (gBrowser.getFindBar()) {
+             gFindBar.hidden? gFindBar.onFindCommand(): gFindBar.close();
+           } else {
+             gLazyFindCommand("onFindCommand");
+           }
+         } else {
+           // 61+
+           gBrowser.getFindBar().then(findbar => {
+             findbar.hidden? findbar.onFindCommand(): findbar.close();
+           });
+         }
+       } ],
+
+     ['', '選択テキストで検索',
+       function(){
+         ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT)
+       } ],
+     ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(); } ],
+     ['DR', '選択テキストを検索バーにコピー',
+       function(){ 
+         if (BrowserSearch.searchBar)
+           BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+       } ],
+
+     ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
+     ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
+   ],
+  // == /config ==
+
 
   _lastX: 0,
   _lastY: 0,
@@ -227,7 +331,24 @@ var ucjsMouseGestures = {
     var lastDirection = this._directionChain.charAt(this._directionChain.length - 1);
     if (direction != lastDirection) {
       this._directionChain += direction;
-      this.statusinfo = "Gesture: " + this._directionChain;
+      let commandName = "";
+      for (let command of this.commands) {
+        if (command[0].substring(0, 1) == "*") {
+          let cmd = command[0].substring(1);
+          if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
+            commandName = command[1];
+            break;
+          }
+        }
+      }
+      if (!commandName)
+        for (let command of this.commands) {
+          if (!!command[0] && command[0] == this._directionChain){
+            commandName = command[1];
+            break;
+          }
+        }
+      this.statusinfo = "Gesture: " + this._directionChain + " " + commandName;
     }
 /*
     // ホバーしたリンクのURLを記憶
@@ -269,147 +390,27 @@ var ucjsMouseGestures = {
   _performAction: function(event) {
     Services.console.logStringMessage(this._directionChain);
     // Any Gesture Sequence
-    const dirSeq = "RUL";
-    if (this._directionChain.substr(dirSeq.length * -1, dirSeq.length) == dirSeq) {
-      // ホバーしたリンクをすべてタブで開く
-      ucjsMouseGestures_helper.openHoverLinksInTabs();
-      return;
-    }
-    // These are the mouse gesture mappings. Customize this as you like.
-    switch (this._directionChain) {
-      // Back
-      case "L":
-        document.getElementById("Browser:Back").doCommand();
-        break;
-      // Forward
-      case "R":
-        document.getElementById("Browser:Forward").doCommand();
-        break;
-      // Reload
-      case "UD":
-        document.getElementById("Browser:Reload").doCommand();
-        break;
-      // Reload (Skip Cache)
-      case "UDU":
-        document.getElementById("Browser:ReloadSkipCache").doCommand();
-        break;
-/*
-      // Minimize Window
-      case "RUD":
-        window.minimize();
-        break;
-      // Maximize Window or Restore Window Size
-      case "RDU":
-        window.windowState == 1 ? window.restore() : window.maximize();
-        break;
-      // Open New Tab
-      case "LR":
-        document.getElementById("cmd_newNavigatorTab").doCommand();
-        break;
-*/
-      // Close Tab
-      case "LD":
-        document.getElementById("cmd_close").doCommand();
-        break;
-      // Undo Close Tab
-      case "DRU":
-        document.getElementById("History:UndoCloseTab").doCommand();
-        break;
-      // ひとつ上の階層へ移動
-      case "RULD":
-        ucjsMouseGestures_helper.goUpperLevel();
-        break;
-      // 数値を増やして移動
-      case "ULDR":
-        ucjsMouseGestures_helper.goNumericURL(+1);
-        break;
-      // 数値を減らして移動
-      case "DLUR":
-        ucjsMouseGestures_helper.goNumericURL(-1);
-        break;
-      // Previous Tab
-      case "UL":
-        gBrowser.tabContainer.advanceSelectedTab(-1, true);
-        break;
-      // Next Tab
-      case "UR":
-        gBrowser.tabContainer.advanceSelectedTab(+1, true);
-        break;
-      // Scroll Top
-      case "RU":
-        goDoCommand("cmd_scrollTop");
-        break;
-      // Scroll Bottom
-      case "RD":
-        goDoCommand("cmd_scrollBottom");
-        break;
-      // Page Up
-      case "U":
-        goDoCommand("cmd_scrollPageUp");
-        break;
-      // Page Down
-      case "D":
-        goDoCommand("cmd_scrollPageDown");
-        break;
-      // Zoom In
-      case "W-": 
-        document.getElementById("cmd_fullZoomReduce").doCommand();
-        break;
-      // Zoom Out
-      case "W+": 
-        document.getElementById("cmd_fullZoomEnlarge").doCommand();
-        break;
-      // Zoom Out
-      case "L<R":
-        document.getElementById("cmd_fullZoomReset").doCommand();
-        break;
-      // Full Screen
-      case "LDRU":
-       document.getElementById("View:FullScreen").doCommand();
-       break;
-      // Find selection in page
-      case "LU":
-        if (gFindBar) {
-          gFindBar.hidden? gFindBar.onFindCommand(): gFindBar.close();
-        } else {
-          gLazyFindCommand("onFindCommand");
+    for (let command of this.commands) {
+      if (command[0].substring(0, 1) == "*") {
+        let cmd = command[0].substring(1);
+        if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
+          command[2]();
+          this._directionChain = "";
+          return;
         }
-        break;
-      // Send selected text to Search Bar
-      case "DR":
-        if (BrowserSearch.searchBar)
-          BrowserSearch.searchBar.value = this._selectedTXT || this._linkTXT;
-        break;
-      // // 選択テキストで検索し結果を新しいタブに開く(検索エンジンリストがポップアップ)
-      case "DRD":
-        ucjsMouseGestures_helper.webSearchPopup(this._selectedTXT || this._linkTXT);
-        break;
-      /*
-      // 選択テキストで検索し結果を新しいタブに開く
-      case "DRD":
-        BrowserSearch.loadSearchFromContext(this._selectedTXT || this._linkTXT,
-                    Services.scriptSecurityManager.createNullPrincipal({}));
-        break;
-      */
-      // Find selected text in page
-      case "DL":
-        if (this._version <= "60") {
-          gBrowser.getFindBar();
-          gFindBar.onFindCommand();
-        } else {
-          // 61+
-          gBrowser.getFindBar().then(findbar => {findbar.onFindCommand();});
-        }
-        break;
-      // 選択範囲のリンクをすべてタブに開く
-      case "RDL":
-        ucjsMouseGestures_helper.openSelectedLinksInTabs();
-        break;
-      // case "L>R":
-      // Unknown Gesture
-      default:
-        throw "Unknown Gesture: " + this._directionChain;
+      }
     }
+    // These are the mouse gesture mappings.
+    for (let command of this.commands) {
+      if (command[0] == this._directionChain) {
+        command[2]();
+        this._directionChain = "";
+        return;
+      }
+    }
+    // Unknown Gesture
+    throw "Unknown Gesture: " + this._directionChain;
+
     this._directionChain = "";
   }
 
@@ -732,6 +733,9 @@ let ucjsMouseGestures_helper = {
     Services.obs.notifyObservers(cancelQuit, "quit-application-requested", "restart");
     if (cancelQuit.data)
       return;
+    let XRE = Cc["@mozilla.org/xre/app-info;1"].getService(Ci.nsIXULRuntime);
+    if (typeof XRE.invalidateCachesOnRestart == "function")
+      XRE.invalidateCachesOnRestart();
     let appStartup = Cc["@mozilla.org/toolkit/app-startup;1"].
                      getService(Ci.nsIAppStartup);
     appStartup.quit(Ci.nsIAppStartup.eAttemptQuit |  Ci.nsIAppStartup.eRestart);
