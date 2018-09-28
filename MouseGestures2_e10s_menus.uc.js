@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 60
+// @version       2018/09/29 01:00 add commands list (commands popop, toggle style)
 // @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
 // @version       2018/09/29 00:00 add commands list ("Closed Tabs Popup" and "Session History Popup")
 // @version       2018/09/28 23:20 fix, reload commands should be for all browser
@@ -125,6 +126,9 @@ ucjsMouseGestures_menues = {
              BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
          } ],
 
+       ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
+
+       ['', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
        ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
        ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
      ];
