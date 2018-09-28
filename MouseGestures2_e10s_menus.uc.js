@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 60
+// @version       2018/09/28 22:50 fix bug
 // @version       2018/09/28 22:00
 // ==/UserScript==
 // @note          MouseGestures2_e10s.uc.jsより後で読み込むようにしておく
@@ -213,5 +214,5 @@ ucjsMouseGestures_menues = {
 
 
 }
-if (typeof ucjsMouseGestures == "undefined")
+if (typeof ucjsMouseGestures != "undefined")
   ucjsMouseGestures_menues.load();
