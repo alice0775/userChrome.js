@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/28 22:40 fix Close other thabs(wip)
 // @version       2018/09/28 19:00 fix typo(wip)
 // @version       2018/09/28 18:50 fix gestures command(wip)
 // @version       2018/09/28 18:30 change gestures command(wip)
@@ -86,12 +87,12 @@ var ucjsMouseGestures = {
      ['LD', 'タブを閉じる', function(){ document.getElementById("cmd_close").doCommand(); } ],
      ['', '左側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("left"); } ],
      ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
-     ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.mCurrentTab); } ],
+     ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
      ['', '閉じたタブを元に戻す', function(){ ocument.getElementById("History:UndoCloseTab").doCommand(); } ],
 
      ['', '最小化', function(){ window.minimize(); } ],
      ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
-     ['', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
+     ['LDRU', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
 
      ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
      ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
