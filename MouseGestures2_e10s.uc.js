@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/28 18:50 gic gestures command(wip)
 // @version       2018/09/28 18:30 change gestures command(wip)
 // @version       2018/09/28 06:30 fix regression (wip)
 // @version       2018/09/28 06:30 add/modify some gesture (wip)
@@ -118,7 +119,8 @@ var ucjsMouseGestures = {
 
      ['', '選択テキストで検索',
        function(){
-         ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT)
+         BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
+                Services.scriptSecurityManager.createNullPrincipal({}));
        } ],
      ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(); } ],
      ['DR', '選択テキストを検索バーにコピー',
