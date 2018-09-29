@@ -6,6 +6,9 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/29 19:00 support zoomIn/Out/Reset for pdf.js
+// @version       2018/09/29 19:00 add 'Search for "hogehoge..."' to webSearchPopup
+// @version       2018/09/29 02:00 fix unused argument
 // @version       2018/09/29 01:00 add commandsPopop
 // @version       2018/09/29 01:00 fix "Closed Tabs Popup" does not work if UndoListInTabmenuToo.uc.js is not installed
 // @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
@@ -106,9 +109,9 @@ var ucjsMouseGestures = {
      ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
      ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
 
-     ['W-', 'ズームイン', function(){ document.getElementById("cmd_fullZoomReduce").doCommand(); } ],
-     ['W+', 'ズームアウト', function(){ document.getElementById("cmd_fullZoomEnlarge").doCommand(); } ],
-     ['L<R', 'ズームリセット', function(){ document.getElementById("cmd_fullZoomReset").doCommand(); } ],
+     ['W-', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
+     ['W+', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
+     ['L<R', 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
 
      ['DL', 'ページ内検索バー',
        function(){
@@ -449,6 +452,7 @@ let ucjsMouseGestures_framescript = {
         this._isMac = isMac;
         addMessageListener("ucjsMouseGestures_mouseup", this);
         addMessageListener("ucjsMouseGestures_linkURLs_request", this);
+        addMessageListener("ucjsMouseGestures_dispatchKeyEvent", this);
         addEventListener("mousedown", this, false);
       },
 
@@ -471,6 +475,20 @@ let ucjsMouseGestures_framescript = {
             sendSyncMessage("ucjsMouseGestures_linkURLs_stop",
               json
             );
+            break;
+          case "ucjsMouseGestures_dispatchKeyEvent":
+            this.dispatchKeyEvent(message.data.targetSelector,
+                                  message.data.type,
+                                  message.data.bubbles,
+                                  message.data.cancelable, 
+                                  /*message.data.viewArg, */
+                                  message.data.ctrlKey,
+                                  message.data.shiftKey,
+                                  message.data.altKey,
+                                  message.data.metaKey,
+                                  message.data.keyCode,
+                                  message.data.charCode,
+                                 );
             break;
         }
         return {};
@@ -647,6 +665,23 @@ let ucjsMouseGestures_framescript = {
           }
         }
         return [linkURLs, linkdocURLs]
+      },
+
+      dispatchKeyEvent: function(targetSelector, type, bubbles, cancelable, /*viewArg, */
+                             ctrlKey, altKey, shiftKey, metaKey, 
+                             keyCode, charCode) {
+        Services.console.logStringMessage(content.document.querySelector(targetSelector));
+        Services.console.logStringMessage(type + " " + ctrlKey + " " + keyCode + "," + charCode);
+        content.document.querySelector(targetSelector).dispatchEvent(new content.KeyboardEvent(
+          type, 
+          { bubbles : bubbles, cancelable : cancelable,
+            ctrlKey  : ctrlKey,
+            shiftKey : shiftKey,
+            altKey   : altKey,
+            metaKey  : metaKey,
+            keyCode : keyCode, charCode : charCode
+          })
+        );
       }
 
     }; // end framescript
@@ -674,8 +709,66 @@ ucjsMouseGestures_framescript.init();
 
 let ucjsMouseGestures_helper = {
 
+  //キーをコンテントに送る
+  dispatchKeyEvent: function(targetSelector, type, bubbles, cancelable, /*viewArg, */
+                             ctrlKey, altKey, shiftKey, metaKey, 
+                             keyCode, charCode) {
+
+    let json = {
+        targetSelector: targetSelector,
+        type: type, 
+        bubbles : bubbles, cancelable : cancelable, /*viewArg: viewArg, */
+        ctrlKey  : ctrlKey,
+        shiftKey : shiftKey,
+        altKey   : altKey,
+        metaKey  : metaKey,
+        keyCode : keyCode, charCode : charCode
+      }
+
+    gBrowser.selectedBrowser.messageManager
+            .sendAsyncMessage("ucjsMouseGestures_dispatchKeyEvent", json);
+  },
+
+  //ズームイン
+  zoomIn: function() {
+    if(/\.pdf$/.test(gBrowser.currentURI.spec)) {
+      ucjsMouseGestures_helper.dispatchKeyEvent(
+        "#zoomIn",
+        "keydown", true, true,/*viewArg, */
+        true, false, false, false,
+        107, 0);
+    } else {
+      document.getElementById("cmd_fullZoomEnlarge").doCommand();
+    }
+  },
+  //ズームアウト
+  zoomOut: function() {
+    if(/\.pdf$/.test(gBrowser.currentURI.spec)) {
+      ucjsMouseGestures_helper.dispatchKeyEvent(
+        "#zoomOut",/*viewArg, */
+        "keydown", true, true,
+        true, false, false, false,
+        109, 0);
+    } else {
+      document.getElementById("cmd_fullZoomReduce").doCommand();
+    }
+  },
+  //ズームリセット
+  zoomReset: function() {
+    if(/\.pdf$/.test(gBrowser.currentURI.spec)) {
+      ucjsMouseGestures_helper.dispatchKeyEvent(
+        "#scaleSelect",/*viewArg, */
+        "keydown", true, true,
+        true, false, false, false,
+        96, 96);
+    } else {
+       document.getElementById("cmd_fullZoomReset").doCommand();
+    }
+  },
+
+
 // commandsPopop() 
- commandsPopop: function(screenX, screenY) {
+  commandsPopop: function(screenX, screenY) {
     let that = ucjsMouseGestures;
 
     if (typeof screenX == "undefined")
@@ -718,7 +811,7 @@ let ucjsMouseGestures_helper = {
 
 
   // Closed Tabs Popup
-    closedTabsPopup: function(aText, screenX, screenY) {
+    closedTabsPopup: function(screenX, screenY) {
     let that = ucjsMouseGestures;
 
     if (typeof screenX == "undefined")
@@ -823,7 +916,7 @@ let ucjsMouseGestures_helper = {
 
   
   // Session History popup
-  sessionHistoryPopup: function(aText, screenX, screenY) {
+  sessionHistoryPopup: function(screenX, screenY) {
     let that = ucjsMouseGestures;
 
     if (typeof screenX == "undefined")
@@ -933,6 +1026,31 @@ let ucjsMouseGestures_helper = {
 			popup.insertBefore(menuitem, popup.firstChild);
 			menuitem.engine = engines[i];
 		}
+
+    // 'Search for "hogehoge..."'
+    if (!!this.text) {
+      let sep = document.createElement("menuseparator");
+      sep.setAttribute("style", "margin-inline-start: -28px;margin-top: -4px;");
+      popup.insertBefore(sep, popup.firstChild);
+  		let toolbar = document.createElement("toolbar");
+      let label = document.createElement("label");
+      let ellipsis = "\u2026";
+      try {
+        ellipsis = Services.prefs.getComplexValue("intl.ellipsis",
+                                                       Ci.nsIPrefLocalizedString).data;
+      } catch (e) { }
+      let selectedText = this.text;
+      if (selectedText.length > 15) {
+        let truncLength = 15;
+        let truncChar = selectedText[15].charCodeAt(0);
+        if (truncChar >= 0xDC00 && truncChar <= 0xDFFF)
+          truncLength++;
+        selectedText = selectedText.substr(0, truncLength) + ellipsis;
+      }
+      label.setAttribute("value" , "Search for \"" + selectedText + "\"");
+      toolbar.appendChild(label);
+      popup.insertBefore(toolbar, popup.firstChild);
+    }
 
 		let ratio = 1;
 		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");

@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 60
+// @version       2018/09/29 19:00 support zoomIn/Out/Reset for pdf.js
 // @version       2018/09/29 01:00 add commands list (commands popop, toggle style)
 // @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
 // @version       2018/09/29 00:00 add commands list ("Closed Tabs Popup" and "Session History Popup")
@@ -94,9 +95,9 @@ ucjsMouseGestures_menues = {
        ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
        ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
 
-       ['W-', 'ズームイン', function(){ document.getElementById("cmd_fullZoomReduce").doCommand(); } ],
-       ['W+', 'ズームアウト', function(){ document.getElementById("cmd_fullZoomEnlarge").doCommand(); } ],
-       ['L<R', 'ズームリセット', function(){ document.getElementById("cmd_fullZoomReset").doCommand(); } ],
+       ['W-', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
+       ['W+', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
+       ['L<R', 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
 
        ['DL', 'ページ内検索バー',
          function(){
@@ -128,7 +129,7 @@ ucjsMouseGestures_menues = {
 
        ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
 
-       ['', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
+       ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
        ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
        ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
      ];
