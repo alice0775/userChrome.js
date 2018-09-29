@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/30 01:00 fix getting selected text on CodeMirror editor
 // @version       2018/09/30 00:00 fix getting selected text on about:addons page
 // @version       2018/09/29 19:00 support zoomIn/Out/Reset for pdf.js
 // @version       2018/09/29 19:00 add 'Search for "hogehoge..."' to webSearchPopup
@@ -454,7 +455,7 @@ let ucjsMouseGestures_framescript = {
         addMessageListener("ucjsMouseGestures_mouseup", this);
         addMessageListener("ucjsMouseGestures_linkURLs_request", this);
         addMessageListener("ucjsMouseGestures_dispatchKeyEvent", this);
-        addEventListener("mousedown", this, false);
+        addEventListener("mousedown", this, true);
       },
 
       receiveMessage: function(message) {
@@ -516,7 +517,7 @@ let ucjsMouseGestures_framescript = {
               linkTXT: this._getLinkTEXT(this.link),
               imgSRC: this._getImgSRC(event.target),
               mediaSRC: this._getMediaSRC(event.target),
-              selectedTXT: event.target.ownerDocument.defaultView.getSelection().toString()
+              selectedTXT: this._getSelectedText(event.target)
             };
             sendSyncMessage("ucjsMouseGestures_linkURL_start",
               json
@@ -540,6 +541,10 @@ let ucjsMouseGestures_framescript = {
         }
       },
 
+      _getSelectedText: function(target) {
+        return BrowserUtils.getSelectionDetails(content).fullText;
+      },
+  
       _getLinkURL: function(aNode) {
         this.link = null;
         while (aNode) {
@@ -671,8 +676,6 @@ let ucjsMouseGestures_framescript = {
       dispatchKeyEvent: function(targetSelector, type, bubbles, cancelable, /*viewArg, */
                              ctrlKey, altKey, shiftKey, metaKey, 
                              keyCode, charCode) {
-        Services.console.logStringMessage(content.document.querySelector(targetSelector));
-        Services.console.logStringMessage(type + " " + ctrlKey + " " + keyCode + "," + charCode);
         content.document.querySelector(targetSelector).dispatchEvent(new content.KeyboardEvent(
           type, 
           { bubbles : bubbles, cancelable : cancelable,
