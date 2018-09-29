@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 38
 // @author         Alice0775
+// @version        2018/09/29 23:00 Fix 64.0a1
 // @version        2018/09/24 23:00 Fix warning from nsIBrowserSearchService
 // @version        2018/07*20 23:00 Fix change option > search
 // @version        2017/11/17 02:00 Fx57
@@ -36,7 +37,8 @@ var searchengineicon = {
       var searchbar = window.document.getElementById("searchbar");
       if (!searchbar)
         return;
-      var searchbutton = window.document.getAnonymousElementByAttribute(searchbar, "class", "searchbar-search-icon");
+      let  searchbutton = searchbar.querySelector(".searchbar-search-icon") ||
+        window.document.getAnonymousElementByAttribute(searchbar, "class", "searchbar-search-icon");
       var uri = Services.search.currentEngine.iconURI.spec;
       //var icon = PlacesUtils.getImageURLForResolution(window, uri);
       searchbutton.setAttribute("style", "list-style-image: url('"+ uri +"') !important; -moz-image-region: auto !important; width: 16px !important; padding: 2px 0 !important;");
