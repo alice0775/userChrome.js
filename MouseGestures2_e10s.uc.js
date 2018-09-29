@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/30 03:00 add dispatchEvent command( dispatch event to content from chrome)
 // @version       2018/09/30 01:00 fix getting selected text on CodeMirror editor
 // @version       2018/09/30 00:00 fix getting selected text on about:addons page
 // @version       2018/09/29 19:00 support zoomIn/Out/Reset for pdf.js
@@ -146,6 +147,13 @@ var ucjsMouseGestures = {
      ['', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
      ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
      ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
+
+     ['', 'weAutopagerizeのトグル',
+       function(){
+         ucjsMouseGestures_helper.dispatchEvent(
+         { target: "document", type: "AutoPagerizeToggleRequest" } );
+       } ],
+
    ],
   // == /config ==
 
@@ -455,6 +463,7 @@ let ucjsMouseGestures_framescript = {
         addMessageListener("ucjsMouseGestures_mouseup", this);
         addMessageListener("ucjsMouseGestures_linkURLs_request", this);
         addMessageListener("ucjsMouseGestures_dispatchKeyEvent", this);
+        addMessageListener("ucjsMouseGestures_dispatchEvent", this);
         addEventListener("mousedown", this, true);
       },
 
@@ -492,6 +501,8 @@ let ucjsMouseGestures_framescript = {
                                   message.data.charCode,
                                  );
             break;
+          case "ucjsMouseGestures_dispatchEvent":
+            this.dispatchEvent(message.data);
         }
         return {};
       },
@@ -673,6 +684,16 @@ let ucjsMouseGestures_framescript = {
         return [linkURLs, linkdocURLs]
       },
 
+      dispatchEvent: function(event) {
+        let targetSelector = event.target;
+        if (targetSelector == "document") {
+          content.document.dispatchEvent(new content.Event(event.type, event));
+        } else {
+          content.document.querySelector(targetSelector).
+                  dispatchEvent(new content.Event(event.type, event));
+        }
+      },
+
       dispatchKeyEvent: function(targetSelector, type, bubbles, cancelable, /*viewArg, */
                              ctrlKey, altKey, shiftKey, metaKey, 
                              keyCode, charCode) {
@@ -712,6 +733,11 @@ ucjsMouseGestures_framescript.init();
 
 
 let ucjsMouseGestures_helper = {
+
+  dispatchEvent: function(event) {
+      gBrowser.selectedBrowser.messageManager
+          .sendAsyncMessage("ucjsMouseGestures_dispatchEvent", event);
+  },
 
   //キーをコンテントに送る
   dispatchKeyEvent: function(targetSelector, type, bubbles, cancelable, /*viewArg, */

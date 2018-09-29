@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 60
+// @version       2018/09/30 03:00 add dispatchEvent command( dispatch event to content from chrome)
 // @version       2018/09/29 19:00 support zoomIn/Out/Reset for pdf.js
 // @version       2018/09/29 01:00 add commands list (commands popop, toggle style)
 // @version       2018/09/29 00:00 fix commands list (missing arguments webSearchPopup)
@@ -132,6 +133,13 @@ ucjsMouseGestures_menues = {
        ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
        ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
        ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
+
+       ['', 'weAutopagerizeのトグル',
+         function(){
+           ucjsMouseGestures_helper.dispatchEvent(
+           { target: "document", type: "AutoPagerizeToggleRequest" } );
+         } ],
+
      ];
 
     // == /config ==
