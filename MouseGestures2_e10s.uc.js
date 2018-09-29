@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/30 00:00 fix getting selected text on about:addons page
 // @version       2018/09/29 19:00 support zoomIn/Out/Reset for pdf.js
 // @version       2018/09/29 19:00 add 'Search for "hogehoge..."' to webSearchPopup
 // @version       2018/09/29 02:00 fix unused argument
@@ -515,7 +516,7 @@ let ucjsMouseGestures_framescript = {
               linkTXT: this._getLinkTEXT(this.link),
               imgSRC: this._getImgSRC(event.target),
               mediaSRC: this._getMediaSRC(event.target),
-              selectedTXT: content.getSelection().toString()
+              selectedTXT: event.target.ownerDocument.defaultView.getSelection().toString()
             };
             sendSyncMessage("ucjsMouseGestures_linkURL_start",
               json
