@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/30 24:00 fix Close Tabs to left right (closeMultipleTabs)
 // @version       2018/09/30 22:00 fix surplus scroll if doing Wheel Gestures on 60esr
 // @version       2018/09/30 03:00 add dispatchEvent command( dispatch event to content from chrome)
 // @version       2018/09/30 01:00 fix getting selected text on CodeMirror editor
@@ -1356,28 +1357,51 @@ let ucjsMouseGestures_helper = {
 
   // 左側または右側のタブをすべて閉じる
 	closeMultipleTabs: function(aLeftRight) {
-		let tabs = gBrowser.visibleTabs.filter((tab) => !tab.pinned);
-		let pos = tabs.indexOf(gBrowser.selectedTab);
-		let start = aLeftRight == "left" ? 0   : pos + 1;
-		let stop  = aLeftRight == "left" ? pos : tabs.length;
-		tabs = tabs.slice(start, stop);
-		let shouldPrompt = Services.prefs.getBoolPref("browser.tabs.warnOnCloseOtherTabs");
-		if (shouldPrompt && tabs.length > 1) {
-			let ps = Services.prompt;
-			let bundle = gBrowser.mStringBundle;
-			let message = PluralForm.get(tabs.length, bundle.getString("tabs.closeWarningMultiple")).
-			              replace("#1", tabs.length);
-			window.focus();
-			let ret = ps.confirmEx(
-				window, bundle.getString("tabs.closeWarningTitle"), message, 
-				ps.BUTTON_TITLE_IS_STRING * ps.BUTTON_POS_0 + ps.BUTTON_TITLE_CANCEL * ps.BUTTON_POS_1, 
-				bundle.getString("tabs.closeButtonMultiple"), 
-				null, null, null, {}
-			);
-			if (ret != 0)
-				return;
-		}
-		tabs.reverse().forEach((tab) => gBrowser.removeTab(tab));
-	},
+    let aTab = gBrowser.selectedTab;
+    if (aLeftRight != "left") {
+      gBrowser.removeTabsToTheEndFrom(aTab);
+      return;
+    }
+    
+    let tabs = this.getTabsToTheStartFrom(aTab);
+
+    let shouldPrompt = Services.prefs.getBoolPref("browser.tabs.warnOnCloseOtherTabs");
+    if (tabs.length > 1 && shouldPrompt) {
+      let ps = Services.prompt;
+      let ret = ps.confirm(window, 
+                "Confirm close",
+                "You are about to close " + tabs.length +
+                " tabs. Are you sure you want to continue?")
+      if (!ret) {
+        return;
+      }
+    }
+    for (let i = tabs.length - 1; i >= 0; --i) {
+      gBrowser.removeTab(tabs[i]);
+    }
+  },
+  getTabsToTheStartFrom: function(aTab) {
+    let tab;
+    if (!!aTab.multiselected) {
+      // In a multi-select context, pick the leftmost
+      // selected tab as reference.
+      let selectedTabs = gBrowser.selectedTabs;
+      tab = selectedTabs[0];
+    } else {
+      tab = aTab;
+    }
+
+    let tabsToStart = [];
+    let tabs = gBrowser.visibleTabs;
+    for (let i = 0; i < tabs.length; ++i) {
+      if (tabs[i] == tab )
+        break;
+
+      if (!tabs[i].pinned) {
+        tabsToStart.push(tabs[i]);
+      }
+    }
+    return tabsToStart;
+  },
 
 }
