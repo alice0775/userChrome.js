@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/09/30 22:00 fix surplus scroll if doing Wheel Gestures on 60esr
 // @version       2018/09/30 03:00 add dispatchEvent command( dispatch event to content from chrome)
 // @version       2018/09/30 01:00 fix getting selected text on CodeMirror editor
 // @version       2018/09/30 00:00 fix getting selected text on about:addons page
@@ -194,6 +195,7 @@ var ucjsMouseGestures = {
     if (this.enableWheelGestures)
       window.addEventListener('wheel', this, true);
 
+     messageManager.addMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURLs_stop", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
@@ -209,6 +211,7 @@ var ucjsMouseGestures = {
     if (this.enableWheelGestures)
       window.removeEventListener('wheel', this, true);
 
+     messageManager.removeMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURLs_stop", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
@@ -219,11 +222,16 @@ var ucjsMouseGestures = {
   _isMouseDownL: false,
   _isMouseDownR: false,
   _suppressContext: false,
-  _shouldFireContext: false,  // for Linux
+  _shouldFireContext: false,  // for Linux 
+  _isWheelCanceled: false,
+
 
   receiveMessage: function(message) {
     Services.console.logStringMessage("message from framescript: " + message.name);
     switch(message.name) {
+      case "ucjsMouseGestures_linkURL_isWheelCancel":
+        return { _isWheelCanceled: this._isWheelCanceled};
+        break;
       case "ucjsMouseGestures_linkURL_start":
         this._docURL = message.data.docURL;
         this._docCHARSET = message.data.docCHARSET;
@@ -234,7 +242,6 @@ var ucjsMouseGestures = {
         this._selectedTXT = message.data.selectedTXT;
         break;
       case "ucjsMouseGestures_linkURLs_stop":
-        Services.console.logStringMessage("message from framescript: " + message.data.linkURLs);
         this._linkdocURLs = message.data.linkdocURLs.split(" ");
         this._linkURLs = message.data.linkURLs.split(" ");
         this._selLinkdocURLs = message.data.selLinkdocURLs.split(" ");
@@ -309,9 +316,13 @@ var ucjsMouseGestures = {
           //Cancel scrolling
           event.preventDefault();
           event.stopPropagation();
+          this._isWheelCanceled = true;
+
           this._suppressContext = true;
           this._directionChain = "W" + (event.deltaY > 0 ? "+" : "-");
           this._stopGesture(event);
+        } else {
+          this._isWheelCanceled = false;
         }
         break;
     }
@@ -368,7 +379,6 @@ var ucjsMouseGestures = {
       }
       if (!commandName)
         for (let command of this.commands) {
-          //Services.console.logStringMessage(command[1]);
           if (!!command[0] && command[0] == this._directionChain){
             commandName = command[1];
             break;
@@ -414,7 +424,7 @@ var ucjsMouseGestures = {
   },
 
   _performAction: function(event) {
-    Services.console.logStringMessage(this._directionChain);
+    Services.console.logStringMessage("====" + this._directionChain);
     // Any Gesture Sequence
     for (let command of this.commands) {
       if (command[0].substring(0, 1) == "*") {
@@ -458,17 +468,20 @@ let ucjsMouseGestures_framescript = {
       _linkURLs: [],
       _linkElts: [],
 
-      init: function(isMac) {
+      init: function(isMac, enableWheelGestures) {
         this._isMac = isMac;
+        this.enableWheelGestures = enableWheelGestures;
         addMessageListener("ucjsMouseGestures_mouseup", this);
         addMessageListener("ucjsMouseGestures_linkURLs_request", this);
         addMessageListener("ucjsMouseGestures_dispatchKeyEvent", this);
         addMessageListener("ucjsMouseGestures_dispatchEvent", this);
         addEventListener("mousedown", this, true);
+        if (this.enableWheelGestures)
+          addEventListener('wheel', this, true);
       },
 
       receiveMessage: function(message) {
-        Services.console.logStringMessage(message.name);
+        Services.console.logStringMessage("====" + message.name);
         switch(message.name) {
           case "ucjsMouseGestures_mouseup":
             removeEventListener("mousemove", this, false);
@@ -508,7 +521,7 @@ let ucjsMouseGestures_framescript = {
       },
 
       handleEvent: function(event) {
-        Services.console.logStringMessage(event.type);
+        Services.console.logStringMessage("====" + event.type);
         switch(event.type) {
           case "mousedown":
             if (event.button == 2) {
@@ -542,6 +555,15 @@ let ucjsMouseGestures_framescript = {
               this._linkURLs.push(linkURL);
               this._linkElts.push(event.target);
               event.target.style.outline = "1px dashed darkorange";
+            }
+            break;
+          case "wheel":
+            let _isWheelCanceled = sendSyncMessage(
+                    "ucjsMouseGestures_linkURL_isWheelCancel", {})[0]._isWheelCanceled;
+            if (_isWheelCanceled) {
+              //Cancel scrolling
+              event.preventDefault();
+              event.stopPropagation();
             }
             break;
           case "dragstart":
@@ -713,7 +735,9 @@ let ucjsMouseGestures_framescript = {
 
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource() + ".init(" + navigator.platform.indexOf("Mac") + ");")
+        + encodeURIComponent(framescript.toSource() +
+        ".init(" + navigator.platform.indexOf("Mac") + "," + 
+         ucjsMouseGestures.enableWheelGestures + ");")
       , true);
   }
 }
