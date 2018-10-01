@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/10/02 02:00 add auto hide for status info
 // @version       2018/09/30 24:00 fix Close Tabs to left right (closeMultipleTabs)
 // @version       2018/09/30 22:00 fix surplus scroll if doing Wheel Gestures on 60esr
 // @version       2018/09/30 03:00 add dispatchEvent command( dispatch event to content from chrome)
@@ -46,6 +47,8 @@ var ucjsMouseGestures = {
   // options
   enableWheelGestures: true,  // Wheel Gestures (Scroll wheel with holding right-click)
   enableRockerGestures: true,  // Rocker Gestures (Left-click with holding right-click and vice versa)
+  STATUSINFO_TIMEOUT: 2000, // timeout(in millisecond) hide status info
+
   // These are the mouse gesture mappings. Customize this as you like. 
   // Gesture Sequence,  UDRL: right-click then move to up down right left
   // Wheel Gestures,    W+ : right-click then wheel turn down , W- : left-click then wheel turn up
@@ -177,13 +180,26 @@ var ucjsMouseGestures = {
 
   _isMac: false,  // for Mac
 
+  get statusinfo() {
+    if ("StatusPanel" in window) {
+      // fx61+
+      return StatusPanel._labelElement.value;
+    } else {
+      return XULBrowserWindow.statusTextField.label;
+    }
+  },
+
   set statusinfo(val) {
     if ("StatusPanel" in window) {
       // fx61+
       StatusPanel._label = val;
     } else {
-      XULBrowserWindow.statusTextField.label = val
+      XULBrowserWindow.statusTextField.label = val;
     }
+    if(this._statusinfotimer)
+      clearTimeout(this._statusinfotimer);
+    this._statusinfotimer = setTimeout(() => {this.hideStatusInfo();}, this.STATUSINFO_TIMEOUT);
+    this._laststatusinfo = val;
     return val;
   },
 
@@ -225,7 +241,16 @@ var ucjsMouseGestures = {
   _suppressContext: false,
   _shouldFireContext: false,  // for Linux 
   _isWheelCanceled: false,
+  _statusinfotimer :null,
+  _laststatusinfo : "",
 
+  hideStatusInfo: function() {
+    if(this._statusinfotimer)
+      clearTimeout(this._statusinfotimer);
+    this._statusinfotimer = null;
+    if (this._laststatusinfo == this.statusinfo)
+      this.statusinfo = "";
+  },
 
   receiveMessage: function(message) {
     Services.console.logStringMessage("message from framescript: " + message.name);
