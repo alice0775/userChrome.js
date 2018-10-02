@@ -4,7 +4,8 @@
 // @description   do not select tab when dragging it, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include       main
 // @compatibility Firefox 60+
-// @version       2018/10/02
+// @version       2018/10/02 23:00 fix do not select tab when click on speeker icon, wip
+// @version       2018/10/02 wip
 // @todo          should investigate side effects due to event.stopPropagation when mousedown
 // ==/UserScript==
 let do_not_select_tab_when_mousedown = {
@@ -59,7 +60,13 @@ let do_not_select_tab_when_mousedown = {
         tab = event.target;
         if (this._mousedownTimer)
           clearTimeout(this._mousedownTimer);
-        if (this._mousedown == tab)
+          let originalTarget = event.originalTarget;
+          let soundPlayingIcon =
+            document.getAnonymousElementByAttribute(tab, "anonid", "soundplaying-icon");
+          let overlayIcon =
+            document.getAnonymousElementByAttribute(tab, "anonid", "overlay-icon")
+        if (this._mousedown == tab &&
+            !(soundPlayingIcon == originalTarget || overlayIcon == originalTarget))
           gBrowser.selectedTab = tab;
         break;
     }
