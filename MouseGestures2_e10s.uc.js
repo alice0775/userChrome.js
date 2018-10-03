@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/10/03 11:00 add ucjsMouseGestures_helper.executeInContent, ucjsMouseGestures.executeInChrome
 // @version       2018/10/03 08:00 add mime/type, content-dispositon (ucjsMouseGestures._imgTYPE, ucjsMouseGestures._imgDISP)
 // @version       2018/10/02 02:00 add auto hide for status info
 // @version       2018/09/30 24:00 fix Close Tabs to left right (closeMultipleTabs)
@@ -208,6 +209,12 @@ var ucjsMouseGestures = {
             ucjsMouseGestures_helper.dispatchEvent(
                             { target: "document", type: "AutoPagerizeToggleRequest" } );
           } ],
+        ['', 'weAutopagerizeのトグル 方法2',
+          function(){
+            ucjsMouseGestures_helper.executeInContent(function aFrameScript() {
+              content.document.dispatchEvent(new content.Event("AutoPagerizeToggleRequest"));
+            });
+          } ],
 
         ['', 'ページ内キャンバスをすべて保存',
           function() {
@@ -243,27 +250,50 @@ var ucjsMouseGestures = {
             browserMM.loadFrameScript(script, false);
           } ],
 
-        ['', 'frameスクリプトのテスト',
+        ['', 'frameスクリプトのテスト用',
           function() {
-            function contentScript() {
+            //frameスクリプトを実行
+            ucjsMouseGestures_helper.executeInContent(function aFrameScript(window) {
               // the following are available in frame script
-              // ucjsMouseGestures._document
-              // ucjsMouseGestures._target  
-              // ucjsMouseGestures._linkURL 
-              // ucjsMouseGestures._linkTXT 
-              // ucjsMouseGestures._imgSRC  
-              // ucjsMouseGestures._imgTYPE 
-              // ucjsMouseGestures._imgDISP 
-              // ucjsMouseGestures._mediaSRC
-              // ucjsMouseGestures._linkElts
-              // ucjsMouseGestures._selLinkElts
-              // 
+              // content                        // window object
+              // ucjsMouseGestures._document    // content.document
+              // ucjsMouseGestures._target      // element at star mouse gestures
+              // ucjsMouseGestures._linkURL     // link url at star mouse gestures(string)
+              // ucjsMouseGestures._linkTXT     //      linktext (string)
+              // ucjsMouseGestures._imgSRC      // image src at star mouse gestures(string)(string)
+              // ucjsMouseGestures._imgTYPE     //       mime/type (string)
+              // ucjsMouseGestures._imgDISP     //       cpntent-disposition (string)
+              // ucjsMouseGestures._mediaSRC    // media src at star mouse gestures(string)(string)(string)
+              // ucjsMouseGestures._linkElts    // links hoverd (array)
+              // ucjsMouseGestures._selLinkElts // links selected (array)
+              // ucjsMouseGestures.executeInChrome: function(func, args) // function oject, array [string, ...]
 
-              Services.console.logStringMessage("contentScript" + ucjsMouseGestures._target);
-              Services.console.logStringMessage("contentScript" + ucjsMouseGestures._imgSRC);
-            }
-            let script = 'data:application/javascript;charset=utf-8,' + encodeURIComponent('(' + contentScript.toString() + ')();');
-            gBrowser.selectedBrowser.messageManager.loadFrameScript(script, false, true);
+
+              Services.console.logStringMessage("contentScript window: " + window); //should undefined
+              Services.console.logStringMessage("contentScript this: " + this);
+              Services.console.logStringMessage("contentScript content: " + content);
+              Services.console.logStringMessage("contentScript this === content: " + (this === content));
+              Services.console.logStringMessage("contentScript _target: " + ucjsMouseGestures._target);
+              /*
+              Services.console.logStringMessage("contentScript test: " + ucjsMouseGestures._imgSRC);
+              Services.console.logStringMessage("contentScript test: " +
+                                        ucjsMouseGestures._getLinkTEXT(ucjsMouseGestures._target)) ;
+              */
+
+              // このframeスクリプトからChromeスクリプトを実行するテスト
+              ucjsMouseGestures.executeInChrome(
+                function aChromeScript(url, inBackground) {
+                  gBrowser.loadOneTab(
+                    url, {
+                    relatedToCurrent: true,
+                    inBackground: inBackground,
+                    referrerURI: null,
+                    triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+                  });
+                },
+                ["http://www.yahoo.co.jp", false]
+              );
+            });
           }],  
 
 
@@ -325,6 +355,7 @@ var ucjsMouseGestures = {
      messageManager.addMessageListener("ucjsMouseGestures_linkURLs_stop", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
 
+     messageManager.addMessageListener("ucjsMouseGestures_executeInChrome", this);
      window.addEventListener("unload", this, false);
   },
 
@@ -341,6 +372,7 @@ var ucjsMouseGestures = {
      messageManager.removeMessageListener("ucjsMouseGestures_linkURLs_stop", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
 
+     messageManager.removeMessageListener("ucjsMouseGestures_executeInChrome", this);
      window.removeEventListener("unload", this, false);
   },
 
@@ -361,7 +393,7 @@ var ucjsMouseGestures = {
   },
 
   receiveMessage: function(message) {
-//    Services.console.logStringMessage("message from framescript: " + message.name);
+    Services.console.logStringMessage("message from framescript: " + message.name);
     switch(message.name) {
       case "ucjsMouseGestures_linkURL_isWheelCancel":
         return { _isWheelCanceled: this._isWheelCanceled};
@@ -385,6 +417,20 @@ var ucjsMouseGestures = {
       case "ucjsMouseGestures_linkURL_dragstart":
         if (this.enableRockerGestures)
           this._isMouseDownL = false;
+        break;
+      case "ucjsMouseGestures_executeInChrome":
+        //try {
+          browser = message.target;
+          func = message.data.func;
+          args = JSON.parse(message.data.args);
+          functionobj = new Function(
+             func.match(/\((.*)\)\s*\{/)[1],
+             func.replace(/^function\s*.*\s*\(.*\)\s*\{/, '').replace(/}$/, '')
+          );
+          functionobj.apply(window, args);
+        //} catch(ex) {
+        //  Services.console.logStringMessage("Error in executeInChrome : " /*+ ex*/);
+        //}
         break;
     }
     return {};
@@ -565,7 +611,11 @@ var ucjsMouseGestures = {
       if (command[0].substring(0, 1) == "*") {
         let cmd = command[0].substring(1);
         if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
-          command[2]();
+          try {
+            command[2]();
+          } catch(ex) {
+            Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
+          }
           this._directionChain = "";
           return;
         }
@@ -574,7 +624,11 @@ var ucjsMouseGestures = {
     // These are the mouse gesture mappings.
     for (let command of this.commands) {
       if (command[0] == this._directionChain) {
-        command[2]();
+        try {
+          command[2]();
+        } catch(ex) {
+          Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
+        }
         this._directionChain = "";
         return;
       }
@@ -892,6 +946,19 @@ let ucjsMouseGestures_framescript = {
         return [LinkElts, linkURLs, linkdocURLs]
       },
 
+      // func       // function object
+      // args       array [string, string, ...]
+      executeInChrome: function(func, args) {
+        let json = {
+          func : func.toString(),
+          args : JSON.stringify(args)
+        }
+        Services.console.logStringMessage("this " + content);
+        sendAsyncMessage("ucjsMouseGestures_executeInChrome",
+              json
+        );
+      },
+
       dispatchEvent: function(event) {
         let targetSelector = event.target;
         if (targetSelector == "document") {
@@ -942,6 +1009,17 @@ ucjsMouseGestures_framescript.init();
 
 
 let ucjsMouseGestures_helper = {
+
+  executeInContent: function(func) {
+    try {
+      let script = 'data:application/javascript;charset=utf-8,' +
+                    encodeURIComponent('{let f = ' + func.toString() + '; f.apply(content, []);}');
+      gBrowser.selectedBrowser.messageManager.loadFrameScript(script, false, true);
+
+    } catch(ex) {
+      Services.console.logStringMessage("Error in executeInContent : " /*+ ex*/);
+    }
+  },
 
   dispatchEvent: function(event) {
       gBrowser.selectedBrowser.messageManager
