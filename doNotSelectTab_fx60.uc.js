@@ -4,6 +4,7 @@
 // @description   do not select tab when dragging it, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include       main
 // @compatibility Firefox 60+
+// @version       2018/10/03 23:00 more aggressive pending tab 
 // @version       2018/10/03 19:00 fix should not react on newtab button and other button, wip
 // @version       2018/10/03 00:20 fix do not load tab when if it is pending background tab, wip
 // @version       2018/10/02 23:10 fix do not select tab when right click, wip
@@ -61,6 +62,12 @@ let do_not_select_tab_when_mousedown = {
           if (this._pending)
             gBrowser.discardBrowser(this._mousedownTab.linkedBrowser);
         }, 0);
+
+        // xxx more aggressive
+        gBrowser.selectedTab = this._selectedTab;
+        if (this._pending)
+          gBrowser.discardBrowser(this._mousedownTab.linkedBrowser);
+
         this._mousedownTab.removeEventListener("dragstart", this, true);
         this._mousedownTab.removeEventListener("mouseup", this, true);
         break;
