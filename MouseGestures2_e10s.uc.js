@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/10/03 08:00 add mime/type, content-dispositon (ucjsMouseGestures._imgTYPE, ucjsMouseGestures._imgDISP)
 // @version       2018/10/02 02:00 add auto hide for status info
 // @version       2018/09/30 24:00 fix Close Tabs to left right (closeMultipleTabs)
 // @version       2018/09/30 22:00 fix surplus scroll if doing Wheel Gestures on 60esr
@@ -55,111 +56,218 @@ var ucjsMouseGestures = {
   // Rocker Gestures,   L<R : right-click then left-click , L>R : left-click then right-click
   // Any Gesture Sequence,  *hogehoge :  Gesture Sequence following that any faesture
   // ucjsMouseGestures._lastX, ucjsMouseGestures._lastY  : start coordinates
+
   // ucjsMouseGestures._linkURLs ,ucjsMouseGestures._linkdocURLs : link url hover, ownerDocument url
   // ucjsMouseGestures._selLinkURLs ,ucjsMouseGestures._selLinkdocURLs: link url in selected, ownerDocument url
   // ucjsMouseGestures._docURL : ownerDocument url
   // ucjsMouseGestures._linkURL ,ucjsMouseGestures._linkTXT : ownerDocument url : link url, ownerDocument url
-  // ucjsMouseGestures._imgSRC ,ucjsMouseGestures._mediaSRC : image src, nedia src
+  // ucjsMouseGestures._imgSRC  _imgTYPE _imgDISP: src mime/type contentdisposition
+  // ucjsMouseGestures._mediaSRC : media src
   // ucjsMouseGestures._selectedTXT : selected text
   // ucjsMouseGestures._version : browser major version
-  commands : 
-   [
-     ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
-     ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
-     ['', 'タブの履歴をポップアップ', function(){ ucjsMouseGestures_helper.sessionHistoryPopup(); } ],
 
-     ['RULD', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
-     ['ULDR', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
-     ['DLUR', '数値を減らして移動', function(){ ucjsMouseGestures_helper.goNumericURL(-1); } ],
+  commands :
 
-     ['UD', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
-     ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
-     ['', 'すべてタブをリロード', function(){ gBrowser.reloadAllTabs(gBrowser.selectedTab); } ],
+      [
 
 
-     ['', 'リンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
-     ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
-     ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
+        ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
+        ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
 
-     ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
-     ['', '通過したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
+        ['', 'タブの履歴をポップアップ', function(){ ucjsMouseGestures_helper.sessionHistoryPopup(); } ],
+        ['', '履歴の先頭へ戻る', function(){ SessionStore.getSessionHistory(gBrowser.selectedTab, history => {gBrowser.gotoIndex(history.entries.length = 0)}); } ],
+        ['', '履歴の末尾へ進む', function(){ SessionStore.getSessionHistory(gBrowser.selectedTab, history => {gBrowser.gotoIndex(history.entries.length - 1)}); } ],
 
-     ['', 'コピー', function(){ ucjsMouseGestures_helper.copyText(ucjsMouseGestures.selectedTXT); } ],
-     ['', '通過したリンクをコピー', function(){ ucjsMouseGestures_helper.copyHoverLinks(); } ],
-     ['', '選択したリンクをコピー', function(){ ucjsMouseGestures_helper.copySelectedLinks(); } ],
+        ['RULD', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
+        ['ULDR', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
+        ['DLUR', '数値を減らして移動', function(){ ucjsMouseGestures_helper.goNumericURL(-1); } ],
 
-     ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
-     ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
-     ['', '新しいタブを開く', function(){ document.getElementById("cmd_newNavigatorTab").doCommand(); } ],
-     ['', 'タブをピン留めトグル',
-			 function(){ var tab = gBrowser.selectedTab;
-			 	   tab.pinned ? gBrowser.unpinTab(tab) : gBrowser.pinTab(tab);
-       } ],
-     ['', 'タブを複製',
-			 function(){ 
-           var orgTab = gBrowser.selectedTab;
-			 	   var newTab = gBrowser.duplicateTab(orgTab);
-				   gBrowser.moveTabTo(newTab, orgTab._tPos + 1);
-       } ],
-     ['LD', 'タブを閉じる', function(){ document.getElementById("cmd_close").doCommand(); } ],
-     ['', '左側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("left"); } ],
-     ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
-     ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
-     ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
-     ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
+        ['UD', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
+        ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
+        ['', 'すべてタブをリロード', function(){ gBrowser.reloadAllTabs(gBrowser.selectedTab); } ],
+        ['', '読込中止', function(){ document.getElementById("Browser:Stop").doCommand(); } ],
 
-     ['', '最小化', function(){ window.minimize(); } ],
-     ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
-     ['LDRU', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
+        ['', 'リンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
+        ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
+        ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
 
-     ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
-     ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
-     ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
-     ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
+        ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
+        ['', '通過したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
 
-     ['W-', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
-     ['W+', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
-     ['L<R', 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
+        ['', 'コピー', function(){ ucjsMouseGestures_helper.copyText(ucjsMouseGestures.selectedTXT); } ],
+        ['', '通過したリンクをコピー', function(){ ucjsMouseGestures_helper.copyHoverLinks(); } ],
+        ['', '選択したリンクをコピー', function(){ ucjsMouseGestures_helper.copySelectedLinks(); } ],
 
-     ['DL', 'ページ内検索バー',
-       function(){
-         if (ucjsMouseGestures._version <= "60") {
-           if (gBrowser.getFindBar()) {
-             gFindBar.hidden? gFindBar.onFindCommand(): gFindBar.close();
-           } else {
-             gLazyFindCommand("onFindCommand");
-           }
-         } else {
-           // 61+
-           gBrowser.getFindBar().then(findbar => {
-             findbar.hidden? findbar.onFindCommand(): findbar.close();
-           });
-         }
-       } ],
+        ['', 'リンクを保存',
+          function(){
+            let url = ucjsMouseGestures._linkURL;
+            saveURL(url, url, null, false, false, null, document);
+          } ],
+        ['LDR', '画像を保存',
+          function() {
+            let that = ucjsMouseGestures;
+            let url = that._imgSRC;
+            let aShouldBypassCache = false; // skip cache or not
+            let aSkipPrompt = false; // use file picker or not
+            let aReferrer = null;
+            saveImageURL(url, that._imgTYPE, null, aShouldBypassCache,
+                         aSkipPrompt, aReferrer, 
+                         document, that._imgTYPE, that._imgDISP,
+                         PrivateBrowsingUtils.isWindowPrivate(window),
+                         Services.scriptSecurityManager.createNullPrincipal({}));
+          } ],
 
-     ['', '選択テキストで検索',
-       function(){
-         BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
-                Services.scriptSecurityManager.createNullPrincipal({}));
-       } ],
-     ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
-     ['DR', '選択テキストを検索バーにコピー',
-       function(){ 
-         if (BrowserSearch.searchBar)
-           BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
-       } ],
+        ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
+        ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
+        ['', '新しいタブを開く', function(){ document.getElementById("cmd_newNavigatorTab").doCommand(); } ],
+        ['', 'タブをピン留めトグル',
+          function(){ var tab = gBrowser.selectedTab;
+            tab.pinned ? gBrowser.unpinTab(tab) : gBrowser.pinTab(tab);
+          } ],
+        ['', 'タブを複製',
+         function(){ 
+            var orgTab = gBrowser.selectedTab;
+            var newTab = gBrowser.duplicateTab(orgTab);
+            gBrowser.moveTabTo(newTab, orgTab._tPos + 1);
+          } ],
+        ['LD', 'タブを閉じる', function(){ document.getElementById("cmd_close").doCommand(); } ],
+        ['', '左側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("left"); } ],
+        ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
+        ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
+        ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
+        ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
+        ['', 'すべてのタブを閉じる', function(){ var browser = getBrowser(); var ctab = browser.addTab("about:newtab"); browser.removeAllTabsBut(ctab); } ],
+        ['', 'ウインドウを閉じる', function(){ document.getElementById("cmd_closeWindow").doCommand(); } ],
 
-     ['', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
-     ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
-     ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
+        ['', '最小化', function(){ window.minimize(); } ],
+        ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
+        ['LDRU', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
 
-     ['', 'weAutopagerizeのトグル',
-       function(){
-         ucjsMouseGestures_helper.dispatchEvent(
-         { target: "document", type: "AutoPagerizeToggleRequest" } );
-       } ],
+        ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
+        ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
+        ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
+        ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
 
-   ],
+        ['W-', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
+        ['W+', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
+        ['L<R', 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
+
+        ['DL', 'ページ内検索バー',
+          function(){
+            if (ucjsMouseGestures._version <= "60") {
+              if (gBrowser.getFindBar()) {
+                gFindBar.hidden? gFindBar.onFindCommand(): gFindBar.close();
+              } else {
+                gLazyFindCommand("onFindCommand");
+              }
+            } else {
+              // 61+
+              gBrowser.getFindBar().then(findbar => {
+                findbar.hidden? findbar.onFindCommand(): findbar.close();
+              });
+            }
+          } ],
+
+        ['', '選択テキストで検索',
+          function(){
+            BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
+                          Services.scriptSecurityManager.createNullPrincipal({}));
+          } ],
+        ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
+        ['DR', '選択テキストを検索バーにコピー',
+          function(){ 
+            if (BrowserSearch.searchBar)
+              BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+          } ],
+        ['', '選択テキストを検索バーに追加',
+          function(){ 
+            if (BrowserSearch.searchBar.value){
+              BrowserSearch.searchBar.value = BrowserSearch.searchBar.value + " " +
+                     ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+            }else{
+              BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT ||
+                                              ucjsMouseGestures._linkTXT;
+            }
+          } ],
+        ['', '検索バー（Web検索ボックス）をクリア', function(){ document.getElementById("searchbar").value = ""; } ],
+        ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
+
+        ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
+        ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
+
+        ['', 'ブックマークサイドバー', function(){ SidebarUI.toggle("viewBookmarksSidebar"); } ],
+        ['', '履歴サイドバー', function(){ SidebarUI.toggle("viewHistorySidebar"); } ],
+
+        ['', '最近の履歴を消去', function(){ setTimeout(function(){ document.getElementById("Tools:Sanitize").doCommand(); }, 0); } ],
+        ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
+        ['', 'アドオンマネージャ', function(){ gBrowser.loadOneTab("about:addons", {inBackground: false, relatedToCurrent: true}); } ],
+        ['', 'トラブルシューティング情報', function(){ gBrowser.loadOneTab("about:support", {inBackground: false, relatedToCurrent: true}); } ],
+        ['', '設定（オプション）', function(){ gBrowser.loadOneTab("about:preferences", {inBackground: false, relatedToCurrent: true}); } ],
+        ['', 'weAutopagerizeのトグル',
+          function(){
+            ucjsMouseGestures_helper.dispatchEvent(
+                            { target: "document", type: "AutoPagerizeToggleRequest" } );
+          } ],
+
+        ['', 'ページ内キャンバスをすべて保存',
+          function() {
+            let browserMM = gBrowser.selectedBrowser.messageManager;
+            browserMM.addMessageListener("getCanvas", function fnc(listener) {
+              browserMM.removeMessageListener("getCanvas", fnc, true);
+              let data = listener.data;
+              let i = data.length;
+              while(i){
+                let IMGtitle = ("000"+i).slice(-3);
+                i--;
+                saveURL(data[i], IMGtitle + ".png", null, false, true, null, document);
+              }
+            });
+            function contentScript() {
+              function populate(win) {
+                let data = [];
+                for (let j = 0; j <  win.frames.length; j++) {
+                  data = data.concat(populate(win.frames[j]));
+                }
+
+                let elems = win.document.getElementsByTagName("canvas");
+                let i = elems.length;
+                while(i--){
+                  data.push(elems[i].toDataURL("image/png"));
+                }
+                return data
+              }
+              let data = populate(content.document.defaultView);
+              sendAsyncMessage("getCanvas", data);
+            }
+            let script = 'data:application/javascript;charset=utf-8,' + encodeURIComponent('(' + contentScript.toString() + ')();');
+            browserMM.loadFrameScript(script, false);
+          } ],
+
+        ['', 'frameスクリプトのテスト',
+          function() {
+            function contentScript() {
+              // the following are available in frame script
+              // ucjsMouseGestures._document
+              // ucjsMouseGestures._target  
+              // ucjsMouseGestures._linkURL 
+              // ucjsMouseGestures._linkTXT 
+              // ucjsMouseGestures._imgSRC  
+              // ucjsMouseGestures._imgTYPE 
+              // ucjsMouseGestures._imgDISP 
+              // ucjsMouseGestures._mediaSRC
+              // ucjsMouseGestures._linkElts
+              // ucjsMouseGestures._selLinkElts
+              // 
+
+              Services.console.logStringMessage("contentScript" + ucjsMouseGestures._target);
+              Services.console.logStringMessage("contentScript" + ucjsMouseGestures._imgSRC);
+            }
+            let script = 'data:application/javascript;charset=utf-8,' + encodeURIComponent('(' + contentScript.toString() + ')();');
+            gBrowser.selectedBrowser.messageManager.loadFrameScript(script, false, true);
+          }],  
+
+
+      ],
   // == /config ==
 
 
@@ -253,7 +361,7 @@ var ucjsMouseGestures = {
   },
 
   receiveMessage: function(message) {
-    Services.console.logStringMessage("message from framescript: " + message.name);
+//    Services.console.logStringMessage("message from framescript: " + message.name);
     switch(message.name) {
       case "ucjsMouseGestures_linkURL_isWheelCancel":
         return { _isWheelCanceled: this._isWheelCanceled};
@@ -264,6 +372,7 @@ var ucjsMouseGestures = {
         this._linkURL = message.data.linkURL;
         this._linkTXT = message.data.linkTXT;
         this._imgSRC = message.data.imgSRC;
+        this._imgTYPE = message.data.imgTYPE;
         this._mediaSRC = message.data.mediaSRC;
         this._selectedTXT = message.data.selectedTXT;
         break;
@@ -450,7 +559,7 @@ var ucjsMouseGestures = {
   },
 
   _performAction: function(event) {
-    Services.console.logStringMessage("====" + this._directionChain);
+//    Services.console.logStringMessage("====" + this._directionChain);
     // Any Gesture Sequence
     for (let command of this.commands) {
       if (command[0].substring(0, 1) == "*") {
@@ -493,6 +602,7 @@ let ucjsMouseGestures_framescript = {
     let framescript = {
       _linkURLs: [],
       _linkElts: [],
+      _target: null,
 
       init: function(isMac, enableWheelGestures) {
         this._isMac = isMac;
@@ -504,18 +614,19 @@ let ucjsMouseGestures_framescript = {
         addEventListener("mousedown", this, true);
         if (this.enableWheelGestures)
           addEventListener('wheel', this, true);
+
+        ucjsMouseGestures = this;
       },
 
       receiveMessage: function(message) {
-        Services.console.logStringMessage("====" + message.name);
+//        Services.console.logStringMessage("====" + message.name);
         switch(message.name) {
           case "ucjsMouseGestures_mouseup":
             removeEventListener("mousemove", this, false);
             this.clearStyle();
             break;
           case "ucjsMouseGestures_linkURLs_request":
-            this.clearStyle();
-            let [selLinkURLs, selLinkdocURLs] = this.gatherLinkURLsInSelection();
+            let [_selLinkElts, selLinkURLs, selLinkdocURLs] = this.gatherLinkURLsInSelection();
             let json = {
               linkdocURLs: this._linkdocURLs.join(" "),
               linkURLs: this._linkURLs.join(" "),
@@ -525,6 +636,9 @@ let ucjsMouseGestures_framescript = {
             sendSyncMessage("ucjsMouseGestures_linkURLs_stop",
               json
             );
+            ucjsMouseGestures._linkElts = this._linkElts;
+            ucjsMouseGestures._selLinkElts = _selLinkElts;
+            this.clearStyle();
             break;
           case "ucjsMouseGestures_dispatchKeyEvent":
             this.dispatchKeyEvent(message.data.targetSelector,
@@ -547,7 +661,9 @@ let ucjsMouseGestures_framescript = {
       },
 
       handleEvent: function(event) {
-        Services.console.logStringMessage("====" + event.type);
+//        Services.console.logStringMessage("====" + event.type);
+        let imgSRC, imgTYPE, imgDISP, linkURL, linkTXT, mediaSRC, selectedTXT, json;
+        let _isWheelCanceled;
         switch(event.type) {
           case "mousedown":
             if (event.button == 2) {
@@ -559,23 +675,37 @@ let ucjsMouseGestures_framescript = {
             this._linkElts = [];
             this._selLinkdocURLs = [];
             this._selLinkURLs = [];
-
-            let json = {
+            [imgSRC, imgTYPE, imgDISP] = this._getImgSRC(event.target);
+            linkURL = this._getLinkURL(event.target);
+            linkTXT = this._getLinkTEXT(this.link);
+            mediaSRC = this._getMediaSRC(event.target);
+            selectedTXT = this._getSelectedText(event.target);
+            json = {
               docURL: event.target.ownerDocument.location.href,
               docCHARSET: event.target.ownerDocument.charset,
-              linkURL: this._getLinkURL(event.target),
-              linkTXT: this._getLinkTEXT(this.link),
-              imgSRC: this._getImgSRC(event.target),
-              mediaSRC: this._getMediaSRC(event.target),
-              selectedTXT: this._getSelectedText(event.target)
+              linkURL: linkURL,
+              linkTXT: linkTXT,
+              imgSRC: imgSRC,
+              imgTYPE: imgTYPE,
+              imgDISP: imgDISP,
+              mediaSRC: mediaSRC,
+              selectedTXT: selectedTXT
             };
             sendSyncMessage("ucjsMouseGestures_linkURL_start",
               json
             );
+            ucjsMouseGestures._document = content.document;
+            ucjsMouseGestures._target   = event.target;
+            ucjsMouseGestures._linkURL  = linkURL;
+            ucjsMouseGestures._linkTXT  = linkTXT;
+            ucjsMouseGestures._imgSRC   = imgSRC;
+            ucjsMouseGestures._imgTYPE  = imgTYPE;
+            ucjsMouseGestures._imgDISP  = imgDISP;
+            ucjsMouseGestures._mediaSRC = mediaSRC;
             break;
           case "mousemove":
                 // ホバーしたリンクのURLを記憶
-            let linkURL = this._getLinkURL(event.target);
+            linkURL = this._getLinkURL(event.target);
             if (linkURL && this._linkURLs.indexOf(linkURL) == -1) {
               this._linkdocURLs.push(event.target.ownerDocument.location.href);
               this._linkURLs.push(linkURL);
@@ -584,7 +714,7 @@ let ucjsMouseGestures_framescript = {
             }
             break;
           case "wheel":
-            let _isWheelCanceled = sendSyncMessage(
+            _isWheelCanceled = sendSyncMessage(
                     "ucjsMouseGestures_linkURL_isWheelCancel", {})[0]._isWheelCanceled;
             if (_isWheelCanceled) {
               //Cancel scrolling
@@ -621,13 +751,41 @@ let ucjsMouseGestures_framescript = {
       },
 
       _getImgSRC: function(aNode) {
+        let aNode0 = aNode;
         while (aNode) {
           if (aNode instanceof content.HTMLImageElement && aNode.src) {
-            return aNode.src;
+            let aURL = aNode.src
+            let aContentType = null;
+            let aContentDisp = null;
+            try {
+              let aDoc = aNode.ownerDocument;
+              aURL = BrowserUtils.makeURI(aURL, aDoc.characterSet);
+              var imageCache = Cc["@mozilla.org/image/tools;1"]
+                                 .getService(Ci.imgITools)
+                                 .getImgCacheForDocument(aDoc);
+              var props =
+                imageCache.findEntryProperties(aURL, aDoc);
+              if (props) {
+                aContentType = props.get("type",  Ci.nsISupportsCString).data;
+                aContentDisp = props.get("content-disposition",  Ci.nsISupportsCString).data;
+              }
+            } catch (e) {
+            }
+            return [aURL.spec, aContentType, aContentDisp];
           }
           aNode = aNode.parentNode;
         }
-        return null;
+        aNode = aNode0;
+        while (aNode) {
+          try {
+            if (aNode instanceof content.HTMLCanvasElement) {
+              return [aNode.toDataURL("image/png"), "image/png"];
+            }
+          } catch(e) {}
+          aNode = aNode.parentNode;
+        }
+        
+        return [null, null, null];
       },
 
       _getMediaSRC: function(aNode) {
@@ -707,8 +865,9 @@ let ucjsMouseGestures_framescript = {
         var win = content;
         var sel = win.getSelection();
         if (!sel || sel.isCollapsed)
-          return [[], []];
+          return [[], [], []];
         var doc = win.document;
+        var LinkElts = [];
         var linkdocURLs = [];
         var linkURLs = [];
         for (var i = 0; i < sel.rangeCount; i++) {
@@ -721,6 +880,7 @@ let ucjsMouseGestures_framescript = {
             if ((node instanceof content.HTMLAnchorElement ||
                  node instanceof content.HTMLAreaElement) && node.href) {
               try {
+                LinkElts.push(node);
                 linkdocURLs.push(fragment.ownerDocument.location.href);
                 linkURLs.push(node.href);
               }
@@ -729,7 +889,7 @@ let ucjsMouseGestures_framescript = {
             }
           }
         }
-        return [linkURLs, linkdocURLs]
+        return [LinkElts, linkURLs, linkdocURLs]
       },
 
       dispatchEvent: function(event) {
@@ -758,13 +918,12 @@ let ucjsMouseGestures_framescript = {
       }
 
     }; // end framescript
-
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
         + encodeURIComponent(framescript.toSource() +
         ".init(" + navigator.platform.indexOf("Mac") + "," + 
          ucjsMouseGestures.enableWheelGestures + ");")
-      , true);
+      , true, true);
   }
 }
 ucjsMouseGestures_framescript.init();
