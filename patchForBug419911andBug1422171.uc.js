@@ -5,6 +5,7 @@
 // @include       main
 // @compatibility Firefox 60
 // @author        alice0775
+// @version       2018/10/05 00:00 fix 60esr
 // @version       2018/10/04 60+
 // ==/UserScript==
 "use strict";
@@ -18,7 +19,7 @@ var bug419911 = {
               'BMB_bookmarksPopup'],
   timer:[],
   count:[],
-
+  rptcnt: 0,
 
   init: function(){
     window.removeEventListener("load", this, false);
@@ -167,15 +168,18 @@ var bug419911 = {
       var anonid = event.originalTarget.getAttribute('anonid');
       var scrollDir = anonid == "scrollbutton-up" ? -1 :
                       anonid == "scrollbutton-down" ? 1 : 0;
-      if (scrollDir < 0) {
-        // Bug 1422171 since 57+
-        //this._scrollBox.scrollByIndex(scrollDir, false);
-        this._scrollBox._startScroll(scrollDir);
-      }
-      if (scrollDir > 0) {
-        // Bug 1422171 since 57+
-        //this._scrollBox.scrollByIndex(scrollDir, false);
-        this._scrollBox._startScroll(scrollDir);
+      if (scrollDir != 0 && this.rptcnt == 0) {
+        this.rptcnt++;
+        let rptbutton = event.originalTarget;
+        if (typeof this._scrollBox._startScroll != "undefined") {
+          this._scrollBox._startScroll(scrollDir);
+        } else {
+          this._scrollBox._autorepeatbuttonScroll(event); // Bug 1422171 
+        }
+      } else {
+        this.rptcnt = 0;
+        if (typeof this._scrollBox._startScroll != "undefined")
+          this._scrollBox._stopScroll()
       }
 
       // Check if we should hide the drop indicator for this target.
@@ -255,5 +259,5 @@ var bug419911 = {
   }
 }
 
-window.addEventListener("load", bug419911, false);
-//bug419911.init();
+
+bug419911.init();
