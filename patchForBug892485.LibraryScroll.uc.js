@@ -5,12 +5,13 @@
 // @include       chrome://browser/content/places/places.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2018/10/04 60+
 // @version       2014/03/01 Fix scroll position
 // @version       2013/11/20 Fix selected index is 0 if scroll = 0
 // @version       2013/07/29 Fix middle click
 // @version       2013/07/16 Fix sortorder == ascending
 // @version       2013/07/16
-// @note          this workaround fails sometimes :(
+// @note          this workaround fails sometimes :( especially double click to open it
 // ==/UserScript==
 
 var patchForBug892485LibraryScroll = {

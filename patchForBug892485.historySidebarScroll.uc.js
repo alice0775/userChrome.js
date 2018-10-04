@@ -4,8 +4,10 @@
 // @description   Prevent scroll History sidebar to top when a history entry added
 // @include       main
 // @include       chrome://browser/content/history/history-panel.xul
+// @include       chrome://browser/content/places/historySidebar.xul
 // @compatibility Firefox 22
 // @author        alice0775
+// @version       2018/10/04 60+
 // @version       2014/03/01 Fix scroll position
 // @version       2013/11/20 Fix selected index is 0 if scroll = 0
 // @version       2013/07/30 Fix Working with "bookmarks history panel"
