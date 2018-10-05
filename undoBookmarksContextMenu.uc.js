@@ -5,6 +5,7 @@
 // @include       *
 // @compatibility Firefox 60
 // @author        alice0775
+// @version       2018/10/04 20:00 remove conflict shortcuts key for main window
 // @version       2018/10/04 60+
 // ==/UserScript==
 let undobookmarksmenu = {
@@ -27,39 +28,30 @@ let undobookmarksmenu = {
     if (!this.popup)
       return;
     this.popup.addEventListener('popupshown', this, false);
-    let template =
-              ["commandset", {id: "undobookmarksmenu:commandset"},
-                ["command", {id: "undobookmarksmenu:cmd_undo",
-                             oncommand: "PlacesTransactions.undo().catch(Cu.reportError);"
-                }],
-                ["command", {id: "undobookmarksmenu:cmd_redo",
-                             oncommand: "PlacesTransactions.redo().catch(Cu.reportError);"
-                }]
-              ];
-    document.documentElement.appendChild(this.jsonToDOM(template, document, {}));
-
-    template =
-              ["keyset", {id: "undobookmarksmenu:keyset"},
-                ["key", {id: "undobookmarksmenu:key_undo",
-                              key: "z",
-                              modifier: "ctrl",
-                              command: "undobookmarksmenu:cmd_undo"
-                }],
-                ["key", {id: "undobookmarksmenu:key_redo",
-                              key: "y",
-                              modifier: "ctrl",
-                              command: "undobookmarksmenu:cmd_redo"
-                }]
-              ];
-    document.documentElement.appendChild(this.jsonToDOM(template, document, {}));
-
-    template =
+    let template = (location.href == "chrome://browser/content/browser.xul")  ?
               [
                 ["menuitem", {id: "undobookmarksmenuUndo",
                               disabled: "true",
                               label: "Undo",
-                              key: "undobookmarksmenu:key_undo",
-                              command: "undobookmarksmenu:cmd_undo",
+                              key: "key_undo",
+                              oncommand: "PlacesTransactions.undo().catch(Cu.reportError);",
+                              accesskey: "U",
+                              selection: "any"
+                }],
+                ["menuitem", {id:"undobookmarksmenuRedo",
+                              disabled: "true",
+                              label: "Redo",
+                              key: "key_redo",
+                              oncommand: "PlacesTransactions.redo().catch(Cu.reportError);",
+                              accesskey: "R",
+                              selection: "any"
+                }]
+              ] : [
+                ["menuitem", {id: "undobookmarksmenuUndo",
+                              disabled: "true",
+                              label: "Undo",
+                              key: "key_undo",
+                              oncommand: "PlacesTransactions.undo().catch(Cu.reportError);",
                               acceltext: "Ctrl+Z",
                               accesskey: "U",
                               selection: "any"
@@ -67,13 +59,14 @@ let undobookmarksmenu = {
                 ["menuitem", {id:"undobookmarksmenuRedo",
                               disabled: "true",
                               label: "Redo",
-                              key: "undobookmarksmenu:key_redo",
-                              command: "undobookmarksmenu:cmd_redo",
+                              key: "key_redo",
+                              oncommand: "PlacesTransactions.redo().catch(Cu.reportError);",
                               acceltext: "Ctrl+Y",
                               accesskey: "R",
                               selection: "any"
                 }]
               ];
+
     let ref = document.getElementById("placesContext_deleteSeparator");
     ref.parentNode.insertBefore(this.jsonToDOM(template, document, {}), ref);
   },
