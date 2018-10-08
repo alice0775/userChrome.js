@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/10/09 00:00 fix CSS
 // @version        2018/09/07 23:00 fix initial visual status
 // ==/UserScript==
 var memoryMinimizationButton = {
@@ -41,11 +42,13 @@ var memoryMinimizationButton = {
       #memoryMinimizationButton {
           width: 16px;
           height: 16px;
-        @media (min-resolution: 1.1dppx) {
+        list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjEuMWMqnEsAAAFdSURBVFhH7VbLbsMwDMsef5dc8z/53F13GXZYm5kaZciqnKro2hxaAkRkmkqI2gI6KNZ1vStPEJluyS6WZVlB3xDpWc3q/Ewf6ASClwicLkhojc5PxaDvgQIU4dWSPjEa/Z1y1ed5fqPUeCmJVhAGUC9YNzz4ghNEelYDrI5aAozjeNyD5QBqgF34DJAN8GN4oGb3cJ527fftumEqgAVurdk7Um680zR92bXWEdMBWB+s14+TegFf93hpgF5dgylK/cFSPSGvOgKA9afWgP4y+lR/xKuOwMN6AdwFXff4H0eAqfhWnU9Mhdx+rrtMBSjER3TUtLYaqOMYjaldN8wGuBmfAWqAcmMPe1ACYF6lIBUZXXFO29I3/5IVoFMpcLoA2iX96gVLiBb0bb6gINSy/WLsgb4HDgBD0BzqXsv0i8nDm+/JCC8lKW5zY4SGvT9LBdbVS0g/64q4fxh+AZvdJHHKcZdFAAAAAElFTkSuQmCC');
+      }
+      @media (min-resolution: 1.1dppx) {
+        #memoryMinimizationButton {
           width: 32px;
           height: 32px;
         }
-        list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAAYdEVYdFNvZnR3YXJlAHBhaW50Lm5ldCA0LjEuMWMqnEsAAAFdSURBVFhH7VbLbsMwDMsef5dc8z/53F13GXZYm5kaZciqnKro2hxaAkRkmkqI2gI6KNZ1vStPEJluyS6WZVlB3xDpWc3q/Ewf6ASClwicLkhojc5PxaDvgQIU4dWSPjEa/Z1y1ed5fqPUeCmJVhAGUC9YNzz4ghNEelYDrI5aAozjeNyD5QBqgF34DJAN8GN4oGb3cJ527fftumEqgAVurdk7Um680zR92bXWEdMBWB+s14+TegFf93hpgF5dgylK/cFSPSGvOgKA9afWgP4y+lR/xKuOwMN6AdwFXff4H0eAqfhWnU9Mhdx+rrtMBSjER3TUtLYaqOMYjaldN8wGuBmfAWqAcmMPe1ACYF6lIBUZXXFO29I3/5IVoFMpcLoA2iX96gVLiBb0bb6gINSy/WLsgb4HDgBD0BzqXsv0i8nDm+/JCC8lKW5zY4SGvT9LBdbVS0g/64q4fxh+AZvdJHHKcZdFAAAAAElFTkSuQmCC');
       }
      `.replace(/\s+/g, " ");
 
