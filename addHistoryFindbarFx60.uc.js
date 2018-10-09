@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/10/09 15:00 remove surplus event dispatch
 // @version        2018/09/15 17:00 remove logging
 // @version        2018/09/15 15:00 fix dop. and use TabFindInitialized instead TabSelect
 // @version        2018/09/15 07:30 workarround for Bug 1411707 Switch findbar and findbar-textbox from XBL bindings 
@@ -256,8 +257,10 @@ const addHistoryFindbar = {
           break;
         textbox2 = document.getAnonymousElementByAttribute(gFindBar._findField,
                           "anonid", "findbar-history-textbox");
-        if (event.originalTarget == textbox2.inputField &&
-            event.keyCode == KeyEvent.DOM_VK_TAB) {
+        if (event.originalTarget != textbox2.inputField)
+          break;
+        
+        if (event.keyCode == KeyEvent.DOM_VK_TAB) {
           this._handleTab(event);
           break;
         }
@@ -284,25 +287,25 @@ const addHistoryFindbar = {
            break;
         }
 
-        if (event.originalTarget == textbox2.inputField &&
-            (event.keyCode == KeyEvent.DOM_VK_RETURN ||
+        if (event.keyCode == KeyEvent.DOM_VK_RETURN ||
              event.keyCode == KeyEvent.DOM_VK_ENTER ||
              event.keyCode == KeyEvent.DOM_VK_PAGE_UP ||
              event.keyCode == KeyEvent.DOM_VK_PAGE_DOWN ||
              event.keyCode == KeyEvent.DOM_VK_UP ||
-             event.keyCode == KeyEvent.DOM_VK_DOWN)) {
+             event.keyCode == KeyEvent.DOM_VK_DOWN) {
           // do nothing if history drop down is openned
           let historyPopup = document.getAnonymousElementByAttribute(textbox2, "type", "autocomplete-richlistbox");
           if (!!historyPopup.getAttribute("open"))
             return
           gFindBar._findField.value = textbox2.value;
+/*          
           var evt = document.createEvent("KeyboardEvent");
           evt.initKeyEvent ('keypress', true, true, window,
                         event.ctrlKey, event.altKey,
                         event.shiftKey, event.metaKey,
                         event.keyCode, 0);
           gFindBar._findField.dispatchEvent(evt);
-
+*/
           if (!(event.keyCode == KeyEvent.DOM_VK_RETURN))
             event.preventDefault();
           break;
