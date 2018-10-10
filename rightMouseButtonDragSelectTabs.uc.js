@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  63+
+// @version        2018/10/10 22:30 fix, scroll when mouse pointer over scrollbuttons
 // @version        2018/10/10 12:30 fix, right click on inactive tab should not multiselect
 // @version        2018/10/10 10:30
 // @note           To enable multiselection tabs, set browser.tabs.multiselect = true in about:config
@@ -79,9 +80,39 @@ var rightMouseButtonDragSelectTabs = {
                 null
               ).singleNodeValue;
     if (!tab) {
+      // scrollbutton
+      let scrollbutton = document.evaluate(
+                  'ancestor-or-self::*[contains(@class,"scrollbutton-up")]',
+                  event.originalTarget,
+                  null,
+                  XPathResult.FIRST_ORDERED_NODE_TYPE,
+                  null
+                ).singleNodeValue;
+      if (scrollbutton) {
+        if (scrollbutton != this.lastHoveredTab) {
+          this.lastHoveredTab = scrollbutton;
+          gBrowser.tabContainer.arrowScrollbox._startScroll(-1);
+        }
+        return;
+      } else {
+        scrollbutton = document.evaluate(
+                          'ancestor-or-self::*[contains(@class,"scrollbutton-down")]',
+                          event.originalTarget,
+                          null,
+                          XPathResult.FIRST_ORDERED_NODE_TYPE,
+                          null
+                        ).singleNodeValue;
+        if (scrollbutton) {
+          if (scrollbutton != this.lastHoveredTab) {
+            this.lastHoveredTab = scrollbutton;
+            gBrowser.tabContainer.arrowScrollbox._startScroll(1);
+          }
+          return
+        }
+      }
       this.lastHoveredTab = null;
-      return;
     }
+    gBrowser.tabContainer.arrowScrollbox._stopScroll();
     if (tab == this.lastHoveredTab)
       return;
 
@@ -106,6 +137,7 @@ var rightMouseButtonDragSelectTabs = {
     window.removeEventListener('mouseup', this, true);
 
     this.startSelection = false;
+    gBrowser.tabContainer.arrowScrollbox._stopScroll();
 
     // Suppressing contextmenu if mouse is not on tab
     if (event.target.localName != "tab") {
