@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  63+
+// @version        2018/10/10 12:30 fix, right click on inactive tab should not multiselect
 // @version        2018/10/10 10:30
 // @note           To enable multiselection tabs, set browser.tabs.multiselect = true in about:config
 // ==/UserScript==
@@ -13,6 +14,8 @@ var rightMouseButtonDragSelectTabs = {
 
   startSelection: false,
   lastHoveredTab: false,
+  lastX:null,
+  lastY:null,
 
   init: function() {
     gBrowser.tabContainer.addEventListener('mousedown', this, true);
@@ -48,24 +51,22 @@ var rightMouseButtonDragSelectTabs = {
     let tab = event.target;
     if (event.button == 2 && !(event.ctrlKey || event.shiftKey || event.altKey || event.metaKey)) {
       this.startSelection = true;
-      this.lastHoveredTab = tab;
+      this.lastHoveredTab = null;
+      this.lastX = event.screenX;
+      this.lastY = event.screenY;
       window.addEventListener('mousemove', this, true);
       window.addEventListener('mouseup', this, true);
-
-      if (tab == gBrowser.selectedTab)
-          return;
-      if (tab.multiselected) {
-        gBrowser.removeFromMultiSelectedTabs(tab, true);
-      } else {
-        gBrowser.addToMultiSelectedTabs(tab, false);
-        gBrowser.lastMultiSelectedTab = tab;
-      }
     }
   },
 
   mousemove: function(event) {
     if (!this.startSelection)
       return;
+    if (Math.abs(this.lastX - event.screenX) < 15 && Math.abs(this.lastY - event.screenY) < 3)
+      return;
+    this.lastX = event.screenX;
+    this.lastY = event.screenY;
+
     if (event.originalTarget.ownerDocument != document) {
       this.lastHoveredTab = null;
       return
@@ -84,8 +85,9 @@ var rightMouseButtonDragSelectTabs = {
     if (tab == this.lastHoveredTab)
       return;
 
-    this.lastHoveredTab = tab;
 
+
+    this.lastHoveredTab = tab;
     if (tab == gBrowser.selectedTab)
       return;
     if (event.ctrlKey || event.shiftKey || event.altKey || event.metaKey)
