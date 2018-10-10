@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2018/10/10 22:00 fix, Suppressing mousemove event after wheel gesture
 // @version       2018/10/03 11:00 add ucjsMouseGestures_helper.executeInContent, ucjsMouseGestures.executeInChrome
 // @version       2018/10/03 08:00 add mime/type, content-dispositon (ucjsMouseGestures._imgTYPE, ucjsMouseGestures._imgDISP)
 // @version       2018/10/02 02:00 add auto hide for status info
@@ -589,6 +590,7 @@ var ucjsMouseGestures = {
   },
 */
   _stopGesture: function(event) {
+    window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
     try {
       if (this._directionChain)
