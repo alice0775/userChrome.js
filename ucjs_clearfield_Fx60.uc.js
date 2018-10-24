@@ -5,6 +5,7 @@
 // @include        *
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/10/24 23:30 typo
 // @version        2018/10/24 21:30 Firefox60 e10s
 // @Note
 // ==/UserScript==
@@ -40,17 +41,17 @@ var ucjs_clearfield = {
           } else if (elem.shadowRoot != null) {
             doc = elem.shadowRoot;
           } else if (/textarea/.test(elem.nodeName.toLowerCase())) {
-            if (!elem.disable) {
+            if (!elem.disabled) {
               hidden = false;
               enable = !!elem.value;
             }
             break;
           } else if (/input/.test(elem.nodeName.toLowerCase())) {
-            if (!elem.disable &&
-                (/file|text|search|tel|url|email|password|datetime|date|month|week|time|datetime-local|number/.test(elem.type) ||
-                 !elem.type)) {
-              hidden = false;
-              enable = !!elem.value;
+            if (/file|text|search|tel|url|email|password|datetime|date|month|week|time|datetime-local|number/.test(elem.type) || !elem.type) {
+              if (!elem.disabled) {
+                hidden = false;
+                enable = !!elem.value;
+              }
             }
             break;
           }
@@ -71,12 +72,12 @@ var ucjs_clearfield = {
             doc = elem.shadowRoot;
           } else if (/textarea/.test(elem.nodeName.toLowerCase())) {
             /*
-            if (!elem.disable)
+            if (!elem.disabled)
               elem.value = "";
             */
             break;
           } else if (/input/.test(elem.nodeName.toLowerCase())) {
-            if (!elem.disable &&
+            if (!elem.disabled &&
                 (/file/.test(elem.type)))
               elem.value = "";
             break;
@@ -103,7 +104,7 @@ var ucjs_clearfield = {
   receiveMessage: function(message) {
     switch(message.name) {
       case "ucjs_clearfield.menuEnabled":
-      this.menuitem.hidden = message.data.ishidden;
+      this.menuitem.hidden = message.data.isHidden;
       this.menuitem.disabled= !message.data.isEnable;
       break;
     }
