@@ -5,6 +5,7 @@
 // @description    workaround, Bug 1493472 Firefox not remembering window position in windows 10
 // @include        main
 // @compatibility  Firefox 62, 63beta, 64a1
+// @version        2018/10/26 00:00 adjust left and roght, top and bottom, Bug 1502062
 // @version        2018/09/24 07:00 add workaround Bug 1493472
 // @version        2018/09/24 07:00 remove workaround bug 1489852
 // @version        2018/09/09 22:00
@@ -44,7 +45,7 @@ var noWindowGap = {
     switch(event.type) {
       case "SSTabRestoring":
       case "resize":
-        this.moveWindow();
+        setTimeout(() => {this.moveWindow();}, 0);
         break;
     }
   },
@@ -56,25 +57,46 @@ var noWindowGap = {
       this.NEED_RESIZE = false;
       window.resizeBy(-this.ADJUST_WIDTH, -this.ADJUST_HEIGHT);
     }
-
+    
     if (window.windowState == window.STATE_NORMAL) {
       let x = window.screenX;
       let y = window.screenY;
       let xr = window.screenX + window.outerWidth;
+      let yb = window.screenY + window.outerHeight;
 
       if (-this.BORDER_WIDTH < x && x <= 0) {
         window.moveTo(-this.BORDER_WIDTH, y);
+        x = window.screenX;
+        y = window.screenY;
+        xr = window.screenX + window.outerWidth;
+        yb = window.screenY + window.outerHeight;
       }
-      if (window.screen.availWidth <= xr && xr < window.screen.availWidth + this.BORDER_WIDTH) {
-        window.moveTo(window.screen.availWidth - window.outerWidth + this.BORDER_WIDTH, y);
+      if (window.screen.availWidth - this.BORDER_WIDTH <= xr && xr < window.screen.availWidth + this.BORDER_WIDTH) {
+        if (-this.BORDER_WIDTH == x) {
+          window.resizeBy(this.BORDER_WIDTH , 0);
+        } else {
+          window.moveTo(window.screen.availWidth - window.outerWidth + this.BORDER_WIDTH, y);
+        }
       }
 
 
       // workaround Bug 1493472
       if (-this.BORDER_WIDTH < y && y <= 0) {
-        window.moveTo(x, -3);
+        window.moveTo(x, this.TOP_BORDER_WIDTH);
+        x = window.screenX;
+        y = window.screenY;
+        xr = window.screenX + window.outerWidth;
+        yb = window.screenY + window.outerHeight;
       }
 
+      if (window.screen.availHeight - this.BORDER_WIDTH <= yb && yb < window.screen.availHeight + this.BORDER_WIDTH) {
+        if (-this.TOP_BORDER_WIDTH == y) {
+          window.resizeBy(0, this.BORDER_WIDTH);
+        } else {
+          window.moveTo(x, window.screen.availHeight - window.outerHeight + this.BORDER_WIDTH);
+        }
+
+      }
     }
   }
 }
