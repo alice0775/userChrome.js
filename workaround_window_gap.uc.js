@@ -5,6 +5,7 @@
 // @description    workaround, Bug 1493472 Firefox not remembering window position in windows 10
 // @include        main
 // @compatibility  Firefox 62, 63beta, 64a1
+// @version        2018/10/26 00:00 prevent supulus resize event fire
 // @version        2018/10/26 00:00 adjust left and roght, top and bottom, Bug 1502062
 // @version        2018/09/24 07:00 add workaround Bug 1493472
 // @version        2018/09/24 07:00 remove workaround bug 1489852
@@ -51,6 +52,8 @@ var noWindowGap = {
   },
 
   moveWindow: function() {
+    window.removeEventListener('resize', this, false);
+
     //console.log(window.windowState + " " + this.NEED_RESIZE + " "+ window.outerWidth + " " + window.outerHeight);
     if (this.NEED_RESIZE && window.windowState == window.STATE_NORMAL) {
       // window.resizeTo(800,600); 
@@ -98,6 +101,7 @@ var noWindowGap = {
 
       }
     }
+    window.addEventListener('resize', this, false);
   }
 }
 
