@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Downloads Status Modoki
 // @include        main
-// @compatibility  Firefox 57
+// @compatibility  Firefox 64+
 // @author         Alice0775
+// @version        2018/10/27 12:00 fix for 64+
 // @version        2018/06/12 21:00 fix for private window mode
 // @version        2018/06/07 12:00 fix file name for history
 // @version        2018/02/10 12:00 try catch error when DO_NOT_DELETE_HISTORY = true
@@ -229,7 +230,12 @@ var ucjsDownloadsStatusModoki = {
         max-width: calc(100% - 50px) !important; 
         min-width: calc(100% - 50px) !important; 
       } 
- 
+
+      .download-state[state="0"] * .downloadTarget,
+      .download-state[state="4"] * .downloadTarget { 
+        padding-bottom:0px; 
+      } 
+
       .downloadTarget:-moz-system-metric(windows-default-theme) { 
         margin-top:2px; 
         /*padding-bottom:10px;  windows7 ?*/
