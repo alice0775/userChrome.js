@@ -5,6 +5,7 @@
 // @include        *
 // @compatibility  Firefox 60
 // @author         Alice0775
+// @version        2018/10/27 10:30 fix findbar
 // @version        2018/10/24 23:30 typo
 // @version        2018/10/24 21:30 Firefox60 e10s
 // @Note
@@ -139,9 +140,9 @@ var ucjs_clearfield = {
         menuitem.setAttribute("oncommand", "ucjs_clearfield.doClear(this);");
         ref.parentNode.insertBefore(menuitem, ref);
       }
-      ref = popup.querySelector('[cmd="cmd_cut"]') || popup.querySelector('[command="cmd_cut"]');
+      ref = popup.querySelector('[cmd="cmd_selectAll"]') || popup.querySelector('[command="cmd_selectAll"]');
       menuitem.hidden = ref.hidden;
-      menuitem.disabled = !event.target.value;
+      menuitem.disabled = ref.disabled;
       this.menuitem = menuitem;
       // content area
       if (typeof gContextMenu == "object" && gContextMenu != null) {
