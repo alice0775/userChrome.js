@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  60
+// @version        2018/11/04 22:30 fix Bug 1502069, use selectedTab.isEmpty insted isTabEmpty()
 // @version        2018/09/24 22:30 fix conflict with other eval, use isTabEmpty()
 // @version        2018/09/23 23:30 fix variable name
 // @version        2018/09/23 23:00 check tab busy flag
@@ -15,7 +16,8 @@ if (window.openLinkIn && !/reuseBlankTabIfCcurrentTab_org/.test(window.openLinkI
   window.openLinkIn_reuseBlankTabIfCcurrentTab_org = window.openLinkIn;
   window.openLinkIn = function(url, where, params) {
     var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
-    if (mainWindow.isTabEmpty(mainWindow.gBrowser.selectedTab)
+    if (("isTabEmpty" in mainWindow) ? mainWindow.isTabEmpty(mainWindow.gBrowser.selectedTab) 
+                                     : mainWindow.gBrowser && mainWindow.gBrowser.selectedTab.isEmpty
       && (where == "tab" || where == "tabshifted")
       && !mainWindow.isBlankPageURL(url)) {
       where  = "current";
@@ -31,7 +33,9 @@ if (location.href == "chrome://browser/content/browser.xul") {
     func =  gBrowser.loadTabs.toString();
     if (!/justCreated/.test(func)) {
       func = func.replace('if (!aURIs.length) {',
-                          `if (isTabEmpty(gBrowser.selectedTab)) {
+                          `if (("isTabEmpty" in window) ? isTabEmpty(gBrowser.selectedTab)
+                               : window.gBrowser && gBrowser.selectedTab.isEmpty
+                              ) {
                              /*reuseBlankTabIfCcurrentTab*/
                              replace  = true;
                            }
