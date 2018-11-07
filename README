@@ -1,3 +1,16 @@
+Firefox62+
+  1. Firefox のプロファイルフォルダー内に、『chrome』フォルダーを作成する
+  2.  chrome フォルダー内に、『userChrome.css』ファイルを作成する (UTF-8 BOM無しテキスト)
+    userChrome.css 内に、以下を追記して保存する
+
+    toolbarbutton#alltabs-button { -moz-binding: url("userChrome.xml#js"); }
+
+   3. chrome フォルダー内に、https://raw.githubusercontent.com/alice0775/userChrome.js/master/userChrome.xml を『userChrome.xml』として保存する
+   4. chrome フォルダー内に、https://raw.githubusercontent.com/alice0775/userChrome.js/master/userChrome.js を『userChrome.js』として保存する
+   5. chrome フォルダー内に、userChrome.js用スクリプトを配置する
+   6. (任意) 念のためスタートアップキャッシュを消すため
+        firefox.exe -purgecaches オプション付きで起動する
+
 免責事項
     でーたのご利用は利用者の責任において行ってください。
     でーたの利用、またはリンク先により生じた損害に対する責任を負いません。
