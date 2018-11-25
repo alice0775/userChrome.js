@@ -6,6 +6,7 @@ Firefox62+
     toolbarbutton#alltabs-button { -moz-binding: url("userChrome.xml#js"); }
 
    3. chrome フォルダー内に、https://raw.githubusercontent.com/alice0775/userChrome.js/master/userChrome.xml を『userChrome.xml』として保存する
+      (ESR60 は https://raw.githubusercontent.com/alice0775/userChrome.js/065b7b4e58f57caad39ee9415762e882802d9f90/userChrome.xml を『userChrome.xml』として保存する)
    4. chrome フォルダー内に、https://raw.githubusercontent.com/alice0775/userChrome.js/master/userChrome.js を『userChrome.js』として保存する
    5. chrome フォルダー内に、userChrome.js用スクリプトを配置する
    6. (任意) 念のためスタートアップキャッシュを消すため
