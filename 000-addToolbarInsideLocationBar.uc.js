@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 65+
 // @author         Alice0775
+// @version        2018/11/15 30:00 fix "unable to normalize widget" error
 // @version        2018/11/15 15:00 fix Bug 1505734 Remove logic from CustomizableUI toolbar XBL constructor
 // @version        2017/12/16 15:00 stop-reload button hack default/lightweight theme
 // @version        2017/12/15 17:00 57
@@ -149,11 +150,11 @@ var addToolbarInsideLocationBar = {
           defaultPlacements: ["feed-button"],
           defaultCollapsed: null
         }, true);
+        CustomizableUI.registerToolbarNode(toolbar);
       } catch(e) {}
 
     let ref = this.getInsertPoint();
     ref.appendChild(toolbar);
-    CustomizableUI.registerToolbarNode(toolbar);
     // xxxx toDo removing dirty hack
     gURLBar.onDrop_addToolbarInsideLocationBar = gURLBar.onDrop;
     gURLBar.onDrop = function(event) {
