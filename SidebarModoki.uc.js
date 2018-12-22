@@ -7,6 +7,7 @@
 // @compatibility  Firefox 61-
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2018/12/23 00:00 Add option of SidebarModoki posiotion SM_RIGHT
 // @version        2018/05/10 00:00 for 61 wip Bug 1448810 - Rename the Places sidebar files
 // @version        2018/05/08 21:00 use jsonToDOM(https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Overlay_Extensions/XUL_School/DOM_Building_and_HTML_Insertion)
 // @version        2018/05/08 19:00 get rid loadoverlay
@@ -63,6 +64,7 @@ if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.
 
 var SidebarModoki = {
   // -- config --
+  SM_RIGHT: false,  // SidebarModoki position
   SM_WIDTH : 130,
   SM_AUTOHIDE : false,  //F11 Fullscreen
   TAB0_SRC   : "chrome://browser/content/places/bookmarksSidebar.xul", //"chrome://browser/content/bookmarks/bookmarksPanel.xul",
@@ -153,6 +155,7 @@ var SidebarModoki = {
         document.getElementById("main-window").getAttribute("chromehidden").includes("extrachrome")) {      return; // do nothing
     }
 
+    let MARGINHACK = this.SM_RIGHT ? "0 -4px 0 0" : "0 0 0 -4px";
     let style = `
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
       #SM_toolbox
@@ -186,7 +189,7 @@ var SidebarModoki = {
       #SM_tabpanels
       { 
         padding: 0;
-        margin:-4px; /*hack*/
+        margin: {MARGINHACK}; /*hack*/
       }
 
 
@@ -201,7 +204,7 @@ var SidebarModoki = {
       }
      `;
 
-    style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH);
+    style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH).replace(/\{MARGINHACK\}/g, MARGINHACK);
     let sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -245,7 +248,7 @@ var SidebarModoki = {
     document.getElementById("mainKeyset").appendChild(this.jsonToDOM(template, document, {}));
 
     template =
-      ["vbox", {id: "SM_toolbox", ordinal: "0"},
+      ["vbox", {id: "SM_toolbox", ordinal: this.SM_RIGHT ? "10" : "0"},
         ["hbox", {id: "SM_header", align: "center"},
           ["label", {}, "SidebarModoki"],
           ["spacer", {flex: "1000"}],
@@ -274,7 +277,7 @@ var SidebarModoki = {
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
     template =
-      ["splitter", {id: "SM_splitter", ordinal: "0", state: "open", collapse: "before", resizebefore: "closest", resizeafter: "closest"},
+      ["splitter", {id: "SM_splitter", ordinal: this.SM_RIGHT ? "9" : "0", state: "open", collapse: this.SM_RIGHT ? "after" :"before", resizebefore: "closest", resizeafter: "closest"},
         ["grippy", {}]
       ];
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
@@ -327,8 +330,8 @@ var SidebarModoki = {
       mutations.forEach(function(mutation) {
         switch (mutation.attributeName) {
           case "ordinal":
-            this.ToolBox.setAttribute("ordinal", "0");
-            this.Splitter.setAttribute("ordinal", "0");
+            this.ToolBox.setAttribute("ordinal", this.SM_RIGHT ? "10" : "0");
+            this.Splitter.setAttribute("ordinal", this.SM_RIGHT ? "9" : "0");
             break;
         }
       }.bind(this));
