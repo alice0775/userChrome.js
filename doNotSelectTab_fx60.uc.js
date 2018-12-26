@@ -4,6 +4,7 @@
 // @description   do not select tab when dragging it, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include       main
 // @compatibility Firefox 60+
+// @version       2018/12/26 11:50 ignore close button 
 // @version       2018/10/03 23:00 more aggressive pending tab 
 // @version       2018/10/03 19:00 fix should not react on newtab button and other button, wip
 // @version       2018/10/03 00:20 fix do not load tab when if it is pending background tab, wip
@@ -37,9 +38,21 @@ let do_not_select_tab_when_mousedown = {
       case "mousedown":
         if (event.button != 0)
           return;
-        tab = event.target;
-        if (tab.localName != "tab")
+        tab = event.originalTarget;
+        if (tab.hasAttribute("anonid") && tab.getAttribute("anonid") == "close-button") {
+          console.log("close-button")
           return;
+        }
+        tab = document.evaluate(
+          'ancestor-or-self::*[local-name()="tab"]',
+          tab,
+          null,
+          XPathResult.FIRST_ORDERED_NODE_TYPE,
+          null
+        ).singleNodeValue;        
+        if (!tab)
+          return;
+        console.log("tab")
         if (tab.selected)
           return;
         if (event.button == 0 && !tab.selected && (event.ctrlKey || event.shiftKey))
