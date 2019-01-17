@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2019/01/18 fix dark theme
 // @version       2018/08/10 fix target scroll listener
 // @version       2018/08/13 61+
 // @version       2012/12/07 //aEvent.preventDefault();
@@ -123,9 +124,10 @@ var acBookMarkTreeFolder = {
       return;
     }
     var toolbox = document.createElementNS(kXULNS, "toolbox");
+    toolbox.setAttribute("style", "-moz-appearance: none;");
     toolbar = document.createElementNS(kXULNS, "toolbar");
     toolbar.setAttribute("id", "acBookMarkTreeFolder-toolbar");
-    var closeAllButton = document.createElementNS(kXULNS, "toolbarbutton");
+   var closeAllButton = document.createElementNS(kXULNS, "toolbarbutton");
     closeAllButton.setAttribute("label", "\u6298\u7573");//折畳
     closeAllButton.setAttribute("oncommand", "acBookMarkTreeFolder.closeAll();");
     var openAllButton = document.createElementNS(kXULNS, "toolbarbutton");

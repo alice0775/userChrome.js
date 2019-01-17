@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2019/01/18 fix dark theme
 // @version       2018/08/13 61+
 // @version       2017/11/18 nsIPrefBranch2 to nsIPrefBranch
 // @version       2008/11/28 Firefox3.1b3pre tboの初期化に時間が掛かるようでsetTimeoutするようにした
@@ -80,6 +81,7 @@ var acHistoryFolder = {
       return;
     }
     var toolbox = document.createElementNS(kXULNS, "toolbox");
+    toolbox.setAttribute("style", "-moz-appearance: none;");
     toolbar = document.createElementNS(kXULNS, "toolbar");
     toolbar.setAttribute("id", "acHistoryFolder-toolbar");
     var closeAllButton = document.createElementNS(kXULNS, "toolbarbutton");

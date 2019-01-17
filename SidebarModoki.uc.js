@@ -7,6 +7,7 @@
 // @compatibility  Firefox 61-
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2018/12/23 14:00 Adjust margin
 // @version        2018/12/23 00:00 Add option of SidebarModoki posiotion SM_RIGHT
 // @version        2018/05/10 00:00 for 61 wip Bug 1448810 - Rename the Places sidebar files
 // @version        2018/05/08 21:00 use jsonToDOM(https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Overlay_Extensions/XUL_School/DOM_Building_and_HTML_Insertion)
@@ -155,7 +156,7 @@ var SidebarModoki = {
         document.getElementById("main-window").getAttribute("chromehidden").includes("extrachrome")) {      return; // do nothing
     }
 
-    let MARGINHACK = this.SM_RIGHT ? "0 -4px 0 0" : "0 0 0 -4px";
+    let MARGINHACK = this.SM_RIGHT ? "0 -4px 0 0" : "0 -6px 0 -4px";
     let style = `
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
       #SM_toolbox
@@ -165,7 +166,11 @@ var SidebarModoki = {
         color: -moz-dialogtext;
         text-shadow: none;
       }
-
+      #SM_toolbox:not(.titlebar-color) {
+          width: 130px;
+          background-color: var(--toolbar-bgcolor);
+          color: var(--toolbar-color);
+      }
       /*フルスクリーン*/
       #SM_toolbox[moz-collapsed="true"],
       #SM_splitter[moz-collapsed="true"]
@@ -190,6 +195,10 @@ var SidebarModoki = {
       { 
         padding: 0;
         margin: {MARGINHACK}; /*hack*/
+      }
+      #SM_tabpanels:not(.titlebar-color) {
+          background-color: var(--toolbar-bgcolor);
+          color: var(--toolbar-color);
       }
 
 
