@@ -3,6 +3,8 @@
 // @description  Synchronize the searchbox content ウェブで検索をした際に検索バーに検索語句を取り込む
 // @charset      utf-8
 // @include      main
+// @version		   2019/01/20 fix regexp
+// @version		   2018/09/23 remove some regexp, add duckduckgo and ecosia
 // @version		   2018/09/23 remove some regexp, add duckduckgo and ecosia
 // @version		   2018/09/22
 // ==/UserScript==
@@ -15,25 +17,25 @@ let searchboxsync = {
   //urlに対する語句の正規表現(RegExp.lastParen にマッチする物を検索語句と見なす)
   rules: 
   [
-  "^http[s]?://www\.google\.(co\.jp|com)/search.*[?&]q=([^&]*)",  /*google*/
-  "^http[s]?://search\.yahoo\.([a-z]+\.?)+/.*[?&]p=([^&]+)", /*yahoo*/
-  "https://www\.ecosia\.org/search.*[?&]q=([^&]*)", /*ecosia*/
-  "https://www\.bing\.com/search.*[?&]q=([^&]*)", /*bing*/
-  "https://duckduckgo\.com/.*[?&]q=([^&]*)", /*duckduckgo*/
-  /*"^http[s]?://([^.]+\.)?youtube\.([a-z]+\.?)+.*[?&]search_query=([^&]+)",*/ /*youtube*/
-  /*"^http[s]?://.+\.wikipedia\.org/wiki/([^&?#]*)",*/ /*wikipedia*/
-  /*"^http[s]?://(www\.)?amazon\.([a-z]+\.?)+/s/.*field-keywords=([^&]+)",*/ /*amazon*/
-  /*"^http[s]?://kakaku\.com/search_results/(.*query=)?([^/&]+)",*/
-  /*"^http[s]?://kakaku\.com/search_results/([^/]+)",*/ /*価格com*/
-  /*"^http[s]?://search\.rakuten\.co\.jp/search/mall/([^/&?]+)", /*楽天*/
-  /*"^http[s]?://recipe\.rakuten\.co\.jp/search/([^/&?]+)",*/ /*楽天レシピ*/
-  /*"^http[s]?://[^/]*\.rakuten\.co\.jp/.*[&?]sitem=([^&]+)",*/
-  /*"^http[s]?://cookpad\.com/search/([^/&?]+)",*/ /*クックパッド*/
-  "^http[s]?://.+\.goo\..+\?.*MT=([^&]+)", /*goo*/
-  "^http[s]?://dictionary\.goo\.ne\.jp/srch/[^/]*/(.*)/m0u/", /*goo辞書*/
-  "^http[s]?://bugzilla\.mozilla\.org/buglist\.cgi[?]quicksearch=([^&]+)",
-  "^http[s]?://bugzilla\.mozilla\.org/buglist\.cgi[?]short_desc=([^&]+)",
-  "^http[s]?://searchfox\.org/.*[?&]q=([^&]*)",
+  "^https?://www\.google\.(co\.jp|com)/search.*[?&]q=([^&]*)",  /*google*/
+  "^https?://search\.yahoo\.(co\.jp|com)/.*[?&]p=([^&]+)", /*yahoo*/
+  "^https://www\.ecosia\.org/search.*[?&]q=([^&]*)", /*ecosia*/
+  "^https://www\.bing\.com/search.*[?&]q=([^&]*)", /*bing*/
+  "^https://duckduckgo\.com/.*[?&]q=([^&]*)", /*duckduckgo*/
+  /*"^https?://([^.]+\.)?youtube\.(co\.jp|com)/.*[?&]search_query=([^&]+)",*/ /*youtube*/
+  /*"^https?://.+\.wikipedia\.org/wiki/([^&?#]*)",*/ /*wikipedia*/
+  /*"^https?://(www\.)?amazon\.(co\.jp|com)/.*field-keywords=([^&]+)",*/ /*amazon*/
+  /*"^https?://kakaku\.com/search_results/(.*query=)?([^/&]+)",*/
+  /*"^https?://kakaku\.com/search_results/([^/]+)",*/ /*価格com*/
+  /*"^https?://search\.rakuten\.co\.jp/search/mall/([^/&?]+)", /*楽天*/
+  /*"^https?://recipe\.rakuten\.co\.jp/search/([^/&?]+)",*/ /*楽天レシピ*/
+  /*"^https?://[^/]*\.rakuten\.co\.jp/.*[&?]sitem=([^&]+)",*/
+  /*"^https?://cookpad\.com/search/([^/&?]+)",*/ /*クックパッド*/
+  "^https?://.+\.goo\..+\?.*MT=([^&]+)", /*goo*/
+  "^https?://dictionary\.goo\.ne\.jp/srch/[^/]*/(.*)/m0u/", /*goo辞書*/
+  "^https?://bugzilla\.mozilla\.org/buglist\.cgi[?]quicksearch=([^&]+)",
+  "^https?://bugzilla\.mozilla\.org/buglist\.cgi[?]short_desc=([^&]+)",
+  "^https?://searchfox\.org/.*[?&]q=([^&]*)",
   /*"[#&?]q=([^&]*)",*/
   /*"[#&?]word=([^&]*)",*/
   ],
