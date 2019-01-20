@@ -6,6 +6,9 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2019/01/21 01:00 reloadAllTabs to reloadTabs
+// @version       2018/12/25 20:00 clear wheel gesture flg when right mouseup/down(wip)
+// @version       2018/10/24 01:00 fix, some command
 // @version       2018/10/10 22:00 fix, Suppressing mousemove event after wheel gesture
 // @version       2018/10/03 11:00 add ucjsMouseGestures_helper.executeInContent, ucjsMouseGestures.executeInChrome
 // @version       2018/10/03 08:00 add mime/type, content-dispositon (ucjsMouseGestures._imgTYPE, ucjsMouseGestures._imgDISP)
@@ -86,7 +89,7 @@ var ucjsMouseGestures = {
 
         ['UD', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
         ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
-        ['', 'すべてタブをリロード', function(){ gBrowser.reloadAllTabs(gBrowser.selectedTab); } ],
+        ['', 'すべてタブをリロード', function(){ typeof gBrowser.reloadTabs == "function" ? gBrowser.reloadTabs(gBrowser.visibleTabs) : gBrowser.reloadAllTabs(); } ],
         ['', '読込中止', function(){ document.getElementById("Browser:Stop").doCommand(); } ],
 
         ['', 'リンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
@@ -202,9 +205,9 @@ var ucjsMouseGestures = {
 
         ['', '最近の履歴を消去', function(){ setTimeout(function(){ document.getElementById("Tools:Sanitize").doCommand(); }, 0); } ],
         ['', 'ブラウザーコンソール', function(){ ucjsMouseGestures_helper.openBrowserConsole(); } ],
-        ['', 'アドオンマネージャ', function(){ gBrowser.loadOneTab("about:addons", {inBackground: false, relatedToCurrent: true}); } ],
-        ['', 'トラブルシューティング情報', function(){ gBrowser.loadOneTab("about:support", {inBackground: false, relatedToCurrent: true}); } ],
-        ['', '設定（オプション）', function(){ gBrowser.loadOneTab("about:preferences", {inBackground: false, relatedToCurrent: true}); } ],
+        ['', 'アドオンマネージャ', function(){ openTrustedLinkIn("about:addons", "tab", {inBackground: false, relatedToCurrent: true}); } ],
+        ['', 'トラブルシューティング情報', function(){ openTrustedLinkIn("about:support", "tab", {inBackground: false, relatedToCurrent: true}); } ],
+        ['', '設定（オプション）', function(){ openTrustedLinkIn("about:preferences", "tab", {inBackground: false, relatedToCurrent: true}); } ],
         ['', 'weAutopagerizeのトグル',
           function(){
             ucjsMouseGestures_helper.dispatchEvent(
@@ -342,6 +345,16 @@ var ucjsMouseGestures = {
     return val;
   },
 
+  get _isMouseDownR() {
+    return this.__isMouseDownR;
+  },
+
+  set _isMouseDownR(val) {
+    this.__isMouseDownR = val;
+    this._isWheelCanceled = false;
+    return val;
+  },
+
   init: function() {
     this._version = Services.appinfo.version.split(".")[0];
     this._isMac = navigator.platform.indexOf("Mac") == 0;
@@ -378,7 +391,7 @@ var ucjsMouseGestures = {
   },
 
   _isMouseDownL: false,
-  _isMouseDownR: false,
+  __isMouseDownR: false,
   _suppressContext: false,
   _shouldFireContext: false,  // for Linux 
   _isWheelCanceled: false,
