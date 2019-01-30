@@ -4,10 +4,11 @@
 // @description   Autoclose BookMark Folders
 // @include       chrome://browser/content/bookmarks/bookmarksPanel.xul
 // @include       chrome://browser/content/places/bookmarksSidebar.xul
-// @compatibility Firefox 3.7
+// @compatibility Firefox 66+
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2019/01/18 fix for 66(Bug 1482389 - Convert TreeBoxObject to XULTreeElement)
 // @version       2019/01/18 fix dark theme
 // @version       2018/08/10 fix target scroll listener
 // @version       2018/08/13 61+
@@ -54,28 +55,23 @@ var acBookMarkTreeFolder = {
     (document.getElementById("bookmarks-view-children") ||
      document.getElementById("bookmarks-view").childNodes[1])
     .addEventListener("scroll", this, false);
-    this.viewbox = this._BTree.boxObject;
 
     this.loadPrefs();
     this.addToolbar();
-    var self = this;
 
     if (this._BTree.result && this._Prefs.SelectLast) {
-      //setTimeout(function(self){
-        var tbo = self._BTree.treeBoxObject;
 
-        var itemId = self.getPref(self.kPrefFOLDER, "int", -1);
+        var itemId = this.getPref(this.kPrefFOLDER, "int", -1);
         if (itemId != -1) {
-          self._BTree.selectItems([itemId], false);
+          this._BTree.selectItems([itemId], false);
         }
 
         try {
-          var pos = self.getPref(self.kPrefROWPOSITION,"int",0);
-          if (tbo && tbo.view.rowCount >= pos && self._Prefs.ScrollToRow){
-            self.viewbox.scrollToRow(pos);
+          var pos = this.getPref(this.kPrefROWPOSITION,"int",0);
+          if (this._BTree && this._BTree.view.rowCount >= pos && this._Prefs.ScrollToRow){
+            this._BTree.scrollToRow(pos);
           }
         } catch(e) {}
-      //}, 0, this);
     }
 
   },
@@ -110,9 +106,9 @@ var acBookMarkTreeFolder = {
      if (this._stimer)
       return;
     this._stimer = true;
-    setTimeout(function(self){self._stimer = false;}, 50, this);
+    setTimeout(function(){this._stimer = false;}.bind(this), 50, this);
 
-    var getRow = this.viewbox.getFirstVisibleRow();
+    var getRow = this._BTree.getFirstVisibleRow();
     this.setPref(this.kPrefROWPOSITION, 'int', getRow);
   },
 
@@ -143,8 +139,7 @@ var acBookMarkTreeFolder = {
 
   onClick: function(aEvent){
     var parents   = new Array();
-    var tbo = this._BTree.treeBoxObject;
-    var aView = tbo.view;
+    var aView = this._BTree.view;
     if (aEvent.button != 0 && aEvent.type !="dragover"){
       if (this._BTree.selectedNode && 'itemId' in this._BTree.selectedNode)
         this.setPref(this.kPrefFOLDER, "int", this._BTree.selectedNode.itemId);
@@ -153,19 +148,17 @@ var acBookMarkTreeFolder = {
       return;
     }
 
-    var row = {}, col = {}, obj = {};
-    tbo.getCellAt(aEvent.clientX, aEvent.clientY, row, col, obj);
-    if (row.value == -1)
+    let cell = this._BTree.getCellAt(aEvent.clientX, aEvent.clientY);
+    if (cell.row == -1)
       return;
 //alert(this._BTree.selectedNode.itemId);
     if (this._BTree.selectedNode && 'itemId' in this._BTree.selectedNode)
       this.setPref(this.kPrefFOLDER, "int", this._BTree.selectedNode.itemId);
     else
       this.setPref(this.kPrefFOLDER, "int", -1);
-
-    if(!aView.isContainer(row.value))
+    if(!aView.isContainer(cell.row))
       return;
-    if (this._BTree.currentIndex != row.value){
+    if (this._BTree.currentIndex != cell.row){
       return;
     }
 
@@ -183,12 +176,12 @@ var acBookMarkTreeFolder = {
         }
       }
     }
-    tbo.ensureRowIsVisible(this._BTree.currentIndex);
+    this._BTree.ensureRowIsVisible(this._BTree.currentIndex);
     //aEvent.preventDefault();
   },
 
   closeAll: function(){
-    var aView = this._BTree.treeBoxObject.view;
+    var aView = this._BTree.view;
     if (aView){
       for (var i = aView.rowCount-1; i>=0; i--){
         if (aView.isContainer(i) && aView.isContainerOpen(i)) aView.toggleOpenState(i);
@@ -197,7 +190,7 @@ var acBookMarkTreeFolder = {
   },
 
   openAll: function(){
-    var aView = this._BTree.treeBoxObject.view;
+    var aView = this._BTree.view;
     if (aView){
       var oldrows = -1;
       var rows = aView.rowCount;

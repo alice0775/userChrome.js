@@ -4,10 +4,11 @@
 // @description   Autoclose History Folders
 // @include       chrome://browser/content/history/history-panel.xul
 // @include       chrome://browser/content/places/historySidebar.xul
-// @compatibility Firefox 3.7
+// @compatibility Firefox 66+
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2019/01/18 fix for 66(Bug 1482389 - Convert TreeBoxObject to XULTreeElement)
 // @version       2019/01/18 fix dark theme
 // @version       2018/08/13 61+
 // @version       2017/11/18 nsIPrefBranch2 to nsIPrefBranch
@@ -51,16 +52,15 @@ var acHistoryFolder = {
 
     var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
     if (this._BTree.result && this._Prefs.SelectLast){
-      setTimeout(function(self){
-        var lastRowToSelect = self.getPref("ac-HistoryTreeFolder.lastBookmarkFolder."+viewtype,"int",0);
-        var tbo = self._BTree.treeBoxObject;
-        if (tbo && tbo.view.rowCount >= lastRowToSelect){
+      setTimeout(function(){
+        var lastRowToSelect = this.getPref("ac-HistoryTreeFolder.lastBookmarkFolder."+viewtype,"int",0);
+        if (this._BTree && this._BTree.view.rowCount >= lastRowToSelect){
           if(viewtype == "byday" || viewtype == "bydayandsite")
-            tbo.scrollToRow(lastRowToSelect);
-          tbo.view.selection.select(lastRowToSelect);
-          tbo.ensureRowIsVisible(lastRowToSelect);
+            this._BTree.scrollToRow(lastRowToSelect);
+          this._BTree.view.selection.select(lastRowToSelect);
+          this._BTree.ensureRowIsVisible(lastRowToSelect);
         }
-      }, 100, this);
+      }.bind(this), 100);
     }
   },
 
@@ -113,19 +113,17 @@ var acHistoryFolder = {
 
   onClick: function(aEvent){
     var parents   = new Array();
-    var tbo = this._BTree.treeBoxObject;
-    var aView = tbo.view;
+    var aView = this._BTree.view;
     if (aEvent.button != 0){
       return;
     }
 
-    var row = {}, col = {}, obj = {};
-    tbo.getCellAt(aEvent.clientX, aEvent.clientY, row, col, obj);
-    if (row.value == -1)
+    let cell = this._BTree.getCellAt(aEvent.clientX, aEvent.clientY);
+    if (cell.row == -1)
       return;
-    if(!aView.isContainer(row.value))
+    if(!aView.isContainer(cell.row))
       return;
-    if (this._BTree.currentIndex != row.value){
+    if (this._BTree.currentIndex != cell.row){
       return;
     }
 
@@ -143,7 +141,7 @@ var acHistoryFolder = {
         }
       }
     }
-    tbo.ensureRowIsVisible(this._BTree.currentIndex);
+    this._BTree.ensureRowIsVisible(this._BTree.currentIndex);
 
     var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
     if (this._Prefs.SelectLast)
@@ -152,7 +150,7 @@ var acHistoryFolder = {
   },
 
   closeAll: function(){
-    var aView = this._BTree.treeBoxObject.view;
+    var aView = this._BTree.view;
     try{
       var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
       this._PrefsIFace.clearUserPref("ac-HistoryTreeFolder.lastBookmarkFolder."+viewtype);
@@ -165,7 +163,7 @@ var acHistoryFolder = {
   },
 
   openAll: function(){
-    var aView = this._BTree.treeBoxObject.view;
+    var aView = this._BTree.view;
       try{
         var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
         this._PrefsIFace.clearUserPref("ac-HistoryTreeFolder.lastBookmarkFolder."+viewtype);
