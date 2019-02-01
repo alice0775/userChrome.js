@@ -5,6 +5,8 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  63+
+// @version        2019/02/01 23:30 fix right click on tabbar is missing for 65+
+// @version        2018/10/26 00:30 fix for 65+ Bug 1499227 - Tab multiselect is triggered on mouse-up intead of mouse-down
 // @version        2018/10/10 22:30 fix, scroll when mouse pointer over scrollbuttons
 // @version        2018/10/10 12:30 fix, right click on inactive tab should not multiselect
 // @version        2018/10/10 10:30
@@ -49,8 +51,19 @@ var rightMouseButtonDragSelectTabs = {
   },
   c:0,
   mousedown: function(event) {
-    let tab = event.target;
+    let tab = document.evaluate(
+                'ancestor-or-self::*[local-name()="tab"]',
+                event.originalTarget,
+                null,
+                XPathResult.FIRST_ORDERED_NODE_TYPE,
+                null
+              ).singleNodeValue;
+    if (!tab)
+      return;
     if (event.button == 2 && !(event.ctrlKey || event.shiftKey || event.altKey || event.metaKey)) {
+      if (Services.appinfo.version.split(".")[0] >= 65 && event.target.localName == "tab") {
+        event.preventDefault();
+      }
       this.startSelection = true;
       this.lastHoveredTab = null;
       this.lastX = event.screenX;
