@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 65+
 // @author         Alice0775
+// @version        2019/02/01 20:00 wip, workaround fix for second window is broken
 // @version        2018/11/15 30:00 fix "unable to normalize widget" error
 // @version        2018/11/15 15:00 fix Bug 1505734 Remove logic from CustomizableUI toolbar XBL constructor
 // @version        2017/12/16 15:00 stop-reload button hack default/lightweight theme
@@ -53,14 +54,16 @@ var addToolbarInsideLocationBar = {
       }
 
       #nav-bar .toolbarbutton-1[type=menu]:not(#back-button):not(#forward-button):not(#feed-button):not(#social-provider-button):not(#PanelUI-menu-button) {
-        padding-left: 0;
-        padding-right: 0;
+        padding-left: 2px;
+        padding-right: 2px;
       }
 
       #ucjs-Locationbar-toolbar .toolbarbutton-1:not([type=menu-button]),
       #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button,
       #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
         padding: 0;
+        padding-left: 2px;
+        padding-right: 2px;
       }
 
       #ucjs-Locationbar-toolbar .toolbarbutton-1:not(#bookmarks-menu-button) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
@@ -139,22 +142,13 @@ var addToolbarInsideLocationBar = {
     toolbar.setAttribute("hidden", "true");
     setTimeout(function(){toolbar.removeAttribute("hidden");}, 0)
 
-    //register toolbar.id
-    //already registered when opening the second or later window
-    if (CustomizableUI.getAreaType("ucjs-Locationbar-toolbar")) {
-      // do nothing
-    } else
-      try {
-        CustomizableUI.registerArea("ucjs-Locationbar-toolbar", {
-          type: CustomizableUI.TYPE_TOOLBAR,
-          defaultPlacements: ["feed-button"],
-          defaultCollapsed: null
-        }, true);
-        CustomizableUI.registerToolbarNode(toolbar);
-      } catch(e) {}
-
     let ref = this.getInsertPoint();
     ref.appendChild(toolbar);
+
+    //register toolbar.id
+    this.registerArea("ucjs-Locationbar-toolbar");
+    this.fakeUnregisterArea("ucjs-Locationbar-toolbar");
+   
     // xxxx toDo removing dirty hack
     gURLBar.onDrop_addToolbarInsideLocationBar = gURLBar.onDrop;
     gURLBar.onDrop = function(event) {
@@ -180,11 +174,30 @@ var addToolbarInsideLocationBar = {
            );
   },
 
+  registerArea: function(name) {
+    Components.utils.import("resource:///modules/CustomizableUI.jsm");
+		CustomizableUI.registerArea(name, {
+		  type: CustomizableUI.TYPE_TOOLBAR,
+      defaultPlacements: ["feed-button"],
+		  defaultCollapsed: null,
+			legacy: true
+		}, true);
+    CustomizableUI.registerToolbarNode(document.getElementById(name));
+  },
+
+  fakeUnregisterArea: function(name) {
+    let CustomizableUIBSPass =
+          ChromeUtils.import("resource:///modules/CustomizableUI.jsm", null);
+    CustomizableUIBSPass.gAreas.delete(name);
+    CustomizableUIBSPass.gBuildAreas.delete(name);
+  },
+
   handleEvent: function(event) {
     let toolbar = document.getElementById("ucjs-Locationbar-toolbar");
     switch(event.type) {
       case "beforecustomization":
         window.addEventListener("customizationending", this, false);
+        this.registerArea("ucjs-Locationbar-toolbar");
         this.placeholder = toolbar.parentNode.insertBefore(document.createElement("hbox"), toolbar);
         let ref = document.getElementById("nav-bar-customization-target");
         toolbar.setAttribute("tooltiptext", "Toolbar inside LocationBar");
@@ -194,6 +207,7 @@ var addToolbarInsideLocationBar = {
         window.removeEventListener("customizationending", this, false);
         this. placeholder.parentNode.replaceChild(toolbar, this. placeholder);
         toolbar.removeAttribute("tooltiptext");
+        this.fakeUnregisterArea("ucjs-Locationbar-toolbar");
         //BookmarkingUI._updateCustomizationState();
         break;
     }
