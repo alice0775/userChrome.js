@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 65+
 // @author         Alice0775
+// @version        2019/02/03 23:00 This is not working with popup button.
 // @version        2019/02/03 18:00 This is not working with addon's button any more.
 // @version        2019/02/01 20:00 wip, workaround fix for second window is broken
 // @version        2018/11/15 30:00 fix "unable to normalize widget" error
