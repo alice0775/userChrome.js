@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 65+
 // @author         Alice0775
+// @version        2019/02/03 23:30 fix revert 59db416
 // @version        2019/02/03 23:30 fix force 18px in height.
 // @version        2019/02/03 23:00 This is not working with popup button.
 // @version        2019/02/03 18:00 This is not working with addon's button any more.
@@ -146,7 +147,7 @@ var addToolbarInsideLocationBar = {
 
     //register toolbar.id
     this.registerArea("ucjs-Locationbar-toolbar");
-    //this.fakeUnregisterArea("ucjs-Locationbar-toolbar");
+    this.fakeUnregisterArea("ucjs-Locationbar-toolbar");
    
     // xxxx toDo removing dirty hack
     gURLBar.onDrop_addToolbarInsideLocationBar = gURLBar.onDrop;
