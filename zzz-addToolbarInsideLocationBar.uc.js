@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 65+
 // @author         Alice0775
+// @version        2019/02/03 23:30 fix force 18px in height.
 // @version        2019/02/03 23:00 This is not working with popup button.
 // @version        2019/02/03 18:00 This is not working with addon's button any more.
 // @version        2019/02/01 20:00 wip, workaround fix for second window is broken
@@ -50,9 +51,10 @@ var addToolbarInsideLocationBar = {
       }
 
       /*default theme*/
-      #nav-bar #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon{
+      #nav-bar #ucjs-Locationbar-toolbar > toolbarbutton .toolbarbutton-icon {
         width: 18px;
-        padding: 0 !important;
+        height: 18px;
+        padding: 0 2px 0 2px !important;
       }
 
       #nav-bar .toolbarbutton-1[type=menu]:not(#back-button):not(#forward-button):not(#feed-button):not(#social-provider-button):not(#PanelUI-menu-button) {
@@ -63,9 +65,7 @@ var addToolbarInsideLocationBar = {
       #ucjs-Locationbar-toolbar .toolbarbutton-1:not([type=menu-button]),
       #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-button,
       #ucjs-Locationbar-toolbar .toolbarbutton-1 > .toolbarbutton-menubutton-dropmarker {
-        padding: 0;
-        padding-left: 2px;
-        padding-right: 2px;
+        padding: 0 2px 0 2px !important;
       }
 
       #ucjs-Locationbar-toolbar .toolbarbutton-1:not(#bookmarks-menu-button) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
@@ -73,10 +73,7 @@ var addToolbarInsideLocationBar = {
       }
 
       #ucjs-Locationbar-toolbar #bookmarks-menu-button[cui-areatype="toolbar"]:not(.bookmark-item):not([overflowedItem=true]) > .toolbarbutton-menubutton-dropmarker > .dropmarker-icon {
-        padding-top: 0;
-        padding-bottom: 0;
-        padding-left: 2px;
-        padding-right: 2px;
+        padding: 0 2px 0 2px !important;
         width: 23px;
       }
       #ucjs-Locationbar-toolbar:not([customizing="true"]) #bookmarks-menu-button[cui-areatype="toolbar"] > .toolbarbutton-menubutton-button > .toolbarbutton-icon {
