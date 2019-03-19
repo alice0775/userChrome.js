@@ -3,6 +3,7 @@
 // @description  Synchronize the searchbox content ウェブで検索をした際に検索バーに検索語句を取り込む
 // @charset      utf-8
 // @include      main
+// @version		   2019/03/20 fix 66
 // @version		   2019/01/20 fix regexp
 // @version		   2018/09/23 remove some regexp, add duckduckgo and ecosia
 // @version		   2018/09/23 remove some regexp, add duckduckgo and ecosia
@@ -124,6 +125,8 @@ let searchboxsync = {
       return;
 
     this.searchbar.value = terms;
+    if(typeof this.searchbar.updateGoButtonVisibility == "function")
+      this.searchbar.updateGoButtonVisibility();
 
     // save to form history
     if (typeof this.searchbar.FormHistory == "object") {

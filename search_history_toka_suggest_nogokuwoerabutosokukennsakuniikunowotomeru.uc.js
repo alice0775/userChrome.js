@@ -3,8 +3,9 @@
 // @namespace      http://pc11.2ch.net/test/read.cgi/software/1168635399/
 // @description    search historyとかsuggestの語句選ぶと即検索にいくのを止める
 // @include        main
-// @compatibility  Firefox 63+
+// @compatibility  Firefox 66
 // @author         2ch
+// @version        2019/03/20 00:00 fix66
 // @version        2018/10/23 12:00
 // @modified       by Alice0775
 // ==/UserScript==
@@ -49,6 +50,8 @@ var search_history_toka_suggest_nogokuwoerabutosokukennsakuniikunowotomeru = {
             !aEvent.altKey && !aEvent.metaKey) {
           var searchBar = BrowserSearch.searchBar;
           searchBar.value = this.input.controller.getValueAt(this.selectedIndex);
+          if(typeof searchBar.updateGoButtonVisibility == "function")
+            searchBar.updateGoButtonVisibility();
           // this.closePopup();
           return;
         }

@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    replace the magnifying glass with the search engine's icon
 // @include        main
-// @compatibility  Firefox 65
+// @compatibility  Firefox 66
 // @author         Alice0775
+// @version        2019/03/20 00:00 Fix 67.0a1
+// @version        2018/11/29 00:00 Fix 67.0a1 Bug 1524593 - nsISearchService (aka nsIBrowserSearchService, previously) refactor to be mostly an asynchronouse
 // @version        2018/11/29 00:00 Fix 65.0a1 Bug 1453264
 // @version        2018/09/29 23:00 Fix 64.0a1
 // @version        2018/09/24 23:00 Fix warning from nsIBrowserSearchService
@@ -34,13 +36,20 @@ var searchengineicon = {
     window.removeEventListener('unload', this, false);
   },
   
-  toggleImage: function() {
+  toggleImage: async function() {
       var searchbar = window.document.getElementById("searchbar");
       if (!searchbar)
         return;
       let  searchbutton = searchbar.querySelector(".searchbar-search-icon") ||
         window.document.getAnonymousElementByAttribute(searchbar, "class", "searchbar-search-icon");
-      var uri = Services.search.defaultEngine.iconURI.spec;
+      let defaultEngine;
+      try {
+        defaultEngine = Services.search.defaultEngine;
+      } catch(ex) {}
+      try {
+        defaultEngine = await Services.search.getDefault();
+     } catch(ex) {}
+      var uri = defaultEngine.iconURI.spec;
       //var icon = PlacesUtils.getImageURLForResolution(window, uri);
       searchbutton.setAttribute("style", "list-style-image: url('"+ uri +"') !important; -moz-image-region: auto !important; width: 16px !important; padding: 2px 0 !important;");
   },
