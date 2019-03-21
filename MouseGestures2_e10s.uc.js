@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 60
+// @version       2019/03/21 01:00 fix Bug 1528695 for 67+
 // @version       2019/01/21 01:00 reloadAllTabs to reloadTabs
 // @version       2018/12/25 20:00 clear wheel gesture flg when right mouseup/down(wip)
 // @version       2018/10/24 01:00 fix, some command
@@ -92,7 +93,7 @@ var ucjsMouseGestures = {
         ['', 'すべてタブをリロード', function(){ typeof gBrowser.reloadTabs == "function" ? gBrowser.reloadTabs(gBrowser.visibleTabs) : gBrowser.reloadAllTabs(); } ],
         ['', '読込中止', function(){ document.getElementById("Browser:Stop").doCommand(); } ],
 
-        ['', 'リンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
+        ['', 'テキストリンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
         ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
         ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
 
@@ -291,7 +292,6 @@ var ucjsMouseGestures = {
                     url, {
                     relatedToCurrent: true,
                     inBackground: inBackground,
-                    referrerURI: null,
                     triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
                   });
                 },
@@ -1457,6 +1457,14 @@ let ucjsMouseGestures_helper = {
       let linkURL = linkURLs[i];
       if (!linkURL)
         continue;
+      let referrerInfo = refURI;
+      if (ucjsMouseGestures._version >= 67) {
+        let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
+                                                  "nsIReferrerInfo",
+                                                  "init");
+        referrerInfo = new ReferrerInfo(
+                    Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, refURI);
+      }
       setTimeout(() => {
         try {
           //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
@@ -1464,7 +1472,7 @@ let ucjsMouseGestures_helper = {
           //        aIsContentWindowPrivate,
           //        aPrincipal)
           saveURL(linkURL, null, null, false,
-                  true, refURI, null,
+                  true, referrerInfo, null,
                   PrivateBrowsingUtils.isWindowPrivate(window),
                   Services.scriptSecurityManager.createNullPrincipal({}));
         } catch(ex) {
@@ -1507,31 +1515,36 @@ let ucjsMouseGestures_helper = {
 		}, 500);
   },
 
+  // URLを開く
+  loadURI: function(url) {
+    if (ucjsMouseGestures._version >= 67) {
+  		loadURI(url, null, null, false,
+  		        null, null, false,
+  		        Services.scriptSecurityManager.getSystemPrincipal(), false, null);
+		} else {
+			loadURI(url, null, null, false, null,
+			        null, null, false,
+			        Services.scriptSecurityManager.getSystemPrincipal(), false);
+    }
+  },
+
   // ひとつ上の階層へ移動
 	goUpperLevel: function() {
 		let uri = gBrowser.currentURI;
 		if (uri.schemeIs("about")) {
-			loadURI("about:about", null, null, false, null,
-			        null, null, false,
-			        Services.scriptSecurityManager.getSystemPrincipal(), false);
+      this.loadURI("about:about");
 			return;
 		}
 		let path = uri.spec.slice(uri.prePath.length)
 		if (path == "/") {
 			if (/:\/\/[^\.]+\.([^\.]+)\./.test(uri.prePath))
-				loadURI(RegExp.leftContext + "://" + RegExp.$1 + "." + RegExp.rightContext + "/",
-				        null, null, false, null,
-			          null, null, false,
-			          Services.scriptSecurityManager.createNullPrincipal({}), false);
+      this.loadURI(RegExp.leftContext + "://" + RegExp.$1 + "." + RegExp.rightContext + "/");
 			return;
 		}
 		let pathList = path.split("/");
 		if (!pathList.pop())
 			pathList.pop();
-		loadURI(uri.prePath + pathList.join("/") + "/",
-		        null, null, false, null,
-	          null, null, false,
-	          Services.scriptSecurityManager.createNullPrincipal({}), false);
+		this.loadURI(uri.prePath + pathList.join("/") + "/");
 	},
 
   // 数値を増減して移動
@@ -1548,10 +1561,7 @@ let ucjsMouseGestures_helper = {
 		digit = digit - num.length;
 		for (let i = 0; i < digit; i++)
 			num = "0" + num;
-		loadURI(RegExp.leftContext + num + RegExp.$2,
-		        null, null, false, null,
-	          null, null, false,
-	          Services.scriptSecurityManager.createNullPrincipal({}), false);
+		this.loadURI(RegExp.leftContext + num + RegExp.$2);
 	},
 
   // 選択範囲のテキストリンクをすべてタブに開く(選択範囲にリンク文字が無い場合は規定の検索エンジンで検索)
@@ -1607,28 +1617,54 @@ let ucjsMouseGestures_helper = {
           refURI = makeURI(docURL);
         } catch(e) {
         }
-        try {
-          gBrowser.loadOneTab(
-            linkURL, {
+        let param = {};
+        if (ucjsMouseGestures._version >= 67) {
+          let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
+                                                    "nsIReferrerInfo",
+                                                    "init");
+          referrerInfo = new ReferrerInfo(
+                      Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, refURI);
+          param = {
+            relatedToCurrent: true,
+            inBackground: true,
+      			referrerInfo: referrerInfo,
+      			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+      		};
+        } else {
+      		param = {
             relatedToCurrent: true,
             inBackground: true,
             referrerURI: refURI,
             triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-          });
-
-        } catch(ex) {
+          };
         }
+        gBrowser.loadOneTab(linkURL, param);
       }
   },
 
   // リンクをタブに開く
 	openURLs: function(aURLs, aReferer, aCharset) {
+    let param = {};
+    if (ucjsMouseGestures._version >= 67) {
+      let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
+                                                "nsIReferrerInfo",
+                                                "init");
+      referrerInfo = new ReferrerInfo(
+                  Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, aReferer);
+      param = {
+  			referrerInfo: referrerInfo, charset: aCharset, 
+  			inBackground: true, relatedToCurrent: true,
+  			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+  		};
+    } else {
+  		param = {
+  			referrerURI: aReferer, charset: aCharset, 
+  			inBackground: true, relatedToCurrent: true,
+  			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+  		};
+    }
 		for (let aURL of aURLs) {
-			gBrowser.loadOneTab(aURL, {
-				referrerURI: aReferer, charset: aCharset, 
-				inBackground: true, relatedToCurrent: true,
-				triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-			});
+			gBrowser.loadOneTab(aURL, param);
 		}
 	},
 
