@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 66
 // @author         Alice0775
+// @version        2019/03/30 19:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
 // @version        2019/03/20 00:00 Fix 67.0a1
 // @version        2018/11/29 00:00 Fix 67.0a1 Bug 1524593 - nsISearchService (aka nsIBrowserSearchService, previously) refactor to be mostly an asynchronouse
 // @version        2018/11/29 00:00 Fix 65.0a1 Bug 1453264
@@ -17,7 +18,7 @@
 var searchengineicon = {
 
   init: function() {
-    Services.search.init(rv => {
+    Services.search.init().then(rv => { 
       if (Components.isSuccessCode(rv)) {
         this.toggleImage();
       }
