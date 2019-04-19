@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 61
 // @author         Alice0775
+// @version        2019/04/19 14:00 Fixed 68a1 due to Bug 1519502 - Convert menu bindings to a Custom Element
 // @version        2018/04/14 00:00 de XUL
 // @version        2017/11/23 23:00 Services :(
 // @version        2017/11/14 21:00 use nsIFile instead nsILocalFile
@@ -96,7 +97,7 @@
           ]), ref);
       let popup = menu.appendChild(this.createElement("menupopup",
         [{attr: "id", value:"userChromejs_options"},
-         {attr: "onpopupshowing", value:"userChromejs.onpopup()"},
+         /*{attr: "onpopupshowing", value:"userChromejs.onpopup()"},*/
          {attr: "context", value:""}
         ]));
       popup.appendChild(this.createElement("menuitem",
@@ -140,6 +141,7 @@
         this.addonbar.addEventListener('drop', this ,true);
       }
       this.addPrefListener(userChromejs.readLaterPrefListener); // 登録処理
+      document.getElementById("menu_ToolsPopup").addEventListener("popupshowing", function(event) {if (event.target == this) userChromejs.onpopup(event);}, false);
     },
     uninit: function(){
       if ("nsDragAndDrop" in window && this.statusDisplay) {
@@ -314,7 +316,7 @@
       var flag = this.getPref("userChrome.enable.reuse",'bool',true);
       this.setPref("userChrome.enable.reuse",'bool',!flag);
     },
-    onpopup: function(){
+    onpopup: function(event){
       var menu;
       var flag = this.getPref("userChrome.enable.reuse",'bool',true);
       var menuitem = document.getElementById('userChrome_setting');
@@ -365,7 +367,7 @@
         menu.dirName = dirName;
 
         menupopup = document.createElement('menupopup');
-        menupopup.setAttribute('onpopupshowing','event.stopPropagation();');
+        //menupopup.setAttribute('onpopupshowing','event.stopPropagation();');
 
         menuitem = document.createElement('menuitem');
         menuitem.setAttribute('label','chrome/' + (dirName=="root"?"":dirName) + ' \u30d5\u30a9\u30eb\u30c0\u306e\u30b9\u30af\u30ea\u30d7\u30c8\u306e\u6709\u52b9/\u7121\u52b9');
