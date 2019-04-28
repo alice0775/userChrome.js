@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2019/04/27 23:00 fix click
 // @version        2018/09/07 23:00 fix wrong commit
 // @version        2018/09/07 23:00 fix comment && Togglehighlight
 // @version        2018/09/07 17:00 changed to default off Togglehighlight
@@ -114,23 +115,22 @@ var serachWP_modoki = {
         while(target) {
           if (target == this._textbox)
             break;
-          if (target.localName == "tab")
-            return;
-          if (target.id == "alltabs-button"
-           || target.id == "sidebar-button"
-           || target.id == "SM_Button"
-           || target.classList && target.classList.contains("all-tabs-button"))
-            return;
+          if (target.localName == "browser")
+            break;
           target = target.parentNode;
         }
-        if (!target) {
+        if (!target)
+          return;
+        if (event.button == 0 && target.localName == "browser") {
           this.clearHighlight(event);
           return;
         }
-        if (event.button == 1 && event.altKey)
-          this.toggleHighlight(event);
-        if (event.button == 0 || event.button == 2)
-          this.clearHighlight(event);
+        if (target == this._textbox) {
+          if (event.button == 1 && event.altKey)
+            this.toggleHighlight(event);
+          if (event.button == 0 || event.button == 2)
+            this.clearHighlight(event);
+        }
         break;
       case "blur":
         this.clearHighlight(event);
