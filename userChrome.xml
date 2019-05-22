@@ -3,6 +3,9 @@
 Available for use under the MIT License:
 https://opensource.org/licenses/MIT
  -->
+<!-- modified by alice0775 2019/05/22
+  69.0a1 Bug 1534407 - Enable browser.xhtml by default
+ -->
 <!-- modified by alice0775 2018/08/28
   fix: menu would not popup.
  -->
@@ -63,7 +66,7 @@ https://opensource.org/licenses/MIT
                   const document = aEvent.originalTarget;
                   if (document.location
                       && document.location.protocol === 'chrome:'
-                      && !(document.location.href == "chrome://browser/content/browser.xul") ) {
+                      && !(document.location.href == "chrome://browser/content/browser.xhtml") ) {
                     try {
                         console.log("chrome window opened")
                         Services.scriptloader.loadSubScript(mFileURL, document.defaultView, 'UTF-8');
