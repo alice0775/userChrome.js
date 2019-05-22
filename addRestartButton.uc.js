@@ -4,8 +4,9 @@
 // @charset        UTF-8
 // @description    ファイルメニューに"再起動"を追加する
 // @include        main
-// @compatibility  Firefox 2.0 3.0
+// @compatibility  Firefox 69
 // @author         Alice0775
+// @version        2019/05/21 08:30 fix 69.0a1 Bug 1534407 - Enable browser.xhtml by default, Bug 1551320 - Replace all CreateElement calls in XUL documents with CreateXULElement
 // @version        2015/12/04 24:00 Bug 1177310 [e10s] Stop using CPOWs on application shutdow
 // @version
 // @Note
@@ -32,7 +33,7 @@ try{
       //try {label =UI.ConvertToUnicode(label)} catch(e){}
       if (button){
         //button.setAttribute("disabled",false); //Fix With Rewindfowerd.xpi
-        menuitem = document.createElement("menuitem");
+        menuitem = document.createXULElement("menuitem");
         menuitem.setAttribute("id", "Restart_Firefox0");
         menuitem.setAttribute("class", "menuitem-iconic");
         menuitem.setAttribute("label", label);
@@ -42,7 +43,7 @@ try{
         optionsitem.parentNode.insertBefore(menuitem, optionsitem);
       }
 
-      menuitem = document.createElement("menuitem");
+      menuitem = document.createXULElement("menuitem");
       menuitem.setAttribute("id", "Restart_Firefox1");
       menuitem.setAttribute("label", label);
       menuitem.setAttribute("oncommand", "ToolRstart.SaveRestart(event);");
@@ -52,7 +53,7 @@ try{
 }catch(e){}
     label = "再起動";
     //try {label =UI.ConvertToUnicode(label)} catch(e){}
-    menuitem = document.createElement("menuitem");
+    menuitem = document.createXULElement("menuitem");
     menuitem.setAttribute("label", label);
     menuitem.setAttribute("accesskey", "R");
     menuitem.setAttribute("oncommand", "ToolRstart.restartApp(true);");

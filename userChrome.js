@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.57mod ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.58mod ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2019/05/21 08:30 fix 69.0a1 Bug 1534407 - Enable browser.xhtml by default, Bug 1551320 - Replace all CreateElement calls in XUL documents with CreateXULElement
 // Date 2018/08/10 01:30 fix 63.0a1
 // Date 2018/08/02 19:30 for userChrome.xml
 // Date 2018/05/30 18:00 ALWAYSEXECUTE  .uc.js
@@ -80,7 +81,8 @@
   //===================================================================
   const ALWAYSEXECUTE   = ['rebuild_userChrome.uc.xul', 'rebuild_userChrome.uc.js']; //常に実行するスクリプト
   var INFO = true;
-  var BROWSERCHROME = "chrome://browser/content/browser.xul"; //Firfox
+  var BROWSERCHROME = "chrome://browser/content/browser.xhtml"; //Firfox
+                    //"chrome://browser/content/browser.xul"; //Firfox
   //var BROWSERCHROME = "chrome://navigator/content/navigator.xul"; //SeaMonkey:
   // -- config --
 /* USE_0_63_FOLDER true の時
@@ -105,14 +107,13 @@
                         +-userCrome.js.0.8-+-*.uc.jsまたは*.uc.xul群 (綴りが変なのはなぜかって? )
  */
 
-
   //chrome/aboutでないならスキップ
   if(!/^(chrome:|about:)/i.test(location.href)) return;
   if(/^(about:(blank|newtab|home))/i.test(location.href)) return;
   //コモンダイアログに対するオーバーレイが今のところ無いので時間短縮のためスキップすることにした
   if(location.href =='chrome://global/content/commonDialog.xul') return;
   if(location.href =='chrome://global/content/alerts/alert.xul') return;
-  if(/.html?$/i.test(location.href)) return;
+  if(/\.html?$/i.test(location.href)) return;
   window.userChrome_js = {
     USE_0_63_FOLDER: USE_0_63_FOLDER,
     UCJS: UCJS,
@@ -521,7 +522,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       } catch (e) {
         return;
       }
-      if (!(doc instanceof XULDocument))
+      if (!(doc instanceof XULDocument || doc instanceof HTMLDocument))
           return;
 
       var script, aScript, url;
@@ -669,9 +670,16 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       document.documentElement.getAttribute("chromehidden") !="" )
     return;
 
-  setTimeout(function(doc){that.runScripts(doc);
+  if (typeof gBrowser != undefined) {
+    that.runScripts(doc);
     setTimeout(function(doc){that.runOverlays(doc);},0, doc);
-  },0, doc);
+  } else {
+    setTimeout(function(doc){
+      that.runScripts(doc);
+      setTimeout(function(doc){that.runOverlays(doc);},0, doc);
+    },0, doc);
+  }
+
 
   //Sidebar for Trunc
   if(location.href != that.BROWSERCHROME) return;
