@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 60
+// @compatibility 67
+// @version       2019/05/23 03:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
 // @version       2019/03/21 01:00 fix Bug 1528695 for 67+
 // @version       2019/01/21 01:00 reloadAllTabs to reloadTabs
 // @version       2018/12/25 20:00 clear wheel gesture flg when right mouseup/down(wip)
@@ -1320,13 +1321,12 @@ let ucjsMouseGestures_helper = {
 
   // Web search selected text with search engins popup
   webSearchPopup: function(aText, screenX, screenY) {
-    Services.search.init(rv => {
+    Services.search.init().then(rv => { 
       if (Components.isSuccessCode(rv)) {
         this._webSearchPopupBuild(aText, screenX, screenY);
-      }
-    });
+      }    });
   },
-  _webSearchPopupBuild: function(aText, screenX, screenY) {
+  _webSearchPopupBuild: async function(aText, screenX, screenY) {
     this.text = aText;
     let that = ucjsMouseGestures;
 
@@ -1335,7 +1335,7 @@ let ucjsMouseGestures_helper = {
     if (typeof screenY == "undefined")
       screenY = that._lastY;
     let searchSvc = Services.search;
-		let engines = searchSvc.getVisibleEngines({});
+		let engines = await searchSvc.getVisibleEngines({});
 		if (engines.length < 1)
 			throw "No search engines installed.";
 
@@ -1353,8 +1353,10 @@ let ucjsMouseGestures_helper = {
 			let menuitem = document.createElement("menuitem");
 			menuitem.setAttribute("label", engines[i].name);
 			menuitem.setAttribute("class", "menuitem-iconic searchbar-engine-menuitem menuitem-with-favicon");
-			if (engines[i].iconURI)
+			if (engines[i].iconURI) {
+        menuitem.setAttribute("style", "list-style-image: url('"+ engines[i].iconURI.spec +"'); -moz-image-region: auto !important; width: 16px;");
 				menuitem.setAttribute("src", engines[i].iconURI.spec);
+		  }
 			popup.insertBefore(menuitem, popup.firstChild);
 			menuitem.engine = engines[i];
 		}
