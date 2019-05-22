@@ -4,7 +4,8 @@
 // @description    discard tab
 // @include        main
 // @author         Alice0775
-// @compatibility  60
+// @compatibility  67
+// @version        2019/02/22 00:00 67 Bug 675539 - Make tab discard functionality work on tab object directly
 // @version        2018/09/27 10:30
 // ==/UserScript==
 
@@ -74,7 +75,7 @@ var discardTab = {
         !aTab.hasAttribute("busy") &&
         !aTab.closing &&
         !aTab.selectedTab)
-      gBrowser.discardBrowser(aTab.linkedBrowser);
+      gBrowser.discardBrowser(aTab);
   },
 
   discardSelectedTabs: function(tabs) {
