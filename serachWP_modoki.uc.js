@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 57
 // @author         Alice0775
+// @version        2019/05/24 11:00 Fix overflowed/underflowed
 // @version        2019/04/27 23:00 fix click
 // @version        2018/09/07 23:00 fix wrong commit
 // @version        2018/09/07 23:00 fix comment && Togglehighlight
@@ -24,6 +25,8 @@
 // 語句上で alt+中クリック : 強調表示 on/off
 // 検索バーフォーカス解除で強調表示off
 // 語句上でマウスホイール回転 : 次/前の語を検索
+// serachWP_modoki_highlightbutton.uc.jsを入れると強調表示 on/offボタンを追加
+
 //
 // todo(未実装)
 //   トークン毎の色分け強調表示
@@ -60,6 +63,7 @@ var serachWP_modoki = {
   init: function() {
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
+    window.addEventListener("resize", this, false);
     window.addEventListener("click", this, true);
     window.addEventListener("unload", this, false);
     this.patch();
@@ -68,6 +72,7 @@ var serachWP_modoki = {
   uninit: function() {
     window.removeEventListener('aftercustomization', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
+    window.removeEventListener("resize", this, false);
     window.removeEventListener("unload", this, false);
     window.removeEventListener("click", this, true);
     if (!this._textbox)
@@ -92,9 +97,15 @@ var serachWP_modoki = {
       }
   },
 
+  _timer: null,
   handleEvent: function(event) {
     let target;
     switch(event.type) {
+      case "resize":
+        if (!this._timer)
+          clearTimeout(this._timer);
+        this._timer = setTimeout(() => this.patch(), 250);
+        break;
       case "aftercustomization":
         this.patch();
         break;

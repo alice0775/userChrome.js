@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    replace the magnifying glass with the search engine's icon
 // @include        main
-// @compatibility  Firefox 66
+// @compatibility  Firefox 67
 // @author         Alice0775
+// @version        2019/05/24 11:00 Fix overflowed/underflowed
 // @version        2019/03/30 19:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
 // @version        2019/03/20 00:00 Fix 67.0a1
 // @version        2018/11/29 00:00 Fix 67.0a1 Bug 1524593 - nsISearchService (aka nsIBrowserSearchService, previously) refactor to be mostly an asynchronouse
@@ -23,10 +24,10 @@ var searchengineicon = {
         this.toggleImage();
       }
     });
-
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     Services.obs.addObserver(this, "browser-search-engine-modified");
+    window.addEventListener("resize", this, false);
     window.addEventListener('unload', this, false);
   },
 
@@ -34,10 +35,12 @@ var searchengineicon = {
     window.removeEventListener('aftercustomization', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
     Services.obs.removeObserver(this, "browser-search-engine-modified");
+    window.removeEventListener("resize", this, false);
     window.removeEventListener('unload', this, false);
   },
   
   toggleImage: async function() {
+      Services.console.logStringMessage("toggleImage");
       var searchbar = window.document.getElementById("searchbar");
       if (!searchbar)
         return;
@@ -72,8 +75,14 @@ var searchengineicon = {
     }
   },
 
+  _timer: null,
   handleEvent: function(event){
     switch (event.type) {
+      case "resize":
+        if (!this._timer)
+          clearTimeout(this._timer);
+        this._timer = setTimeout(() => this.toggleImage(), 250);
+        break;
       case "aftercustomization":
         this.toggleImage();
         break;

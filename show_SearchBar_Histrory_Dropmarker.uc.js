@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 58
+// @version        2019/05/24 11:00 Fix overflowed/underflowed
 // @version        2018-09-16 fix button click
 // @version        2018-07-21 add button toggle popup when click
 // @version        2018-07-21 add button style open state
@@ -15,6 +16,8 @@ var showSearchBarHistroryDropmarker = {
     const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
     let bar = BrowserSearch.searchBar;
     if (!bar)
+      return;
+    if (bar._textbox.getElementsByAttribute("anonid", "historydropmarker").length > 0)
       return;
     let btn = document.createElementNS(kNSXUL, "dropmarker");
     btn.setAttribute("anonid", "historydropmarker");
@@ -34,6 +37,7 @@ var showSearchBarHistroryDropmarker = {
     window.addEventListener("unload", this, false);
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
+    window.addEventListener("resize", this, false);
     this.popup = document.getElementById("PopupSearchAutoComplete");
     this.popup.addEventListener("popupshown", this, false);
     this.popup.addEventListener("popuphidden", this, false);
@@ -73,6 +77,7 @@ var showSearchBarHistroryDropmarker = {
     window.removeEventListener("unload", this, false);
     window.removeEventListener('aftercustomization', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
+    window.removeEventListener("resize", this, false);
   },
 
   showHistory: function(event) {
@@ -105,8 +110,14 @@ var showSearchBarHistroryDropmarker = {
       }
   },
 
+  _timer: null,
   handleEvent: function(event) {
     switch(event.type) {
+      case "resize":
+        if (!this._timer)
+          clearTimeout(this._timer);
+        this._timer = setTimeout(() => this.init2(), 250);
+        break;
       case "aftercustomization":
         this.init2();
         break;
@@ -116,8 +127,8 @@ var showSearchBarHistroryDropmarker = {
         break;
       case "click":
         if (event.button == 0) {
-          event.stopPropagation();
-          event.preventDefault();
+          //event.stopPropagation();
+          //event.preventDefault();
         }
         break;
       case "popupshown":
