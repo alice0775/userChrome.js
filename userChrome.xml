@@ -3,6 +3,9 @@
 Available for use under the MIT License:
 https://opensource.org/licenses/MIT
  -->
+<!-- modified by alice0775 2019/05/24
+  69.0a1  Bug 1519577 Convert toolbarbutton to a custom element
+ -->
 <!-- modified by alice0775 2019/05/22
   69.0a1 Bug 1534407 - Enable browser.xhtml by default
  -->
@@ -19,7 +22,7 @@ https://opensource.org/licenses/MIT
 
 <!-- Run userChrome.js -->
 <bindings xmlns="http://www.mozilla.org/xbl">
-  <binding id="js" extends="chrome://global/content/bindings/toolbarbutton.xml#toolbarbutton-badged">
+  <binding id="js">
     <implementation>
       <constructor><![CDATA[
 
