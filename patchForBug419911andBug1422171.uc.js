@@ -3,8 +3,9 @@
 // @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description   Workaround Bug 419911 - Support diagonal dragging through bookmarks menus (was:Bookmarks submenu is closed immediately during dragging)  and Bug 1422171 - When dragging a link into a bookmark folder and scrolling down via the hovering over the down arrow it scrolls way too fast
 // @include       main
-// @compatibility Firefox 60
+// @compatibility Firefox 67+
 // @author        alice0775
+// @version       2019/06/10 00:00 fix Bug 1533720 - Bookmark insertion indicator of bookmarks menu is slightly shifted in vertically, Bug 1479125 - Rewrite callers firstChild/lastChild/childNodes/previousSibling/nextSibling with firstElementChild/lastElementChild/children/previousElementSibling/nextElementSibling in browser.xul
 // @version       2018/10/05 00:00 fix 60esr
 // @version       2018/10/04 60+
 // ==/UserScript==
@@ -127,9 +128,9 @@ var bug419911 = {
       event.stopPropagation();
 
       PlacesControllerDragHelper.currentDropTarget = event.target;
-      var dt = event.dataTransfer;
+      let dt = event.dataTransfer;
 
-      var dropPoint = this._getDropPoint(event);
+      let dropPoint = this._getDropPoint(event);
 
       if (!dropPoint || !dropPoint.ip ||
           !PlacesControllerDragHelper.canDrop(dropPoint.ip, dt)) {
@@ -165,22 +166,16 @@ var bug419911 = {
       }
 
       // Autoscroll the popup strip if we drag over the scroll buttons.
-      var anonid = event.originalTarget.getAttribute('anonid');
-      var scrollDir = anonid == "scrollbutton-up" ? -1 :
-                      anonid == "scrollbutton-down" ? 1 : 0;
-      if (scrollDir != 0 && this.rptcnt == 0) {
-        this.rptcnt++;
-        let rptbutton = event.originalTarget;
-        if (typeof this._scrollBox._startScroll != "undefined") {
-          this._scrollBox._startScroll(scrollDir);
-        } else {
-          this._scrollBox._autorepeatbuttonScroll(event); // Bug 1422171 
+        let anonid = event.originalTarget.getAttribute("anonid");
+        let scrollDir = 0;
+        if (anonid == "scrollbutton-up") {
+          scrollDir = -1;
+        } else if (anonid == "scrollbutton-down") {
+          scrollDir = 1;
         }
-      } else {
-        this.rptcnt = 0;
-        if (typeof this._scrollBox._startScroll != "undefined")
-          this._scrollBox._stopScroll()
-      }
+        if (scrollDir != 0) {
+          this._scrollBox.scrollByIndex(scrollDir, true);
+        }
 
       // Check if we should hide the drop indicator for this target.
       if (dropPoint.folderElt || this._hideDropIndicator(event)) {
@@ -191,23 +186,23 @@ var bug419911 = {
       }
 
       // We should display the drop indicator relative to the arrowscrollbox.
-      var sbo = this._scrollBox.scrollBoxObject;
-      var newMarginTop = 0;
+      let scrollRect = this._scrollBox.getBoundingClientRect();
+      let newMarginTop = 0;
       if (scrollDir == 0) {
-        var elt = this.firstChild;
-        while (elt && event.screenY > elt.boxObject.screenY +
-                                       elt.boxObject.height / 2)
-          elt = elt.nextSibling;
-        newMarginTop = elt ? elt.boxObject.screenY - sbo.screenY :
-                              sbo.height;
+        let elt = this.firstElementChild;
+        while (elt && event.screenY > elt.screenY +
+                                      elt.getBoundingClientRect().height / 2)
+          elt = elt.nextElementSibling;
+        newMarginTop = elt ? elt.screenY - this._scrollBox.screenY :
+                               scrollRect.height;
       }
       else if (scrollDir == 1)
-        newMarginTop = sbo.height;
+        newMarginTop = scrollRect.height;
 
       // Set the new marginTop based on arrowscrollbox.
-      newMarginTop += sbo.y - this._scrollBox.boxObject.y;
-      this._indicatorBar.firstChild.style.marginTop = newMarginTop + "px";
-      this._indicatorBar.hidden = false;
+        newMarginTop += scrollRect.y - this._scrollBox.getBoundingClientRect().y;
+        this._indicatorBar.firstElementChild.style.marginTop = newMarginTop + "px";
+        this._indicatorBar.hidden = false;
 
       event.preventDefault();
       event.stopPropagation();
@@ -230,7 +225,7 @@ var bug419911 = {
       // If we have not moved to a valid new target clear the drop indicator
       // this happens when moving out of the popup.
       target = event.relatedTarget;
-      if (!target)
+      if (!target || !this.contains(target))
         this._indicatorBar.hidden = true;
 
       // Close any folder being hovered over
