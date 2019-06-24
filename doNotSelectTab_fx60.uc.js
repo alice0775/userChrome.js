@@ -3,7 +3,8 @@
 // @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description   do not select tab when dragging it, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include       main
-// @compatibility Firefox 60+
+// @compatibility Firefox 67
+// @version        2019/02/22 00:00 fix 67 Bug 675539 - Make tab discard functionality work on tab object directly
 // @version       2018/12/26 11:50 ignore close button 
 // @version       2018/10/03 23:00 more aggressive pending tab 
 // @version       2018/10/03 19:00 fix should not react on newtab button and other button, wip
@@ -73,7 +74,7 @@ let do_not_select_tab_when_mousedown = {
         this._mousedownTimer = setTimeout(() => {
           gBrowser.selectedTab = this._selectedTab;
           if (this._pending)
-            gBrowser.discardBrowser(this._mousedownTab.linkedBrowser);
+            gBrowser.discardBrowser(this._mousedownTab);
         }, 0);
 
         // xxx more aggressive
