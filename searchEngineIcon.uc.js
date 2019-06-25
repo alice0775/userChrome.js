@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 67
 // @author         Alice0775
+// @version        2019/06/24 11:00 Fix 68+ Bug 1518545 - Merge engine-current/ default notifications
 // @version        2019/05/24 11:00 Fix overflowed/underflowed
 // @version        2019/03/30 19:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
 // @version        2019/03/20 00:00 Fix 67.0a1
@@ -46,13 +47,7 @@ var searchengineicon = {
         return;
       let  searchbutton = searchbar.querySelector(".searchbar-search-icon") ||
         window.document.getAnonymousElementByAttribute(searchbar, "class", "searchbar-search-icon");
-      let defaultEngine;
-      try {
-        defaultEngine = Services.search.defaultEngine;
-      } catch(ex) {}
-      try {
-        defaultEngine = await Services.search.getDefault();
-     } catch(ex) {}
+      let defaultEngine = await Services.search.getDefault();
       var uri = defaultEngine.iconURI.spec;
       //var icon = PlacesUtils.getImageURLForResolution(window, uri);
       searchbutton.setAttribute("style", "list-style-image: url('"+ uri +"') !important; -moz-image-region: auto !important; width: 16px !important; padding: 2px 0 !important;");
@@ -63,8 +58,8 @@ var searchengineicon = {
       aSubject.QueryInterface(Components.interfaces.nsISearchEngine);
       switch (aPrefstring) {
       case "engine-current":
-        this.toggleImage();
       case "engine-default":
+       this.toggleImage();
         // Not relevant
         break;
       }
