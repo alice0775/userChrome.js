@@ -3,8 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    UndoListInTabmenuToo.uc.js
 // @include        main
-// @compatibility  Firefox 61.0
+// @compatibility  Firefox 69+
 // @author         Alice0775
+// @version        2019/06/30 10:00 Bug 1555060 Convert <tabs> to a custom element
+// @version        2019/06/24 23:00 wait for gBrowser initialized
+// @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2018/05/10 60
 // @version        2017/11/18 nsIPrefBranch to nsIPrefBranch
 // @version        2010/09/18 00:00 4.0b7pre
@@ -30,8 +33,7 @@ var UndoListInTabmenu = {
   ss: null,
 
   get tabContext() {
-    return gBrowser.tabContainer.contextMenu;
-;
+    return document.getElementById("tabContextMenu");
   },
 
   init: function(){
@@ -64,27 +66,27 @@ var UndoListInTabmenu = {
     
     if (this.getVer() > 3.0) {
       // "Recently Closed Windows"
-      menu = document.createElement("menu");
+      menu = document.createXULElement("menu");
       menu.setAttribute("id", "historyUndoWindowMenu3");
       menu.setAttribute("label", "Recently Closed Windows");
       menu.setAttribute("accesskey", "W");
       menu.setAttribute("disabled", "true");
       popup.insertBefore(menu, refItem);
 
-      this.historyUndoWindowPopup3 = menu = menu.appendChild(document.createElement("menupopup"));
+      this.historyUndoWindowPopup3 = menu = menu.appendChild(document.createXULElement("menupopup"));
       menu.setAttribute("id", "historyUndoWindowPopup3");
       menu.setAttribute("onpopupshowing", "UndoListInTabmenu.populateUndoWindowSubmenu();");
     }
 
     //UndoClose Tab List  最近閉じたタブ
     const LABELTEXT = locale.indexOf("ja") == -1?"Recently Closed Tabs":"\u6700\u8fd1\u9589\u3058\u305f\u30bf\u30d6";    //create menu
-    menu = document.createElement("menu");
+    menu = document.createXULElement("menu");
     menu.setAttribute("label", LABELTEXT);
     menu.setAttribute("accesskey", "L");
     if (id)
       menu.setAttribute("id", id);
     //menu.setAttribute("disabled", true);
-    var menupopup = document.createElement("menupopup");
+    var menupopup = document.createXULElement("menupopup");
     if (this.getVer()<3) {
       menupopup.setAttribute("onpopupshowing", "UndoListInTabmenu.populateUndoSubmenu(this);");
     } else if (this.getVer()<3.6) {
@@ -122,7 +124,7 @@ var UndoListInTabmenu = {
     // populate menu
     var undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
     for (var i = 0; i < undoItems.length; i++) {
-        var m = undoPopup.appendChild(document.createElement("menuitem"));
+        var m = undoPopup.appendChild(document.createXULElement("menuitem"));
       m.setAttribute("label", undoItems[i].title);
       m.setAttribute("value", i);
       m.setAttribute("oncommand", "undoCloseTab(" + i + ");");
@@ -133,8 +135,8 @@ var UndoListInTabmenu = {
     var bundleService = Cc["@mozilla.org/intl/stringbundle;1"].
                         getService(Ci.nsIStringBundleService);
     var stringBundle = bundleService.createBundle("chrome://browser/locale/bookmarks/bookmarks.properties");
-    undoPopup.appendChild(document.createElement("menuseparator"));
-    m = undoPopup.appendChild(document.createElement("menuitem"));
+    undoPopup.appendChild(document.createXULElement("menuseparator"));
+    m = undoPopup.appendChild(document.createXULElement("menuitem"));
     m.setAttribute("label", stringBundle.GetStringFromName("cmd_bm_openfolder"));
     m.setAttribute("accesskey", stringBundle.GetStringFromName("cmd_bm_openfolder_accesskey"));
     m.addEventListener("command", function() {
@@ -170,7 +172,7 @@ var UndoListInTabmenu = {
 
     // "Open All in Tabs"
     var strings = gNavigatorBundle;
-    m = undoPopup.appendChild(document.createElement("menuitem"));
+    m = undoPopup.appendChild(document.createXULElement("menuitem"));
     m.setAttribute("label", strings.getString("menuOpenAllInTabs.label"));
     m.setAttribute("accesskey", strings.getString("menuOpenAllInTabs.accesskey"));
     m.addEventListener("command", function() {
@@ -178,7 +180,7 @@ var UndoListInTabmenu = {
         undoCloseTab();
     }, false);
 
-    undoPopup.appendChild(document.createElement("menuseparator"));
+    undoPopup.appendChild(document.createXULElement("menuseparator"));
 
     // populate menu
     var undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
@@ -190,7 +192,7 @@ var UndoListInTabmenu = {
           tooltiptext += "\n";
         tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
       }
-      var m = document.createElement("menuitem");
+      var m = document.createXULElement("menuitem");
       m.setAttribute("tooltiptext", tooltiptext);
       m.setAttribute("label", undoItems[i].title);
       if (undoItems[i].image)
@@ -205,9 +207,9 @@ var UndoListInTabmenu = {
     }
 
     // "Clear undo close tb list"
-    undoPopup.appendChild(document.createElement("menuseparator"));
+    undoPopup.appendChild(document.createXULElement("menuseparator"));
 
-    m = undoPopup.appendChild(document.createElement("menuitem"));
+    m = undoPopup.appendChild(document.createXULElement("menuitem"));
     m.setAttribute("label", "Clear undo close tab list");
     m.setAttribute("accesskey", "C");
     m.addEventListener("command", function() {
@@ -230,7 +232,7 @@ var UndoListInTabmenu = {
 
     // "Open All in Tabs"
     var strings = gNavigatorBundle;
-    m = undoPopup.appendChild(document.createElement("menuitem"));
+    m = undoPopup.appendChild(document.createXULElement("menuitem"));
     m.setAttribute("label", strings.getString("menuRestoreAllTabs.label"));
     //m.setAttribute("class", "menuitem-iconic bookmark-item");
     m.setAttribute("accesskey", "R" /*strings.getString("menuRestoreAllTabs.accesskey")*/);
@@ -239,7 +241,7 @@ var UndoListInTabmenu = {
         undoCloseTab();
     }, false);
 
-    undoPopup.appendChild(document.createElement("menuseparator"));
+    undoPopup.appendChild(document.createXULElement("menuseparator"));
 
     // populate menu
     var undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
@@ -251,7 +253,7 @@ var UndoListInTabmenu = {
           tooltiptext += "\n";
         tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
       }
-      var m = document.createElement("menuitem");
+      var m = document.createXULElement("menuitem");
       m.setAttribute("tooltiptext", tooltiptext);
       m.setAttribute("label", undoItems[i].title);
       if (undoItems[i].image)
@@ -266,11 +268,10 @@ var UndoListInTabmenu = {
     }
 
     // "Clear undo close tb list"
-    undoPopup.appendChild(document.createElement("menuseparator"));
+    undoPopup.appendChild(document.createXULElement("menuseparator"));
 
-    m = undoPopup.appendChild(document.createElement("menuitem"));
+    m = undoPopup.appendChild(document.createXULElement("menuitem"));
     m.setAttribute("label", "Clear undo close tab list");
-    m.setAttribute("class", "menuitem-iconic bookmark-item");
     m.setAttribute("accesskey", "C");
     m.addEventListener("command", function() {
       var max_undo = UndoListInTabmenu.getPref("browser.sessionstore.max_tabs_undo", "int", 10);
@@ -313,13 +314,13 @@ var UndoListInTabmenu = {
     undoPopup.parentNode.removeAttribute("disabled");
     let undoItems = JSON.parse(this._ss.getClosedWindowData());
     // "Open All in Windows"
-    let m = undoPopup.appendChild(document.createElement("menuitem"));
+    let m = undoPopup.appendChild(document.createXULElement("menuitem"));
     m.setAttribute("label", gNavigatorBundle.getString("menuRestoreAllWindows.label"));
     //m.setAttribute("class", "menuitem-iconic bookmark-item");
     m.setAttribute("accesskey", "W"/*gNavigatorBundle.getString("menuRestoreAllWindows.accesskey")*/);
     m.setAttribute("oncommand",
       "for (var i = 0; i < " + undoItems.length + "; i++) UndoListInTabmenu.undoCloseWindow();");
-    undoPopup.appendChild(document.createElement("menuseparator"));
+    undoPopup.appendChild(document.createXULElement("menuseparator"));
     // populate menu
     for (let i = 0; i < undoItems.length; i++) {
       let undoItem = undoItems[i];
@@ -328,7 +329,7 @@ var UndoListInTabmenu = {
                                         : PluralForm.get(otherTabsCount, menuLabelString);
       let menuLabel = label.replace("#1", undoItem.title)
                            .replace("#2", otherTabsCount);
-      let m = document.createElement("menuitem");
+      let m = document.createXULElement("menuitem");
       m.setAttribute("label", menuLabel);
       let selectedTab = undoItem.tabs[undoItem.selected - 1];
       if (selectedTab.attributes.image) {
@@ -420,4 +421,18 @@ var UndoListInTabmenu = {
   }
 };
 
-if(!('TM_init' in window)) UndoListInTabmenu.init();
+// We should only start the redirection if the browser window has finished
+// starting up. Otherwise, we should wait until the startup is done.
+if (gBrowserInit.delayedStartupFinished) {
+  UndoListInTabmenu.init();
+} else {
+  let delayedStartupFinished = (subject, topic) => {
+    if (topic == "browser-delayed-startup-finished" &&
+        subject == window) {
+      Services.obs.removeObserver(delayedStartupFinished, topic);
+      UndoListInTabmenu.init();
+    }
+  };
+  Services.obs.addObserver(delayedStartupFinished,
+                           "browser-delayed-startup-finished");
+}

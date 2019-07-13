@@ -4,11 +4,11 @@
 // @description    TST
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM
-// @compatibility  Firefox 61-
+// @compatibility  Firefox 69
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
-// @version        2018/12/23 14:00 Adjust margin
-// @version        2018/12/23 00:00 Add option of SidebarModoki posiotion SM_RIGHT
+// @version        2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
+// @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
 // @version        2018/05/10 00:00 for 61 wip Bug 1448810 - Rename the Places sidebar files
 // @version        2018/05/08 21:00 use jsonToDOM(https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Overlay_Extensions/XUL_School/DOM_Building_and_HTML_Insertion)
 // @version        2018/05/08 19:00 get rid loadoverlay
@@ -65,7 +65,6 @@ if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.
 
 var SidebarModoki = {
   // -- config --
-  SM_RIGHT: false,  // SidebarModoki position
   SM_WIDTH : 130,
   SM_AUTOHIDE : false,  //F11 Fullscreen
   TAB0_SRC   : "chrome://browser/content/places/bookmarksSidebar.xul", //"chrome://browser/content/bookmarks/bookmarksPanel.xul",
@@ -104,7 +103,7 @@ var SidebarModoki = {
         // Array of elements?  Parse each one...
         if (Array.isArray(elemNameOrArray)) {
           var frag = doc.createDocumentFragment();
-          Array.forEach(arguments, function(thisElem) {
+          Array.prototype.forEach.call(arguments, function(thisElem) {
             frag.appendChild(tag.apply(null, thisElem));
           });
           return frag;
@@ -133,7 +132,7 @@ var SidebarModoki = {
         }
 
         // Create and append this element's children
-        var childElems = Array.slice(arguments, 2);
+        var childElems = Array.prototype.slice.call(arguments, 2);
         childElems.forEach(function(childElem) {
           if (childElem != null) {
             elem.appendChild(
@@ -156,7 +155,6 @@ var SidebarModoki = {
         document.getElementById("main-window").getAttribute("chromehidden").includes("extrachrome")) {      return; // do nothing
     }
 
-    let MARGINHACK = this.SM_RIGHT ? "0 -4px 0 0" : "0 -6px 0 -4px";
     let style = `
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
       #SM_toolbox
@@ -166,11 +164,7 @@ var SidebarModoki = {
         color: -moz-dialogtext;
         text-shadow: none;
       }
-      #SM_toolbox:not(.titlebar-color) {
-          width: 130px;
-          background-color: var(--toolbar-bgcolor);
-          color: var(--toolbar-color);
-      }
+
       /*フルスクリーン*/
       #SM_toolbox[moz-collapsed="true"],
       #SM_splitter[moz-collapsed="true"]
@@ -194,11 +188,7 @@ var SidebarModoki = {
       #SM_tabpanels
       { 
         padding: 0;
-        margin: {MARGINHACK}; /*hack*/
-      }
-      #SM_tabpanels:not(.titlebar-color) {
-          background-color: var(--toolbar-bgcolor);
-          color: var(--toolbar-color);
+        margin:-4px; /*hack*/
       }
 
 
@@ -213,7 +203,7 @@ var SidebarModoki = {
       }
      `;
 
-    style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH).replace(/\{MARGINHACK\}/g, MARGINHACK);
+    style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH);
     let sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -257,7 +247,7 @@ var SidebarModoki = {
     document.getElementById("mainKeyset").appendChild(this.jsonToDOM(template, document, {}));
 
     template =
-      ["vbox", {id: "SM_toolbox", ordinal: this.SM_RIGHT ? "10" : "0"},
+      ["vbox", {id: "SM_toolbox", ordinal: "0"},
         ["hbox", {id: "SM_header", align: "center"},
           ["label", {}, "SidebarModoki"],
           ["spacer", {flex: "1000"}],
@@ -286,10 +276,19 @@ var SidebarModoki = {
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
     template =
-      ["splitter", {id: "SM_splitter", ordinal: this.SM_RIGHT ? "9" : "0", state: "open", collapse: this.SM_RIGHT ? "after" :"before", resizebefore: "closest", resizeafter: "closest"},
+      ["splitter", {id: "SM_splitter", ordinal: "0", state: "open", collapse: "before", resizebefore: "closest", resizeafter: "closest"},
         ["grippy", {}]
       ];
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
+
+    //xxx 69 hack
+    let index = document.getElementById("SM_tabpanels").selectedIndex;
+    let tb0 = document.getElementById("SM_tab0");
+    let tb1 = document.getElementById("SM_tab1");
+    let tb2 = document.getElementById("SM_tab2");
+    tb0.parentNode.insertBefore(tb0, tb1);
+    tb0.parentNode.insertBefore(tb1, tb2);
+    document.getElementById("SM_tabs").selectedIndex = index;
 
     setTimeout(function(){this.observe();}.bind(this), 0);
 
@@ -339,8 +338,8 @@ var SidebarModoki = {
       mutations.forEach(function(mutation) {
         switch (mutation.attributeName) {
           case "ordinal":
-            this.ToolBox.setAttribute("ordinal", this.SM_RIGHT ? "10" : "0");
-            this.Splitter.setAttribute("ordinal", this.SM_RIGHT ? "9" : "0");
+            this.ToolBox.setAttribute("ordinal", "0");
+            this.Splitter.setAttribute("ordinal", "0");
             break;
         }
       }.bind(this));

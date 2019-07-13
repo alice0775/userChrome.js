@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  69
+// @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2019/02/22 00:00 fix 67 Bug 675539 - Make tab discard functionality work on tab object directly
 // @version        2018/12/03 10:30 workaround Bug 1511756
@@ -13,15 +14,19 @@
 
 var discardTab = {
 
+  get tabContext() {
+    return document.getElementById("tabContextMenu");
+  },
+
   init: function(){
     this.tabContextMenu();
-    gBrowser.tabContainer.contextMenu.addEventListener('popupshowing', this, false);
+    this.tabContext.addEventListener('popupshowing', this, false);
     gBrowser.tabContainer.addEventListener('SSTabRestored', this, false);
     window.addEventListener('unload', this, false)
   },
 
   uninit: function(){
-    gBrowser.tabContainer.contextMenu.removeEventListener('popupshowing', this, false);
+    this.tabContext.removeEventListener('popupshowing', this, false);
     gBrowser.tabContainer.removeEventListener('SSTabRestored', this, false);
     window.removeEventListener('unload', this, false)
   },
@@ -42,7 +47,7 @@ var discardTab = {
 
   tabContextMenu: function(){
     //tab context menu
-    var tabContext = gBrowser.tabContainer.contextMenu;
+    var tabContext = this.tabContext;
     var menuitem = this.discardTabMenu
                  = tabContext.appendChild(
                         document.createXULElement("menuitem"));
