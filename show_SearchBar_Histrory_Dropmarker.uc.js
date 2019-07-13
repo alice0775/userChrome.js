@@ -3,7 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
-// @compatibility  Firefox 58
+// @compatibility  Firefox 69
+// @version        2019/07/13 01:00 Fix 68 Bug 1556561 - Remove children usage from autocomplete binding
+// @version        2019/06/10 01:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
 // @version        2019/05/24 11:00 Fix overflowed/underflowed
 // @version        2018-09-16 fix button click
 // @version        2018-07-21 add button toggle popup when click
@@ -17,7 +19,8 @@ var showSearchBarHistroryDropmarker = {
     let bar = BrowserSearch.searchBar;
     if (!bar)
       return;
-    if (bar._textbox.getElementsByAttribute("anonid", "historydropmarker").length > 0)
+    let ref = bar.querySelector(".search-go-container");
+    if (ref.parentNode.querySelector(".searchBar-history-dropmarker"))
       return;
     let btn = document.createElementNS(kNSXUL, "dropmarker");
     btn.setAttribute("anonid", "historydropmarker");
@@ -27,8 +30,7 @@ var showSearchBarHistroryDropmarker = {
     btn.setAttribute("ordinal", "99");
     btn.setAttribute("type", "checkbox");
     btn.setAttribute("autoCheck", "false");
-    let ref = bar._textbox;
-    this.btn = ref.appendChild(btn);
+    this.btn = ref.parentNode.insertBefore(btn, ref);
     btn.addEventListener("click", this, false);
     btn.addEventListener("mousedown", this, false);
   },
@@ -41,9 +43,15 @@ var showSearchBarHistroryDropmarker = {
     this.popup = document.getElementById("PopupSearchAutoComplete");
     this.popup.addEventListener("popupshown", this, false);
     this.popup.addEventListener("popuphidden", this, false);
-    
-    this.init2();
+    Services.search.init().then(rv => { 
+      if (Components.isSuccessCode(rv)) {
+        this.init2();
+      }
+    });
     let style = `
+      .search-go-container {
+        /* -moz-box-ordinal-group:500; */  /* V-> */
+      }
       .searchBar-history-dropmarker {
         -moz-appearance: none;
         list-style-image: url(chrome://global/skin/icons/arrow-dropdown-16.svg);
