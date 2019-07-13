@@ -4,8 +4,10 @@
 // @description    FindBarの選択テキスト上でマウスホイールによる選択テキスでの検索を可能にする。選択なき場合は日本語のトークンを自動判定する
 // @charset        utf-8
 // @include        main
-// @compatibility  Firefox 57
+// @compatibility  Firefox 69
 // @author         Alice0775
+// @version        2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
+// @version        2019/06/24 23:00 wait for gBrowser initialized
 // @version        2018/09/15 18:00 cleanup
 // @version        2018/09/15 15:00 fix error
 // @version        2018/09/08 08:00 event.preventDefault();
@@ -49,7 +51,7 @@ var findSelectionInFindbar = {
       this._findField2.removeEventListener("DOMMouseScroll", this, false);
 
     let findBars = document.querySelectorAll("findbar");
-    Array.forEach(findBars, (function (aFindBar) {
+    Array.prototype.forEach.call(findBars, (function (aFindBar) {
       var target = aFindBar._findField;
       target.removeEventListener("DOMMouseScroll", this, false);
     }).bind(this));
@@ -650,4 +652,20 @@ var ucjs_Tokenizer = new function() {
 }
 
 
-findSelectionInFindbar.init();
+// We should only start the redirection if the browser window has finished
+// starting up. Otherwise, we should wait until the startup is done.
+if (gBrowserInit.delayedStartupFinished) {
+  findSelectionInFindbar.init();
+} else {
+  let delayedStartupFinished = (subject, topic) => {
+    if (topic == "browser-delayed-startup-finished" &&
+        subject == window) {
+      Services.obs.removeObserver(delayedStartupFinished, topic);
+      findSelectionInFindbar.init();
+    }
+  };
+  Services.obs.addObserver(delayedStartupFinished,
+                           "browser-delayed-startup-finished");
+}
+
+

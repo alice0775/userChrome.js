@@ -5,6 +5,7 @@
 // @include       *
 // @compatibility Firefox 60
 // @author        alice0775
+// @version       2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version       2018/10/04 20:00 remove conflict shortcuts key for main window
 // @version       2018/10/04 60+
 // ==/UserScript==
@@ -104,7 +105,7 @@ let undobookmarksmenu = {
         // Array of elements?  Parse each one...
         if (Array.isArray(elemNameOrArray)) {
           var frag = doc.createDocumentFragment();
-          Array.forEach(arguments, function(thisElem) {
+          Array.prototype.forEach.call(arguments, function(thisElem) {
             frag.appendChild(tag.apply(null, thisElem));
           });
           return frag;
@@ -133,7 +134,7 @@ let undobookmarksmenu = {
         }
 
         // Create and append this element's children
-        var childElems = Array.slice(arguments, 2);
+        var childElems = Array.prototype.slice.call(arguments, 2);
         childElems.forEach(function(childElem) {
           if (childElem != null) {
             elem.appendChild(

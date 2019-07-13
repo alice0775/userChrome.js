@@ -5,7 +5,10 @@
 // @author         Alice0775
 // @include        main
 // @modified by    Alice0775
-// @compatibility  56+
+// @compatibility  69+
+// @version        2019/06/24 23:00 wait for gBrowser initialized
+// @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
+// @version        2018/09/24 23:00 remove logging
 // @version        2018/09/23 09:00 add style pending and unread, reduce text color flickering
 // @version        2018/09/22 23:00 fix bug
 // @version        2018/09/22 22:00 fix bug
@@ -89,6 +92,10 @@ const unreadTabs = {
       else
         return this.ss_old.deleteTabValue(aTab, aKey);
     }
+  },
+
+  get tabContext() {
+    return document.getElementById("tabContextMenu");
   },
 
   init: function() {
@@ -208,10 +215,10 @@ const unreadTabs = {
 
   tabContextMenu: function(){
     //tab context menu
-    var tabContext = gBrowser.tabContainer.contextMenu ||
+    var tabContext = this.tabContext ||
                      document.getAnonymousElementByAttribute(gBrowser, "anonid", "tabContextMenu");
     var menuitem = tabContext.appendChild(
-                        document.createElement("menuitem"));
+                        document.createXULElement("menuitem"));
     menuitem.id = "removeunreadalltabs";
     menuitem.setAttribute("label", "Remove UnRead For All Tabs");
     menuitem.setAttribute("accesskey", "z");
@@ -336,7 +343,7 @@ const unreadTabs = {
     var aTab;
 //window.userChrome_js.debug(event.type);
     if (event.type != "unload")
-      Services.console.logStringMessage(event.type + " "+ event.target._tPos);
+      /*Services.console.logStringMessage(event.type + " "+ event.target._tPos);*/
     switch (event.type) {
       case 'unload':
         this.uninit();
@@ -366,7 +373,24 @@ const unreadTabs = {
     }
   }
 }
-unreadTabs.init();
+
+// We should only start the redirection if the browser window has finished
+// starting up. Otherwise, we should wait until the startup is done.
+if (gBrowserInit.delayedStartupFinished) {
+  unreadTabs.init();
+} else {
+  let delayedStartupFinished = (subject, topic) => {
+    if (topic == "browser-delayed-startup-finished" &&
+        subject == window) {
+      Services.obs.removeObserver(delayedStartupFinished, topic);
+      unreadTabs.init();
+    }
+  };
+  Services.obs.addObserver(delayedStartupFinished,
+                           "browser-delayed-startup-finished");
+}
+
+
 
 
 

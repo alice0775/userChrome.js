@@ -5,7 +5,11 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
-// @compatibility  60
+// @compatibility  69
+// @version        2019/06/06 07:00 Bug 1534681 Use ReferrerInfo class in document
+// @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
+// @version        2019/05/21 08:30 fix 69.0a1 Bug 1534407 - Enable browser.xhtml by default
+// @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2018/09/27 10:30 fix  tab detach
 // @version        2018/09/26 07:30 support tab detach
 // @version        2018/09/25 21:30 working with tab multi selection
@@ -31,7 +35,7 @@
 
 patch: {
   if ("openLinkIn" in window) {
-    if (!/isLockTab/.test(window.openLinkIn.toString())) {
+    if (!window.hasOwnProperty("openLinkIn_lockorg")) {
       window.openLinkIn_lockorg = window.openLinkIn;
       window.openLinkIn = function(url, where, params) {
         var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
@@ -46,7 +50,7 @@ patch: {
     }
   }
 
-  if (location.href != "chrome://browser/content/browser.xul")
+  if (location.href != "chrome://browser/content/browser.xhtml")
     break patch;
 
   window.tabLock = {
@@ -85,6 +89,10 @@ patch: {
       }
     },
 
+    get tabContext() {
+      return document.getElementById("tabContextMenu");
+    },
+
     init: function(){
 
       // detach tab
@@ -101,21 +109,78 @@ patch: {
         eval("gBrowser.swapBrowsersAndCloseOther = function " + func.replace(/^function/, ''));
       }
 
+      gBrowser.isLockTab = function (aTab){
+        //var x = gBrowser.isLockTab.caller;
+         return aTab.hasAttribute("tabLock");
+      }
+
+      gBrowser.lockTab = function (aTab, state){
+        let isLocked;
+        if (typeof state == "undefined") {
+          if ( aTab.hasAttribute("tabLock") ){
+            state = false;
+          }else{
+            state = true;
+          }
+        }
+        if (state) {
+          aTab.setAttribute("tabLock", "true");
+          tabLock.sessionStore.setTabValue(aTab, "tabLock", "true");
+          isLocked = true;
+        } else {
+          aTab.removeAttribute("tabLock");
+          try {
+            tabLock.sessionStore.deleteTabValue(aTab, "tabLock");
+          } catch(e) {}
+          isLocked = false;
+        }
+        this.lockTabIcon(aTab);
+        return isLocked;
+      }
+
+      gBrowser.lockTabIcon = function (aTab){
+        const kXULNS =
+                 "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
+        var image = document.getAnonymousElementByAttribute(
+                                 aTab, "class", "tab-icon-lock");
+        if ( aTab.hasAttribute("tabLock") ){
+          if(!image){
+            var stack = aTab.querySelector(".tab-stack");
+            var image = document.createElementNS(kXULNS,'image');
+            image.setAttribute('class','tab-icon-lock');
+            image.setAttribute('left',0);
+            image.setAttribute('top',0);
+            if(stack) stack.appendChild(image);
+          }
+        }
+      }
+
+
+      gBrowser.isHashLink = function (aUrl, aDocumentUrl){
+        if(!tabLock.getPref('userChrome.tabLock.ignoreHashLink','bool', tabLock.ignoreHashLink))
+          return false;
+        let aURI = new URL(aUrl);
+        let aDocumentURI = new URL(aDocumentUrl);
+        if (aURI.hash || aDocumentURI.hash) {
+          if(aURI.href.replace(aURI.hash, "") == aDocumentURI.href.replace(aDocumentURI.hash, "")) {
+            return true;
+          }
+        }
+        return false;
+      }
+
       this.tabContextMenu();
 
       // CSSを適用
-      var stack = document.getAnonymousElementByAttribute(
-                            gBrowser.tabContainer.firstChild, "class", "tab-stack");
-
-        var style = " \
-        .tab-icon-lock{ \
-          margin-top: 0px; /*要調整*/  \
-          margin-left: 0px; /*要調整*/ \
-          list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjElEQVQ4je3RsQ7CMAyE4S9pURl5/6csGxKJw1AKFBARK+IkD3Fyv86OQouHOhNBqzQcdJSPzCKIEMgkKFTMXcDmMI6LGzuGnvkFoBRQiWtn/x1g5dwBpx4gnalDxAZUcm4jad3HxwTpzaNxmtZef4RMkrNbDQPTtN53AanSniM0S6y8/ES82v76MV0AlREpDobXTpUAAAAASUVORK5CYII='); \
-        } \
-        .tab-icon-lock[hidden='true'] { \
-          display: none !important; \
-        }".replace(/\s+/g, " ");
+        var style = `
+        tab[tabLock] .tab-icon-lock{
+          margin-top: 0px; /*要調整*/
+          margin-left: 0px; /*要調整*/
+          list-style-image:url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAjElEQVQ4je3RsQ7CMAyE4S9pURl5/6csGxKJw1AKFBARK+IkD3Fyv86OQouHOhNBqzQcdJSPzCKIEMgkKFTMXcDmMI6LGzuGnvkFoBRQiWtn/x1g5dwBpx4gnalDxAZUcm4jad3HxwTpzaNxmtZef4RMkrNbDQPTtN53AanSniM0S6y8/ES82v76MV0AlREpDobXTpUAAAAASUVORK5CYII=');
+        }
+        tab:not([tabLock]) .tab-icon-lock {
+          display: none !important;
+        }`.replace(/\s+/g, " ");
 
       var sspi = document.createProcessingInstruction(
         'xml-stylesheet',
@@ -150,7 +215,7 @@ patch: {
       window.removeEventListener('unload', this, false)
       gBrowser.tabContainer.removeEventListener('TabMove', this, false);
       gBrowser.tabContainer.removeEventListener('SSTabRestoring', this,false);
-      gBrowser.tabContainer.contextMenu.removeEventListener('popupshowing', this, false);
+      this.tabContext.removeEventListener('popupshowing', this, false);
     },
 
     handleEvent: function(event) {
@@ -177,10 +242,10 @@ patch: {
 
     tabContextMenu: function(){
       //tab context menu
-      var tabContext = gBrowser.tabContainer.contextMenu;;
+      var tabContext = this.tabContext;
       var menuitem = this.tabLockMenu
                    = tabContext.appendChild(
-                          document.createElement("menuitem"));
+                          document.createXULElement("menuitem"));
       menuitem.id = "tabLock";
       menuitem.setAttribute("type", "checkbox");
       if (Services.appinfo.version.split(".")[0] >= 63)
@@ -316,76 +381,21 @@ patch: {
   }
 
 
-  gBrowser.isLockTab = function (aTab){
-    //var x = gBrowser.isLockTab.caller;
-     return aTab.hasAttribute("tabLock");
-  }
-
-  gBrowser.lockTab = function (aTab, state){
-    let isLocked;
-    if (typeof state == "undefined") {
-      if ( aTab.hasAttribute("tabLock") ){
-        state = false;
-      }else{
-        state = true;
+  // We should only start the redirection if the browser window has finished
+  // starting up. Otherwise, we should wait until the startup is done.
+  if (gBrowserInit.delayedStartupFinished) {
+    tabLock.init();
+  } else {
+    let delayedStartupFinished = (subject, topic) => {
+      if (topic == "browser-delayed-startup-finished" &&
+          subject == window) {
+        Services.obs.removeObserver(delayedStartupFinished, topic);
+        tabLock.init();
       }
-    }
-    if (state) {
-      aTab.setAttribute("tabLock", "true");
-      tabLock.sessionStore.setTabValue(aTab, "tabLock", "true");
-      isLocked = true;
-    } else {
-      aTab.removeAttribute("tabLock");
-      try {
-        tabLock.sessionStore.deleteTabValue(aTab, "tabLock");
-      } catch(e) {}
-      isLocked = false;
-    }
-    this.lockTabIcon(aTab);
-    return isLocked;
+    };
+    Services.obs.addObserver(delayedStartupFinished,
+                             "browser-delayed-startup-finished");
   }
-
-  gBrowser.lockTabIcon = function (aTab){
-    const kXULNS =
-             "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    var image = document.getAnonymousElementByAttribute(
-                             aTab, "class", "tab-icon-lock");
-    if ( aTab.hasAttribute("tabLock") ){
-      if(!image){
-        var stack = document.getAnonymousElementByAttribute(
-                               aTab, "class", "tab-stack");
-        var image = document.createElementNS(kXULNS,'image');
-        image.setAttribute('class','tab-icon-lock');
-        image.setAttribute('left',0);
-        image.setAttribute('top',0);
-        if(stack) stack.appendChild(image);
-      }
-      image.removeAttribute('hidden');
-      aTab.setAttribute('class',aTab.getAttribute('class')+' tabLock');
-    }else{
-      if(image){
-        image.setAttribute('hidden', true);
-      }
-      aTab.setAttribute('class',aTab.getAttribute('class').replace(/\stabLock/g,''));
-    }
-  }
-
-
-  gBrowser.isHashLink = function (aUrl, aDocumentUrl){
-    if(!tabLock.getPref('userChrome.tabLock.ignoreHashLink','bool', tabLock.ignoreHashLink))
-      return false;
-    let aURI = new URL(aUrl);
-    let aDocumentURI = new URL(aDocumentUrl);
-    if (aURI.hash || aDocumentURI.hash) {
-      if(aURI.href.replace(aURI.hash, "") == aDocumentURI.href.replace(aDocumentURI.hash, "")) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  tabLock.init();
-
 
 
 (function() {
@@ -427,19 +437,13 @@ patch: {
       event.preventDefault();
       event.stopPropagation();
 
-      let referrerPolicy = ownerDoc.referrerPolicy;
-      if (node) {
-        let referrerAttrValue = Services.netUtils.parseAttributePolicyString(node.
-                                getAttribute("referrerpolicy"));
-        if (referrerAttrValue !== Components.interfaces.nsIHttpChannel.REFERRER_POLICY_UNSET) {
-          referrerPolicy = referrerAttrValue;
-        }
+     let referrerInfo = Cc["@mozilla.org/referrer-info;1"].createInstance(Ci.nsIReferrerInfo);
+     if (node) {
+       referrerInfo.initWithNode(node);
+     } else {
+       referrerInfo.initWithDocument(ownerDoc);
       }
-
-      let referrerURI = node.referrer || ownerDoc.documentURI;
-      let noreferrer = BrowserUtils.linkHasNoReferrer(node);
-      if (noreferrer)
-         referrerURI = null;
+      referrerInfo = E10SUtils.serializeReferrerInfo(referrerInfo);
 
       let userContextId = null;
       if (ownerDoc.nodePrincipal.originAttributes.userContextId) {
@@ -450,15 +454,13 @@ patch: {
         {url: url, 
          target: target,
          documentURI: ownerDoc.documentURI,
-         referrerURI: referrerURI,
-         noReferrer: noreferrer,
-         referrerPolicy: referrerPolicy,
+         referrerInfo: referrerInfo,
          userContextId: userContextId,
          originPrincipal: ownerDoc.nodePrincipal,
          triggeringPrincipal: ownerDoc.nodePrincipal,
         });
     }
-
+  
     function _hrefAndLinkNodeForClickEvent(event) {
       function isHTMLLink(aNode) {
         return ((aNode instanceof content.HTMLAnchorElement && aNode.href) ||
