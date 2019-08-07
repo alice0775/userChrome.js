@@ -7,6 +7,7 @@
 // @compatibility  Firefox 69
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2019/08/07 15:00 fix adding key(renamde from key to keyvalue in jsonToDOM)
 // @version        2019/07/13 13:00 fix wrong commit
 // @version        2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
@@ -120,7 +121,7 @@ var SidebarModoki = {
         // Set element's attributes and/or callback functions (eg. onclick)
         for (var key in elemAttr) {
           var val = elemAttr[key];
-          if (nodes && key == "key") {
+          if (nodes && key == "keyvalue") {  //for later convenient JavaScript access) by giving them a 'keyvalue' attribute; |nodes|.|keyvalue|
               nodes[val] = elem;
               continue;
           }
