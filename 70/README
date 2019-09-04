@@ -1,1 +1,9 @@
 70で動くかもしれないもの
+
+
+about:configでtoolkit.legacyUserProfileCustomizations.stylesheets = trueにする
+プロファイルフォルダにchromeフォルダを作り以下のファイルを保存する
+userChrome.css
+userChrome.xml
+userChrome.js
+必要なスクリプトファイルを保存する
