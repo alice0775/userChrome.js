@@ -7,6 +7,7 @@
 // @compatibility  Firefox 69
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2019/09/05 13:00 fix listitem
 // @version        2019/08/07 15:00 fix adding key(renamde from key to keyvalue in jsonToDOM)
 // @version        2019/07/13 13:00 fix wrong commit
 // @version        2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
@@ -35,13 +36,13 @@
 if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM") {
     let style = `
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+      :root
+      {
+        --downloads-item-height: 3.5em;
+      }
       #contentAreaDownloadsView
       {
         padding: 0;
-      }
-      #downloadsRichListBox > richlistitem.download
-      {
-        height: auto;
       }
       .downloadTypeIcon,
       .downloadBlockedBadge
