@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 69
+// @version       2019/09/05 15:00 fix 69.0 load parent
 // @version       2019/05/23 03:10 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version       2019/05/23 03:10 fix Bug 1483077 - Replaced reference to getBrowser with gBrowser for 68+
 // @version       2019/05/23 03:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
@@ -660,7 +661,23 @@ var ucjsMouseGestures = {
 };
 
 // エントリポイント
-ucjsMouseGestures.init();
+// We should only start the redirection if the browser window has finished
+// starting up. Otherwise, we should wait until the startup is done.
+if (gBrowserInit.delayedStartupFinished) {
+  ucjsMouseGestures.init();
+
+} else {
+  let delayedStartupFinished = (subject, topic) => {
+    if (topic == "browser-delayed-startup-finished" &&
+        subject == window) {
+      Services.obs.removeObserver(delayedStartupFinished, topic);
+      ucjsMouseGestures.init();
+
+    }
+  };
+  Services.obs.addObserver(delayedStartupFinished,
+                           "browser-delayed-startup-finished");
+}
 
 
 
@@ -1522,15 +1539,9 @@ let ucjsMouseGestures_helper = {
 
   // URLを開く
   loadURI: function(url) {
-    if (ucjsMouseGestures._version >= 67) {
-  		loadURI(url, null, null, false,
-  		        null, null, false,
-  		        Services.scriptSecurityManager.getSystemPrincipal(), false, null);
-		} else {
-			loadURI(url, null, null, false, null,
-			        null, null, false,
-			        Services.scriptSecurityManager.getSystemPrincipal(), false);
-    }
+		loadURI(url, null, null, false,
+		        null, null, false, false,
+		        Services.scriptSecurityManager.getSystemPrincipal(), false, null);
   },
 
   // ひとつ上の階層へ移動
