@@ -7,6 +7,8 @@
 // @compatibility  Firefox 69
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2019/09/05 13:00 fix key and listitem
+// @version        2019/08/07 15:00 fix adding key(renamde from key to keyvalue in jsonToDOM)
 // @version        2019/07/13 13:00 fix wrong commit
 // @version        2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
@@ -32,15 +34,16 @@
 
 //xxxx download manager hack
 if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM") {
+
     let style = `
       @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
+      :root
+      {
+        --downloads-item-height: 3.5em;
+      }
       #contentAreaDownloadsView
       {
         padding: 0;
-      }
-      #downloadsRichListBox > richlistitem.download
-      {
-        height: auto;
       }
       .downloadTypeIcon,
       .downloadBlockedBadge
@@ -59,10 +62,10 @@ if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
     );
-    document.insertBefore(sspi, document.documentElement);
-    sspi.getAttribute = function(name) {
-      return document.documentElement.getAttribute(name);
-    };
+      document.insertBefore(sspi, document.documentElement);
+      sspi.getAttribute = function(name) {
+        return document.documentElement.getAttribute(name);
+      };
     throw 'not an error, just load contentAreaDownloadsView.xul';
 }
 
@@ -120,7 +123,7 @@ var SidebarModoki = {
         // Set element's attributes and/or callback functions (eg. onclick)
         for (var key in elemAttr) {
           var val = elemAttr[key];
-          if (nodes && key == "key") {
+          if (nodes && key == "keyvalue") {  //for later convenient JavaScript access) by giving them a 'keyvalue' attribute; |nodes|.|keyvalue|
               nodes[val] = elem;
               continue;
           }
