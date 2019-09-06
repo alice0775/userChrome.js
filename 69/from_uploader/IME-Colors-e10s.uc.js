@@ -4,7 +4,8 @@
 // @include        *
 // @exclude        about:*
 // @license        MIT License
-// @version        0.0.12
+// @version        0.0.13
+// @note           0.0.13 reset color in sidebar when blur
 // @note           0.0.12 findbar
 // @note           0.0.11 63.0a1対応 (https://u6.getuploader.com/script/download/1736)
 // @note           0.0.10 e10s対応等
@@ -64,7 +65,8 @@ class IMEColorsClass {
 		this.setColor();
 		if (isFrameScript || doc !== document)
 			this.win.addEventListener('pagehide', this, false);
-		this.elem.addEventListener('blur', this, false);
+			
+		this.inputField.addEventListener('blur', this, false);
 		this.elem.addEventListener('keyup', this, false);
 		this.elem.addEventListener('compositionend', this, false);
 	}
@@ -116,7 +118,7 @@ class IMEColorsClass {
 		case 'pagehide':
 			this.timer = null;
 			this.win.removeEventListener('pagehide', this, false);
-			this.elem.removeEventListener('blur', this, false);
+	  	this.inputField.removeEventListener('blur', this, false);
 			this.elem.removeEventListener('keyup', this, false);
 			this.elem.removeEventListener('compositionend', this, false);
 			this.resetColor();
@@ -141,6 +143,8 @@ if (isFrameScript) {
 		removeEventListener('focus', IMEColors, true);
 	}, false);
 } else {
+  if (window.top != window)
+    return;
 	document.documentElement.addEventListener('focus', IMEColors, true);
 	window.addEventListener('unload', () => {
 		document.documentElement.removeEventListener('focus', IMEColors, true);
