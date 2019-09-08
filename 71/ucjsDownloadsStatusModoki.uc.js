@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 69+
 // @author         Alice0775
+// @version        2019/09/08 19:30 fix scrollbox
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2018/10/27 12:00 fix for 64+
 // @version        2018/06/12 21:00 fix for private window mode
@@ -55,7 +56,7 @@ var ucjsDownloadsStatusModoki = {
       #ucjsDownloadsStatusModoki { 
         width: 100%; 
         max-height: 100px; 
-        height: 35px; 
+        height: 39px; 
       } 
      `.replace(/\s+/g, " ");
     var sspi = document.createProcessingInstruction(
@@ -193,20 +194,25 @@ var ucjsDownloadsStatusModoki = {
         background-color: -moz-dialog; 
         padding: 0; 
       } 
- 
+
+      #contentAreaDownloadsView > stack:first-child {
+      }
+
       #downloadsRichListBox { 
-        max-height:35px; 
         background-color: -moz-dialog; 
+        display:inline-block !important; 
+        overflow-y: auto;
+        scrollbar-width: thin;
+        border: none;
       } 
  
-      #downloadsRichListBox .scrollbox-innerbox { 
-        display:inline !important; 
-      } 
- 
+      :root
+      {
+        --downloads-item-height: 38px;
+      }
       richlistitem { 
         min-width:200px; 
         max-width:200px; 
-        max-height:33px; 
         font-size: 13px; 
         border-width: 0 1px 0 0;
         border-style: solid;
