@@ -5,6 +5,7 @@
 // @include        *
 // @compatibility  Firefox 67+
 // @author         Alice0775
+// @version        2019/09/09 22:20 fix event propagation and scrollbarbutton
 // @version        2019/09/09 workaround Bug 1575485 - Unable scroll Sidebar/Library window with turning the mouse wheel on scrollbar
 // ==/UserScript==
 var patchForBug1575485 = {
@@ -44,9 +45,13 @@ var patchForBug1575485 = {
       var scrollView = event.target;
       if (event.target.localName != "tree")
         return;
-      if (event.originalTarget.orient == "vertical"){
+      event.stopPropagation();
+      var target = event.originalTarget;
+      if (target.localName == "scrollbarbutton")
+        target = target.parentNode;
+      if (target.orient == "vertical"){
         this._scrollBy(scrollView, 0, event.deltaY);
-      } else if (event.originalTarget.orient == "horizontal"){
+      } else if (target.orient == "horizontal"){
         this._scrollBy(scrollView, event.deltaY, 0);
       }
     }
