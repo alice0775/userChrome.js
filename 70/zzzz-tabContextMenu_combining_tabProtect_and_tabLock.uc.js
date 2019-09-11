@@ -2,6 +2,7 @@
 // @name           ZZZ_tabContextMenu_combining_tabProtect_and_tabLock.uc.js
 // @description    Tab context menu combining tabProtect and tabLock
 // @include        main
+// @version        2019/09/11 16:00 workaround HIDEINDIVIDUALMENU: true
 // @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2018/09/25 22:30 reduce cpu
@@ -24,12 +25,6 @@ const tabLockProtect = {
       menuitem.setAttribute("oncommand","tabLockProtect.toggle(event);");
       this.menuitem = tabContext.insertBefore(menuitem, document.getElementById("tabLock"));
       tabContext.addEventListener('popupshowing', this, false);
-
-      // hide individual menu
-      if (this.HIDEINDIVIDUALMENU) {
-        document.getElementById("tabLock").style.setProperty("display", "none", "important");
-        document.getElementById("tabProtect").style.setProperty("display", "none", "important");
-      }
     }
   },
 
@@ -42,6 +37,11 @@ const tabLockProtect = {
   },
 
   popupshowing: function(event) {
+    // hide individual menu
+    if (this.HIDEINDIVIDUALMENU) {
+      document.getElementById("tabLock").style.setProperty("display", "none", "important");
+      document.getElementById("tabProtect").style.setProperty("display", "none", "important");
+    }
     var menuitem = this.menuitem;
     var aTab = TabContextMenu.contextTab;
     if( !aTab || aTab.localName !='tab'){
