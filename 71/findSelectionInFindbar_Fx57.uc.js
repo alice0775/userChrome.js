@@ -4,8 +4,9 @@
 // @description    FindBarの選択テキスト上でマウスホイールによる選択テキスでの検索を可能にする。選択なき場合は日本語のトークンを自動判定する
 // @charset        utf-8
 // @include        main
-// @compatibility  Firefox 69
+// @compatibility  Firefox 71
 // @author         Alice0775
+// @version        2019/10/01 01:00 Bug 1553384 - Make 'Find in page' work in fission world
 // @version        2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version        2019/06/24 23:00 wait for gBrowser initialized
 // @version        2018/09/15 18:00 cleanup
@@ -74,11 +75,11 @@ var findSelectionInFindbar = {
 
     var result = Components.interfaces.nsITypeAheadFind.FIND_NOTFOUND;
     if (fastFind.searchString != aWord) {
-      result = fastFind.fastFind(aWord,);
+      result = fastFind.fastFind(aWord, false);
       //result = fastFind.find(aWord, false);
     }
     else {
-      result = fastFind.findAgain(aFindBackwards, false);
+      result = fastFind.findAgain(aWord, aFindBackwards, false, false);
     }
 
     // a

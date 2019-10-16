@@ -4,8 +4,9 @@
 // @description    serachWPもどき  まだまだtodo未実装だらけ
 // @charset        utf-8
 // @include        main
-// @compatibility  Firefox 57
+// @compatibility  Firefox 71
 // @author         Alice0775
+// @version        2019/10/01 01:00 Bug 1553384 - Make 'Find in page' work in fission world
 // @version        2019/05/24 11:00 Fix overflowed/underflowed
 // @version        2019/04/27 23:00 fix click
 // @version        2018/09/07 23:00 fix wrong commit
@@ -217,10 +218,10 @@ var serachWP_modoki = {
     }
     
     if (finder.searchString != aWord) {
-      result = finder.fastFind(aWord, false);
+      result = finder.fastFind(aWord, false, false);
     }
     else {
-      result = finder.findAgain(aFindBackwards, false, false);
+      result = finder.findAgain(aWord, aFindBackwards, false, false);
     }
 
     //xxx
