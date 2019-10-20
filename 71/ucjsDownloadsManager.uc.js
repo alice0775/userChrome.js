@@ -4,8 +4,9 @@
 // @description    Donloads Manager
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul
-// @compatibility  Firefox 69
+// @compatibility  Firefox 71+
 // @author         Alice0775
+// @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1534407 - Enable browser.xhtml by default
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2018/07/01 16:30 revert Disable btn
@@ -222,6 +223,14 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
       return elm;
     },
 
+    createElementNS: function(NS, localName, arryAttribute) {
+      let elm = document.createElementNS(NS, localName);
+      for(let i = 0; i < arryAttribute.length; i++) {
+        elm.setAttribute(arryAttribute[i].attr, arryAttribute[i].value);
+      }
+      return elm;
+    },
+
     init: function() {
       window.addEventListener("unload", this, false);
 
@@ -234,7 +243,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
           break;
         }
       }
-      
+      /*
       var style = ' \
         @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
         #contentAreaDownloadsView { \
@@ -252,24 +261,31 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
       sspi.getAttribute = function(name) {
         return document.documentElement.getAttribute(name);
       };
-
+      */
       let ref = document.documentElement;
       ref = ref.appendChild(this.createElement("hbox", []));
       ref.appendChild(this.createElement("button",
         [{attr: "id", value: "ucjs_clearListButton"},
          {attr: "label", value: "Clear List"},
-         {attr: "accesskey", value: "C"},
-         {attr: "oncommand", value: "ucjs_downloadManagerMain.clearDownloads();"}
+         {attr: "accesskey", value: "C"}
         ]));
       ref.appendChild(this.createElement("spacer",
         [{attr: "flex", value: "1"}]));
-      ref.appendChild(this.createElement("textbox",
-        [{attr: "clickSelectsAll", value: "true"},
+      ref.appendChild(this.createElementNS("http://www.w3.org/1999/xhtml", "input",
+        [{attr: "id", value: "ucjs_downloadManagerMain_input"},
+         {attr: "clickSelectsAll", value: "true"},
          {attr: "type", value: "search"},
          {attr: "placeholder", value: "Search..."},
-         {attr: "aria-autocomplete", value: "list"},
-         {attr: "oncommand", value: "ucjs_downloadManagerMain.doSearch(this.value);"}
+         {attr: "aria-autocomplete", value: "list"}
         ]));
+
+        document.getElementById("ucjs_clearListButton").addEventListener("command", function(event) {
+            ucjs_downloadManagerMain.clearDownloads();
+          });
+        document.getElementById("ucjs_downloadManagerMain_input")
+                .addEventListener("input", function(event) {
+            ucjs_downloadManagerMain.doSearch(event.target.value);
+          });
 
       this.originalTitle = document.title +
                            (PrivateBrowsingUtils.isWindowPrivate(window) ? " - Private Window"

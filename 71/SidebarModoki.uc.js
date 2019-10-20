@@ -4,9 +4,11 @@
 // @description    TST
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM
-// @compatibility  Firefox 69
+// @compatibility  Firefox 71+
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
 // @version        2019/09/05 13:00 fix listitem
 // @version        2019/08/07 15:00 fix adding key(renamde from key to keyvalue in jsonToDOM)
 // @version        2019/07/13 13:00 fix wrong commit
@@ -32,41 +34,6 @@
 // @version        2017/11/15 09:00
 // ==/UserScript==
 
-//xxxx download manager hack
-if (location.href=="chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM") {
-    let style = `
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);
-      :root
-      {
-        --downloads-item-height: 3.5em;
-      }
-      #contentAreaDownloadsView
-      {
-        padding: 0;
-      }
-      .downloadTypeIcon,
-      .downloadBlockedBadge
-      {
-        margin-left:0;
-        margin-right:1px;
-      }
-      .downloadButton {
-        padding-left:0;
-        padding-right:0;
-      }
-     `;
-
-    style = style.replace(/\s+/g, " ").replace(/\{SM_WIDTH\}/g, this.SM_WIDTH);
-    let sspi = document.createProcessingInstruction(
-      'xml-stylesheet',
-      'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
-    );
-    document.insertBefore(sspi, document.documentElement);
-    sspi.getAttribute = function(name) {
-      return document.documentElement.getAttribute(name);
-    };
-    throw 'not an error, just load contentAreaDownloadsView.xul';
-}
 
 var SidebarModoki = {
   // -- config --

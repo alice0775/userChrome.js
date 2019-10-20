@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Downloads Status Modoki
 // @include        main
-// @compatibility  Firefox 69+
+// @compatibility  Firefox 71+
 // @author         Alice0775
+// @note           ucjsDownloadsStatusModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
 // @version        2019/09/08 19:30 fix scrollbox
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2018/10/27 12:00 fix for 64+
@@ -80,8 +82,7 @@ var ucjsDownloadsStatusModoki = {
     browser.setAttribute("remote", false);
     browser.setAttribute("id", "ucjsDownloadsStatusModoki");
     browser.addEventListener("load", function(event){ucjsDownloadsStatusModoki.onload(event)}, true);
-    browser.setAttribute("src", "chrome://browser/content/downloads/contentAreaDownloadsView.xul");
-
+    browser.setAttribute("src", "chrome://browser/content/downloads/contentAreaDownloadsView.xul?StatusModoki");
     var menuitem = document.createXULElement("menuitem");
     menuitem.setAttribute("id", "toggle_downloadsStatusModokiBar");
     menuitem.setAttribute("type", "checkbox");
@@ -186,145 +187,40 @@ var ucjsDownloadsStatusModoki = {
   onload: function(event) {
     var doc = event.originalTarget;
     var win = doc.defaultView;
- 
-    var style = ` 
-      @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); 
-      #contentAreaDownloadsView { 
-        -moz-box-orient: horizontal; 
-        background-color: -moz-dialog; 
-        padding: 0; 
-      } 
-
-      #contentAreaDownloadsView > stack:first-child {
-      }
-
-      #downloadsRichListBox { 
-        background-color: -moz-dialog; 
-        display:inline-block !important; 
-        overflow-y: auto;
-        scrollbar-width: thin;
-        border: none;
-      } 
- 
-      :root
-      {
-        --downloads-item-height: 38px;
-      }
-      richlistitem { 
-        min-width:200px; 
-        max-width:200px; 
-        font-size: 13px; 
-        border-width: 0 1px 0 0;
-        border-style: solid;
-        border-color: black;
-       } 
- 
-      richlistitem vbox { 
-      } 
- 
-      .downloadTypeIcon { 
-        height:16px; 
-        width: 16px; 
-        -moz-margin-end: 0px; 
-        -moz-margin-start: 1px; 
-         padding-right: 0; 
-         padding-left: 1px; 
-      } 
- 
-      .downloadTarget { 
-        margin-top:1px; 
-        padding-bottom:16px; 
-        max-width: calc(100% - 50px) !important; 
-        min-width: calc(100% - 50px) !important; 
-      } 
-
-      .download-state[state="0"] * .downloadTarget,
-      .download-state[state="4"] * .downloadTarget { 
-        padding-bottom:0px; 
-      } 
-
-      .downloadTarget:-moz-system-metric(windows-default-theme) { 
-        margin-top:2px; 
-        /*padding-bottom:10px;  windows7 ?*/
-      } 
- 
-      .downloadProgress { 
-        margin-top:-16px; 
-        margin-bottom: -1px;
-        height:12px;
-        margin-inline-end: 0 !important;
-      } 
- 
-      .progress-bar { 
-        -moz-appearance:none !important; 
-        background-color: lime !important; 
-      } 
- 
-      .progress-remainder { 
-      } 
- 
-      .downloadDetails { 
-        margin-top:-12px; 
-      } 
-
-       .download-state:not(:-moz-any([state="-1"], [state="5"], [state="0"], [state="4"], [state="7"]))      .downloadDetails {
-         margin-top:-17px; 
-      }
-
-      richlistitem[selected] .downloadDetails { 
-      opacity: 1; 
-      } 
- 
-      .downloadButton { 
-        padding: 0; 
-        margin: 0; 
-      } 
- 
-     button > .button-box { 
-        -moz-padding-start: 0px; 
-        -moz-padding-end: 1px; 
-        padding-right: 0 !important; 
-        padding-left: 0 !important; 
-      } 
- 
-     #downloadFilter { 
-       width: 150px; 
-     } 
- 
-     `.replace(/\s+/g, " ");
-    var sspi = doc.createProcessingInstruction(
-      'xml-stylesheet',
-      'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
-    );
-    doc.insertBefore(sspi, doc.documentElement);
-    sspi.getAttribute = function(name) {
-      return doc.documentElement.getAttribute(name);
-    };
+    doc.documentElement.setAttribute("ucjsDownloadsStatusModoki", "true");
 
     var button = doc.createXULElement("button");
     button.setAttribute("label", "Clear");
     button.setAttribute("id", "ucjs_clearListButton");
     button.setAttribute("accesskey", "C");
-    button.setAttribute("oncommand", "ucjsDownloadsStatusModoki_clearDownloads();");
     var ref = doc.getElementById("downloadCommands");
     var vbox = doc.createXULElement("vbox");
     var box = vbox.appendChild(doc.createXULElement("hbox"));
     box.appendChild(button);
     box.appendChild(doc.createXULElement("spacer")).setAttribute("flex", 1);
-    var textbox = doc.createXULElement("textbox");
+    var textbox = doc.createElementNS("http://www.w3.org/1999/xhtml", "input");
     textbox.setAttribute("id", "downloadFilter");
     textbox.setAttribute("clickSelectsAll", true);
     textbox.setAttribute("type", "search");
     textbox.setAttribute("placeholder", "Search...");
-    textbox.setAttribute("oncommand", "ucjsDownloadsStatusModoki_doSearch(this.value);");
     box.appendChild(textbox);
     var closebtn = doc.createXULElement("toolbarbutton");
     closebtn.setAttribute("id", "ucjsDownloadsStatusModoki-closebutton");
     closebtn.setAttribute("class", "close-icon");
     closebtn.setAttribute("tooltiptext", "Close this bar");
-    closebtn.setAttribute("oncommand", "ucjsDownloadsStatusModoki_doClose();");
     box.appendChild(closebtn);
     ref.parentNode.insertBefore(vbox, ref);
+    doc.getElementById("ucjs_clearListButton").addEventListener("command", function(event) {
+        win.ucjsDownloadsStatusModoki_clearDownloads();
+      });
+    doc.getElementById("downloadFilter")
+            .addEventListener("input", function(event) {
+        win.ucjsDownloadsStatusModoki_doSearch(event.target.value);
+      });
+    doc.getElementById("ucjsDownloadsStatusModoki-closebutton")
+            .addEventListener("command", function(event) {
+        win.ucjsDownloadsStatusModoki_doClose();
+      });
 
 /*
     // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
