@@ -3,11 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TST
 // @include        main
-// @include        chrome://browser/content/downloads/contentAreaDownloadsView.xul?SM
 // @compatibility  Firefox 71+
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2019/10/20 22:00 fix surplus loading
 // @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
 // @version        2019/09/05 13:00 fix listitem
 // @version        2019/08/07 15:00 fix adding key(renamde from key to keyvalue in jsonToDOM)
