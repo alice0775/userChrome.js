@@ -5,7 +5,9 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 69
+// @compatibility 70
+// @version       2019/10/22 08:00 fix 70.0 fix web search Bug 1587803 - Check BrowserContentHandler.jsm doSearch uses the right engine
+// @version       2019/10/15 15:00 fix mousescroll(see software 1567300946/286)
 // @version       2019/09/05 15:00 fix 69.0 load parent
 // @version       2019/05/23 03:10 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version       2019/05/23 03:10 fix Bug 1483077 - Replaced reference to getBrowser with gBrowser for 68+
@@ -181,6 +183,7 @@ var ucjsMouseGestures = {
         ['', '選択テキストで検索',
           function(){
             BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
+                          !PrivateBrowsingUtils.isWindowPrivate(window),
                           Services.scriptSecurityManager.createNullPrincipal({}));
           } ],
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
@@ -479,7 +482,7 @@ var ucjsMouseGestures = {
         }
         break;
       case "mousemove": 
-        if (this._isMouseDownR) {
+        if (this._isMouseDownR && !(this._suppressContext)) { // bousyo
           this._progressGesture(event);
         }
         break;
@@ -1602,6 +1605,7 @@ let ucjsMouseGestures_helper = {
 			this.openURLs(URLs);
 		else
       BrowserSearch.loadSearchFromContext(sel,
+                !PrivateBrowsingUtils.isWindowPrivate(window),
                 Services.scriptSecurityManager.createNullPrincipal({}));
 	},
 
