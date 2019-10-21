@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 70
+// @compatibility 71
+// @version       2019/10/22 09:00 fix 71.0 fix web search
 // @version       2019/10/22 08:00 fix 70.0 fix web search Bug 1587803 - Check BrowserContentHandler.jsm doSearch uses the right engine
 // @version       2019/10/15 15:00 fix mousescroll(see software 1567300946/286)
 // @version       2019/09/05 15:00 fix 69.0 load parent
@@ -183,7 +184,7 @@ var ucjsMouseGestures = {
         ['', '選択テキストで検索',
           function(){
             BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
-                          !PrivateBrowsingUtils.isWindowPrivate(window),
+                          false,
                           Services.scriptSecurityManager.createNullPrincipal({}));
           } ],
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
@@ -1605,7 +1606,7 @@ let ucjsMouseGestures_helper = {
 			this.openURLs(URLs);
 		else
       BrowserSearch.loadSearchFromContext(sel,
-                !PrivateBrowsingUtils.isWindowPrivate(window),
+                false,
                 Services.scriptSecurityManager.createNullPrincipal({}));
 	},
 

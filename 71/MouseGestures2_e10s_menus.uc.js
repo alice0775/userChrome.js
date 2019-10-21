@@ -5,7 +5,9 @@
 // @include       main
 // @charset       UTF-8
 // @author        Alice0775
-// @compatibility 70
+// @compatibility 71
+// @version       2019/10/22 09:00 fix 71.0 fix web search
+
 // @version       2019/10/22 08:00 fix 70.0 fix web search Bug 1587803 - Check BrowserContentHandler.jsm doSearch uses the right engine
 // @version       2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version       2019/01/21 01:00 reloadAllTabs to reloadTabs
@@ -127,7 +129,7 @@ ucjsMouseGestures_menues = {
         ['', '選択テキストで検索',
           function(){
             BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
-                          !PrivateBrowsingUtils.isWindowPrivate(window),
+                          false,
                           Services.scriptSecurityManager.createNullPrincipal({}));
           } ],
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
