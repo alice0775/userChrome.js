@@ -1,0 +1,16 @@
+72で動くかもしれないもの
+
+
+アプリケーションインストールフォルダに以下のファイルを保存する
+install_folder/config.js
+
+アプリケーションインストールフォルダ\defaults\pref に以下のファイルを保存する
+install_folder\defaults\pref\config-prefs.js
+
+
+プロファイルフォルダに chrome フォルダを作り以下のファイルを保存する
+userChrome.css
+userChrome.js
+
+
+必要なスクリプトファイルを保存する
