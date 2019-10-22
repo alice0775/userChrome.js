@@ -6,6 +6,7 @@
 // @compatibility  Firefox 68ESR
 // @author         Alice0775
 // @note           not dupport pinned tab
+// @version        2019/10/23 00:00 68ESR fix multiselect mark
 // @version        2019/10/22 00:00 68ESR
 // ==/UserScript==
 "user strict";
@@ -109,6 +110,10 @@ function verticalTabLiteforFx() {
       display: none !important;
   }
 */
+
+  .tabbrowser-tab[multiselected="true"] .tab-content::before {
+    display: none !important;
+  }
 
   .tabbrowser-tab::after {
     display: none !important;
