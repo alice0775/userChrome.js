@@ -6,6 +6,7 @@
 // @compatibility  Firefox 68ESR
 // @author         Alice0775
 // @note           not dupport pinned tab
+// @version        2019/10/23 18:30 68ESR force disabled animatio
 // @version        2019/10/23 00:00 68ESR fix multiselect mark
 // @version        2019/10/22 00:00 68ESR
 // ==/UserScript==
@@ -16,6 +17,9 @@ function verticalTabLiteforFx() {
   let verticalTab_height = 24;  /* タブの高さ px */
   let verticalTabPinned_width = 27; /* ピン留めタブの横幅 px */
   let verticalScrollbar_width = 11; /* スクロールバー幅 px */
+
+  // force disabled animation
+  Services.prefs.setBoolPref("toolkit.cosmeticAnimations.enabled", false);
 
   let style =`
   #main-window[windowtype="navigator:browser"]:not([inFullscreen]):not([printpreview]):not([chromehidden*="toolbar"]) {
