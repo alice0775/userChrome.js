@@ -7,6 +7,7 @@
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2019/11/14 03:00 workarround Ctrl+tab/Ctrl+pageUP/Down
 // @version        2019/10/20 22:00 fix surplus loading
 // @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
 // @version        2019/09/05 13:00 fix listitem
@@ -221,6 +222,7 @@ var SidebarModoki = {
       });
     }catch(e){}
 
+    // to do, replace with MozXULElement.parseXULToFragment();
     let template = ["command", {id: "cmd_SidebarModoki", oncommand: "SidebarModoki.toggle()"}];
     document.getElementById("mainCommandSet").appendChild(this.jsonToDOM(template, document, {}));
 
@@ -234,7 +236,7 @@ var SidebarModoki = {
           ["spacer", {flex: "1000"}],
           ["toolbarbutton", {id: "SM_closeButton", class: "close-icon tabbable", tooltiptext: "Close SidebarModoki", oncommand: "SidebarModoki.close();"}]
         ],
-        ["tabbox", {flex: "1"},
+        ["tabbox", {id:"SM_tabbox", flex: "1", handleCtrlPageUpDown: false, handleCtrlTab: false},
           ["tabs", {id: "SM_tabs"},
             ["tab", {id: "SM_tab0", label: this.TAB0_LABEL}],
             ["tab", {id: "SM_tab1", label: this.TAB1_LABEL}],
@@ -263,6 +265,50 @@ var SidebarModoki = {
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
     //xxx 69 hack
+    let tabbox = document.getElementById("SM_tabbox");
+    tabbox.handleEvent = function handleEvent(event) {
+      if (!event.isTrusted) {
+        // Don't let untrusted events mess with tabs.
+        return;
+      }
+
+      // Skip this only if something has explicitly cancelled it.
+      if (event.defaultCancelled) {
+        return;
+      }
+
+      // Don't check if the event was already consumed because tab
+      // navigation should always work for better user experience.
+      let imports = {};
+      ChromeUtils.defineModuleGetter(
+        imports,
+        "ShortcutUtils",
+        "resource://gre/modules/ShortcutUtils.jsm"
+      );
+      const { ShortcutUtils } = imports;
+
+      switch (ShortcutUtils.getSystemActionForEvent(event)) {
+        case ShortcutUtils.CYCLE_TABS:
+          if (this.tabs && this.handleCtrlTab) {
+            this.tabs.advanceSelectedTab(event.shiftKey ? -1 : 1, true);
+            event.preventDefault();
+          }
+          break;
+        case ShortcutUtils.PREVIOUS_TAB:
+          if (this.tabs && this.handleCtrlPageUpDown) {
+            this.tabs.advanceSelectedTab(-1, true);
+            event.preventDefault();
+          }
+          break;
+        case ShortcutUtils.NEXT_TAB:
+          if (this.tabs && this.handleCtrlPageUpDown) {
+            this.tabs.advanceSelectedTab(1, true);
+            event.preventDefault();
+          }
+          break;
+      }
+    };
+
     let index = document.getElementById("SM_tabpanels").selectedIndex;
     let tb0 = document.getElementById("SM_tab0");
     let tb1 = document.getElementById("SM_tab1");

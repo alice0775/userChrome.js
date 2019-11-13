@@ -7,6 +7,7 @@
 // @compatibility  Firefox 61-
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2019/11/14 03:00 workarround Ctrl+tab/Ctrl+pageUP/Down
 // @version        2018/05/10 00:00 for 61 wip Bug 1448810 - Rename the Places sidebar files
 // @version        2018/05/08 21:00 use jsonToDOM(https://developer.mozilla.org/en-US/docs/Archive/Add-ons/Overlay_Extensions/XUL_School/DOM_Building_and_HTML_Insertion)
 // @version        2018/05/08 19:00 get rid loadoverlay
@@ -251,7 +252,7 @@ var SidebarModoki = {
           ["spacer", {flex: "1000"}],
           ["toolbarbutton", {id: "SM_closeButton", class: "close-icon tabbable", tooltiptext: "Close SidebarModoki", oncommand: "SidebarModoki.close();"}]
         ],
-        ["tabbox", {flex: "1"},
+        ["tabbox", {id:"SM_tabbox", flex: "1", handleCtrlPageUpDown: false, handleCtrlTab: false},
           ["tabs", {id: "SM_tabs"},
             ["tab", {id: "SM_tab0", label: this.TAB0_LABEL}],
             ["tab", {id: "SM_tab1", label: this.TAB1_LABEL}],
@@ -278,6 +279,46 @@ var SidebarModoki = {
         ["grippy", {}]
       ];
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
+
+    //xxx 68 hack
+    let tabbox = document.getElementById("SM_tabbox");
+    tabbox.handleEvent = function handleEvent(event) {
+      if (!event.isTrusted) {
+        // Don't let untrusted events mess with tabs.
+        return;
+      }
+
+      // Skip this only if something has explicitly cancelled it.
+      if (event.defaultCancelled) {
+        return;
+      }
+
+      // Don't check if the event was already consumed because tab
+      // navigation should always work for better user experience.
+
+      const { ShortcutUtils } = imports;
+
+      switch (ShortcutUtils.getSystemActionForEvent(event)) {
+        case ShortcutUtils.CYCLE_TABS:
+          if (this.tabs && this.handleCtrlTab) {
+            this.tabs.advanceSelectedTab(event.shiftKey ? -1 : 1, true);
+            event.preventDefault();
+          }
+          break;
+        case ShortcutUtils.PREVIOUS_TAB:
+          if (this.tabs && this.handleCtrlPageUpDown) {
+            this.tabs.advanceSelectedTab(-1, true);
+            event.preventDefault();
+          }
+          break;
+        case ShortcutUtils.NEXT_TAB:
+          if (this.tabs && this.handleCtrlPageUpDown) {
+            this.tabs.advanceSelectedTab(1, true);
+            event.preventDefault();
+          }
+          break;
+      }
+    }
 
     setTimeout(function(){this.observe();}.bind(this), 0);
 

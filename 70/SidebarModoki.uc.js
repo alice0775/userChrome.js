@@ -7,6 +7,7 @@
 // @compatibility  Firefox 69
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
+// @version        2019/11/14 03:00 workarround Ctrl+tab/Ctrl+pageUP/Down
 // @version        2019/09/05 13:00 fix listitem
 // @version        2019/08/07 15:00 fix adding key(renamde from key to keyvalue in jsonToDOM)
 // @version        2019/07/13 13:00 fix wrong commit
@@ -267,7 +268,7 @@ var SidebarModoki = {
           ["spacer", {flex: "1000"}],
           ["toolbarbutton", {id: "SM_closeButton", class: "close-icon tabbable", tooltiptext: "Close SidebarModoki", oncommand: "SidebarModoki.close();"}]
         ],
-        ["tabbox", {flex: "1"},
+        ["tabbox", {id:"SM_tabbox", flex: "1", handleCtrlPageUpDown: false, handleCtrlTab: false},
           ["tabs", {id: "SM_tabs"},
             ["tab", {id: "SM_tab0", label: this.TAB0_LABEL}],
             ["tab", {id: "SM_tab1", label: this.TAB1_LABEL}],
@@ -296,6 +297,50 @@ var SidebarModoki = {
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
     //xxx 69 hack
+    let tabbox = document.getElementById("SM_tabbox");
+    tabbox.handleEvent = function handleEvent(event) {
+      if (!event.isTrusted) {
+        // Don't let untrusted events mess with tabs.
+        return;
+      }
+
+      // Skip this only if something has explicitly cancelled it.
+      if (event.defaultCancelled) {
+        return;
+      }
+
+      // Don't check if the event was already consumed because tab
+      // navigation should always work for better user experience.
+      let imports = {};
+      ChromeUtils.defineModuleGetter(
+        imports,
+        "ShortcutUtils",
+        "resource://gre/modules/ShortcutUtils.jsm"
+      );
+      const { ShortcutUtils } = imports;
+
+      switch (ShortcutUtils.getSystemActionForEvent(event)) {
+        case ShortcutUtils.CYCLE_TABS:
+          if (this.tabs && this.handleCtrlTab) {
+            this.tabs.advanceSelectedTab(event.shiftKey ? -1 : 1, true);
+            event.preventDefault();
+          }
+          break;
+        case ShortcutUtils.PREVIOUS_TAB:
+          if (this.tabs && this.handleCtrlPageUpDown) {
+            this.tabs.advanceSelectedTab(-1, true);
+            event.preventDefault();
+          }
+          break;
+        case ShortcutUtils.NEXT_TAB:
+          if (this.tabs && this.handleCtrlPageUpDown) {
+            this.tabs.advanceSelectedTab(1, true);
+            event.preventDefault();
+          }
+          break;
+      }
+    };
+
     let index = document.getElementById("SM_tabpanels").selectedIndex;
     let tb0 = document.getElementById("SM_tab0");
     let tb1 = document.getElementById("SM_tab1");
