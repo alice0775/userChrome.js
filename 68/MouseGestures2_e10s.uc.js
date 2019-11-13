@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 67
+// @version       2019/10/31 19:00 fix >>374 '選択テキストを検索バーに追加'
 // @version       2019/05/23 03:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
 // @version       2019/03/21 01:00 fix Bug 1528695 for 67+
 // @version       2019/01/21 01:00 reloadAllTabs to reloadTabs
@@ -190,7 +191,7 @@ var ucjsMouseGestures = {
           function(){ 
             if (BrowserSearch.searchBar.value){
               BrowserSearch.searchBar.value = BrowserSearch.searchBar.value + " " +
-                     ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+                     (ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT);
             }else{
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT ||
                                               ucjsMouseGestures._linkTXT;

@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 71
+// @version       2019/10/31 19:00 fix >>374 '選択テキストを検索バーに追加'
 // @version       2019/10/22 09:00 fix 71.0 fix web search
 // @version       2019/10/22 08:00 fix 70.0 fix web search Bug 1587803 - Check BrowserContentHandler.jsm doSearch uses the right engine
 // @version       2019/10/15 15:00 fix mousescroll(see software 1567300946/286)
@@ -197,7 +198,7 @@ var ucjsMouseGestures = {
           function(){ 
             if (BrowserSearch.searchBar.value){
               BrowserSearch.searchBar.value = BrowserSearch.searchBar.value + " " +
-                     ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+                     (ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT);
             }else{
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT ||
                                               ucjsMouseGestures._linkTXT;

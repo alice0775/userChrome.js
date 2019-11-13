@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 69
+// @version       2019/10/31 19:00 fix >>374 '選択テキストを検索バーに追加'
 // @version       2019/09/05 15:00 fix 69.0 load parent
 // @version       2019/05/23 03:10 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version       2019/05/23 03:10 fix Bug 1483077 - Replaced reference to getBrowser with gBrowser for 68+
@@ -193,7 +194,7 @@ var ucjsMouseGestures = {
           function(){ 
             if (BrowserSearch.searchBar.value){
               BrowserSearch.searchBar.value = BrowserSearch.searchBar.value + " " +
-                     ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+                     (ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT);
             }else{
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT ||
                                               ucjsMouseGestures._linkTXT;
