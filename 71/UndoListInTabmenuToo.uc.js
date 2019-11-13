@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 69+
 // @author         Alice0775
+// @version        2019/11/14 remove eval
 // @version        2019/06/30 10:00 Bug 1555060 Convert <tabs> to a custom element
 // @version        2019/06/24 23:00 wait for gBrowser initialized
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
@@ -122,7 +123,7 @@ var UndoListInTabmenu = {
       undoPopup.removeChild(undoPopup.firstChild);
 
     // populate menu
-    var undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
+    var undoItems = JSON.parse(UndoListInTabmenu._ss.getClosedTabData(window));
     for (var i = 0; i < undoItems.length; i++) {
         var m = undoPopup.appendChild(document.createXULElement("menuitem"));
       m.setAttribute("label", undoItems[i].title);
@@ -183,7 +184,7 @@ var UndoListInTabmenu = {
     undoPopup.appendChild(document.createXULElement("menuseparator"));
 
     // populate menu
-    var undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
+    var undoItems = JSON.parse(UndoListInTabmenu._ss.getClosedTabData(window));
     for (var i = 0; i < undoItems.length; i++) {
       var entries = undoItems[i].state.entries;
       var tooltiptext = "";
@@ -244,7 +245,7 @@ var UndoListInTabmenu = {
     undoPopup.appendChild(document.createXULElement("menuseparator"));
 
     // populate menu
-    var undoItems = eval("(" + UndoListInTabmenu._ss.getClosedTabData(window) + ")");
+    var undoItems = JSON.parse(UndoListInTabmenu._ss.getClosedTabData(window));
     for (var i = 0; i < undoItems.length; i++) {
       var entries = undoItems[i].state.entries;
       var tooltiptext = "";
