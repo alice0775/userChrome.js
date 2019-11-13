@@ -4,6 +4,7 @@
 // @description   do not select tab when dragging it, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include       main
 // @compatibility Firefox 72
+// @version        2019/11/14 workarround for busy icon
 // @version        2019/11/14 wait for init gBrowser
 // @version        2019/02/22 00:00 fix 67 Bug 675539 - Make tab discard functionality work on tab object directly
 // @version       2018/12/26 11:50 ignore close button 
@@ -69,8 +70,10 @@ let do_not_select_tab_when_mousedown = {
           clearTimeout(this._mousedownTimer);
         this._mousedownTimer = setTimeout(() => {
           gBrowser.selectedTab = this._selectedTab;
-          if (this._pending)
+          if (this._pending) {
             gBrowser.discardBrowser(this._mousedownTab);
+            this._mousedownTab.removeAttribute("busy");
+          }
         }, 0);
 
         // xxx more aggressive
