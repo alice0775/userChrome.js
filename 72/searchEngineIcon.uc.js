@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 72
 // @author         Alice0775
+// @version        2019/11/22 00:00 workaround delayed initialize using gBrowserInit.delayedStartupFinished instead async Services.search.init()
 // @version        2019/11/14 00:00 Fix 72+ Bug 1591145 Remove Document.GetAnonymousElementByAttribute
 // @version        2019/06/24 11:00 Fix 68+ Bug 1518545 - Merge engine-current/ default notifications
 // @version        2019/05/24 11:00 Fix overflowed/underflowed
@@ -21,11 +22,7 @@
 var searchengineicon = {
 
   init: function() {
-    Services.search.init().then(rv => { 
-      if (Components.isSuccessCode(rv)) {
-        this.toggleImage();
-      }
-    });
+    this.toggleImage("init");
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     Services.obs.addObserver(this, "browser-search-engine-modified");
@@ -41,12 +38,15 @@ var searchengineicon = {
     window.removeEventListener('unload', this, false);
   },
   
-  toggleImage: async function() {
-      Services.console.logStringMessage("toggleImage");
+  toggleImage: async function(topic) {
+      Services.console.logStringMessage("toggleImage "+topic);
       var searchbar = window.document.getElementById("searchbar");
       if (!searchbar)
         return;
       let  searchbutton = searchbar.querySelector(".searchbar-search-icon");
+      if (!searchbutton)
+        return;
+      Services.console.logStringMessage("toggleImage "+topic +" done");
       let defaultEngine = await Services.search.getDefault();
       var uri = defaultEngine.iconURI.spec;
       //var icon = PlacesUtils.getImageURLForResolution(window, uri);
@@ -59,27 +59,22 @@ var searchengineicon = {
       switch (aPrefstring) {
       case "engine-current":
       case "engine-default":
-       this.toggleImage();
+       this.toggleImage(aPrefstring);
         // Not relevant
         break;
       }
     }
     if (aTopic == 'nsPref:changed') {
       // 設定が変更された時の処理
-      setTimeout(function(){searchengineicon.toggleImage();}, 0);
+      setTimeout(function(){searchengineicon.toggleImage(aTopic);}, 0);
     }
   },
 
   _timer: null,
   handleEvent: function(event){
     switch (event.type) {
-      case "resize":
-        if (!this._timer)
-          clearTimeout(this._timer);
-        this._timer = setTimeout(() => this.toggleImage(), 250);
-        break;
       case "aftercustomization":
-        this.toggleImage();
+        this.toggleImage("aftercustomization");
         break;
       case 'unload':
         this.uninit();
@@ -88,4 +83,19 @@ var searchengineicon = {
   }
 }
 
-searchengineicon.init();
+
+// We should only start the redirection if the browser window has finished
+// starting up. Otherwise, we should wait until the startup is done.
+if (gBrowserInit.delayedStartupFinished) {
+  searchengineicon.init();
+} else {
+  let delayedStartupFinished = (subject, topic) => {
+    if (topic == "browser-delayed-startup-finished" &&
+        subject == window) {
+      Services.obs.removeObserver(delayedStartupFinished, topic);
+      searchengineicon.init();
+    }
+  };
+  Services.obs.addObserver(delayedStartupFinished,
+                           "browser-delayed-startup-finished");
+}
