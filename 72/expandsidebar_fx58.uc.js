@@ -3,11 +3,12 @@
 // @description    サイドバーの自動開閉
 // @namespace      http://forums.mozillazine.org/viewtopic.php?p=2592073#2592073
 // @include        main
-// @compatibility  Firefox 71
+// @compatibility  Firefox 72
 // @author         Alice0775
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2019/12/05 18:00 fix 72 Bug 1492582 - browser.xhtml: Migrate root xul:window element to an html:html element
 // @version        2019/12/05 17:00 fix 71 Bug 1582530 - Turn on `layout.css.xul-box-display-values.survive-blockification.enabled` by default
 // @version        2019/12/05 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version        2019/09/04 Fx69
@@ -159,7 +160,7 @@ var ucjs_expand_sidebar = {
     var style = ' \
     @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
  \
-    #main-window #sidebar-splitter \
+    #sidebar-splitter \
     { \
       -moz-box-align: center; \
       -moz-box-pack: center; \
@@ -176,7 +177,7 @@ var ucjs_expand_sidebar = {
       margin-inline-start: 0px; \
     } \
     #navigator-toolbox[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter, \
-    #main-window[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter \
+    :root[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter \
     { \
       width: 0px; \
       max-width: 1px; \
