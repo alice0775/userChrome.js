@@ -3,11 +3,12 @@
 // @description    サイドバーの自動開閉
 // @namespace      http://forums.mozillazine.org/viewtopic.php?p=2592073#2592073
 // @include        main
-// @compatibility  Firefox 69
+// @compatibility  Firefox 71
 // @author         Alice0775
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2019/12/05 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version        2019/09/04 Fx69
 // @version        2018/07/03 Fx61 fix regression from remove loadoverlay
 // @version        2018/07/03 Fx61 remove loadoverlay
@@ -103,7 +104,7 @@ var ucjs_expand_sidebar = {
         // Array of elements?  Parse each one...
         if (Array.isArray(elemNameOrArray)) {
           var frag = doc.createDocumentFragment();
-          Array.forEach(arguments, function(thisElem) {
+          Array.prototype.forEach.call(arguments, function(thisElem) {
             frag.appendChild(tag.apply(null, thisElem));
           });
           return frag;
@@ -132,7 +133,7 @@ var ucjs_expand_sidebar = {
         }
 
         // Create and append this element's children
-        var childElems = Array.slice(arguments, 2);
+        var childElems = Array.prototype.slice.call(arguments, 2);
         childElems.forEach(function(childElem) {
           if (childElem != null) {
             elem.appendChild(
