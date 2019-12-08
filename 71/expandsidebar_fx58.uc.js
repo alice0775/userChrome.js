@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2019/12/09 17:00 fix 71 Bug 1582530
 // @version        2019/12/05 17:00 fix 71 Bug 1582530 - Turn on `layout.css.xul-box-display-values.survive-blockification.enabled` by default
 // @version        2019/12/05 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version        2019/09/04 Fx69
@@ -214,6 +215,7 @@ var ucjs_expand_sidebar = {
         #sidebar-box #sidebar \
         { \
         position: fixed ; \
+        display: block; \
         height: calc(100vh - 210px); \
         border-left:3px solid -moz-dialog; \
         border-right:3px solid -moz-dialog; \
