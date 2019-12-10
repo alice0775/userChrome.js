@@ -1,8 +1,8 @@
 // skip 1st line
 /*
+ 2019/12/11 01:30 fix 72 use "load" in config.js, working with Sub-Script/Overlay Loader v3.0.60mod
  2019-10-22 23:00
 */
-
 try {
 
     let {
@@ -20,7 +20,7 @@ try {
 
     UserChrome_js.prototype = {
       observe: function (aSubject, aTopic, aData) {
-          aSubject.addEventListener('DOMContentLoaded', this, true);
+          aSubject.addEventListener('load', this, true);
       },
 
       handleEvent: function (aEvent) {

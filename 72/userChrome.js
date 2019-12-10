@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.59mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.60mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// Date 2019/12/11 01:30 fix 72 revert the code for sidebar, use "load" in config.js(2019/12/11 01:30), 
 // Date 2019/08/11 21:30 fix 70.0a1  Bug 1551344 - Remove XULDocument code
 // Date 2019/05/21 08:30 fix 69.0a1 Bug 1534407 - Enable browser.xhtml by default, Bug 1551320 - Replace all CreateElement calls in XUL documents with CreateXULElement
 // Date 2018/08/10 01:30 fix 63.0a1
@@ -681,4 +682,58 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
     },0, doc);
   }
 
+
+  //Sidebar for Trunc
+  if(location.href != that.BROWSERCHROME) return;
+  window.document.addEventListener("load",
+    function(event){
+      if (!event.originalTarget.location) return;
+      if(/^(about:(blank|newtab|home))/i.test(event.originalTarget.location.href)) return;
+      if( !/^(about:|chrome:)/.test(event.originalTarget.location.href) )return;
+      var doc = event.originalTarget;
+      var href = doc.location.href;
+      if (that.INFO) that.debug("load Sidebar " +  href);
+      setTimeout(function(doc){that.runScripts(doc);
+        setTimeout(function(doc){that.runOverlays(doc);}, 0, doc);
+      },0, doc);
+      if (href != "chrome://browser/content/web-panels.xul") return;
+      if (!window.document.getElementById("sidebar")) return;
+      var sidebarWindow = window.document.getElementById("sidebar").contentWindow;
+        if (sidebarWindow){
+          loadInWebpanel.init(sidebarWindow);
+        }
+    }
+  , true);
+
+  var loadInWebpanel = {
+    sidebarWindow: null,
+    init: function(sidebarWindow){
+      this.sidebarWindow = sidebarWindow;
+      this.sidebarWindow.document.getElementById("web-panels-browser").addEventListener("load", this, true);
+      this.sidebarWindow.addEventListener("unload", this, false);
+    },
+    handleEvent: function(event){
+      switch (event.type) {
+        case "unload":
+          this.uninit(event);
+          break;
+        case "load":
+          this.load(event);
+          break;
+      }
+    },
+    uninit: function(event){
+      this.sidebarWindow.document.getElementById("web-panels-browser").removeEventListener("load", this, true);
+      this.sidebarWindow.removeEventListener("unload", this, false);
+    },
+    load: function(event){
+      var doc = event.originalTarget;
+      var href = doc.location.href;
+        if( !/^chrome:/.test(href) )return;
+        if (that.INFO) that.debug("load Webpanel " +  href);
+        setTimeout(function(doc){that.runScripts(doc);
+          setTimeout(function(doc){that.runOverlays(doc);},0, doc);
+        },0, doc);
+    }
+  }
 })();
