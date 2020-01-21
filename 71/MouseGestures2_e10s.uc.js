@@ -307,8 +307,11 @@ var ucjsMouseGestures = {
                 ["http://www.yahoo.co.jp", false]
               );
             });
-          }],  
-
+          }],
+		  
+		['', 'Open from Clipboard in Tab (foreground new tab)', function(){ ucjsMouseGestures_helper.openLinkFromClipboard(true); } ],
+		
+		['', 'Open from Clipboard in Tab (in active tab)', function(){ ucjsMouseGestures_helper.openLinkFromClipboard(false); } ],
 
       ],
   // == /config ==
@@ -1737,6 +1740,31 @@ let ucjsMouseGestures_helper = {
       }
     }
     return tabsToStart;
+  },
+  
+  openLinkFromClipboard: function(inNewTab) {
+	param = {
+			relatedToCurrent: false,
+			inBackground: false,
+			referrerURI: null,
+			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
+	};
+
+	// https://developer.mozilla.org/en-US/docs/Mozilla/Tech/XPCOM/Using_the_clipboard
+	let trans = Cc["@mozilla.org/widget/transferable;1"].createInstance(Ci.nsITransferable);
+	trans.init(null);
+	trans.addDataFlavor("text/unicode");
+	Services.clipboard.getData(trans, Services.clipboard.kGlobalClipboard);
+	let str       = {};
+	let strLength = {};
+	trans.getTransferData("text/unicode", str, strLength);
+	if (str) {
+		if (inNewTab) {
+			gBrowser.loadOneTab(  str.value.QueryInterface(Ci.nsISupportsString).data  , param);
+		} else {
+			gBrowser.loadURI(  str.value.QueryInterface(Ci.nsISupportsString).data  , param);
+		}
+	}  
   },
 
 }
