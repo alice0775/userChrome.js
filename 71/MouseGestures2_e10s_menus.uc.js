@@ -52,23 +52,23 @@ ucjsMouseGestures_menues = {
       [
 
 
-        ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
-        ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
+        ['', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
+        ['', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
 
         ['', 'タブの履歴をポップアップ', function(){ ucjsMouseGestures_helper.sessionHistoryPopup(); } ],
 
-        ['RULD', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
-        ['ULDR', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
-        ['DLUR', '数値を減らして移動', function(){ ucjsMouseGestures_helper.goNumericURL(-1); } ],
+        ['', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
+        ['', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
+        ['', '数値を減らして移動', function(){ ucjsMouseGestures_helper.goNumericURL(-1); } ],
 
-        ['UD', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
-        ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
+        ['UDR', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
+        ['UD', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
         ['', 'すべてタブをリロード', function(){ typeof gBrowser.reloadTabs == "function" ? gBrowser.reloadTabs(gBrowser.visibleTabs) : gBrowser.reloadAllTabs(); } ],
 
 
         ['', 'テキストリンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
-        ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
-        ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
+        ['', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
+        ['', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
 
         ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
         ['', '通過したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
@@ -77,9 +77,9 @@ ucjsMouseGestures_menues = {
         ['', '通過したリンクをコピー', function(){ ucjsMouseGestures_helper.copyHoverLinks(); } ],
         ['', '選択したリンクをコピー', function(){ ucjsMouseGestures_helper.copySelectedLinks(); } ],
 
-        ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
-        ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
-        ['', '新しいタブを開く', function(){ document.getElementById("cmd_newNavigatorTab").doCommand(); } ],
+        ['L', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
+        ['R', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
+        ['U', '新しいタブを開く', function(){ document.getElementById("cmd_newNavigatorTab").doCommand(); } ],
         ['', 'タブをピン留めトグル',
   			  function(){ var tab = gBrowser.selectedTab;
   			 	   tab.pinned ? gBrowser.unpinTab(tab) : gBrowser.pinTab(tab);
@@ -90,27 +90,27 @@ ucjsMouseGestures_menues = {
   			 	  var newTab = gBrowser.duplicateTab(orgTab);
   				  gBrowser.moveTabTo(newTab, orgTab._tPos + 1);
           } ],
-        ['LD', 'タブを閉じる', function(){ document.getElementById("cmd_close").doCommand(); } ],
+        ['D', 'タブを閉じる', function(){ document.getElementById("cmd_close").doCommand(); } ],
         ['', '左側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("left"); } ],
         ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
         ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
-        ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
+        ['', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
         ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
 
         ['', '最小化', function(){ window.minimize(); } ],
         ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
-        ['LDRU', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
+        ['', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
 
-        ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
-        ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
-        ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
-        ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
+        ['LU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
+        ['LD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
+        ['', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
+        ['', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
 
-        ['W-', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
-        ['W+', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
-        ['L<R', 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
+        ['', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
+        ['', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
+        ['', 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
 
-        ['DL', 'ページ内検索バー',
+        ['', 'ページ内検索バー',
           function(){
             if (ucjsMouseGestures._version <= "60") {
               if (gBrowser.getFindBar()) {
@@ -132,8 +132,8 @@ ucjsMouseGestures_menues = {
                           false,
                           Services.scriptSecurityManager.createNullPrincipal({}));
           } ],
-        ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
-        ['DR', '選択テキストを検索バーにコピー',
+        ['', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
+        ['', '選択テキストを検索バーにコピー',
           function(){ 
             if (BrowserSearch.searchBar)
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
@@ -141,7 +141,7 @@ ucjsMouseGestures_menues = {
 
         ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
 
-        ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
+        ['', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
         ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
 
         ['', 'ブックマークサイドバー', function(){ SidebarUI.toggle("viewBookmarksSidebar"); } ],
@@ -154,7 +154,10 @@ ucjsMouseGestures_menues = {
             ucjsMouseGestures_helper.dispatchEvent(
             { target: "document", type: "AutoPagerizeToggleRequest" } );
           } ],
-
+		  
+		['', 'Open from Clipboard in Tab (foreground new tab)', function(){ ucjsMouseGestures_helper.openLinkFromClipboard(true); } ],
+		
+		['', 'Open from Clipboard in Tab (in active tab)', function(){ ucjsMouseGestures_helper.openLinkFromClipboard(false); } ],
 
      ];
 
@@ -165,7 +168,7 @@ ucjsMouseGestures_menues = {
   },
 
   // == config ==
-  editor: "C:\\Program Files\\hidemaru\\hidemaru.exe",
+  editor: "C:\\Program Files (x86)\\notepad++\\notepad++.exe",
   // editor: "/usr/bin/gedit",
   // == /config ==
 
