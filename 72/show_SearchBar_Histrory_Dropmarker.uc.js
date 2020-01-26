@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 72
+// @version        2020/01/26 22:00 fix typo & simplify
 // @version        2020/01/26 20:00 fox after DOM fullscreen
 // @version        2019/11/22 00:00 workaround delayed initialize using gBrowserInit.delayedStartupFinished instead async Services.search.init()
 // @version        2019/07/13 01:00 Fix 68 Bug 1556561 - Remove children usage from autocomplete binding
@@ -42,8 +43,7 @@ var showSearchBarHistroryDropmarker = {
   init: function() {
     window.addEventListener("unload", this, false);
     window.addEventListener('aftercustomization', this, false);
-    window.addEventListener('fullscreenchange', this, false);
-    window.addEventListener('mozfullscreenchange', this, false);
+    window.addEventListener('MozDOMFullscreen:Exited', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     window.addEventListener("resize", this, false);
     this.popup = document.getElementById("PopupSearchAutoComplete");
@@ -86,8 +86,7 @@ var showSearchBarHistroryDropmarker = {
   uninit: function() {
     window.removeEventListener("unload", this, false);
     window.removeEventListener('aftercustomization', this, false);
-    window.addEventListener('fullscreenchange', this, false);
-    window.addEventListener('mozfullscreenchange', this, false);
+    window.removeEventListener('MozDOMFullscreen:Exited', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
     window.removeEventListener("resize", this, false);
   },
@@ -125,10 +124,7 @@ var showSearchBarHistroryDropmarker = {
   _timer: null,
   handleEvent: function(event) {
     switch(event.type) {
-      case "mozfullscreenchange":
-      case "fullscreenchange":
-        if (document.fullscreenElement || document.mozFullScreenElement)
-          return;
+      case "MozDOMFullscreen:Exited":
         setTimeout(() => {this.init2(event.type);}, 1000);
         break;
       case "aftercustomization":

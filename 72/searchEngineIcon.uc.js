@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 72
 // @author         Alice0775
+// @version        2020/01/26 22:00 fix typo & simplify
 // @version        2020/01/26 20:00 fox after DOM fullscreen
 // @version        2019/11/22 00:00 workaround delayed initialize using gBrowserInit.delayedStartupFinished instead async Services.search.init()
 // @version        2019/11/14 00:00 Fix 72+ Bug 1591145 Remove Document.GetAnonymousElementByAttribute
@@ -25,8 +26,7 @@ var searchengineicon = {
   init: function() {
     this.toggleImage("init");
     window.addEventListener('aftercustomization', this, false);
-    window.addEventListener('fullscreenchange', this, false);
-    window.addEventListener('mozfullscreenchange', this, false);
+    window.addEventListener('MozDOMFullscreen:Exited', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     Services.obs.addObserver(this, "browser-search-engine-modified");
     window.addEventListener("resize", this, false);
@@ -35,8 +35,7 @@ var searchengineicon = {
 
   uninit: function(){
     window.removeEventListener('aftercustomization', this, false);
-    window.addEventListener('fullscreenchange', this, false);
-    window.addEventListener('mozfullscreenchange', this, false);
+    window.removeEventListener('MozDOMFullscreen:Exited', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
     Services.obs.removeObserver(this, "browser-search-engine-modified");
     window.removeEventListener("resize", this, false);
@@ -78,10 +77,7 @@ var searchengineicon = {
   _timer: null,
   handleEvent: function(event){
     switch (event.type) {
-      case "mozfullscreenchange":
-      case "fullscreenchange":
-        if (document.fullscreenElement || document.mozFullScreenElement)
-          return;
+      case "MozDOMFullscreen:Exited":
         setTimeout(() => {this.toggleImage(event.type);}, 1000);
         break;
       case "aftercustomization":
