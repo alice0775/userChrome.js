@@ -3,7 +3,8 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
-// @compatibility  Firefox 69
+// @compatibility  Firefox 72
+// @version        2020/01/26 20:00 fox after DOM fullscreen
 // @version        2019/11/22 00:00 workaround delayed initialize using gBrowserInit.delayedStartupFinished instead async Services.search.init()
 // @version        2019/07/13 01:00 Fix 68 Bug 1556561 - Remove children usage from autocomplete binding
 // @version        2019/06/10 01:00 Fix 67.0a1 Bug 1492475 The search service init() method should simply return a Promise
@@ -41,6 +42,8 @@ var showSearchBarHistroryDropmarker = {
   init: function() {
     window.addEventListener("unload", this, false);
     window.addEventListener('aftercustomization', this, false);
+    window.addEventListener('fullscreenchange', this, false);
+    window.addEventListener('mozfullscreenchange', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     window.addEventListener("resize", this, false);
     this.popup = document.getElementById("PopupSearchAutoComplete");
@@ -83,6 +86,8 @@ var showSearchBarHistroryDropmarker = {
   uninit: function() {
     window.removeEventListener("unload", this, false);
     window.removeEventListener('aftercustomization', this, false);
+    window.addEventListener('fullscreenchange', this, false);
+    window.addEventListener('mozfullscreenchange', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
     window.removeEventListener("resize", this, false);
   },
@@ -120,6 +125,12 @@ var showSearchBarHistroryDropmarker = {
   _timer: null,
   handleEvent: function(event) {
     switch(event.type) {
+      case "mozfullscreenchange":
+      case "fullscreenchange":
+        if (document.fullscreenElement || document.mozFullScreenElement)
+          return;
+        setTimeout(() => {this.init2(event.type);}, 1000);
+        break;
       case "aftercustomization":
         this.init2(event.type);
         break;
