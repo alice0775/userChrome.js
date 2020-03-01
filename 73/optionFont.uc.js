@@ -5,6 +5,7 @@
 // @include        chrome://browser/content/preferences/fonts.xhtml
 // @include        about:preferences
 // @compatibility  73
+// @version        2020/03/02 00:00 fix
 // @version        2020/02/29 00:00 
 // ==/UserScript==
 if (location.href == "chrome://browser/content/preferences/fonts.xhtml") {
@@ -13,7 +14,7 @@ if (location.href == "chrome://browser/content/preferences/fonts.xhtml") {
       ["serif", "sans-serif", "monospace"].forEach(id => 
       {
         let menulist = document.getElementById(id);
-        menulist.addEventListener("popupshowing", this, {capture:false, once: true});
+        menulist.addEventListener("popupshowing", this, {capture:false});
       });
     },
 
