@@ -8,6 +8,7 @@
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2020/07/14 00:00 style
 // @version        2019/12/09 18:00 fix 72 Bug 1582530
 // @version        2019/12/05 18:00 fix 72 Bug 1492582 - browser.xhtml: Migrate root xul:window element to an html:html element
 // @version        2019/12/05 17:00 fix 71 Bug 1582530 - Turn on `layout.css.xul-box-display-values.survive-blockification.enabled` by default
@@ -158,36 +159,36 @@ var ucjs_expand_sidebar = {
       return;
     this._sidebar_box = document.getElementById('sidebar-box');
 
-    var style = ' \
-    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); \
- \
-    #sidebar-splitter \
-    { \
-      -moz-box-align: center; \
-      -moz-box-pack: center; \
-      cursor: ew-resize; \
-      border-width: 0 2px; \
-      border-style: solid; \
-      -moz-border-left-colors: ThreeDShadow ThreeDHighlight; \
-      -moz-border-right-colors: ThreeDDarkShadow ThreeDFace; \
-      width: 2px; \
-      max-width: 2px; \
-      min-width: 0px; \
-      background-color: ThreeDFace; \
-      margin-left: 0px; \
-      margin-inline-start: 0px; \
-    } \
-    #navigator-toolbox[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter, \
-    :root[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter \
-    { \
-      width: 0px; \
-      max-width: 1px; \
-      min-width: 0px; \
-      border-left-width: 0px; \
-      border-right-width: 1px; \
-      background-color: ThreeDFace; \
-    }  \
-    ';
+    var style = ` 
+    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); 
+ 
+    #sidebar-splitter 
+    { 
+      -moz-box-align: center; 
+      -moz-box-pack: center; 
+      cursor: ew-resize; 
+      border-width: 0 2px; 
+      border-style: solid; 
+      -moz-border-left-colors: ThreeDShadow ThreeDHighlight; 
+      -moz-border-right-colors: ThreeDDarkShadow ThreeDFace; 
+      width: 2px; 
+      max-width: 2px; 
+      min-width: 0px; 
+      background-color: ThreeDFace; 
+      margin-left: 0px; 
+      margin-inline-start: 0px; 
+    } 
+    #navigator-toolbox[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter, 
+    :root[inFullscreen="true"] #sidebar-box[hidden="true"] + #sidebar-splitter 
+    { 
+      width: 0px; 
+      max-width: 1px; 
+      min-width: 0px; 
+      border-left-width: 0px; 
+      border-right-width: 1px; 
+      background-color: ThreeDFace; 
+    }  
+    `;
     var sspi = document.createProcessingInstruction(
       'xml-stylesheet',
       'type="text/css" href="data:text/css,' + encodeURIComponent(style) + '"'
@@ -199,52 +200,61 @@ var ucjs_expand_sidebar = {
 
     if (this._FLOATING_SIDEBAR) {
       // floating css
-      var floatingStyle = ' \
-        @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); \
- \
-         #sidebar-box { \
-        position: fixed ; \
-        display: block; \
-        z-index: 55555; \
-        background-color: -moz-dialog; \
-        left: 4px; \
-        } \
-        #sidebar-box #sidebar-header \
-        { \
-        width :100%; \
-        } \
-        #sidebar-box #sidebar \
-        { \
-        position: fixed ; \
-        display: block; \
-        height: calc(100vh - 210px); \
-        border-left:3px solid -moz-dialog; \
-        border-right:3px solid -moz-dialog; \
-        border-bottom:3px solid -moz-dialog; \
-        } \
- \
-        #sidebar-box { \
-          border-right: 1px solid ThreeDShadow; \
-          border-bottom: 1px solid ThreeDShadow; \
-        } \
-        #sidebar-box:-moz-locale-dir(rtl) { \
-          border-left: 1px solid ThreeDHighlight; \
-        } \
-        #sidebar-box:-moz-lwtheme { \
-          background-color: -moz-Dialog; \
-        } \
-        #sidebar-box sidebarheader:-moz-lwtheme { \
-          color: -moz-dialogtext; \
-          text-shadow: none; \
-          background-color: -moz-Dialog; \
-          -moz-appearance: toolbox; \
-          border-bottom: 1px solid ThreeDShadow; \
-          border-top: 1px solid ThreeDHighlight; \
-        } \
-        #sidebar-box #sidebarpopuppanel-bottom { \
-        background-color: -moz-dialog; \
-        width:100%; \
-        }';
+      var floatingStyle = `
+        @namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"); 
+ 
+        #sidebar-box { 
+        position: fixed ; 
+        display: block; 
+        z-index: 55555; 
+        background-color: -moz-dialog; 
+        left: 4px; 
+        } 
+        #sidebar-box #sidebar-header 
+        { 
+        width :100%; 
+        } 
+        #sidebar-box #sidebar 
+        { 
+        position: fixed ; 
+        display: block; 
+        height: calc(100vh - 210px); 
+        border-left:3px solid -moz-dialog; 
+        border-right:3px solid -moz-dialog; 
+        border-bottom:3px solid -moz-dialog; 
+        } 
+        #sidebar-box #sidebar:-moz-lwtheme
+        { 
+        border-left:3px solid var(--sidebar-background-color);
+        border-right:3px solid var(--sidebar-background-color);
+        border-bottom:3px solid var(--sidebar-background-color);
+        } 
+ 
+        #sidebar-box { 
+          border-right: 1px solid ThreeDShadow; 
+          border-bottom: 1px solid ThreeDShadow; 
+        } 
+        #sidebar-box:-moz-locale-dir(rtl) { 
+          border-left: 1px solid ThreeDHighlight; 
+        } 
+        #sidebar-box:-moz-lwtheme { 
+          background-color: var(--sidebar-background-color);
+        } 
+        #sidebar-box sidebarheader:-moz-lwtheme { 
+          color: -moz-dialogtext; 
+          text-shadow: none; 
+          background-color: var(--sidebar-background-color);
+          -moz-appearance: toolbox; 
+          border-bottom: 1px solid ThreeDShadow; 
+          border-top: 1px solid ThreeDHighlight; 
+        } 
+        #sidebar-box #sidebarpopuppanel-bottom { 
+        background-color: -moz-dialog; 
+        width:100%; 
+        }
+        #sidebar-box #sidebarpopuppanel-bottom:-moz-lwtheme { 
+        background-color: var(--sidebar-background-color);
+        }`;
 
       if (this._SIDEBARPOSITION="L") {
         floatingStyle += ' #sidebar-box .PopupResizerGripper { \
