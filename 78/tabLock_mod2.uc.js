@@ -5,7 +5,8 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
-// @compatibility  73
+// @compatibility  78
+// @version        2020/07/16 20:20 Bug 1635094 - Cleanup the referrerinfo code
 // @version        2020/05/12 00:00 Removed unused pref
 // @version        2020/02/12 16:30 fix revert url when open from ul bar
 // @version        2019/11/14 00:00 Fix 72+ Bug 1591145 Remove Document.GetAnonymousElementByAttribute
@@ -454,7 +455,7 @@ patch: {
 
      let referrerInfo = Cc["@mozilla.org/referrer-info;1"].createInstance(Ci.nsIReferrerInfo);
      if (node) {
-       referrerInfo.initWithNode(node);
+       referrerInfo.initWithElement(node);
      } else {
        referrerInfo.initWithDocument(ownerDoc);
       }
