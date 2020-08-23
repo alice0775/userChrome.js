@@ -6,6 +6,9 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 77
+// @version       2020/08/22 21:11 fix すべてのタブを閉じる
+// @version       2020/06/01 00:21 fix content-type
+// @version       2020/04/25 10:00 Bug 1612068 - Move zoom from the content viewer to the browsing context
 // @version       2020/06/01 00:00 fix Bug 1616881 - Get rid of `uses-unsafe-cpows`
 // @version       2020/01/20 00:00 fix 'Home'
 // @version       2019/10/31 19:00 fix >>374 '選択テキストを検索バーに追加'
@@ -160,7 +163,7 @@ var ucjsMouseGestures = {
         ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
         ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
         ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
-        ['', 'すべてのタブを閉じる', function(){ var browser = gBrowser; var ctab = browser.addTab("about:newtab"); browser.removeAllTabsBut(ctab); } ],
+        ['', 'すべてのタブを閉じる', function(){ var browser = gBrowser; var ctab = browser.addTrustedTab(BROWSER_NEW_TAB_URL, {skipAnimation: true,}); browser.removeAllTabsBut(ctab); } ],
         ['', 'ウインドウを閉じる', function(){ document.getElementById("cmd_closeWindow").doCommand(); } ],
 
         ['', '最小化', function(){ window.minimize(); } ],
@@ -869,11 +872,19 @@ let ucjsMouseGestures_framescript = {
                                  .getImgCacheForDocument(aDoc);
               var props =
                 imageCache.findEntryProperties(aURL, aDoc);
-              if (props) {
+            } catch (e) {}
+            if (props) {
+              try {
                 aContentType = props.get("type",  Ci.nsISupportsCString).data;
-                aContentDisp = props.get("content-disposition",  Ci.nsISupportsCString).data;
+              } catch (e) {
               }
-            } catch (e) {
+              try {
+                aContentDisp = props.get(
+                  "content-disposition",
+                  Ci.nsISupportsCString
+                ).data;
+              } catch (e) {
+              }
             }
             return [aURL.spec, aContentType, aContentDisp];
           }
