@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/places/places.xhtml
 // @compatibility Firefox 78
 // @author        alice0775
+// @version       2020/09/13 
 // @version       2020/09/04 
 // @note          ucjs.showParentFolder.showFolderHierarchy
 // @note          ucjs.showParentFolder.reverseFolderHierarchy
@@ -66,8 +67,9 @@
               var FolderId;
               var parentFolderId = bmsvc.getFolderIdForItem(rowId);
               var folderTitle = bmsvc.getItemTitle(parentFolderId);
-              if (this.getLocalizedTitle2(folderTitle + "_____"))
-                folderTitle = this.getLocalizedTitle2(folderTitle + "_____")
+              var txt = (folderTitle + "____________").substr(0, 12);
+              if (this.getLocalizedTitle2(txt))
+                folderTitle = this.getLocalizedTitle2(txt)
               var xpref = Components.classes['@mozilla.org/preferences-service;1']
                   .getService(Components.interfaces.nsIPrefService);
               var reverse = xpref.getBoolPref('ucjs.showParentFolder.reverseFolderHierarchy', true);
