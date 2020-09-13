@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/places/places.xhtml
 // @compatibility Firefox 78
 // @author        alice0775
+// @version       2020/09/14 
 // @version       2020/09/13 
 // @version       2020/09/04 
 // @note          ucjs.showParentFolder.showFolderHierarchy
@@ -80,8 +81,9 @@
                     break;
                   parentFolderId = FolderId;
                   var text = bmsvc.getItemTitle(parentFolderId);
-                  if (this.getLocalizedTitle2(text + "_____"))
-                    text = this.getLocalizedTitle2(text + "_____")
+                  var txt = (text + "____________").substr(0, 12);
+                  if (this.getLocalizedTitle2(txt))
+                    text = this.getLocalizedTitle2(txt)
 
                   if (!text)
                     break;
