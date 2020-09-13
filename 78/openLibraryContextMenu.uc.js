@@ -7,6 +7,7 @@
 // @include        chrome://browser/content/places/bookmarksSidebar.xhtml
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/09/14 fix posiotion of menu
 // @version        2020/08/17
 // ==/UserScript==
 
@@ -33,8 +34,7 @@ var openLibraryContextMenu = {
       menuitem.setAttribute("selectiontype", "single");
       menuitem.setAttribute("selection", "bookmark|folder|query|livemark/feedURI");
       menuitem.setAttribute("oncommand", "openLibraryContextMenu.showOrganizer();");
-
-      var afterNode = document.getElementById("placesContext_openLinks:tabs");
+      var afterNode = placesContext.firstChild; //document.getElementById("placesContext_openLinks:tabs");
       placesContext.insertBefore(menuitem, afterNode);
   },
 
