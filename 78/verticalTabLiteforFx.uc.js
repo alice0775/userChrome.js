@@ -6,6 +6,7 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/16 00:00 78ESR fix fullscreen navbar(wip, todo pinned tab)
 // @version        2020/09/15 00:00 78ESR (wip, todo pinned tab)
 // @version        2019/10/23 00:00 68ESR fix multiselect mark
 // @version        2019/10/22 00:00 68ESR
@@ -102,7 +103,7 @@ function verticalTabLiteforFx() {
   }
 
   /*  */
-  :root[tabsintitlebar][Menubarinactive] #titlebar {
+  :root:not([inFullscreen])[tabsintitlebar][Menubarinactive] #titlebar {
      margin-top:-32px;
   }
 
