@@ -6,6 +6,7 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/16 20:00 78ESR make tab resizabe (todo pinned tab)
 // @version        2020/09/16 10:00 78ESR fix fullscreen window controls(wip, todo pinned tab)
 // @version        2020/09/16 00:00 78ESR fix fullscreen navbar(wip, todo pinned tab)
 // @version        2020/09/15 00:00 78ESR (wip, todo pinned tab)
@@ -15,17 +16,34 @@
 "user strict";
 verticalTabLiteforFx();
 function verticalTabLiteforFx() {
-  let verticalTabbar_width = 100;  /* タブバーの横幅 px */
+  let verticalTabbar_maxWidth = 225;  /* タブバーの横幅 px */
   let verticalTab_height = 18;  /* タブの高さ px */
   /* not yet */
   //let verticalTabPinned_width = 27; /* ピン留めタブの横幅 px */
   //let verticalScrollbar_width = 11; /* スクロールバー幅 px */
-  
+
+  let verticalTabbar_minWidth = Services.prefs.getIntPref("browser.tabs.tabMinWidth", 0);
+  let verticalTabbar_width = Services.prefs.getIntPref("ucjs.tabWidth", verticalTabbar_maxWidth);
+
   var css =`@-moz-document url-prefix("chrome://browser/content/browser.xhtml") {
 
   /* vertical tabs */
-  #tabbrowser-arrowscrollbox {
-    max-width: ${verticalTabbar_width}px !important;
+  #vtb_TabsToolbar {
+    max-width: ${verticalTabbar_maxWidth}px !important;
+    min-width: calc(0px + ${verticalTabbar_minWidth}px) !important;
+    width: ${verticalTabbar_width}px !important;
+    background-color: transparent;
+  }
+
+  #vtb_splitter:not([state="collapsed"]) {
+    -moz-appearance: none !important;
+    border: 0 solid !important;
+    min-width: 1px !important;
+    width: 4px !important;
+    background-image: none !important;
+    background-color: transparent !important;
+    margin-inline-start: -4px !important;
+    position: relative;
   }
 
   #tabbrowser-tabs {
@@ -37,8 +55,9 @@ function verticalTabLiteforFx() {
     font-size: calc(${verticalTab_height}px - 3px) !important;
   }
 
-  .tabbrowser-tab:not([pinned]) {
+   .tabbrowser-tab:not([pinned]) {
     width: auto !important;
+    max-width: auto !important;
     transition: none !important;
   }
   
@@ -72,30 +91,35 @@ function verticalTabLiteforFx() {
       display: -moz-box !important;
   }
 
-  /*FullScreen*/
-  :root[inFullscreen][inDOMFullscreen] #TabsToolbar {
+  /*DOMFullScreen*/
+  :root[inFullscreen][inDOMFullscreen] #vtb_TabsToolbar {
     display: none;
   }
-  :root[inFullscreen]:not([inDOMFullscreen]) #TabsToolbar:not(:hover) {
+  /*FullScreen*/
+  :root[inFullscreen]:not([inDOMFullscreen]) #vtb_TabsToolbar:not(:hover) {
     max-width: 1px !important;
+    min-width: 1px !important;
     opacity: 0;
+    visibility: visible !important;
     transition: .5s;
   }
-  :root[inFullscreen]:not([inDOMFullscreen]) #TabsToolbar:hover {
+  :root[inFullscreen]:not([inDOMFullscreen]) #vtb_TabsToolbar:hover {
+    visibility: visible !important;
     transition: .2s;
   }
+  
   :root[inFullscreen] #vtb_splitter {
     display: none;
   }
 
   /*Print Preview*/
-  :root[printpreview] #TabsToolbar {
-    visibility: collapse;
+  :root[printpreview] #vtb_TabsToolbar {
+    display: none;
   }
 
   /*Popup window*/
-  :root[chromehidden*="toolbar"] #TabsToolbar {
-    visibility: collapse;
+  :root[chromehidden*="toolbar"] #vtb_TabsToolbar {
+    display: none;
   }
 
   /* height of menu bar */
@@ -142,15 +166,22 @@ function verticalTabLiteforFx() {
   sss.loadAndRegisterSheet(uri, sss.AGENT_SHEET);
 
 
-  var tabsToolbar = document.getElementById('TabsToolbar');
   var ref = document.getElementById('SM_toolbox') ||
             document.getElementById('sidebar-box') ||
             document.getElementById("appcontent");
-  document.getElementById("browser").insertBefore(tabsToolbar, ref);
+  var vtbTabsToolbar = document.createXULElement('hbox');
+  vtbTabsToolbar.setAttribute("id", "vtb_TabsToolbar");
+  document.getElementById("browser").insertBefore(vtbTabsToolbar, ref);
+  var tabsToolbar = document.getElementById('TabsToolbar');
+  vtbTabsToolbar.appendChild(tabsToolbar);
   //prepare for splitter
   var vtbSplitter = document.createXULElement("splitter");
   vtbSplitter.setAttribute("id", "vtb_splitter");
-  //document.getElementById("browser").insertBefore(vtbSplitter, ref);
+  vtbSplitter.setAttribute("state", "open");
+  vtbSplitter.setAttribute("collapse", "before");
+  vtbSplitter.setAttribute("resizebefore", "closest");
+  vtbSplitter.setAttribute("resizeafter", "closest");
+  document.getElementById("browser").insertBefore(vtbSplitter, ref);
 
   tabsToolbar.setAttribute("orient", "vertical");
   tabsToolbar.querySelector(".toolbar-items").setAttribute("orient", "vertical");
@@ -479,6 +510,10 @@ function verticalTabLiteforFx() {
     } else if ( tab.screenY < tabContainer.screenY ) {
       tab.scrollIntoView(true);
     }
+    
+    let width = gBrowser.tabContainer.getBoundingClientRect().width;
+    if (verticalTabbar_minWidth <= width)
+      Services.prefs.setIntPref("ucjs.tabWidth", width);
   }
 
 }
