@@ -6,6 +6,7 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/16 10:00 78ESR fix fullscreen window controls(wip, todo pinned tab)
 // @version        2020/09/16 00:00 78ESR fix fullscreen navbar(wip, todo pinned tab)
 // @version        2020/09/15 00:00 78ESR (wip, todo pinned tab)
 // @version        2019/10/23 00:00 68ESR fix multiselect mark
@@ -123,9 +124,10 @@ function verticalTabLiteforFx() {
       display: none !important;
   }
     
-  :root[inFullscreen]:not([tabsintitlebar]) #window-controls {
+/*  :root[inFullscreen]:not([tabsintitlebar]) #window-controls {
       display: none;
   }
+*/
 
   :root[inFullscreen] .titlebar-restore {
       display: -moz-box !important;
@@ -199,6 +201,15 @@ function verticalTabLiteforFx() {
   ref.parentNode.insertBefore(accessibility, ref);
   ref.parentNode.insertBefore(private, ref);
   ref.parentNode.insertBefore(control, ref);
+  var func = FullScreen._updateToolbars.toString();
+  func = func.replace(
+  'document.getElementById("TabsToolbar").appendChild(fullscreenctls);',
+  ''
+  );
+  FullScreen._updateToolbars = new Function(
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
+  );
 
   const target = document.getElementById('toolbar-menubar');
   if (!target?.getAttribute("inactive"))
