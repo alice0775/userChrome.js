@@ -6,6 +6,7 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/21 00:00 78ESR fix close button
 // @version        2020/09/16 20:00 78ESR make tab resizabe (todo pinned tab)
 // @version        2020/09/16 10:00 78ESR fix fullscreen window controls(wip, todo pinned tab)
 // @version        2020/09/16 00:00 78ESR fix fullscreen navbar(wip, todo pinned tab)
@@ -263,6 +264,9 @@ function verticalTabLiteforFx() {
     verticalTabLiteforFx.observer.disconnect();
   }, {once: true});
 
+  gBrowser.tabContainer._updateCloseButtons = function _updateCloseButtons() {
+      return;
+  }
 
   gBrowser.tabContainer._getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
   gBrowser.tabContainer.lastVisibleTab = function() {
