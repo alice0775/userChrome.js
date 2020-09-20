@@ -6,6 +6,7 @@
 // @compatibility  Firefox 81
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/21 01:00 force ReducedMotion for tab manuplation
 // @version        2020/09/21 00:00 81(wip, todo pinned tab)
 // @version        2020/09/21 00:00 78ESR fix close button
 // @version        2020/09/16 20:00 78ESR make tab resizabe (todo pinned tab)
@@ -269,6 +270,27 @@ function verticalTabLiteforFx() {
       return;
   }
 
+  gBrowser.removeTab_vtb_org = gBrowser.removeTab;
+  gBrowser.removeTab = function removeTab(
+    aTab,
+    {
+      animate,
+      byMouse,
+      skipPermitUnload,
+      closeWindowWithLastTab,
+      prewarmed,
+    } = {}) {
+    animate = false;
+    gBrowser.removeTab_vtb_org(aTab,
+    {
+      animate,
+      byMouse,
+      skipPermitUnload,
+      closeWindowWithLastTab,
+      prewarmed,
+    });
+  }
+
   gBrowser.tabContainer._getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
   gBrowser.tabContainer.lastVisibleTab = function() {
     var tabs = this.allTabs;
@@ -287,6 +309,24 @@ function verticalTabLiteforFx() {
   };
   gBrowser.tabContainer.addEventListener("drop",function(event){this.on_drop(event);},true);
   gBrowser.tabContainer.addEventListener("dragleave",function(event){this.clearDropIndicator(event);},true);
+
+  gBrowser.tabContainer._getDragTargetTab = function _getDragTargetTab(event, isLink) {
+    let tab = event.target;
+    while (tab && tab.localName != "tab") {
+      tab = tab.parentNode;
+    }
+    if (tab && isLink) {
+      let { height } = tab.getBoundingClientRect();
+      if (
+        event.screenY < tab.screenY + height * 0.25 ||
+        event.screenY > tab.screenY + height * 0.75
+      ) {
+        return null;
+      }
+    }
+    return tab;
+  }
+
   gBrowser.tabContainer.on_dragover = function(event) {
     this.clearDropIndicator();
     var effects = this._getDropEffectForTabDrag(event);
@@ -401,7 +441,7 @@ function verticalTabLiteforFx() {
           dropIndex--;
           incrementDropIndex = false;
       }
-      if (oldTranslateX && oldTranslateX != newTranslateX && !gReduceMotion) {
+      if (false && oldTranslateX && oldTranslateX != newTranslateX && !gReduceMotion) {
         for (let tab of movingTabs) {
           tab.setAttribute("tabdrop-samewindow", "true");
           tab.style.transform = "translateX(" + newTranslateX + "px)";
@@ -506,15 +546,16 @@ function verticalTabLiteforFx() {
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
   window.addEventListener('resize', ensureVisible, false);
   function ensureVisible(event) {
-    let tab = gBrowser.selectedTab;
-    let tabContainer = gBrowser.tabContainer;
-    if ( tab.screenY + tab.getBoundingClientRect().height + 1 >
-           tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
-      tab.scrollIntoView(false);
-    } else if ( tab.screenY < tabContainer.screenY ) {
-      tab.scrollIntoView(true);
-    }
-    
+    setTimeout(() => {
+      let tab = gBrowser.selectedTab;
+      let tabContainer = gBrowser.tabContainer;
+      if ( tab.screenY + tab.getBoundingClientRect().height + 1 >
+             tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
+        tab.scrollIntoView(false);
+      } else if ( tab.screenY < tabContainer.screenY ) {
+        tab.scrollIntoView(true);
+      }
+    }, gReduceMotion ? 0 : 150);
     let width = gBrowser.tabContainer.getBoundingClientRect().width;
     if (verticalTabbar_minWidth <= width)
       Services.prefs.setIntPref("ucjs.tabWidth", width);
