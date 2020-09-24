@@ -6,6 +6,8 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/25 05:00 use ResizeObserver instead resize event
+// @version        2020/09/25 05:00 adjust allTabsMenu to make including pinned tab
 // @version        2020/09/23 01:30 cosme label pinned
 // @version        2020/09/25 01:00 dblclick splitter toggle tabbar
 // @version        2020/09/25 01:00 check gBrowserInit.delayedStartupFinished
@@ -195,6 +197,10 @@ function verticalTabLiteforFx() {
   .tab-label-container[textoverflow]:not([labeldirection]):not([pinned]):-moz-locale-dir(ltr)   {
       direction: ltr;
       mask-image: linear-gradient(to left, transparent, black 0.5em) !important;
+  }
+  /*scrollbar color*/
+  toolbar[brighttext] #tabbrowser-tabs * {
+    scrollbar-color: rgba(249,249,250,.4) rgba(20,20,25,.3) !important;
   }
 
  /*bollow css code from https://egg.5ch.net/test/read.cgi/software/1579702570/676 */
@@ -625,7 +631,6 @@ function verticalTabLiteforFx() {
   
   gBrowser.tabContainer.addEventListener('SSTabRestoring', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
-  window.addEventListener('resize', ensureVisible, false);
   function ensureVisible(event) {
     setTimeout(() => {
       let tab = gBrowser.selectedTab;
@@ -637,15 +642,35 @@ function verticalTabLiteforFx() {
         tab.scrollIntoView(true);
       }
     }, gReduceMotion ? 0 : 150);
-
-    // check width only while dragging of splitter
-    if (vtbSplitter.getAttribute("state") == "dragging") {
-      let width = gBrowser.tabContainer.getBoundingClientRect().width;
-      if (verticalTabbar_minWidth <= width)
-        Services.prefs.setIntPref("ucjs.tabWidth", width);
-    }
   }
 
+  // check width only while dragging of splitter
+  const resizeObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+      if(entry.contentBoxSize) {
+        ensureVisible();
+        if (vtbSplitter.getAttribute("state") == "dragging") {
+          let width = vtbTabsToolbar.getBoundingClientRect().width;
+          if (verticalTabbar_minWidth <= width) {
+            sizeofToolbottun();
+            Services.prefs.setIntPref("ucjs.tabWidth", width);
+          }
+        }
+      }
+    }
+  });
+  resizeObserver.observe(vtbTabsToolbar);
+
+  // adjust button size
+  sizeofToolbottun();
+  function sizeofToolbottun() {
+    let width = vtbTabsToolbar.getBoundingClientRect().width;
+    let btn = document.querySelector("#new-tab-button .toolbarbutton-icon");
+    btn.style.setProperty("width", "auto", "");
+    btn.style.setProperty("padding", "6px " + (width - 16 - 4) / 2 + "px", "");
+    btn = document.querySelector("#alltabs-button .toolbarbutton-badge-stack");
+    btn.style.setProperty("padding", "6px " + (width - 16 - 4) / 2 + "px", "");
+  };
   // dblclick splitter toggle tabbar
   vtbSplitter.addEventListener('dblclick', vtbSplitter_toggle, false);
   function vtbSplitter_toggle(event) {
@@ -654,4 +679,16 @@ function verticalTabLiteforFx() {
     else
       vtbSplitter.setAttribute("state", "collapsed");
   }
+
+  // adjust allTabsMenu to make including pinned tab
+  func = gTabsPanel.init.toString();
+  func = func.replace(
+  'filterFn: tab => !tab.pinned && !tab.hidden,',
+  'filterFn: tab => !tab.hidden,'
+  );
+  gTabsPanel.init = new Function(
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
+  );
+  
 }
