@@ -6,6 +6,7 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/23 01:00 cosme
 // @version        2020/09/21 01:00 force ReducedMotion for tab manuplation
 // @version        2020/09/21 00:00 78ESR fix close button
 // @version        2020/09/16 20:00 78ESR make tab resizabe (todo pinned tab)
@@ -57,7 +58,7 @@ function verticalTabLiteforFx() {
     font-size: calc(${verticalTab_height}px - 3px) !important;
   }
 
-   .tabbrowser-tab:not([pinned]) {
+  .tabbrowser-tab:not([pinned]) {
     width: auto !important;
     max-width: auto !important;
     transition: none !important;
@@ -126,7 +127,10 @@ function verticalTabLiteforFx() {
 
   /* height of menu bar */
   :root:not([tabsintitlebar]) #toolbar-menubar {
-    height: 24px;
+    height: 30px;
+  }
+  :root:not([tabsintitlebar]) #main-menubar {
+    padding-top: 4px;
   }
 
   /*  */
@@ -162,6 +166,64 @@ function verticalTabLiteforFx() {
       display: none !important
   }
 
+  /*cosme*/
+  .tab-content {
+    padding: 0 2px !important;
+  }
+  .tab-label {
+      line-height: 1.5em !important;
+  }
+  .tab-label-container[textoverflow][labeldirection="ltr"]:not([pinned]),
+  .tab-label-container[textoverflow]:not([labeldirection]):not([pinned]):-moz-locale-dir(ltr)   {
+      direction: ltr;
+      mask-image: linear-gradient(to left, transparent, black 0.5em) !important;
+  }
+
+ /*bollow css code from https://egg.5ch.net/test/read.cgi/software/1579702570/676 */
+  /* ピン留めしたタブicon左右位置調整 */
+  .tab-throbber[pinned],
+  .tab-sharing-icon-overlay[pinned],
+  .tab-icon-pending[pinned],
+  .tab-icon-image[pinned] {
+    margin-inline-end: 6px;
+  }
+  /* ピン留めしたタブに閉じるボタンを表示する・左右位置調整 */
+  #vtb_TabsToolbar .tabbrowser-tab[pinned]:not([tabProtect]) .tab-close-button {
+    visibility:visible !important;
+    display: unset !important;
+    margin-inline-end: -2px;
+  }
+  /* ピン留めしたタブのサウンドアイコン */
+  #vtb_TabsToolbar .tab-icon-overlay:-moz-any([soundplaying],[muted],[activemedia-blocked]),
+  #vtb_TabsToolbar .tab-icon-overlay:-moz-any([soundplaying],[muted][activemedia]) {
+    display: none !important;;
+  }     
+  #vtb_TabsToolbar .tabbrowser-tab[pinned] .tab-icon-sound[soundplaying] {
+    color: #00ACE5;
+    visibility: visible;
+    display: unset !important;
+  }
+  #vtb_TabsToolbar .tabbrowser-tab[pinned] .tab-icon-sound[muted] {
+    color: #FF6E00;
+    visibility: visible;
+    display: unset !important;
+  } 
+  /* ピン留めしたタブにピンマークを付ける */
+  #vtb_TabsToolbar .tabbrowser-tab[pinned="true"] .tab-content::before {
+    content: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOCAYAAAD9lDaoAAABPUlEQVQokY3RTUtCQRTG8WnRNwj6DDkzotwLBoVBZLeIgsCglYvAct0LSLlICIqLm7LAIIQIAqMWiULaQsyITOkFgtpEuwokiJDE9J6nXWpG9F8efnAOM4zVVY6PH9B+NygxUC7nnSsAWtjPimdOlxF1gI7HQLkJ0OM0KpWQowEZJ2rweUuiuGNDKeUGPfhhvK+jAVFGgo4sKAQFVgcFZq3ielNRWr9BNTfqQtoMIyJw5eNYUAUCw0obY4wxHNraKd71RGkJSprxFuKIuARmpHyprUhxIClBSSuMPY5bP8dipwlrI6q1hrLqPeWHQFEFpTDHpc+E2JSKarY30XDwZ6bvhuJ2vG504MLLcTon8bHbQ01vFA54z++WbfnYJC8s2UVB1yzzTUjTtO2mYX26rvf/+gX1eTwe95/gP30BeHKkcA2on8MAAAAASUVORK5CYII=") !important;
+    position: absolute !important;
+    z-index: -1 !important;
+    margin-left: 13px !important;
+    margin-right: 0px !important;
+    margin-top: -14px !important;
+    display: block !important;
+    filter: saturate(150%) !important;
+  }
+  /* タブのfaviconよりもピンマークを上にする */
+  #vtb_TabsToolbar .tabbrowser-tab[pinned="true"] .tab-icon-image {
+    position: relative !important;
+    z-index: -2 !important;
+  }   
   `;
   var sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
   var uri = makeURI('data:text/css;charset=UTF=8,' + encodeURIComponent(css));
@@ -265,6 +327,9 @@ function verticalTabLiteforFx() {
     verticalTabLiteforFx.observer.disconnect();
   }, {once: true});
 
+  gBrowser.tabContainer._positionPinnedTabs = function _positionPinnedTabs() {
+      return;
+  }
   gBrowser.tabContainer._updateCloseButtons = function _updateCloseButtons() {
       return;
   }
@@ -347,16 +412,10 @@ function verticalTabLiteforFx() {
     if (newIndex == null)
       return;
     if (newIndex < this.allTabs.length) {
-      if (this.allTabs[newIndex].pinned)
-        this.allTabs[newIndex].style.setProperty("box-shadow","4px 0px 0px 0px #f00 inset","important");
-      else
-        this.allTabs[newIndex].style.setProperty("box-shadow","0px 2px 0px 0px #f00 inset, 0px -2px 0px 0px #f00","important");
+      this.allTabs[newIndex].style.setProperty("box-shadow","0px 2px 0px 0px #f00 inset, 0px -2px 0px 0px #f00","important");
     } else {
       newIndex = gBrowser.tabContainer.lastVisibleTab();
       if (newIndex >= 0)
-      if (this.allTabs[newIndex].pinned)
-        this.allTabs[newIndex].style.setProperty("box-shadow","-4px 0px 0px 0px #f00 inset","important");
-      else
         this.allTabs[newIndex].style.setProperty("box-shadow","0px -2px 0px 0px #f00 inset, 0px 2px 0px 0px #f00","important");
     }
   };
@@ -364,28 +423,12 @@ function verticalTabLiteforFx() {
   gBrowser.tabContainer._getDropIndex = function(aEvent, isLink) {
     var tabs = this.allTabs;
     for (let i = 0; i < tabs.length; i++){
-      if(tabs[i].pinned) {
-        if (aEvent.screenX >= tabs[i].screenX &&
-            aEvent.screenX < tabs[i].screenX + tabs[i].getBoundingClientRect().width / 2 &&
-            aEvent.screenY >= tabs[i].screenY &&
-            aEvent.screenY < tabs[i].screenY + tabs[i].getBoundingClientRect().height)
-          return i;
-        if (aEvent.screenX >= tabs[i].screenX + tabs[i].getBoundingClientRect().width / 2 &&
-            aEvent.screenX < tabs[i].screenX + tabs[i].getBoundingClientRect().width &&
-            aEvent.screenY >= tabs[i].screenY &&
-            aEvent.screenY < tabs[i].screenY + tabs[i].getBoundingClientRect().height)
-          return i + 1;
-      }
-    }
-    for (let i = 0; i < tabs.length; i++){
-      if(!tabs[i].pinned) {
-        if (aEvent.screenY >= tabs[i].screenY &&
-            aEvent.screenY < tabs[i].screenY + tabs[i].getBoundingClientRect().height / 2)
-          return i;
-        if (aEvent.screenY >= tabs[i].screenY + tabs[i].getBoundingClientRect().height / 2 &&
-            aEvent.screenY < tabs[i].screenY + tabs[i].getBoundingClientRect().height)
-          return i + 1;
-      }
+      if (aEvent.screenY >= tabs[i].screenY &&
+          aEvent.screenY < tabs[i].screenY + tabs[i].getBoundingClientRect().height / 2)
+        return i;
+      if (aEvent.screenY >= tabs[i].screenY + tabs[i].getBoundingClientRect().height / 2 &&
+          aEvent.screenY < tabs[i].screenY + tabs[i].getBoundingClientRect().height)
+        return i + 1;
     }
     return tabs.length;
   };
@@ -541,6 +584,22 @@ function verticalTabLiteforFx() {
       delete draggedTab._dragData;
     }
   };
+
+  func = gBrowser.tabContainer.on_dragend.toString();
+  func = func.replace(
+  'var wX = window.screenX;',
+  'var wX = window.screenX;var wY = window.screenY;'
+  ).replace(
+  'let detachTabThresholdY = window.screenY + rect.top + 1.5 * rect.height;',
+  'let detachTabThresholdX = window.screenX + rect.left;'
+  ).replace(
+  'if (eY < detachTabThresholdY && eY > window.screenY) {',
+  'if (eX < detachTabThresholdX && eX > window.screenX) {'
+  );
+  gBrowser.tabContainer.on_dragend = new Function(
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
+  );
   
   gBrowser.tabContainer.addEventListener('SSTabRestoring', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
