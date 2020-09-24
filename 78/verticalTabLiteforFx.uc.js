@@ -6,6 +6,7 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/23 01:30 cosme label pinned
 // @version        2020/09/25 01:00 dblclick splitter toggle tabbar
 // @version        2020/09/25 01:00 check gBrowserInit.delayedStartupFinished
 // @version        2020/09/23 01:00 cosme
@@ -197,6 +198,10 @@ function verticalTabLiteforFx() {
   }
 
  /*bollow css code from https://egg.5ch.net/test/read.cgi/software/1579702570/676 */
+  /* ピン留めしたタブのタイトルをグラデーション表示 */  
+  #vtb_TabsToolbar .tab-label-container[textoverflow][labeldirection=ltr][pinned] {
+      mask-image: linear-gradient(to left, transparent, black 0.5em)!important;
+  }
   /* ピン留めしたタブicon左右位置調整 */
   .tab-throbber[pinned],
   .tab-sharing-icon-overlay[pinned],
