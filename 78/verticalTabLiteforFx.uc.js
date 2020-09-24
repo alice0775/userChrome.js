@@ -6,6 +6,8 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/09/25 01:00 dblclick splitter toggle tabbar
+// @version        2020/09/25 01:00 check gBrowserInit.delayedStartupFinished
 // @version        2020/09/23 01:00 cosme
 // @version        2020/09/21 01:00 force ReducedMotion for tab manuplation
 // @version        2020/09/21 00:00 78ESR fix close button
@@ -17,7 +19,22 @@
 // @version        2019/10/22 00:00 68ESR
 // ==/UserScript==
 "user strict";
-verticalTabLiteforFx();
+// We should only start the redirection if the browser window has finished
+// starting up. Otherwise, we should wait until the startup is done.
+if (gBrowserInit.delayedStartupFinished) {
+  verticalTabLiteforFx();
+} else {
+  let delayedStartupFinished = (subject, topic) => {
+    if (topic == "browser-delayed-startup-finished" &&
+        subject == window) {
+      Services.obs.removeObserver(delayedStartupFinished, topic);
+      verticalTabLiteforFx();
+    }
+  };
+  Services.obs.addObserver(delayedStartupFinished,
+                           "browser-delayed-startup-finished");
+}
+
 function verticalTabLiteforFx() {
   let verticalTabbar_maxWidth = 225;  /* タブバーの横幅 px */
   let verticalTab_height = 18;  /* タブの高さ px */
@@ -615,9 +632,21 @@ function verticalTabLiteforFx() {
         tab.scrollIntoView(true);
       }
     }, gReduceMotion ? 0 : 150);
-    let width = gBrowser.tabContainer.getBoundingClientRect().width;
-    if (verticalTabbar_minWidth <= width)
-      Services.prefs.setIntPref("ucjs.tabWidth", width);
+
+    // check width only while dragging of splitter
+    if (vtbSplitter.getAttribute("state") == "dragging") {
+      let width = gBrowser.tabContainer.getBoundingClientRect().width;
+      if (verticalTabbar_minWidth <= width)
+        Services.prefs.setIntPref("ucjs.tabWidth", width);
+    }
   }
 
+  // dblclick splitter toggle tabbar
+  vtbSplitter.addEventListener('dblclick', vtbSplitter_toggle, false);
+  function vtbSplitter_toggle(event) {
+    if (vtbSplitter.getAttribute("state") == "collapsed")
+      vtbSplitter.setAttribute("state", "open");
+    else
+      vtbSplitter.setAttribute("state", "collapsed");
+  }
 }
