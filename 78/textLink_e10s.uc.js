@@ -6,13 +6,13 @@
 // @include        chrome://browser/content/web-panels.xul
 // @include        chrome://messenger/content/messenger.xul
 // @include        chrome://messenger/content/messageWindow.xul
-// @compatibility  Firefox 77
+// @compatibility  Firefox 78
 // @author         Alice0775
 // @note           Left DblClick         : open link on new tab
 // @note           shift + Left DblClick : open current on new tab but focus oppsite
 // @note           ctrl + Left DblClick  : open current tab
 // @note           alt + Left DblClick   : save as link
-// @note           全角で書かれたURLを解釈するには,user.jsにおいて,user_pref("network.enableIDN", true);
+// @version        2020/10/05 00:00 fix zenkaku
 // @version        2020/05/22 00:00 Bug 1496578 - convert  nsDefaultURIFixup to js and rename it to make it clear it's the only one
 // @version        2018/09/22 00:00 62+
 // @version        2017/11/19 00:00 experiments e10s more releable
@@ -379,7 +379,11 @@ function ucjs_textlink(event) {
         url = url.replace(/\]$/,'');
     }
     */
-    return url;
+    return url.replace(/[\uff01-\uff5e]/g,
+      function(s) {
+        return String.fromCharCode(s.charCodeAt(0) - 0xFEE0);
+      }
+    );
   }
 
 
