@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  69
+// @version        2020/10/06 06:00 remove array
 // @version        2019/06/24 23:00 fix 69 wait for gBrowser initialized
 // @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
@@ -77,14 +78,9 @@ var discardTab = {
 
   SSTabRestored: function(event) {
     let tab = event.target;
-    if (this.aTabLabels[tab.linkedBrowser.currentURI.spec]) {
-      tab.label = this.aTabLabels[tab.linkedBrowser.currentURI.spec];
-      if (typeof this.aTabcount[tab.linkedBrowser.currentURI.spec] != "undefined") {
-        this.aTabcount[tab.linkedBrowser.currentURI.spec]--;
-        if (this.aTabcount[tab.linkedBrowser.currentURI.spec] == 0)
-          delete this.aTabLabels[tab.linkedBrowser.currentURI.spec];
-          delete this.aTabcount[tab.linkedBrowser.currentURI.spec];
-      }
+    if (tab.hasAttribute("discardTabLabel")) {
+      tab.label = tab.getAttribute("discardTabLabel");
+      tab.remobeAttribute("discardTabLabel")
     }
   },
 
@@ -96,18 +92,12 @@ var discardTab = {
     }
   },
 
-  aTabLabels: [],
-  aTabcount: [],
   discardSelectedTab(aTab) {
     if (!aTab.hasAttribute("pending") &&
         !aTab.hasAttribute("busy") &&
         !aTab.closing &&
         !aTab.selected) {
-      this.aTabLabels[aTab.linkedBrowser.currentURI.spec] = aTab.label;
-      if (typeof this.aTabcount[aTab.linkedBrowser.currentURI.spec] == "undefined") {
-        this.aTabcount[aTab.linkedBrowser.currentURI.spec] = 0;
-      }
-      this.aTabcount[aTab.linkedBrowser.currentURI.spec]++;
+      aTab.setAttribute("discardTabLabel", aTab.label);
       gBrowser.discardBrowser(aTab);
     }
   },
