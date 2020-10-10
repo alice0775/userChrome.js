@@ -3,7 +3,7 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Fix alt+wheel mouse skips session history
 // @include        main
-// @compatibility  Firefox 78+
+// @compatibility  Firefox 79+
 // @author         Alice0775
 // @version        2020/10/10 00:00
 // @Note
