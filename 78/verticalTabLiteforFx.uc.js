@@ -6,6 +6,8 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2020/10/21 12:00 fix resize vtb when drag Sidebar splitter
+// @version        2020/10/18 00:00 fix detach Tab Threshold
 // @version        2020/09/25 05:00 use ResizeObserver instead resize event
 // @version        2020/09/25 05:00 adjust allTabsMenu to make including pinned tab
 // @version        2020/09/23 01:30 cosme label pinned
@@ -395,7 +397,7 @@ function verticalTabLiteforFx() {
   gBrowser.tabContainer.clearDropIndicator = function() {
     var tabs = this.allTabs;
     for (let i = 0, len = tabs.length; i < len; i++){
-      let tab_s= tabs[i].style;
+      let tab_s= tabs[i].querySelector(".tab-background").style;
       tab_s.removeProperty("box-shadow");
     }
   };
@@ -440,11 +442,11 @@ function verticalTabLiteforFx() {
     if (newIndex == null)
       return;
     if (newIndex < this.allTabs.length) {
-      this.allTabs[newIndex].style.setProperty("box-shadow","0px 2px 0px 0px #f00 inset, 0px -2px 0px 0px #f00","important");
+      this.allTabs[newIndex].querySelector(".tab-background").style.setProperty("box-shadow","0px 2px 0px 0px #f00 inset, 0px -2px 0px 0px #f00","important");
     } else {
       newIndex = gBrowser.tabContainer.lastVisibleTab();
       if (newIndex >= 0)
-        this.allTabs[newIndex].style.setProperty("box-shadow","0px -2px 0px 0px #f00 inset, 0px 2px 0px 0px #f00","important");
+        this.allTabs[newIndex].querySelector(".tab-background").style.setProperty("box-shadow","0px -2px 0px 0px #f00 inset, 0px 2px 0px 0px #f00","important");
     }
   };
   gBrowser.tabContainer.addEventListener("dragover", gBrowser.tabContainer.on_dragover, true);
@@ -619,7 +621,7 @@ function verticalTabLiteforFx() {
   'var wX = window.screenX;var wY = window.screenY;'
   ).replace(
   'let detachTabThresholdY = window.screenY + rect.top + 1.5 * rect.height;',
-  'let detachTabThresholdX = window.screenX + rect.left;'
+  'let detachTabThresholdX = window.screenX + rect.left + rect.width + 100;'
   ).replace(
   'if (eY < detachTabThresholdY && eY > window.screenY) {',
   'if (eX < detachTabThresholdX && eX > window.screenX) {'
@@ -649,7 +651,8 @@ function verticalTabLiteforFx() {
     for (let entry of entries) {
       if(entry.contentBoxSize) {
         ensureVisible();
-        if (vtbSplitter.getAttribute("state") == "dragging") {
+        if (vtbSplitter.getAttribute("state") == "dragging" ||
+            SidebarUI._splitter.getAttribute("state") == "dragging") {
           let width = vtbTabsToolbar.getBoundingClientRect().width;
           if (verticalTabbar_minWidth <= width) {
             sizeofToolbottun();
