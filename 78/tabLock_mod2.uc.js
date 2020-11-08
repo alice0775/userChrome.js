@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  78
+// @version        2020/11/09 06:20 Bug 1590538 - Copying a link and using "Paste & Go" results in error when HTTPS Everywhere add-on is installed
 // @version        2020/07/16 20:20 Bug 1635094 - Cleanup the referrerinfo code
 // @version        2020/05/12 00:00 Removed unused pref
 // @version        2020/02/12 16:30 fix revert url when open from ul bar
@@ -58,14 +59,26 @@ patch: {
     break patch;
 
   gURLBar._loadURL_org = gURLBar._loadURL;
-  gURLBar._loadURL = function _loadURL(url, where, openParams) {
-    if (url && where  == "current" && "isLockTab" in gBrowser &&
+  gURLBar._loadURL = function _loadURL(
+    url,
+    openUILinkWhere,
+    params,
+    resultDetails = null,
+    browser = this.window.gBrowser.selectedBrowser
+  ) {
+    if (url && openUILinkWhere  == "current" && "isLockTab" in gBrowser &&
         gBrowser.isLockTab(gBrowser.selectedTab) &&
         !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
         !gBrowser.isHashLink(url, gBrowser.currentURI.spec)) {
-      where  = "tab";
+      openUILinkWhere  = "tab";
     }
-    gURLBar._loadURL_org(url, where, openParams);
+    gURLBar._loadURL_org(
+      url,
+      openUILinkWhere,
+      params,
+      resultDetails = null,
+      browser = this.window.gBrowser.selectedBrowser
+    );
   }
 
   window.tabLock = {
