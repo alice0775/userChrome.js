@@ -5,7 +5,8 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
-// @compatibility  84+
+// @compatibility  84 ,85+
+// @version        2020/11/18 06:20 Bug 1671983 - Remove E10SUtils.shouldLoadURI
 // @version        2020/11/09 06:20 Bug 1641287 - Malicious website can hijack Google search initiated from address bar
 // @version        2020/11/09 06:20 Bug 1590538 - Copying a link and using "Paste & Go" results in error when HTTPS Everywhere add-on is installed
 // @version        2020/07/16 20:20 Bug 1635094 - Cleanup the referrerinfo code
@@ -429,7 +430,6 @@ patch: {
                              "browser-delayed-startup-finished");
   }
 
-
 (function() {
   'use strict';
 
@@ -469,28 +469,14 @@ patch: {
       event.preventDefault();
       event.stopPropagation();
 
-     let referrerInfo = Cc["@mozilla.org/referrer-info;1"].createInstance(Ci.nsIReferrerInfo);
-     if (node) {
-       referrerInfo.initWithElement(node);
-     } else {
-       referrerInfo.initWithDocument(ownerDoc);
-      }
-      referrerInfo = E10SUtils.serializeReferrerInfo(referrerInfo);
 
-      let userContextId = null;
-      if (ownerDoc.nodePrincipal.originAttributes.userContextId) {
-        userContextId = ownerDoc.nodePrincipal.originAttributes.userContextId;
-      }
-
-      sendAsyncMessage('openLinkByLockTab', 
-        {url: url, 
-         target: target,
-         documentURI: ownerDoc.documentURI,
-         referrerInfo: referrerInfo,
-         userContextId: userContextId,
-         originPrincipal: ownerDoc.nodePrincipal,
-         triggeringPrincipal: ownerDoc.nodePrincipal,
+      let event2 = new MouseEvent('click', {
+          view: event.originalTarget.ownerDocument.defaultView,
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true
         });
+      event.target.dispatchEvent(event2);
     }
   
     function _hrefAndLinkNodeForClickEvent(event) {
@@ -541,28 +527,6 @@ patch: {
       return { isHash: gBrowser.isHashLink(message.data.url, message.data.documentURI) };
     }
   );
-  window.messageManager.addMessageListener('openLinkByLockTab',
-    function(message) {
-      let referrerURI = message.data.referrerURI;
-      try {
-        referrerURI = Services.io.newURI(message.data.referrerURI)
-      } catch(e) {
-        referrerURI = null;
-      }
-      let params = {
-          relatedToCurrent: Services.prefs.getBoolPref("browser.tabs.insertRelatedAfterCurrent"),
-          inBackground: Services.prefs.getBoolPref("browser.tabs.loadInBackground"),
-          referrerURI: referrerURI,
-          noReferrer: message.data.noReferrer,
-          referrerPolicy: message.data.referrerPolicy,
-          userContextId: message.data.userContextId,
-          originPrincipal: message.data.originPrincipal,
-          triggeringPrincipal: message.data.triggeringPrincipal
-      };
-      window.openLinkIn(message.data.url, "tab", params);
-    }
-  );
-
 }());
 
 }
