@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  84 ,85+
+// @version        2020/11/23 20:20 If exist download attribute
 // @version        2020/11/18 06:20 Bug 1671983 - Remove E10SUtils.shouldLoadURI
 // @version        2020/11/09 06:20 Bug 1641287 - Malicious website can hijack Google search initiated from address bar
 // @version        2020/11/09 06:20 Bug 1590538 - Copying a link and using "Paste & Go" results in error when HTTPS Everywhere add-on is installed
@@ -450,6 +451,7 @@ patch: {
       let ownerDoc = event.originalTarget.ownerDocument;
 
       if (!url || !node || node.getAttribute("href") == "" ||    /*xxxx fix ""*/
+          node.hasAttribute("download") ||
            /^\s*(javascript:|data:|moz-extension:)/.test(url))
         return;
 
