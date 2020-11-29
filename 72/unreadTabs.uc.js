@@ -6,6 +6,7 @@
 // @include        main
 // @modified by    Alice0775
 // @compatibility  72
+// @version        2020/11/29 20:00 add try catch
 // @version        2019/11/14 00:00 Fix 72+ Bug 1591145 Remove Document.GetAnonymousElementByAttribute
 // @version        2019/06/24 23:00 wait for gBrowser initialized
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
@@ -236,10 +237,10 @@ const unreadTabs = {
   uninitTab: function(aTab){
     if (aTab.unreadtimer)
       clearTimeout(aTab.unreadtimer);
-    //try {
+    try {
       aTab.unreadTabsEventListener.destroy();
       delete aTab.unreadTabsEventListener;
-    //} catch(e) {}
+    } catch(e) {}
   },
 
   // タブの状態をセッションデータに保存
