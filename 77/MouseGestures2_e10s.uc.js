@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 77
+// @version       2020/11/29 20:00 add コンテナータブを指定してリンクを開く
 // @version       2020/08/22 21:11 fix すべてのタブを閉じる
 // @version       2020/06/01 00:21 fix content-type
 // @version       2020/04/25 10:00 Bug 1612068 - Move zoom from the content viewer to the browsing context
@@ -106,6 +107,8 @@ var ucjsMouseGestures = {
         ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
         ['', 'すべてタブをリロード', function(){ typeof gBrowser.reloadTabs == "function" ? gBrowser.reloadTabs(gBrowser.visibleTabs) : gBrowser.reloadAllTabs(); } ],
         ['', '読込中止', function(){ document.getElementById("Browser:Stop").doCommand(); } ],
+
+        ['', 'コンテナータブを指定してリンクを開く', function(){ ucjsMouseGestures_helper.openLinkInContainerTab(); } ],
 
         ['', 'テキストリンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
         ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
@@ -296,12 +299,12 @@ var ucjsMouseGestures = {
               // ucjsMouseGestures.executeInChrome: function(func, args) // function oject, array [string, ...]
 
 
+              /*
               Services.console.logStringMessage("contentScript window: " + window); //should undefined
               Services.console.logStringMessage("contentScript this: " + this);
               Services.console.logStringMessage("contentScript content: " + content);
               Services.console.logStringMessage("contentScript this === content: " + (this === content));
               Services.console.logStringMessage("contentScript _target: " + ucjsMouseGestures._target);
-              /*
               Services.console.logStringMessage("contentScript test: " + ucjsMouseGestures._imgSRC);
               Services.console.logStringMessage("contentScript test: " +
                                         ucjsMouseGestures._getLinkTEXT(ucjsMouseGestures._target)) ;
@@ -429,7 +432,7 @@ var ucjsMouseGestures = {
   },
 
   receiveMessage: function(message) {
-    Services.console.logStringMessage("message from framescript: " + message.name);
+    //Services.console.logStringMessage("message from framescript: " + message.name);
     switch(message.name) {
       case "ucjsMouseGestures_linkURL_isWheelCancel":
         return { _isWheelCanceled: this._isWheelCanceled};
@@ -1014,7 +1017,7 @@ let ucjsMouseGestures_framescript = {
           func : func.toString(),
           args : JSON.stringify(args)
         }
-        Services.console.logStringMessage("this " + content);
+        //Services.console.logStringMessage("this " + content);
         sendAsyncMessage("ucjsMouseGestures_executeInChrome",
               json
         );
@@ -1759,5 +1762,135 @@ let ucjsMouseGestures_helper = {
     }
     return tabsToStart;
   },
+
+  // open uri from Container Popup
+  openLinkInContainerTab: function(screenX, screenY) {
+    let that = ucjsMouseGestures;
+
+    if (typeof screenX == "undefined")
+      screenX = that._lastX;
+    if (typeof screenY == "undefined")
+      screenY = that._lastY;
+
+    if(document.getElementById("ucjsMouseGestures_popup")) {
+      document.getElementById("mainPopupSet").
+               removeChild(document.getElementById("ucjsMouseGestures_popup"));
+    }
+    let popup = document.createXULElement("menupopup");
+    document.getElementById("mainPopupSet").appendChild(popup);
+    popup.setAttribute("id", "ucjsMouseGestures_popup");
+    popup.setAttribute("oncommand", "ucjsMouseGestures_helper.openLinkInTabFromContainerMenu(event);");
+   
+    let createMenuOptions = {
+      isContextMenu: true,
+      showDefaultTab: true,
+      excludeUserContextId: null, //gBrowser.selectedBrowser.contentPrincipal.userContextId
+    };
+    this.createUserContextMenu(popup, createMenuOptions);
+    
+		let ratio = 1;
+		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
+		if (os == "Darwin") {
+			ratio = popup.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
+		            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
+		}
+		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
+  },
+
+  openLinkInTabFromContainerMenu: function(event) {
+    let that = ucjsMouseGestures;
+    let docURL = that._docURL;
+    let linkURL = that._linkURL || that._docURL; // link url or docment url
+    let refURI = null
+    try {
+      refURI = makeURI(docURL);
+    } catch(e) {
+    }
+    let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
+                                              "nsIReferrerInfo",
+                                              "init");
+    referrerInfo = new ReferrerInfo(
+                Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, refURI);
+    let param = {
+      relatedToCurrent: true,
+      inBackground: true,
+			referrerInfo: referrerInfo,
+			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({}),
+		  userContextId: parseInt(event.target.getAttribute("data-usercontextid")),
+    };
+
+    gBrowser.loadOneTab(linkURL, param);
+  },
+
+  createUserContextMenu: function(
+    popup,
+    {
+      isContextMenu = false,
+      excludeUserContextId = 0,
+      showDefaultTab = false,
+      useAccessKeys = true,
+    } = {}
+  ) {
+
+    let bundle = Services.strings.createBundle(
+      "chrome://browser/locale/browser.properties"
+    );
+    let docfrag = document.createDocumentFragment();
+
+    // If we are excluding a userContextId, we want to add a 'no-container' item.
+    if (excludeUserContextId || showDefaultTab) {
+      let menuitem = document.createXULElement("menuitem");
+      menuitem.setAttribute("data-usercontextid", "0");
+      menuitem.setAttribute(
+        "label",
+        bundle.GetStringFromName("userContextNone.label")
+      );
+      menuitem.setAttribute(
+        "accesskey",
+        bundle.GetStringFromName("userContextNone.accesskey")
+      );
+
+      // We don't set an oncommand/command attribute because if we have
+      // to exclude a userContextId we are generating the contextMenu and
+      // isContextMenu will be true.
+
+      docfrag.appendChild(menuitem);
+
+      let menuseparator = document.createXULElement("menuseparator");
+      docfrag.appendChild(menuseparator);
+    }
+
+    ContextualIdentityService.getPublicIdentities().forEach(identity => {
+      if (identity.userContextId == excludeUserContextId) {
+        return;
+      }
+
+      let menuitem = document.createXULElement("menuitem");
+      menuitem.setAttribute("data-usercontextid", identity.userContextId);
+      menuitem.setAttribute(
+        "label",
+        ContextualIdentityService.getUserContextLabel(identity.userContextId)
+      );
+
+      if (identity.accessKey && useAccessKeys) {
+        menuitem.setAttribute(
+          "accesskey",
+          bundle.GetStringFromName(identity.accessKey)
+        );
+      }
+
+      menuitem.classList.add("menuitem-iconic");
+      menuitem.classList.add("identity-color-" + identity.color);
+      menuitem.classList.add("identity-icon-" + identity.icon);
+
+      docfrag.appendChild(menuitem);
+    });
+
+    popup.appendChild(docfrag);
+    return true;
+  },
+
+
+
 
 }
