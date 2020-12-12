@@ -7,6 +7,7 @@
 // @include        chrome://browser/content/places/bookmarksSidebar.xhtml
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/13 simplify
 // @version        2020/12/13 save folder state
 // @version        2020/12/12
 // ==/UserScript==
@@ -23,41 +24,44 @@ var openSidebarContextMenu = {
       menuitem.setAttribute("selectiontype", "single");
       menuitem.setAttribute("selection", "bookmark|folder|query|livemark/feedURI");
       menuitem.setAttribute("oncommand", "openSidebarContextMenu.showSidebar();");
-      var afterNode = placesContext.firstChild; //document.getElementById("placesContext_openLinks:tabs");
+      var afterNode = placesContext.firstChild;
       placesContext.insertBefore(menuitem, afterNode);
   },
 
-  showSidebar : function () {
+  showSidebar: function() {
     let view = PlacesUIUtils.getViewForNode(document.popupNode);
     let node = view.selectedNode;
-
     let win = Services.wm.getMostRecentWindow("navigator:browser");
-    let sidebarWin = win.SidebarUI.browser.contentWindow;
-    let delay = 0;
     win.SidebarUI._show("viewBookmarksSidebar").then(() => {
-      let tree = sidebarWin.document.getElementById("bookmarks-view");
-      if (sidebarWin.document.getElementById("search-box").value) {
-        sidebarWin.document.getElementById("search-box").value = "";
-        tree.place = tree.place;
-        delay = 250;
-      }
-      sidebarWin.setTimeout(() => {
-        tree.selectPlaceURI(node.uri);
-
-        // xxx
-        this.xulStore(tree);
-
-        let index = tree.currentIndex;
-        if (tree.view.isContainer(index)){
-          if (!tree.view.isContainerOpen(index)) {
-            tree.view.toggleOpenState(index);
-          }
-          let e = tree.view.selection.currentIndex
-          tree.scrollToRow(e)
-        }
-        tree.focus();
-      }, delay);
+      let sidebarWin = win.SidebarUI.browser.contentWindow;
+      sidebarWin.openSidebarContextMenu.show(node.uri);
     });
+  },
+
+  show: function(uri) {
+    let delay = 0;
+    let tree = document.getElementById("bookmarks-view");
+    if (document.getElementById("search-box").value) {
+      document.getElementById("search-box").value = "";
+      tree.place = tree.place;
+      delay = 250;
+    }
+    setTimeout(() => {
+      tree.selectPlaceURI(uri);
+
+      // xxx
+      this.xulStore(tree);
+
+      let index = tree.currentIndex;
+      if (tree.view.isContainer(index)) {
+        if (!tree.view.isContainerOpen(index)) {
+          tree.view.toggleOpenState(index);
+        }
+        let e = tree.view.selection.currentIndex
+        tree.scrollToRow(e)
+      }
+      tree.focus();
+    }, delay);
   },
 
   xulStore: function(tree) {
