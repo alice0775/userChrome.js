@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2020/12/13 fix scroll position
 // @version       2020/12/12 remove prefs and simplify
 // @version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
 // @version       2019/01/18 fix for 66(Bug 1482389 - Convert TreeBoxObject to XULTreeElement)
@@ -83,6 +84,9 @@ var acBookMarkTreeFolder = {
 
   _stimer: null,
   onScroll: function(){
+    if (document.getElementById("search-box").value)
+      return;
+
     if (this._stimer)
       clearTimeout(this._stimer);
     this._stimer = setTimeout(() => {
