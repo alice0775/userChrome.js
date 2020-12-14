@@ -7,6 +7,7 @@
 // @include        chrome://browser/content/places/bookmarksSidebar.xhtml
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/14 simplify & ucjs_expand_sidebar hack
 // @version        2020/12/13 simplify
 // @version        2020/12/13 save folder state
 // @version        2020/12/12
@@ -34,11 +35,24 @@ var openSidebarContextMenu = {
     let win = Services.wm.getMostRecentWindow("navigator:browser");
     win.SidebarUI._show("viewBookmarksSidebar").then(() => {
       let sidebarWin = win.SidebarUI.browser.contentWindow;
-      sidebarWin.openSidebarContextMenu.show(node.uri);
+      sidebarWin.openSidebarContextMenu.show(node);
+
+      // xxx ucjs_expand_sidebar hack
+      if (typeof ucjs_expand_sidebar != "undefined" ) {
+        SidebarUI._box.collapsed = false;
+	      SidebarUI._splitter.hidden = false;
+        ucjs_expand_sidebar._opend = true;
+        ucjs_expand_sidebar._loadKeepItSizes("viewBookmarksSidebar");
+        if (ucjs_expand_sidebar._FLOATING_SIDEBAR) {
+          let x = document.getElementById("appcontent").getBoundingClientRect().x;
+          ucjs_expand_sidebar._sidebar_box.style.setProperty("left", x + "px", "");
+        }
+      }
+      /// xxx
     });
   },
 
-  show: function(uri) {
+  show: function(node) {
     let delay = 0;
     let tree = document.getElementById("bookmarks-view");
     if (document.getElementById("search-box").value) {
@@ -46,8 +60,14 @@ var openSidebarContextMenu = {
       tree.place = tree.place;
       delay = 250;
     }
+    let guid = node.bookmarkGuid
     setTimeout(() => {
-      tree.selectPlaceURI(uri);
+      let aFolderItemId = PlacesUtils.bookmarks.getFolderIdForItem(node.itemId);
+      if (aFolderItemId) {
+        tree.selectItems([guid]);
+      } else {
+        return;
+      }
 
       // xxx
       this.xulStore(tree);
@@ -59,6 +79,8 @@ var openSidebarContextMenu = {
         }
         let e = tree.view.selection.currentIndex
         tree.scrollToRow(e)
+      } else {
+        tree.ensureRowIsVisible(index);
       }
       tree.focus();
     }, delay);
