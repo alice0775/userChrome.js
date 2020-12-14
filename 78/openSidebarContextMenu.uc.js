@@ -7,6 +7,7 @@
 // @include        chrome://browser/content/places/bookmarksSidebar.xhtml
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/14 fix ucjs_expand_sidebar hack
 // @version        2020/12/14 simplify & ucjs_expand_sidebar hack
 // @version        2020/12/13 simplify
 // @version        2020/12/13 save folder state
@@ -38,14 +39,14 @@ var openSidebarContextMenu = {
       sidebarWin.openSidebarContextMenu.show(node);
 
       // xxx ucjs_expand_sidebar hack
-      if (typeof ucjs_expand_sidebar != "undefined" ) {
-        SidebarUI._box.collapsed = false;
-	      SidebarUI._splitter.hidden = false;
-        ucjs_expand_sidebar._opend = true;
-        ucjs_expand_sidebar._loadKeepItSizes("viewBookmarksSidebar");
-        if (ucjs_expand_sidebar._FLOATING_SIDEBAR) {
-          let x = document.getElementById("appcontent").getBoundingClientRect().x;
-          ucjs_expand_sidebar._sidebar_box.style.setProperty("left", x + "px", "");
+      if (typeof win.ucjs_expand_sidebar != "undefined" ) {
+        win.SidebarUI._box.collapsed = false;
+	      win.SidebarUI._splitter.hidden = false;
+        win.ucjs_expand_sidebar._opend = true;
+        win.ucjs_expand_sidebar._loadKeepItSizes("viewBookmarksSidebar");
+        if (win.ucjs_expand_sidebar._FLOATING_SIDEBAR) {
+          let x = win.document.getElementById("appcontent").getBoundingClientRect().x;
+          win.ucjs_expand_sidebar._sidebar_box.style.setProperty("left", x + "px", "");
         }
       }
       /// xxx
