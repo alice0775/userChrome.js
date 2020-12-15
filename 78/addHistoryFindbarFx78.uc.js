@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/16 00:00 新しい順
 // @version        2020/12/15 17:00 simplify
 // ==/UserScript==
 const addHistoryFindbar78 = {
@@ -152,7 +153,7 @@ const addHistoryFindbar78 = {
   },
 
   getHistory: function() {
-    return addHistoryFindbar_storage.getValues("findbar-history", "id", false);
+    return addHistoryFindbar_storage.getValues("findbar-history", "id", true);
   },
 
   onpopupshowing: function(event) {
