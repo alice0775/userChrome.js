@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/16 01:00 ミドルクリックでヒストリー削除
 // @version        2020/12/16 00:00 新しい順
 // @version        2020/12/15 17:00 simplify
 // ==/UserScript==
@@ -75,6 +76,7 @@ const addHistoryFindbar78 = {
     menupopup.setAttribute("onpopupshowing", "addHistoryFindbar78.onpopupshowing(event);");
     menupopup.setAttribute("anonid", "historypopup");
     menupopup.setAttribute("oncommand", "addHistoryFindbar78.copyToFindfield(event);");
+    menupopup.setAttribute("onclick", "addHistoryFindbar78.onclick(event);");
     menu.appendChild(menupopup);
 
     gFindBar._findField.FormHistory =
@@ -116,7 +118,18 @@ const addHistoryFindbar78 = {
     }
   },
 
-  copyToFindfield: function(aEvent){
+  onclick: function(aEvent) {
+    if (event.button != 1)
+      return
+
+    let target = aEvent.originalTarget;
+    let value  = target.getAttribute("data");
+    target.parentNode.removeChild(target);
+
+    addHistoryFindbar_storage.deleteValue("findbar-history", value);
+  },
+
+  copyToFindfield: function(aEvent) {
     var target = aEvent.originalTarget;
     //本来のfindbar-textboxに転記して, ダミーイベント送信
     gFindBar._findField.value  = target.getAttribute("data");
@@ -146,7 +159,7 @@ const addHistoryFindbar78 = {
       }
     }, this.typingSpeed);
   },
-  
+
   clearHistory: function() {
     gFindBar._findField.lastInputValue = "";
     addHistoryFindbar_storage.deleteAll("findbar-history");
@@ -310,6 +323,24 @@ var addHistoryFindbar_storage = {
     stmt.params['fieldname'] = fieldname;
     stmt.params['value'] = value;
     stmt.params['count'] = count;
+    try {
+      stmt.execute();
+    } finally {
+      stmt.finalize();
+    }
+  },
+
+  deleteValue: function(fieldname, value) {
+    if (typeof fieldname != "string" || !fieldname)
+      return;
+    if (typeof value != "string" || !value)
+      return;
+
+    let stmt = this.db.createStatement(
+      "DELETE FROM HistoryFindbar WHERE fieldname = :fieldname AND value = :value"
+    );
+    stmt.params['fieldname'] = fieldname;
+    stmt.params['value'] = value;
     try {
       stmt.execute();
     } finally {
