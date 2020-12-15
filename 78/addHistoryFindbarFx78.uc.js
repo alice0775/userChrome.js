@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/16 01:30 popup before_end
 // @version        2020/12/16 01:00 ミドルクリックでヒストリー削除
 // @version        2020/12/16 00:00 新しい順
 // @version        2020/12/15 17:00 simplify
@@ -75,16 +76,12 @@ const addHistoryFindbar78 = {
     let menupopup = document.createElementNS(this.kNSXUL, "menupopup");
     menupopup.setAttribute("onpopupshowing", "addHistoryFindbar78.onpopupshowing(event);");
     menupopup.setAttribute("anonid", "historypopup");
+    menupopup.setAttribute("position", "before_end");
     menupopup.setAttribute("oncommand", "addHistoryFindbar78.copyToFindfield(event);");
     menupopup.setAttribute("onclick", "addHistoryFindbar78.onclick(event);");
     menu.appendChild(menupopup);
 
-    gFindBar._findField.FormHistory =
-      (ChromeUtils.import("resource://gre/modules/FormHistory.jsm", {})).FormHistory;
     gFindBar._findField.lastInputValue = "";
-
-    gFindBar._findField.addEventListener("focus", this, false);
-    gFindBar._findField.addEventListener("input", this, false);
   },
 
   uninit: function() {
