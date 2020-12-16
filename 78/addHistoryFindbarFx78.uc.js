@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/16 09:30 order by last_used
 // @version        2020/12/16 01:30 popup before_end
 // @version        2020/12/16 01:00 ミドルクリックでヒストリー削除
 // @version        2020/12/16 00:00 新しい順
@@ -150,9 +151,9 @@ const addHistoryFindbar78 = {
       let fieldname = "findbar-history";
       let count = addHistoryFindbar_storage.getCount("findbar-history", value);
       if (!count) {
-        addHistoryFindbar_storage.insert(fieldname, value, 1) ;
+        addHistoryFindbar_storage.insert(fieldname, value, 1, new Date().getTime() ) ;
       } else {
-        addHistoryFindbar_storage.updateCount(fieldname, value, ++count);
+        addHistoryFindbar_storage.updateCount(fieldname, value, ++count, new Date().getTime() );
       }
     }, this.typingSpeed);
   },
@@ -163,7 +164,7 @@ const addHistoryFindbar78 = {
   },
 
   getHistory: function() {
-    return addHistoryFindbar_storage.getValues("findbar-history", "id", true);
+    return addHistoryFindbar_storage.getValues("findbar-history", "last_used", true);
   },
 
   onpopupshowing: function(event) {
@@ -211,11 +212,11 @@ const addHistoryFindbar78 = {
 var addHistoryFindbar_storage = {
   db: null,
   initDB: function() {
-    let file = FileUtils.getFile("UChrm", ["HistoryFindbar.sqlite"]);
+    let file = FileUtils.getFile("UChrm", ["HistoryFindbar1.sqlite"]);
     if (!file.exists()) {
       this.db = Services.storage.openDatabase(file);
       let stmt = this.db.createStatement(
-        "CREATE TABLE HistoryFindbar (id INTEGER PRIMARY KEY AUTOINCREMENT, fieldname TEXT NOT NULL, value TEXT NOT NULL, count INTEGER)"
+        "CREATE TABLE HistoryFindbar (id INTEGER PRIMARY KEY AUTOINCREMENT, fieldname TEXT NOT NULL, value TEXT NOT NULL, count INTEGER, last_used TIMESTAMP)"
       );
       try {
         stmt.execute();
@@ -241,12 +242,14 @@ var addHistoryFindbar_storage = {
       orderBy = "ORDER BY value";
     } else if (order == "count"){
       orderBy = "ORDER BY count";
+    } else if (order == "last_used"){
+      orderBy = "ORDER BY last_used";
     }
     if (desc)
       orderBy += " DESC"
     
     let results = [];
-    let sql = "SELECT value, count FROM HistoryFindbar WHERE fieldname = :fieldname " + orderBy;
+    let sql = "SELECT value, count, last_used FROM HistoryFindbar WHERE fieldname = :fieldname " + orderBy;
     
     let stmt = this.db.createStatement(sql);
     stmt.params['fieldname'] = fieldname;
@@ -254,7 +257,8 @@ var addHistoryFindbar_storage = {
       while (stmt.executeStep()) {
         value = stmt.row.value;
         count = stmt.row.count;
-        results.push({fieldname: fieldname, value: value, count: count});
+        last_used = stmt.row.last_used;
+        results.push({fieldname: fieldname, value: value, count: count, last_used: last_used});
       }
     } finally {
       stmt.finalize();
@@ -285,20 +289,23 @@ var addHistoryFindbar_storage = {
     return count;
   },
 
-  insert: function(fieldname, value, count) {
+  insert: function(fieldname, value, count, last_used) {
     if (typeof fieldname != "string" || !fieldname)
       return;
     if (typeof value != "string" || !value)
       return;
     if (typeof count != "number")
       return;
+    if (typeof last_used != "number")
+      return;
 
     let stmt = this.db.createStatement(
-      "INSERT INTO HistoryFindbar (fieldname, value, count) VALUES (:fieldname, :value, :count)"
+      "INSERT INTO HistoryFindbar (fieldname, value, count, last_used) VALUES (:fieldname, :value, :count, :last_used)"
     );
     stmt.params['fieldname'] = fieldname;
     stmt.params['value'] = value;
     stmt.params['count'] = count;
+    stmt.params['last_used'] = last_used;
     try {
       stmt.execute();
     } catch(ex) {
@@ -308,18 +315,19 @@ var addHistoryFindbar_storage = {
 
   },
 
-  updateCount: function(fieldname, value, count) {
+  updateCount: function(fieldname, value, count, last_used) {
     if (typeof fieldname != "string" || !fieldname)
       return;
     if (typeof value != "string" || !value)
       return;
 
     let stmt = this.db.createStatement(
-      "UPDATE HistoryFindbar SET count = :count WHERE fieldname = :fieldname AND value = :value"
+      "UPDATE HistoryFindbar SET count = :count, last_used = :last_used WHERE fieldname = :fieldname AND value = :value"
     );
     stmt.params['fieldname'] = fieldname;
     stmt.params['value'] = value;
     stmt.params['count'] = count;
+    stmt.params['last_used'] = last_used;
     try {
       stmt.execute();
     } finally {
