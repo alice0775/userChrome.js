@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/16 22:30 use LIMIT
 // @version        2020/12/16 22:00 fix typo
 // @version        2020/12/16 09:30 order by last_used
 // @version        2020/12/16 01:30 popup before_end
@@ -165,18 +166,18 @@ const addHistoryFindbar78 = {
     addHistoryFindbar_storage.deleteAll("findbar-history");
   },
 
-  getHistory: function() {
-    return addHistoryFindbar_storage.getValues("findbar-history", "last_used", true);
+  getHistory: function(max) {
+    return addHistoryFindbar_storage.getValues("findbar-history", "last_used", true, max);
   },
 
   onpopupshowing: function(event) {
-    let results = this.getHistory();
+    let max = 20;
+    let results = this.getHistory(max);
     let popup = event.target;
     while(popup.lastChild) {
       popup.removeChild(popup.lastChild);
     }
 
-    let max = 20;
     for (let entry of results) {
       let text = entry.value;
       let element = document.createElementNS(this.kNSXUL, "menuitem");
@@ -192,9 +193,6 @@ const addHistoryFindbar78 = {
       }
       element.setAttribute("label", text);
       popup.appendChild(element);
-
-      if (max-- < 0)
-        break;
     }
     let element = document.createElementNS(this.kNSXUL, "menuseparator");
     popup.appendChild(element);
@@ -236,7 +234,7 @@ var addHistoryFindbar_storage = {
     } catch(e) {}
   },
 
-  getValues: function(fieldname, order = "", desc = false) {
+  getValues: function(fieldname, order = "", desc = false, max) {
     let orderBy = "";
     if (order == "id") {
       orderBy = "ORDER BY id";
@@ -249,9 +247,12 @@ var addHistoryFindbar_storage = {
     }
     if (desc)
       orderBy += " DESC"
-    
+
     let results = [];
     let sql = "SELECT value, count, last_used FROM HistoryFindbar WHERE fieldname = :fieldname " + orderBy;
+
+    if (typeof max == "number" && max >=0)
+      sql += " LIMIT " + max;
     
     let stmt = this.db.createStatement(sql);
     stmt.params['fieldname'] = fieldname;
