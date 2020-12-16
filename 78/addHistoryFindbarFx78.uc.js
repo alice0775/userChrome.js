@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2020/12/16 22:00 fix typo
 // @version        2020/12/16 09:30 order by last_used
 // @version        2020/12/16 01:30 popup before_end
 // @version        2020/12/16 01:00 ミドルクリックでヒストリー削除
@@ -118,7 +119,7 @@ const addHistoryFindbar78 = {
   },
 
   onclick: function(aEvent) {
-    if (event.button != 1)
+    if (aEvent.button != 1)
       return
 
     let target = aEvent.originalTarget;
