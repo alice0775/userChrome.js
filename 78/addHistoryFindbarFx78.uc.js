@@ -106,6 +106,7 @@ const addHistoryFindbar78 = {
       case 'TabClose':
         break;
       case 'find':
+        gFindBar._findField.lastInputValue = "";
       case 'findagain':
         let text = event.detail.query;
         if (gFindBar._findField.lastInputValue != text &&
@@ -198,8 +199,8 @@ const addHistoryFindbar78 = {
     popup.appendChild(element);
 
     element = document.createElementNS(this.kNSXUL, "menuitem");
-    label = "Clear Search History";
-    akey = "H";
+    let label = "Clear Search History";
+    let akey = "H";
     element.setAttribute("label", label);
     element.setAttribute("accesskey", akey);
     element.setAttribute("oncommand", "event.stopPropagation(); addHistoryFindbar78.clearHistory();");
@@ -255,9 +256,9 @@ var addHistoryFindbar_storage = {
     stmt.params['fieldname'] = fieldname;
     try {
       while (stmt.executeStep()) {
-        value = stmt.row.value;
-        count = stmt.row.count;
-        last_used = stmt.row.last_used;
+        let value = stmt.row.value;
+        let count = stmt.row.count;
+        let last_used = stmt.row.last_used;
         results.push({fieldname: fieldname, value: value, count: count, last_used: last_used});
       }
     } finally {
