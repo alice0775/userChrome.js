@@ -6,9 +6,11 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xhtml
 // @compatibility  Firefox 73+
 // @author         Alice0775
-// @version       2020/12/18 fix closeWhenDone if small size downloaded
-// @version       2020/09/24 fix emptylist layout
-// @version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
+// @version        2020/12/19 WIP:Workaround to avoid closing the manager if download.error/download.canceled.
+// @version        2020/12/18 fix closeWhenDone if small size downloaded
+// @version        2020/09/24 fix emptylist layout
+// @version        2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
+
 // @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1534407 - Enable browser.xhtml by default
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
@@ -65,8 +67,8 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
   Cu.import("resource://gre/modules/Services.jsm");
 
   window.ucjs_downloadManager = {
-    delay: 500, //自動的に閉じる場合の待ち時間(ミリ秒)
-    
+    delay: 500, //自動で閉じる設定の場合、 自動表示しない閾値(ミリ秒)
+
     _summary: null,
     _list: null,
     kshowWhenStarting: "browser.download.manager.showWhenStarting",
@@ -113,8 +115,7 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
 
     uninit: function() {
       window.removeEventListener("unload", this, false);
-      this.autoOpened = false;
-      
+
       if (this._summary) {
         this._summary.removeView(this);
       }
@@ -131,21 +132,27 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
       }
     },
 
-    autoOpened: false,
-    openDownloadManager: function ucjs_openDownloadManager(aForceFocus) {
-      if (aForceFocus)
-        this.autoOpened = false;
-      
+    getDMWindow: function() {
       var enumerator = Services.wm.getEnumerator(null);
       while(enumerator.hasMoreElements()) {
         var win = enumerator.getNext();
         if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xhtml"
           && PrivateBrowsingUtils.isWindowPrivate(window) ==
              PrivateBrowsingUtils.isWindowPrivate(win)) {
-          if (aForceFocus)
-            win.focus();
-          return null;
+          return win;
         }
+      }
+      return null;
+    },
+
+    openDownloadManager: function ucjs_openDownloadManager(aForceFocus) {
+      var win = this.getDMWindow();
+      if (win) {
+        if (aForceFocus) {
+          win.focus();
+          win.autoOpened = false;
+        }
+        return false; //既存
       }
 
       try {
@@ -159,101 +166,58 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
         screenX = 0;
         screenY = 0;
       }
-      return window.open("chrome://browser/content/downloads/contentAreaDownloadsView.xhtml",
+      win = window.open("chrome://browser/content/downloads/contentAreaDownloadsView.xhtml",
                             "Download" +
                               (PrivateBrowsingUtils.isWindowPrivate(window) ? " - Private Window"
                                                                             : ""),
                             "outerWidth=" + width + ",outerHeight=" + height +
                             ",left=" + screenX + ",top=" + screenY +
                             ",chrome,toolbar=yes,dialog=no,resizable");
+       this.success = true;
+       if (aForceFocus)
+         win.autoOpened = false;
+       return win; //新規
     },
 
-    closeDownloadManager: function ucjs_closeDownloadManager() {
-      var enumerator = Services.wm.getEnumerator(null);
-      while(enumerator.hasMoreElements()) {
-        var win = enumerator.getNext();
-        if (win.location == "chrome://browser/content/downloads/contentAreaDownloadsView.xhtml") {
-          win.close();
-          return;
-        }
-      }
+    success: true,
+    onDownloadChanged: function (aDownload) {
+      this.success = this.success && !(aDownload.canceled || aDownload.error);
     },
 
     closeTimer: null,
-
-    onDownloadAdded: function (aDownload) {
+    onSummaryChanged: function (aDownload) {
       var showWhenStarting = Services.prefs.getBoolPref(this.kshowWhenStarting, true);
-      if (!showWhenStarting)
+      if (!showWhenStarting) //自動オープンでないならDMを開かない
         return
 
-      var numDls = 0;
-      if (this._list) {
-        this._list.getAll().then(downloads => {
-
-          for (let download of downloads) {
-            if (!download.stopped)
-              numDls++;
-          }
-          if (numDls == 0)
-            return;
-
-          var closeWhenDone = Services.prefs.getBoolPref(this.kcloseWhenDone, false);
-          var closeWhenDoneIfAutoOpened
-                            = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false);
-          if (!(closeWhenDone || closeWhenDoneIfAutoOpened)) {
-            var win = this.openDownloadManager(false);
-            if (win)
-              this.autoOpened = true;
-          }
-          
-          if (this.closeTimer)
-            clearTimeout(this.closeTimer);
-          this.closeTimer = setTimeout(() => {
-
-            numDls = 0;
-            this._list.getAll().then(downloads => {
-              for (let download of downloads) {
-                if (!download.stopped)
-                  numDls++;
-              }
-              if (numDls == 0) {
-                if (!win)
-                  return;
-                closeWhenDoneIfAutoOpened
-                                  = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false) && this.autoOpen;
-                if (closeWhenDone || closeWhenDoneIfAutoOpened)
-                  win.close();
-              } else {
-                win = this.openDownloadManager(false);
-                if (win)
-                  this.autoOpened = true;
-              }
-            }).then(null, Cu.reportError);
-
-          }, this.delay);
-
-        }).then(null, Cu.reportError);
-      }
-    },
-
-    onDownloadChanged: function (aDownload) {
-      if (!this._list)
+      var win = this.getDMWindow();
+      if (win) {  // すでに開らかれている
         return;
-      this._list.getAll().then(downloads => {
-        var num = 0;
-        for (let download of downloads) {
-          if (!download.succeeded)
-            num++;
+      }
+
+      if (this.success && this._summary.allHaveStopped) //エラーもダウンロード中がないならDMを開かない
+        return;
+
+      var closeWhenDone = Services.prefs.getBoolPref(this.kcloseWhenDone, false);
+      var closeWhenDoneIfAutoOpened
+                        = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false);
+      if (!this.success || !(closeWhenDone || closeWhenDoneIfAutoOpened)) { //エラーがあるまたは自動クローズでないならDMを開く
+        var newWindow = this.openDownloadManager(false);
+        if (newWindow) {
+          newWindow.autoOpened = true;
         }
-        if (num == 0) {
-          var closeWhenDone = Services.prefs.getBoolPref(this.kcloseWhenDone, false);
-          var closeWhenDoneIfAutoOpened
-                            = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false) && this.autoOpened;
-          if (closeWhenDone || closeWhenDoneIfAutoOpened) {
-            this.closeDownloadManager();
-          }
+      }
+      
+      this.closeTimer = setTimeout(() => {
+       if (this.success && this._summary.allHaveStopped) //エラーもダウンロード中もない
+          return;
+
+        newWindow = this.openDownloadManager(false); 
+        if (newWindow) {
+          newWindow.autoOpened = true;
         }
-      }).then(null, Cu.reportError);
+      }, this.delay);
+
     }
   };
   ucjs_downloadManager.init();
@@ -267,9 +231,14 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
   window.ucjs_downloadManagerMain = {
     originalTitle:"",
+    _hasDowbload: false,
     _summary: null,
     _list: null,
     _wait:false,
+    kshowWhenStarting: "browser.download.manager.showWhenStarting",
+    kcloseWhenDone:    "browser.download.manager.closeWhenDone",
+    kcloseWhenDoneIfAutoOpened:
+                       "browser.download.manager.closeWhenDoneIfAutoOpened",
 
     createElement: function(localName, arryAttribute) {
       let elm = document.createXULElement(localName);
@@ -425,9 +394,18 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
       }
     },
 
+    success: true,
+    onDownloadChanged: function (aDownload) {
+      this.success = this.success && !(aDownload.canceled || aDownload.error);
+    },
     onSummaryChanged: function () {
       if (!this._summary)
         return;
+
+      if (!this._hasDowbload) {
+        this._hasDowbload = true;
+        return;
+      }
       if (this._summary.allHaveStopped || this._summary.progressTotalBytes == 0) {
         document.title = this.originalTitle;
         if (this._taskbarProgress) {
@@ -435,19 +413,14 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
                                      Ci.nsITaskbarProgress.STATE_NO_PROGRESS, 0, 0);
         }
 
-/*
-        Cu.import("resource://gre/modules/Services.jsm");
-        var enumerator = Services.wm.getEnumerator("navigator:browser");
-        while(enumerator.hasMoreElements()) {
-          return;
-        }
 
-        var closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone", false);
-        if (closeWhenDone) {
-          DownloadIntegration._store.save();
+        var closeWhenDone = Services.prefs.getBoolPref(this.kcloseWhenDone, false);
+        var closeWhenDoneIfAutoOpened = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false) && window.autoOpened;
+        if (this.success && (closeWhenDone || closeWhenDoneIfAutoOpened)) {
+          DownloadIntegration?._store?.save();
           window.close();
         }
-*/
+
       } else {
 
         // If the last browser window has been closed, we have no indicator any more.
