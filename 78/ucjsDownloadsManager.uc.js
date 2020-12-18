@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xhtml
 // @compatibility  Firefox 73+
 // @author         Alice0775
+// @version       2020/12/18 fix closeWhenDone if small size downloaded
 // @version       2020/09/24 fix emptylist layout
 // @version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
 // @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
@@ -49,17 +50,29 @@
 // @version        2013/12/14 18:00 browser.download.manager.showWhenStarting , browser.download.manager.closeWhenDone
 // @version        2013/12/02 00:00 
 // @note           Require Sub-Script/Overlay Loader v3.0.40mod
-// @note           preferences: (bool) browser.download.manager.showWhenStarting
-// @note                        (bool) browser.download.manager.closeWhenDone
-// @note                        (bool) browser.download.manager.showProgressInTaskButton
 // ==/UserScript== 
+// preferences:
+// 自動で開く(デフォルト true):
+//   (bool) browser.download.manager.showWhenStarting
+// 自動で閉じる(デフォルト false):
+//   (bool) browser.download.manager.closeWhenDone
+// 上記falseの場合,自動で開いたときにのみ自動で閉じる(デフォルト false):
+//   (bool) browser.download.manager.closeWhenDoneIfAutoOpened
+// タスクバーにプロフレスメーターを表示(デフォルト true):
+//   (bool) browser.download.manager.showProgressInTaskButton
 
 if (location.href == "chrome://browser/content/browser.xhtml") {
   Cu.import("resource://gre/modules/Services.jsm");
 
   window.ucjs_downloadManager = {
+    delay: 500, //自動的に閉じる場合の待ち時間(ミリ秒)
+    
     _summary: null,
     _list: null,
+    kshowWhenStarting: "browser.download.manager.showWhenStarting",
+    kcloseWhenDone:    "browser.download.manager.closeWhenDone",
+    kcloseWhenDoneIfAutoOpened:
+                       "browser.download.manager.closeWhenDoneIfAutoOpened",
 
     createElement: function(localName, arryAttribute) {
       let elm = document.createXULElement(localName);
@@ -100,7 +113,8 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
 
     uninit: function() {
       window.removeEventListener("unload", this, false);
-
+      this.autoOpened = false;
+      
       if (this._summary) {
         this._summary.removeView(this);
       }
@@ -117,7 +131,11 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
       }
     },
 
+    autoOpened: false,
     openDownloadManager: function ucjs_openDownloadManager(aForceFocus) {
+      if (aForceFocus)
+        this.autoOpened = false;
+      
       var enumerator = Services.wm.getEnumerator(null);
       while(enumerator.hasMoreElements()) {
         var win = enumerator.getNext();
@@ -126,7 +144,7 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
              PrivateBrowsingUtils.isWindowPrivate(win)) {
           if (aForceFocus)
             win.focus();
-          return;
+          return null;
         }
       }
 
@@ -141,7 +159,7 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
         screenX = 0;
         screenY = 0;
       }
-      var win = window.open("chrome://browser/content/downloads/contentAreaDownloadsView.xhtml",
+      return window.open("chrome://browser/content/downloads/contentAreaDownloadsView.xhtml",
                             "Download" +
                               (PrivateBrowsingUtils.isWindowPrivate(window) ? " - Private Window"
                                                                             : ""),
@@ -161,23 +179,60 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
       }
     },
 
+    closeTimer: null,
+
     onDownloadAdded: function (aDownload) {
-      var showWhenStarting = true;
-      try {
-        showWhenStarting = Services.prefs.getBoolPref("browser.download.manager.showWhenStarting");
-      } catch(e) {}
+      var showWhenStarting = Services.prefs.getBoolPref(this.kshowWhenStarting, true);
+      if (!showWhenStarting)
+        return
+
       var numDls = 0;
-      if (showWhenStarting) {
-        if (this._list) {
-          this._list.getAll().then(downloads => {
-            for (let download of downloads) {
-              if (!download.stopped)
-                numDls++;
-            }
-            if (numDls > 0)
-              this.openDownloadManager(false);
-          }).then(null, Cu.reportError);
-        }
+      if (this._list) {
+        this._list.getAll().then(downloads => {
+
+          for (let download of downloads) {
+            if (!download.stopped)
+              numDls++;
+          }
+          if (numDls == 0)
+            return;
+
+          var closeWhenDone = Services.prefs.getBoolPref(this.kcloseWhenDone, false);
+          var closeWhenDoneIfAutoOpened
+                            = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false);
+          if (!(closeWhenDone || closeWhenDoneIfAutoOpened)) {
+            var win = this.openDownloadManager(false);
+            if (win)
+              this.autoOpened = true;
+          }
+          
+          if (this.closeTimer)
+            clearTimeout(this.closeTimer);
+          this.closeTimer = setTimeout(() => {
+
+            numDls = 0;
+            this._list.getAll().then(downloads => {
+              for (let download of downloads) {
+                if (!download.stopped)
+                  numDls++;
+              }
+              if (numDls == 0) {
+                if (!win)
+                  return;
+                closeWhenDoneIfAutoOpened
+                                  = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false) && this.autoOpen;
+                if (closeWhenDone || closeWhenDoneIfAutoOpened)
+                  win.close();
+              } else {
+                win = this.openDownloadManager(false);
+                if (win)
+                  this.autoOpened = true;
+              }
+            }).then(null, Cu.reportError);
+
+          }, this.delay);
+
+        }).then(null, Cu.reportError);
       }
     },
 
@@ -191,11 +246,10 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
             num++;
         }
         if (num == 0) {
-          var closeWhenDone = false;
-          try {
-            closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
-          } catch(e) {}
-          if (closeWhenDone) {
+          var closeWhenDone = Services.prefs.getBoolPref(this.kcloseWhenDone, false);
+          var closeWhenDoneIfAutoOpened
+                            = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false) && this.autoOpened;
+          if (closeWhenDone || closeWhenDoneIfAutoOpened) {
             this.closeDownloadManager();
           }
         }
@@ -321,11 +375,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         }).then(null, Cu.reportError);
       }
 
-      try {
-        var showProgressInTaskButton = Services.prefs.getBoolPref("browser.download.manager.showProgressInTaskButton")
-      } catch(ex) {
-        showProgressInTaskButton = true; //default
-      }
+      var showProgressInTaskButton = Services.prefs.getBoolPref("browser.download.manager.showProgressInTaskButton", true);
       if (showProgressInTaskButton)
         setTimeout(function() {
           try {
@@ -384,21 +434,20 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
           this._taskbarProgress.setProgressState(
                                      Ci.nsITaskbarProgress.STATE_NO_PROGRESS, 0, 0);
         }
+
+/*
         Cu.import("resource://gre/modules/Services.jsm");
         var enumerator = Services.wm.getEnumerator("navigator:browser");
         while(enumerator.hasMoreElements()) {
           return;
         }
 
-        var closeWhenDone = false;
-        try {
-          closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone");
-        } catch(e) {}
+        var closeWhenDone = Services.prefs.getBoolPref("browser.download.manager.closeWhenDone", false);
         if (closeWhenDone) {
           DownloadIntegration._store.save();
           window.close();
         }
-
+*/
       } else {
 
         // If the last browser window has been closed, we have no indicator any more.
