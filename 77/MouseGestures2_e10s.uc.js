@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 77
+// @version       2020/12/19 15:00 fix typo and remove refferer
+// @version       2020/12/14 09:00 add urlSecurityCheck for _linkURL, _linkURLs
 // @version       2020/11/29 20:00 add コンテナータブを指定してリンクを開く
 // @version       2020/08/22 21:11 fix すべてのタブを閉じる
 // @version       2020/06/01 00:21 fix content-type
@@ -77,8 +79,8 @@ var ucjsMouseGestures = {
   // Any Gesture Sequence,  *hogehoge :  Gesture Sequence following that any faesture
   // ucjsMouseGestures._lastX, ucjsMouseGestures._lastY  : start coordinates
 
-  // ucjsMouseGestures._linkURLs ,ucjsMouseGestures._linkdocURLs : link url hover, ownerDocument url
-  // ucjsMouseGestures._selLinkURLs ,ucjsMouseGestures._selLinkdocURLs: link url in selected, ownerDocument url
+  // ucjsMouseGestures._linkURLs: link url hover
+  // ucjsMouseGestures._selLinkURLs: link url in selected
   // ucjsMouseGestures._docURL : ownerDocument url
   // ucjsMouseGestures._linkURL ,ucjsMouseGestures._linkTXT : ownerDocument url : link url, ownerDocument url
   // ucjsMouseGestures._imgSRC  _imgTYPE _imgDISP: src mime/type contentdisposition
@@ -124,7 +126,16 @@ var ucjsMouseGestures = {
         ['', 'リンクを保存',
           function(){
             let url = ucjsMouseGestures._linkURL;
-            saveURL(url, url, null, false, false, null, document);
+            //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+            //        aSkipPrompt, aReferrer
+            //        aSourceDocument,
+            //        aIsContentWindowPrivate,
+            //        aPrincipal)
+            saveURL(url, url, null, false,
+                    true, null,
+                    null,
+                    PrivateBrowsingUtils.isWindowPrivate(window),
+                    Services.scriptSecurityManager.createNullPrincipal({}));
           } ],
         ['LDR', '画像を保存',
           function() {
@@ -139,7 +150,7 @@ var ucjsMouseGestures = {
                "SaveImageTitle", // FilePickerTitleKey
               null, // chosen data
               null, //referrerInfo
-              document, // initiating doc
+              null, // initiating doc
               false, // don't skip prompt for where to save
               null, // cache key
               PrivateBrowsingUtils.isWindowPrivate(window),
@@ -256,7 +267,16 @@ var ucjsMouseGestures = {
               while(i){
                 let IMGtitle = ("000"+i).slice(-3);
                 i--;
-                saveURL(data[i], IMGtitle + ".png", null, false, true, null, document);
+                //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+                //        aSkipPrompt, aReferrer
+                //        aSourceDocument,
+                //        aIsContentWindowPrivate,
+                //        aPrincipal)
+                saveURL(data[i], IMGtitle + ".png", null, false,
+                        true, null,
+                        null,
+                        PrivateBrowsingUtils.isWindowPrivate(window),
+                        Services.scriptSecurityManager.createNullPrincipal({}));
               }
             });
             function contentScript() {
@@ -786,7 +806,13 @@ let ucjsMouseGestures_framescript = {
             this._selLinkdocURLs = [];
             this._selLinkURLs = [];
             [imgSRC, imgTYPE, imgDISP] = this._getImgSRC(event.target);
-            linkURL = this._getLinkURL(event.target);
+            try {
+              let URL = this._getLinkURL(event.target);
+              BrowserUtils.urlSecurityCheck(URL, event.target.ownerDocument.nodePrincipal);
+              linkURL = this._getLinkURL(event.target);
+            } catch (ex) {
+              linkURL = null;
+            }
             linkTXT = this._getLinkTEXT(this.link);
             mediaSRC = this._getMediaSRC(event.target);
             selectedTXT = this._getSelectedText(event.target);
@@ -817,6 +843,11 @@ let ucjsMouseGestures_framescript = {
                 // ホバーしたリンクのURLを記憶
             linkURL = this._getLinkURL(event.target);
             if (linkURL && this._linkURLs.indexOf(linkURL) == -1) {
+              try {
+                BrowserUtils.urlSecurityCheck(linkURL, event.target.ownerDocument.nodePrincipal);
+              } catch (ex) {
+                break
+              }
               this._linkdocURLs.push(event.target.ownerDocument.location.href);
               this._linkURLs.push(linkURL);
               this._linkElts.push(event.target);
@@ -1483,53 +1514,34 @@ let ucjsMouseGestures_helper = {
   saveHoverLinks: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      this.saveLinks(that._linkURLs, that._linkdocURLs)
+      this.saveLinks(that._linkURLs)
 		}, 500);
   },
   
   // 選択範囲のリンクをすべて保存
-  saveHoverLinks: function() {
+  saveSelectedLinks: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      this.saveLinks(that._selLinkURLs, that._selLinkdocURLs)
+      this.saveLinks(that._selLinkURLs)
 		}, 500);
   },
 
   // リンクをすべて保存
-  saveLinks: function(linkURLs, linkdocURLs) {
-    let delay = 0;
-    let refURI = null;
+  saveLinks: function(linkURLs) {
     for (let i = 0; i < linkURLs.length; i++) {
-      let docURL = linkdocURLs[i];
-      try {
-        refURI =  makeURI(docURL);
-      } catch(e) {
-      }
       let linkURL = linkURLs[i];
       if (!linkURL)
         continue;
-      let referrerInfo = refURI;
-      if (ucjsMouseGestures._version >= 67) {
-        let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
-                                                  "nsIReferrerInfo",
-                                                  "init");
-        referrerInfo = new ReferrerInfo(
-                    Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, refURI);
-      }
-      setTimeout(() => {
-        try {
-          //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-          //        aSkipPrompt, aReferrer, aSourceDocument,
-          //        aIsContentWindowPrivate,
-          //        aPrincipal)
-          saveURL(linkURL, null, null, false,
-                  true, referrerInfo, null,
-                  PrivateBrowsingUtils.isWindowPrivate(window),
-                  Services.scriptSecurityManager.createNullPrincipal({}));
-        } catch(ex) {
-        }
-      }, delay);
-      delay += 1000;
+      //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+      //        aSkipPrompt, aReferrer,
+      //        aSourceDocument,
+      //        aIsContentWindowPrivate,
+      //        aPrincipal)
+      saveURL(linkURL, null, null, false,
+              true, null,
+              null,
+              PrivateBrowsingUtils.isWindowPrivate(window),
+              Services.scriptSecurityManager.createNullPrincipal({}));
     }
   },
 
@@ -1639,7 +1651,7 @@ let ucjsMouseGestures_helper = {
   openHoverLinksInTabs: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      ucjsMouseGestures_helper.openURLsInTabs(that._linkURLs, that._linkdocURLs);
+      ucjsMouseGestures_helper.openURLsInTabs(that._linkURLs);
     }, 500);
   },
 
@@ -1647,68 +1659,31 @@ let ucjsMouseGestures_helper = {
   openSelectedLinksInTabs: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      ucjsMouseGestures_helper.openURLsInTabs(that._selLinkURLs, that._selLinkdocURLs);
+      ucjsMouseGestures_helper.openURLsInTabs(that._selLinkURLs);
     }, 500);
   },
 
   // リンクをすべてタブに開く
-  openURLsInTabs: function(linkURLs, linkdocURLs) {
+  openURLsInTabs: function(linkURLs) {
       for (let i = 0; i < linkURLs.length; i++) {
-        let docURL = linkdocURLs[i];
         let linkURL = linkURLs[i];
-        let refURI = null
         if (!linkURL)
           continue;
-        try {
-          refURI = makeURI(docURL);
-        } catch(e) {
-        }
-        let param = {};
-        if (ucjsMouseGestures._version >= 67) {
-          let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
-                                                    "nsIReferrerInfo",
-                                                    "init");
-          referrerInfo = new ReferrerInfo(
-                      Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, refURI);
-          param = {
+        let param = {
             relatedToCurrent: true,
             inBackground: true,
-      			referrerInfo: referrerInfo,
-      			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-      		};
-        } else {
-      		param = {
-            relatedToCurrent: true,
-            inBackground: true,
-            referrerURI: refURI,
             triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-          };
-        }
+        };
         gBrowser.loadOneTab(linkURL, param);
       }
   },
 
   // リンクをタブに開く
-	openURLs: function(aURLs, aReferer, aCharset) {
-    let param = {};
-    if (ucjsMouseGestures._version >= 67) {
-      let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
-                                                "nsIReferrerInfo",
-                                                "init");
-      referrerInfo = new ReferrerInfo(
-                  Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, aReferer);
-      param = {
-  			referrerInfo: referrerInfo, charset: aCharset, 
+	openURLs: function(aURLs) {
+    let param = {
   			inBackground: true, relatedToCurrent: true,
   			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-  		};
-    } else {
-  		param = {
-  			referrerURI: aReferer, charset: aCharset, 
-  			inBackground: true, relatedToCurrent: true,
-  			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-  		};
-    }
+  	};
 		for (let aURL of aURLs) {
 			gBrowser.loadOneTab(aURL, param);
 		}
@@ -1799,22 +1774,10 @@ let ucjsMouseGestures_helper = {
 
   openLinkInTabFromContainerMenu: function(event) {
     let that = ucjsMouseGestures;
-    let docURL = that._docURL;
     let linkURL = that._linkURL || that._docURL; // link url or docment url
-    let refURI = null
-    try {
-      refURI = makeURI(docURL);
-    } catch(e) {
-    }
-    let ReferrerInfo = Components.Constructor("@mozilla.org/referrer-info;1",
-                                              "nsIReferrerInfo",
-                                              "init");
-    referrerInfo = new ReferrerInfo(
-                Ci.nsIHttpChannel.REFERRER_POLICY_UNSET, true, refURI);
     let param = {
       relatedToCurrent: true,
       inBackground: true,
-			referrerInfo: referrerInfo,
 			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({}),
 		  userContextId: parseInt(event.target.getAttribute("data-usercontextid")),
     };
