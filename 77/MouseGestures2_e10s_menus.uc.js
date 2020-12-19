@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 72
+// @version       2020/12/19 15:00 fix typo
+// @version       2020/11/29 20:00 add コンテナータブを指定してリンクを開く
 // @version       2020/08/17 16:00 HighlightAll extension のトグル 方法 (Firefox userChrome.js greasemonkeyスクリプトｽﾚ41 595)
 // @version       2020/01/20 00:00 fix 'Home'
 // @version       2019/10/22 09:00 fix 71.0 fix web search
@@ -67,13 +69,13 @@ ucjsMouseGestures_menues = {
         ['UD', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
         ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
         ['', 'すべてタブをリロード', function(){ typeof gBrowser.reloadTabs == "function" ? gBrowser.reloadTabs(gBrowser.visibleTabs) : gBrowser.reloadAllTabs(); } ],
-
+        ['', 'コンテナータブを指定してリンクを開く', function(){ ucjsMouseGestures_helper.openLinkInContainerTab(); }],
 
         ['', 'テキストリンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
         ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
         ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
 
-        ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
+        ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveSelectedLinks(); } ],
         ['', '通過したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
 
         ['', 'コピー', function(){ ucjsMouseGestures_helper.copyText(ucjsMouseGestures.selectedTXT); } ],
