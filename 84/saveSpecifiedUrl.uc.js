@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 84
 // @author         Alice0775
+// @version        2020/12/19 15:00 remove refferer
 // @version        2020/12/19 00:00 Bug 1641270 - Saving already-loaded images from a webpage yields "not an image".
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
 // @version        2019/09/26 23:00 60+
@@ -36,11 +37,7 @@ var saveSpecifiedUrl = {
     var url = input.value;
     if (!url)
       return;
-    let referrerInfo = new ReferrerInfo(
-      Ci.nsIReferrerInfo.EMPTY,
-      true,
-      null
-    );
+
     let cookieJarSettings =  gBrowser.selectedBrowser.cookieJarSettings;
     //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
     //        aSkipPrompt, aReferrer, aCookieJarSettings,
@@ -53,7 +50,7 @@ var saveSpecifiedUrl = {
         null,
         true,
         false,
-        referrerInfo,
+        null,
         null,
         null,
         PrivateBrowsingUtils.isWindowPrivate(window),
