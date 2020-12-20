@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  78
+// @version        2020/12/21 01:00 Fix Addres Bar if invalid state for 78
 // @version        2020/12/21 00:00 Apply to textbox of Addres Bar/Search Bar as well as menuitems
 // @version        2020/12/15 00:00
 // @version        2020/12/14 00:00
@@ -62,6 +63,7 @@ BrowserSearch.searchBar.addEventListener("click", (event) => {middleclickPasteAn
       return;
     if (gURLBar.getAttribute("pageproxystate") != "valid") {
       gURLBar.view.close();
+      gURLBar.handleRevert();
     }
 
     gURLBar._suppressStartQuery = true;
