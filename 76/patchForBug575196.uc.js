@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  76+
 // @compatibility  60+
+// @version        2020/12/22 00:00 fix scroll
 // @version        2020/04/27 00:00 fix Bug 1625630 - Rename popup-internal-box to menupopup-arrowscrollbox
 // @version        2020/03/02 00:00 fix type
 // @version        2019/10/22 13:00 fix undefined shadowRoot
@@ -45,36 +46,25 @@ var bug575196 = {
   },
 
   setListener: function(popup) {
-    if (popup.localName != "menupopup"/* || !popup.hasAttribute("placespopup")*/)
+    if (popup.localName != "menupopup" || !popup.hasAttribute("placespopup"))
       return;
-Services.console.logStringMessage("popup.shadowRoot " + popup.shadowRoot);
     if (popup.shadowRoot == null)
       return;
     var scrollbox = popup.scrollBox; // popup.shadowRoot.querySelector(".popup-internal-box");
-Services.console.logStringMessage("scrollbox " + scrollbox);
+
     if (!scrollbox)
       return;
 
-     bug575196.scrollbox = scrollbox;
+     bug575196.timer = null;
      if(typeof scrollbox._scrollButtonUp != "undefined") {
-       scrollbox._scrollButtonUp.addEventListener("mouseover", this.onmouseover_scrollButtonUp, true);       scrollbox._scrollButtonUp.setAttribute("onmouseout", "if(bug575196.timer){clearTimeout(bug575196.timer);} bug575196.scrollbox._stopScroll();");
-
+       scrollbox._scrollButtonUp.setAttribute("onmouseover", "event.preventDefault();event.stopPropagation();bug575196.timer = setTimeout(() => {this.getRootNode().host._startScroll(-1);}, bug575196.DELAY);");
+       scrollbox._scrollButtonUp.setAttribute("onmouseout", "if(bug575196.timer){clearTimeout(bug575196.timer);} this.getRootNode().host._stopScroll();");
      }
+
      if(typeof scrollbox._scrollButtonDown != "undefined") {
-       scrollbox._scrollButtonDown.addEventListener("mouseover", this.onmouseover_scrollButtonDown, true);
-       scrollbox._scrollButtonDown.setAttribute("onmouseout", "if(bug575196.timer) {clearTimeout(bug575196.timer);} bug575196.scrollbox._stopScroll();");
+       scrollbox._scrollButtonDown.setAttribute("onmouseover", "event.preventDefault();event.stopPropagation();bug575196.timer = setTimeout(() => {this.getRootNode().host._startScroll(1);}, bug575196.DELAY);");
+       scrollbox._scrollButtonDown.setAttribute("onmouseout", ";if(bug575196.timer){clearTimeout(bug575196.timer);} this.getRootNode().host._stopScroll();");
      }
-  },
-
-  onmouseover_scrollButtonUp: function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    bug575196.timer = setTimeout(() => {bug575196.scrollbox._startScroll(-1);}, bug575196.DELAY);
-  },
-  onmouseover_scrollButtonDown: function(event) {
-    event.preventDefault();
-    event.stopPropagation();
-    bug575196.timer = setTimeout(() => {bug575196.scrollbox._startScroll(1);}, bug575196.DELAY);
-  },
+  }
 }
   bug575196.init();
