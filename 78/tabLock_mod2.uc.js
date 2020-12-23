@@ -5,7 +5,8 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
-// @compatibility  78
+// @compatibility  78-83
+// @version        2020/12/23 20:30 Fix if targetBrowser is specified
 // @version        2020/11/23 20:20 If exist download attribute
 // @version        2020/11/18 06:20 Bug 1671983 - Remove E10SUtils.shouldLoadURI
 // @version        2020/11/09 06:20 Bug 1590538 - Copying a link and using "Paste & Go" results in error when HTTPS Everywhere add-on is installed
@@ -45,12 +46,23 @@ patch: {
     if (!window.hasOwnProperty("openLinkIn_lockorg")) {
       window.openLinkIn_lockorg = window.openLinkIn;
       window.openLinkIn = function(url, where, params) {
-        var mainWindow = (typeof BrowserWindowTracker != "undefined") ? BrowserWindowTracker.getTopWindow(): Services.wm.getMostRecentWindow("navigator:browser");
-        if (url && where  == "current" && "isLockTab" in mainWindow.gBrowser &&
-            mainWindow.gBrowser.isLockTab(mainWindow.gBrowser.selectedTab) &&
-            !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
-            !mainWindow.gBrowser.isHashLink(url, mainWindow.gBrowser.currentURI.spec)) {
-          where  = "tab";
+        let w, targetBrowser, targetTab;
+        if (where == "current") {
+          if (params.targetBrowser) {
+            w = params.targetBrowser.ownerGlobal;
+            targetBrowser = params.targetBrowser;
+            targetTab = w.gBrowser.getTabForBrowser(targetBrowser);
+          } else {
+            w = getTopWin();
+            targetBrowser = w.gBrowser.selectedBrowser;
+            targetTab = w.gBrowser.selectedTab;
+          }
+          if (url && "isLockTab" in w.gBrowser &&
+              w.gBrowser.isLockTab(targetTab) &&
+              !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
+              !w.gBrowser.isHashLink(url, targetBrowser.currentURI.spec)) {
+            where  = "tab";
+          }
         }
         window.openLinkIn_lockorg(url, where, params);
       }
