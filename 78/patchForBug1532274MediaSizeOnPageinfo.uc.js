@@ -5,6 +5,7 @@
 // @include        chrome://browser/content/pageinfo/pageInfo.xhtml
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/01/29 Workaround for url data:image/*;base64,
 // @version        2021/01/27
 // @Note
 // ==/UserScript==
@@ -24,13 +25,21 @@
         { kb: formatNumber(kbSize), bytes: formatNumber(imageSize) }
       );
     } else {
-      document.l10n.setAttributes(
-        document.getElementById("imagesizetext"),
-        "media-unknown-not-cached"
-      );
+      if (/^data:image\\/.*;base64,/.test(cacheKey)) {
+        var str = cacheKey.replace(/^data:image\\/.*;base64,/, "");
+        var imageSize = atob(str).length;
+        var kbSize = Math.round((imageSize / 1024) * 100) / 100;
+        document.l10n.setAttributes(
+          document.getElementById("imagesizetext"),
+          "properties-general-size",
+          { kb: formatNumber(kbSize), bytes: formatNumber(imageSize) }
+        );
+      }
     }
   });$&
   `);
+  console.log(func.match(/\(([^)]*)/)[1]);
+  console.log(func.replace(/[^{]*\{/, '').replace(/}\s*$/, ''));
   makePreview = new Function(
          func.match(/\(([^)]*)/)[1],
          func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
