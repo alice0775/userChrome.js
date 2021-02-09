@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 84
+// @compatibility 87
+// @version       2021/02/09 15:00 Bug 1685801 - Move most things out of BrowserUtils.jsm
 // @version       2020/12/19 15:00 fix typo and remove refferer
 // @version       2020/12/19 00:00 Bug 1641270 - Saving already-loaded images from a webpage yields "not an image".
 // @version       2020/12/14 09:00 add urlSecurityCheck for _linkURL, _linkURLs
@@ -810,7 +811,10 @@ let ucjsMouseGestures_framescript = {
             [imgSRC, imgTYPE, imgDISP] = this._getImgSRC(event.target);
             try {
               let URL = this._getLinkURL(event.target);
-              BrowserUtils.urlSecurityCheck(URL, event.target.ownerDocument.nodePrincipal);
+              Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
+                event.target.ownerDocument.nodePrincipal,
+                URL
+              );
               linkURL = this._getLinkURL(event.target);
             } catch (ex) {
               linkURL = null;
@@ -846,7 +850,10 @@ let ucjsMouseGestures_framescript = {
             linkURL = this._getLinkURL(event.target);
             if (linkURL && this._linkURLs.indexOf(linkURL) == -1) {
               try {
-                BrowserUtils.urlSecurityCheck(linkURL, event.target.ownerDocument.nodePrincipal);
+                Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
+                  event.target.ownerDocument.nodePrincipal,
+                  linkURL
+                );
               } catch (ex) {
                 break
               }
@@ -874,7 +881,15 @@ let ucjsMouseGestures_framescript = {
       },
 
       _getSelectedText: function(target) {
-        return BrowserUtils.getSelectionDetails(content).fullText;
+        let win;
+        if (target != undefined) {
+          win = target.ownerDocument.defaultView;
+        } else {
+          win = content;
+        }
+        let selection = win.getSelection();
+        selectionStr = selection.toString();
+        return selectionStr.substr(0, 16384);
       },
   
       _getLinkURL: function(aNode) {
@@ -902,7 +917,7 @@ let ucjsMouseGestures_framescript = {
             let aContentDisp = null;
             try {
               let aDoc = aNode.ownerDocument;
-              aURL = BrowserUtils.makeURI(aURL, aDoc.characterSet);
+              aURL = Services.io.newURI(aURL, aDoc.characterSet);
               var imageCache = Cc["@mozilla.org/image/tools;1"]
                                  .getService(Ci.imgITools)
                                  .getImgCacheForDocument(aDoc);
@@ -1374,7 +1389,7 @@ let ucjsMouseGestures_helper = {
 							menuitem.setAttribute("tooltiptext", "Stay on this page");
 							menuitem.className = "unified-nav-current";
 						} else {
-							let entryURI = BrowserUtils.makeURI(entry.url, entry.charset, null);
+							let entryURI = Services.io.newURI(entry.url, entry.charset, null);
 							PlacesUtils.favicons.getFaviconURLForPage(entryURI, function(aURI) {
 								if (!aURI)
 									return;
