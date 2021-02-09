@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 87
 // @author         Alice0775
+// @version       2021/02/09 15:01 fix use finder.getInitialSelection
 // @version       2021/02/09 15:01 fix import SelectionUtils
 // @version       2021/02/09 15:00 Bug 1685801 - Move most things out of BrowserUtils.jsm
 // @version        2020/12/15 00:00 do find after copy text
@@ -30,9 +31,6 @@ var global_FindTerm = {
   findTerm:"",
 
   init : function() {
-      XPCOMUtils.defineLazyModuleGetters(this, {
-        SelectionUtils: "resource://gre/modules/SelectionUtils.jsm",
-      });
       if (this.ENABLE_GLOBAL_FINDTERM) {
       gBrowser.tabContainer.addEventListener("TabSelect", this, false);
       window.addEventListener("findbaropen", this, false);
@@ -96,14 +94,16 @@ var global_FindTerm = {
     if (gFindBar._findMode != gFindBar.FIND_NORMAL)
       return;
 
-    let sel = this.SelectionUtils.getSelectionDetails(window).text
+    gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+      let sel = r.selectedText;
 
-    if (!!sel)
-      this.findTerm = sel;
+      if (!!sel)
+        this.findTerm = sel;
 
-    this.setTerm(this.findTerm);
-    this.updateUI();
-    this.selectFindField();
+      this.setTerm(this.findTerm);
+      this.updateUI();
+      this.selectFindField();
+    });
 	},
 
   copyTerm: function() {
