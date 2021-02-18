@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name           patchForBug1675935.uc.js
+// @name           patchForBug1261327.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    Fix places contextmenu highlight, workaround Bug1675935
+// @description    Fix places contextmenu highlight, workaround Bug1261327
 // @include        main
 // @compatibility  Firefox 78+
 // @author         Alice0775
