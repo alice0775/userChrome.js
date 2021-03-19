@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2021/03/20 fix right click on folder should not toggle
 // @version       2020/12/13 fix scroll position
 // @version       2020/12/12 remove prefs and simplify
 // @version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
@@ -123,6 +124,9 @@ var acBookMarkTreeFolder = {
   onClick: function(aEvent){
     var parents   = new Array();
     var aView = this._BTree.view;
+    if (aEvent.button != 0){
+      return;
+    }
 
     let cell = this._BTree.getCellAt(aEvent.clientX, aEvent.clientY);
     if (cell.row == -1)
