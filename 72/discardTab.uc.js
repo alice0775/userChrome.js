@@ -4,7 +4,8 @@
 // @description    discard tab
 // @include        main
 // @author         Alice0775
-// @compatibility  69
+// @compatibility  72+
+// @version        2021/03/25 22:00 fix typo in discardTab #61. thanks,aminomancer
 // @version        2020/10/06 06:00 remove array
 // @version        2019/06/24 23:00 fix 69 wait for gBrowser initialized
 // @version        2019/05/29 16:00 Bug 1519514 - Convert tab bindings
@@ -80,7 +81,7 @@ var discardTab = {
     let tab = event.target;
     if (tab.hasAttribute("discardTabLabel")) {
       tab.label = tab.getAttribute("discardTabLabel");
-      tab.remobeAttribute("discardTabLabel")
+      tab.removeAttribute("discardTabLabel")
     }
   },
 
