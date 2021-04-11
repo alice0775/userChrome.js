@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 87
+// @version       2021/04/11 12:00 workaround: use finder.getInitialSelection
 // @version       2021/02/09 15:00 Bug 1685801 - Move most things out of BrowserUtils.jsm
 // @version       2020/12/19 15:00 fix typo and remove refferer
 // @version       2020/12/19 00:00 Bug 1641270 - Saving already-loaded images from a webpage yields "not an image".
@@ -469,7 +470,10 @@ var ucjsMouseGestures = {
         this._imgTYPE = message.data.imgTYPE;
         this._mediaSRC = message.data.mediaSRC;
         this._selectedTXT = message.data.selectedTXT;
-        break;
+        gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+          this._selectedTXT = r.selectedText;
+        })
+      break;
       case "ucjsMouseGestures_linkURLs_stop":
         this._linkdocURLs = message.data.linkdocURLs.split(" ");
         this._linkURLs = message.data.linkURLs.split(" ");

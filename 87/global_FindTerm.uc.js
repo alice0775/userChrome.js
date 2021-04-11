@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 87
 // @author         Alice0775
+// @version       2021/04/11 12:00 workaround: use finder.getInitialSelection
+// @version       2021/02/09 20:00 fix an error when FindBar close
 // @version       2021/02/09 15:01 fix use finder.getInitialSelection
 // @version       2021/02/09 15:01 fix import SelectionUtils
 // @version       2021/02/09 15:00 Bug 1685801 - Move most things out of BrowserUtils.jsm
@@ -43,6 +45,7 @@ var global_FindTerm = {
     }.bind(this));
 
 
+/*
     function frameScript() {
       addMessageListener("global_FindTerm_getSelectedText", messageListener);
       function messageListener() {
@@ -55,6 +58,7 @@ var global_FindTerm = {
       + encodeURIComponent('(' + frameScript.toString() + ')()');
     window.messageManager.loadFrameScript(frameScriptURI, true);
     window.messageManager.addMessageListener("global_FindTerm_selectionData", this);
+*/
   },
 
   handleEvent: function(event){
@@ -94,7 +98,7 @@ var global_FindTerm = {
     if (gFindBar._findMode != gFindBar.FIND_NORMAL)
       return;
 
-    gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+    gBrowser.selectedBrowser.finder.getInitialSelection()?.then((r)=> {
       let sel = r.selectedText;
 
       if (!!sel)
@@ -140,7 +144,11 @@ var global_FindTerm = {
     var sel;
     switch (event.button) {
       case 0:
-        gBrowser.selectedTab.linkedBrowser.messageManager.sendAsyncMessage("global_FindTerm_getSelectedText");
+        gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+          sel = r.selectedText;
+          this.copySelectedTextToFindbar(sel);
+        })
+        //gBrowser.selectedTab.linkedBrowser.messageManager.sendAsyncMessage("global_FindTerm_getSelectedText");
        return;
        break;
       case 1:
@@ -154,8 +162,8 @@ var global_FindTerm = {
     this.selectFindField();
   },
 
-  copySelectedTextToFindbar: function(message) {
-    this.findTerm = message.data.text;
+  copySelectedTextToFindbar: function(text) {
+    this.findTerm = text;
     this.setTerm(this.findTerm);
     this.selectFindField();
 
