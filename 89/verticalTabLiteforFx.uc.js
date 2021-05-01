@@ -3,9 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 84
+// @compatibility  Firefox 89
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2021/04/08 20:00 Wip proton
+// @version        2021/02/09 20:00 Rewrite `X.setAttribute("hidden", Y)` to `X.hidden = Y`
 // @version        2020/12/04 07:00 fix Bug 1678906 - Sidebar resizes in the opposite direction to the mouse drag after move sidebar to right
 // @version        2020/10/21 12:00 fix resize vtb when drag Sidebar splitter
 // @version        2020/10/18 00:00 fix detach Tab Threshold
@@ -44,13 +46,13 @@ if (gBrowserInit.delayedStartupFinished) {
 
 function verticalTabLiteforFx() {
   let verticalTabbar_maxWidth = 225;  /* タブバーの横幅 px */
-  let verticalTab_height = 18;  /* タブの高さ px */
   /* not yet */
   //let verticalTabPinned_width = 27; /* ピン留めタブの横幅 px */
   //let verticalScrollbar_width = 11; /* スクロールバー幅 px */
 
   let verticalTabbar_minWidth = Services.prefs.getIntPref("browser.tabs.tabMinWidth", 0);
   let verticalTabbar_width = Services.prefs.getIntPref("ucjs.tabWidth", verticalTabbar_maxWidth);
+  let verticalTab_height = 18;
 
   var css =`@-moz-document url-prefix("chrome://browser/content/browser.xhtml") {
 
@@ -61,7 +63,9 @@ function verticalTabLiteforFx() {
     width: ${verticalTabbar_width}px !important;
     background-color: transparent;
   }
-
+  #vtb_TabsToolbar:-moz-lwtheme {
+      background-color: var(--lwt-accent-color);
+  }
   #vtb_splitter:not([state="collapsed"]) {
     -moz-appearance: none !important;
     border: 0 solid !important;
@@ -117,7 +121,13 @@ function verticalTabLiteforFx() {
   tabs:not([overflow="true"]):not([hashiddentabs]) ~ #alltabs-button {
       display: -moz-box !important;
   }
-
+  #new-tab-button image,
+    height: 28px !important;
+  }
+  #new-tab-button,
+  #alltabs-button {
+    height: 28px;
+  }
   /*DOMFullScreen*/
   :root[inFullscreen][inDOMFullscreen] #vtb_TabsToolbar {
     display: none;
@@ -197,11 +207,20 @@ function verticalTabLiteforFx() {
   .tab-label {
       line-height: 1.5em !important;
   }
-  .tab-label-container[textoverflow][labeldirection="ltr"]:not([pinned]),
-  .tab-label-container[textoverflow]:not([labeldirection]):not([pinned]):-moz-locale-dir(ltr)   {
+  .tabbrowser-tab:hover .tab-label-container,
+  .tab-label-container {
       direction: ltr;
-      mask-image: linear-gradient(to left, transparent, black 0.5em) !important;
+      mask-image: linear-gradient(to left, transparent, black 0.05em) !important;
   }
+  .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
+  .tabbrowser-tab:hover > .tab-stack > .tab-content > .tab-close-button {
+      margin-inline-end: calc(var(--inline-tab-padding) / -2);
+      width: 19px !important;
+      height: 23px !important;
+      padding: 7px 5px !important; /*[上下][左右]*/
+      border-radius: 8px !important;
+  }
+
   /*scrollbar color*/
   toolbar[brighttext] #tabbrowser-tabs * {
     scrollbar-color: rgba(249,249,250,.4) rgba(20,20,25,.3) !important;
@@ -209,10 +228,7 @@ function verticalTabLiteforFx() {
 
 
  /*bollow css code from https://egg.5ch.net/test/read.cgi/software/1579702570/676 */
-  /* ピン留めしたタブのタイトルをグラデーション表示 */  
-  #vtb_TabsToolbar .tab-label-container[textoverflow][labeldirection=ltr][pinned] {
-      mask-image: linear-gradient(to left, transparent, black 0.5em)!important;
-  }
+
   /* ピン留めしたタブicon左右位置調整 */
   .tab-throbber[pinned],
   .tab-sharing-icon-overlay[pinned],
@@ -229,7 +245,10 @@ function verticalTabLiteforFx() {
   .tab-icon-image:not([src])[pinned] {
     fill: #aaaaaa !important;
   }
+
+@media not (-moz-proton) {
   /*Bug 1612648 - Picture in Picture tab mute options moved to overlay on tab image icon*/
+
   .tab-icon-overlay:not([pictureinpicture])[soundplaying],
   .tab-icon-overlay:not([pictureinpicture])[muted] {
     display: none !important;
@@ -255,12 +274,15 @@ function verticalTabLiteforFx() {
     visibility: visible;
     display: unset !important;
   } 
+  
+}
+
   /* ピン留めしたタブにピンマークを付ける */
   #vtb_TabsToolbar .tabbrowser-tab[pinned="true"] .tab-content::before {
     content: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOCAYAAAD9lDaoAAABPUlEQVQokY3RTUtCQRTG8WnRNwj6DDkzotwLBoVBZLeIgsCglYvAct0LSLlICIqLm7LAIIQIAqMWiULaQsyITOkFgtpEuwokiJDE9J6nXWpG9F8efnAOM4zVVY6PH9B+NygxUC7nnSsAWtjPimdOlxF1gI7HQLkJ0OM0KpWQowEZJ2rweUuiuGNDKeUGPfhhvK+jAVFGgo4sKAQFVgcFZq3ielNRWr9BNTfqQtoMIyJw5eNYUAUCw0obY4wxHNraKd71RGkJSprxFuKIuARmpHyprUhxIClBSSuMPY5bP8dipwlrI6q1hrLqPeWHQFEFpTDHpc+E2JSKarY30XDwZ6bvhuJ2vG504MLLcTon8bHbQ01vFA54z++WbfnYJC8s2UVB1yzzTUjTtO2mYX26rvf/+gX1eTwe95/gP30BeHKkcA2on8MAAAAASUVORK5CYII=") !important;
     position: absolute !important;
     z-index: -1 !important;
-    margin-left: 16px !important;
+    margin-left: 18px !important;
     margin-right: 0px !important;
     margin-top: -12px !important;
     display: block !important;
@@ -271,6 +293,98 @@ function verticalTabLiteforFx() {
     position: relative !important;
     z-index: -2 !important;
   }   
+
+  /* Proton */
+@media (-moz-proton) {
+  :root:not([uidensity="touch"]) #TabsToolbar {
+      --toolbarbutton-inner-padding: unset !important;
+  }
+  :root {
+    --tab-min-height: 25px !important;
+    --tab-border-radius: 0 !important;
+    --tab-shadow-max-size: 0 !important;
+    --proton-tab-block-margin: 0 !important;
+    --inline-tab-padding: 0 !important;
+    --tabpanel-background-color: unset !important;
+  }
+
+  #TabsToolbar .tabbrowser-tab:not([dragover]) .tab-background {
+    box-shadow: unset !important;
+  }
+
+  .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay),
+  :is(#toolbar-menubar:hover + #TabsToolbar, #TabsToolbar:hover) .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay) {
+      opacity: 1 !important;
+  }
+
+  .tabbrowser-tab:not(:hover) .tab-icon-overlay:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) {
+   opacity: 1 !important;
+ }
+
+ .tab-icon-overlay:not([crashed])[soundplaying]:hover,
+ .tab-icon-overlay:not([crashed])[muted]:hover,
+ .tab-icon-overlay:not([crashed])[activemedia-blocked]:hover {
+    background-color: white !important;
+    stroke: white !important;
+    color: black !important;
+  }
+
+
+  #TabsToolbar:not([brighttext]) .tabbrowser-tab[multiselected]  .tab-background {
+    box-shadow: inset 0px 0px 0px 2px var(--tab-line-color) !important;
+  }
+  #TabsToolbar .tabbrowser-tab[multiselected="true"]:not([selected="true"]) .tab-label{
+    opacity: .7 !important;
+  }
+  .tab-background {
+    border-radius: unset !important;
+    margin-block: unset !important;
+    -moz-box-orient: horizontal !important;
+  }
+  .tabbrowser-tab[usercontextid] > .tab-stack > .tab-background > .tab-context-line {
+    height: unset !important;
+    width: 2px !important;
+    margin: 0 0 0 !important;
+  }
+
+  .tab-icon-overlay {
+      top: -7px !important;
+      inset-inline-end: -6px !important;
+      z-index: 1 !important;
+      padding: 2px !important;
+  }
+  .tab-icon-overlay:is([soundplaying], [muted], [activemedia-blocked]) {
+      border-radius: 10px!important;
+  }
+
+  .tab-icon-image:not([src],[busy]) {
+    display: unset !important;
+    fill: #aaaaaa !important;
+  }
+
+  .tab-icon-overlay[pictureinpicture="true"]:not([soundplaying]):not([muted]) {
+    list-style-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%20fill%3D%22context-fill%22%3E%3Cpath%20d%3D%22M15%209c.552%200%201%20.447%201%201v4c0%20.553-.448%201-1%201H9c-.552%200-1-.447-1-1v-4c0-.553.448-1%201-1zm-2-8c1.654%200%203%201.346%203%203v2c0%20.553-.448%201-1%201s-1-.447-1-1V4c0-.552-.449-1-1-1H3c-.551%200-1%20.448-1%201v8c0%20.552.449%201%201%201h2c.552%200%201%20.447%201%201%200%20.553-.448%201-1%201H3c-1.654%200-3-1.346-3-3V4c0-1.654%201.346-3%203-3zM3.146%204.146c.196-.195.512-.195.708%200L6%206.293V5.5c0-.276.224-.5.5-.5s.5.224.5.5v2c0%20.065-.013.13-.039.191-.05.122-.148.22-.27.271C6.63%207.986%206.565%208%206.5%208h-2c-.276%200-.5-.224-.5-.5s.224-.5.5-.5h.793L3.146%204.854c-.195-.196-.195-.512%200-.708z%22%2F%3E%3C%2Fsvg%3E")
+  }
+  #TabsToolbar[brighttext] .tab-icon-overlay[pictureinpicture="true"]:not([soundplaying]):not([muted]) {
+    list-style-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2216%22%20height%3D%2216%22%3E%3Ccircle%20fill%3D%22black%22%20cx%3D%228%22%20cy%3D%228%22%20r%3D%228%22%2F%3E%3Cpath%20stroke%3D%22white%22%20d%3D%22M15%209c.552%200%201%20.447%201%201v4c0%20.553-.448%201-1%201H9c-.552%200-1-.447-1-1v-4c0-.553.448-1%201-1zm-2-8c1.654%200%203%201.346%203%203v2c0%20.553-.448%201-1%201s-1-.447-1-1V4c0-.552-.449-1-1-1H3c-.551%200-1%20.448-1%201v8c0%20.552.449%201%201%201h2c.552%200%201%20.447%201%201%200%20.553-.448%201-1%201H3c-1.654%200-3-1.346-3-3V4c0-1.654%201.346-3%203-3zM3.146%204.146c.196-.195.512-.195.708%200L6%206.293V5.5c0-.276.224-.5.5-.5s.5.224.5.5v2c0%20.065-.013.13-.039.191-.05.122-.148.22-.27.271C6.63%207.986%206.565%208%206.5%208h-2c-.276%200-.5-.224-.5-.5s.224-.5.5-.5h.793L3.146%204.854c-.195-.196-.195-.512%200-.708z%22%2F%3E%3C%2Fsvg%3E")
+  }
+
+  .tab-secondary-label {
+    display: none;
+  }
+
+  .tabbrowser-tab[visuallyselected="true"] {
+    z-index: unset !important;
+  }
+
+  tab[tabLock] .tab-icon-lock {
+    margin-top: 3px !important;
+    margin-left: 2px !important;
+  }
+  tab[tabProtect] .tab-icon-protect {
+    margin-top: 5px !important;
+    margin-left: 4px !important;
+  }
   `;
   var sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
   var uri = makeURI('data:text/css;charset=UTF=8,' + encodeURIComponent(css));
@@ -406,7 +520,7 @@ function verticalTabLiteforFx() {
   gBrowser.tabContainer.lastVisibleTab = function() {
     var tabs = this.allTabs;
     for (let i = tabs.length - 1; i >= 0; i--){
-      if (!tabs[i].hasAttribute("hidden"))
+      if (!tabs[i].hidden)
         return i;
     }
     return -1;
@@ -416,6 +530,7 @@ function verticalTabLiteforFx() {
     for (let i = 0, len = tabs.length; i < len; i++){
       let tab_s= tabs[i].querySelector(".tab-background").style;
       tab_s.removeProperty("box-shadow");
+      tabs[i].removeAttribute("dragover");
     }
   };
   gBrowser.tabContainer.addEventListener("drop",function(event){this.on_drop(event);},true);
@@ -460,10 +575,13 @@ function verticalTabLiteforFx() {
       return;
     if (newIndex < this.allTabs.length) {
       this.allTabs[newIndex].querySelector(".tab-background").style.setProperty("box-shadow","0px 2px 0px 0px #f00 inset, 0px -2px 0px 0px #f00","important");
+      this.allTabs[newIndex].setAttribute("dragover", true);
     } else {
       newIndex = gBrowser.tabContainer.lastVisibleTab();
-      if (newIndex >= 0)
+      if (newIndex >= 0) {
         this.allTabs[newIndex].querySelector(".tab-background").style.setProperty("box-shadow","0px -2px 0px 0px #f00 inset, 0px 2px 0px 0px #f00","important");
+        this.allTabs[newIndex].setAttribute("dragover", true);
+      }
     }
   };
   gBrowser.tabContainer.addEventListener("dragover", gBrowser.tabContainer.on_dragover, true);
@@ -669,6 +787,7 @@ function verticalTabLiteforFx() {
       if(entry.contentBoxSize) {
         ensureVisible();
         if (vtbSplitter.getAttribute("state") == "dragging" ||
+            document.getElementById("SM_splitter")?.getAttribute("state") == "dragging" ||
             SidebarUI._splitter.getAttribute("state") == "dragging") {
           let width = vtbTabsToolbar.getBoundingClientRect().width;
           if (verticalTabbar_minWidth <= width) {
