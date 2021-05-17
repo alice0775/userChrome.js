@@ -3,13 +3,16 @@
 // @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description   Show Parent Folder
 // @include       chrome://browser/content/places/places.xhtml
-// @compatibility Firefox 78
+// @compatibility Firefox 88
 // @author        alice0775
+// @version       2021/05/18 22:00 fix splitter ordinal 
+// @version       2021/02/09 20:00 Rewrite `X.setAttribute("hidden", Y)` to `X.hidden = Y`
 // @version       2020/09/14 
 // @version       2020/09/13 
 // @version       2020/09/04 
 // @note          ucjs.showParentFolder.showFolderHierarchy
 // @note          ucjs.showParentFolder.reverseFolderHierarchy
+// @note          Sort column is not implemented.
 // ==/UserScript==
   var showparentfolder = {
     
@@ -18,14 +21,15 @@
 
       let xpref = Components.classes['@mozilla.org/preferences-service;1']
                   .getService(Components.interfaces.nsIPrefService);
-      let ordinal = xpref.getStringPref('ucjs.showParentFolder.ordinal', "14");
+      let ordinal = xpref.getStringPref('ucjs.showParentFolder.ordinal', "15");
       let width = xpref.getStringPref('ucjs.showParentFolder.width', "100");
 
       let treecols = document.getElementById("placeContentColumns");
       let treecolpicker = treecols.querySelector("treecolpicker");
       let splitter = document.createXULElement("splitter");
       splitter.setAttribute("class", "tree-splitter");
-      splitter.setAttribute("resize", "after");
+      splitter.setAttribute("resizeafter", "farthest");
+      splitter.setAttribute("style", "-moz-box-ordinal-group: 14;");
       let treecol = document.createXULElement("treecol");
       treecol.setAttribute("ordinal", ordinal);
       treecol.setAttribute("width", width);
@@ -35,8 +39,8 @@
       treecol.setAttribute("anonid", "parentFolder");
       treecol.setAttribute("label", "Parent Folder");
       treecol.setAttribute("flex", "1");
-      treecol.setAttribute("hidden", "false");
-      treecol.setAttribute("persist", "width hidden ordinal");
+      treecol.hidden = false;
+      treecol.setAttribute("persist", "width hidden ordinal sortActive sortDirection");
       //Bug 196509  Search for bookmark should show parent folder
       PlacesTreeView.prototype.COLUMN_TYPE_PARENTFOLDER = 999;
 
@@ -110,11 +114,18 @@
       func = PlacesTreeView.prototype.cycleHeader.toString();
       func = func.replace(
       'switch (this._getColumnType(aColumn)) {',
-      ' \
-      switch (this._getColumnType(aColumn)) { \
-        case this.COLUMN_TYPE_PARENTFOLDER: \
-          return; \
-      '
+      `
+      switch (this._getColumnType(aColumn)) {
+        case this.COLUMN_TYPE_PARENTFOLDER:
+        if (oldSort == 23 /*ASCENDING*/) {
+          newSort = 24 /*DESCENDING*/;
+        } else if (allowTriState && oldSort == 24/*DESCENDING*/) {
+          newSort = 0 /*NONE*/;
+        } else {
+          newSort = 23 /*ASCENDING*/;
+        }
+        return;
+      `
       );
       PlacesTreeView.prototype.cycleHeader = new Function(
            func.match(/\(([^)]*)/)[1],
