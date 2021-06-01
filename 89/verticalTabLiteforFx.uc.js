@@ -6,6 +6,7 @@
 // @compatibility  Firefox 89
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2021/06/02 00:00 hide titlebar if :not([tabsintitlebar])[Menubarinactive="true"]
 // @version        2021/04/08 20:00 Wip proton
 // @version        2021/02/09 20:00 Rewrite `X.setAttribute("hidden", Y)` to `X.hidden = Y`
 // @version        2020/12/04 07:00 fix Bug 1678906 - Sidebar resizes in the opposite direction to the mouse drag after move sidebar to right
@@ -172,6 +173,11 @@ function verticalTabLiteforFx() {
      margin-top:-32px;
   }
 
+
+  :root:not([tabsintitlebar])[Menubarinactive="true"] #titlebar {
+    height: 0 !important; 
+  }
+
   /* window control and  drag space */
   :root[tabsintitlebar]:not([Menubarinactive]) #nav-bar .titlebar-buttonbox{
      display: none !important;
@@ -327,6 +333,11 @@ function verticalTabLiteforFx() {
     background-color: white !important;
     stroke: white !important;
     color: black !important;
+  }
+
+  :root[tabsintitlebar]:not(:-moz-window-inactive, :-moz-lwtheme) #vtb_TabsToolbar,
+  :root[tabsintitlebar]:not(:-moz-window-inactive)[lwt-default-theme-in-dark-mode] #vtb_TabsToolbar {
+      background-color: -moz-dialog !important;
   }
 
 
