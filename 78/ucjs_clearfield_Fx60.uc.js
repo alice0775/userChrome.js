@@ -5,6 +5,7 @@
 // @include        *
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/06/03 01:00 simplified
 // @version        2021/06/03 00:00 Fix incorrect menu state due to Bug 1588773
 // @version        2020/09/24 00:00 Fix context menu
 // @version        2019/11/14 00:00 Fix undefined error
@@ -16,111 +17,24 @@
 // ==/UserScript==
 var ucjs_clearfield = {
   init: function() {
-    if (typeof window.messageManager == "undefined")
-      return;
-    let framescript = {
-      init: function() {
-        const { ContentDOMReference } = ChromeUtils.import(
-          "resource://gre/modules/ContentDOMReference.jsm"
-        );
-        this.ContentDOMReference = ContentDOMReference;
-        delete ContentDOMReference;
-        addMessageListener("ucjs_clearfield.isMenuEnable", this);
-        addMessageListener("ucjs_clearfield.doClear", this);
-      },
-      receiveMessage: function(message) {
-        switch(message.name) {
-          case "ucjs_clearfield.isMenuEnable":
-           this.isMenuEnable(message.data.targetIdentifier)
-           break;
-          case "ucjs_clearfield.doClear":
-           this.doClear(message.data.targetIdentifier)
-           break;
-        }
-      },
-      isMenuEnable: function(targetIdentifier) {
-        //Services.console.logStringMessage(targetIdentifier);
-        let target = this.ContentDOMReference.resolve(targetIdentifier);
-        if (!target)
-          return;
-        let hidden = true;
-        let enable = false;
-        let win = content;
-        let doc = win.document;
-          let elem = target;
-          if (/iframe|frame/.test(elem.nodeName.toLowerCase())) {
-            win = elem.contentWindow;
-            doc = elem.contentDocument;
-          } else if (elem.shadowRoot != null) {
-            doc = elem.shadowRoot;
-          } else if (/textarea/.test(elem.nodeName.toLowerCase())) {
-            if (!elem.disabled) {
-              hidden = false;
-              enable = !!elem.value;
-            }
-          } else if (/input/.test(elem.nodeName.toLowerCase())) {
-            if (/file|text|search|tel|url|email|password|datetime|date|month|week|time|datetime-local|number/.test(elem.type) || !elem.type) {
-              if (!elem.disabled) {
-                hidden = false;
-                enable = !!elem.value;
-              }
-            }
-          }
-        sendSyncMessage("ucjs_clearfield.menuEnabled", {isHidden: hidden, isEnable: enable});
-      },
-      doClear: function(targetIdentifier) {
-        let target = this.ContentDOMReference.resolve(targetIdentifier);
-        if (!target)
-          return;
-        let win = content;
-        let doc = win.document;
-          let elem = target;
-          if (/iframe|frame/.test(elem.nodeName.toLowerCase())) {
-            win = elem.contentWindow;
-            doc = elem.contentDocument;
-          } else if (elem.shadowRoot != null) {
-            doc = elem.shadowRoot;
-          } else if (/textarea/.test(elem.nodeName.toLowerCase())) {
-            /*
-            if (!elem.disabled)
-              elem.value = "";
-            */
-          } else if (/input/.test(elem.nodeName.toLowerCase())) {
-            if (!elem.disabled &&
-                (/file/.test(elem.type)))
-              elem.value = "";
-          }
-      }
-    };
-    window.messageManager.loadFrameScript(
-       'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource() + ".init()")
-      , true, true);
-
-    messageManager.addMessageListener("ucjs_clearfield.menuEnabled", this);
     window.addEventListener("unload", this, false);
     window.addEventListener("popupshowing", this, false);
+    window.addEventListener("popupshown", this, false);
   },
 
   uninit: function() {
-    messageManager.removeMessageListener("ucjs_clearfield.menuEnabled", this);
     window.removeEventListener("unload", this, false);
     window.removeEventListener("popupshowing", this, false);
-  },
-
-  receiveMessage: function(message) {
-    switch(message.name) {
-      case "ucjs_clearfield.menuEnabled":
-      this.menuitem.hidden = message.data.isHidden;
-      this.menuitem.disabled= !message.data.isEnable;
-      break;
-    }
+    window.removeEventListener("popupshown", this, false);
   },
 
   handleEvent: function(event) {
     switch(event.type) {
       case 'popupshowing':
         this.popupContextMenu(event);
+        break;
+      case 'popupshown':
+        this.popupContextMenuVisibility(event);
         break;
       case 'unload':
         this.uninit();
@@ -146,35 +60,26 @@ var ucjs_clearfield = {
         menuitem.setAttribute("oncommand", "ucjs_clearfield.doClear(this);");
         ref.parentNode.insertBefore(menuitem, ref);
       }
-      ref = popup.querySelector('[cmd="cmd_cut"]') || popup.querySelector('[command="cmd_cut"]');
-      menuitem.hidden = ref.hidden;
-      menuitem.disabled = ref.disabled;
-      this.menuitem = menuitem;
-      // content area
-      if (typeof gContextMenu == "object" && gContextMenu != null) {
-        let json = {
-          targetIdentifier: gContextMenu.targetIdentifier
-        }
-        gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjs_clearfield.isMenuEnable", json);
-      }
+      this.popupContextMenuVisibility(event);
+    }
+  },
+  
+  popupContextMenuVisibility: function(event) {
+    let popup = event.originalTarget;
+    let menuitem = popup.querySelector('[anonid="ucjs_clearfield_menu"]');
+    if (menuitem) {
+      let ref = popup.querySelector('[cmd="cmd_cut"]') || popup.querySelector('[command="cmd_cut"]');
+      menuitem.hidden = ref ? ref.hidden : ture;
+      ref = popup.querySelector('[cmd="cmd_selectAll"]') || popup.querySelector('[command="cmd_selectAll"]');
+      menuitem.disabled = ref?.disabled;
     }
   },
 
   doClear: function() {
-    //if (typeof gContextMenu != "object" || gContextMenu == null) {
-      goDoCommand('cmd_selectAll');
-      setTimeout(() => {
-        goDoCommand('cmd_delete');
-      }, 250);
-    //} else {
-    if (typeof gContextMenu == "object" && gContextMenu != null) {
-      //in case of <input type="file">
-      let json = {
-        targetIdentifier: gContextMenu.targetIdentifier
-      }
-      this.menuitem.hidden = !gContextMenu.onTextInput;
-      gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjs_clearfield.doClear", json);
-    }
+    goDoCommand('cmd_selectAll');
+    setTimeout(() => {
+      goDoCommand('cmd_delete');
+    }, 250);
   }
 }
 
