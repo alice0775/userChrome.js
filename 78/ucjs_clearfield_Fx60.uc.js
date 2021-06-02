@@ -5,6 +5,7 @@
 // @include        *
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/06/03 00:00 Fix incorrect menu state due to Bug 1588773
 // @version        2020/09/24 00:00 Fix context menu
 // @version        2019/11/14 00:00 Fix undefined error
 // @version        2019/05/21 08:30 fix 69.0a1 Bug 1551320 - Replace all createElement calls in XUL documents with createXULElement
@@ -19,30 +20,34 @@ var ucjs_clearfield = {
       return;
     let framescript = {
       init: function() {
+        const { ContentDOMReference } = ChromeUtils.import(
+          "resource://gre/modules/ContentDOMReference.jsm"
+        );
+        this.ContentDOMReference = ContentDOMReference;
+        delete ContentDOMReference;
         addMessageListener("ucjs_clearfield.isMenuEnable", this);
         addMessageListener("ucjs_clearfield.doClear", this);
       },
       receiveMessage: function(message) {
         switch(message.name) {
           case "ucjs_clearfield.isMenuEnable":
-           this.isMenuEnable(message.data.targetSelectors)
+           this.isMenuEnable(message.data.targetIdentifier)
            break;
           case "ucjs_clearfield.doClear":
-           this.doClear(message.data.targetSelectors)
+           this.doClear(message.data.targetIdentifier)
            break;
         }
       },
-      isMenuEnable: function(selectors) {
-        if (!selectors)
+      isMenuEnable: function(targetIdentifier) {
+        //Services.console.logStringMessage(targetIdentifier);
+        let target = this.ContentDOMReference.resolve(targetIdentifier);
+        if (!target)
           return;
         let hidden = true;
         let enable = false;
         let win = content;
         let doc = win.document;
-        for (let i = 0; i < selectors.length; i++) {
-          let elem = doc.querySelector(selectors[i]);
-          if (!elem)
-            continue;
+          let elem = target;
           if (/iframe|frame/.test(elem.nodeName.toLowerCase())) {
             win = elem.contentWindow;
             doc = elem.contentDocument;
@@ -53,7 +58,6 @@ var ucjs_clearfield = {
               hidden = false;
               enable = !!elem.value;
             }
-            break;
           } else if (/input/.test(elem.nodeName.toLowerCase())) {
             if (/file|text|search|tel|url|email|password|datetime|date|month|week|time|datetime-local|number/.test(elem.type) || !elem.type) {
               if (!elem.disabled) {
@@ -61,20 +65,16 @@ var ucjs_clearfield = {
                 enable = !!elem.value;
               }
             }
-            break;
           }
-        }
         sendSyncMessage("ucjs_clearfield.menuEnabled", {isHidden: hidden, isEnable: enable});
       },
-      doClear: function(selectors) {
-        if (!selectors)
+      doClear: function(targetIdentifier) {
+        let target = this.ContentDOMReference.resolve(targetIdentifier);
+        if (!target)
           return;
         let win = content;
         let doc = win.document;
-        for (let i = 0; i < selectors.length; i++) {
-          let elem = doc.querySelector(selectors[i]);
-          if (!elem)
-            continue;
+          let elem = target;
           if (/iframe|frame/.test(elem.nodeName.toLowerCase())) {
             win = elem.contentWindow;
             doc = elem.contentDocument;
@@ -85,14 +85,11 @@ var ucjs_clearfield = {
             if (!elem.disabled)
               elem.value = "";
             */
-            break;
           } else if (/input/.test(elem.nodeName.toLowerCase())) {
             if (!elem.disabled &&
                 (/file/.test(elem.type)))
               elem.value = "";
-            break;
           }
-        }
       }
     };
     window.messageManager.loadFrameScript(
@@ -156,7 +153,7 @@ var ucjs_clearfield = {
       // content area
       if (typeof gContextMenu == "object" && gContextMenu != null) {
         let json = {
-          targetSelectors: gContextMenu.targetSelectors
+          targetIdentifier: gContextMenu.targetIdentifier
         }
         gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjs_clearfield.isMenuEnable", json);
       }
@@ -173,7 +170,7 @@ var ucjs_clearfield = {
     if (typeof gContextMenu == "object" && gContextMenu != null) {
       //in case of <input type="file">
       let json = {
-        targetSelectors: gContextMenu.targetSelectors
+        targetIdentifier: gContextMenu.targetIdentifier
       }
       this.menuitem.hidden = !gContextMenu.onTextInput;
       gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjs_clearfield.doClear", json);
