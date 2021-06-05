@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 88
+// @version       2021/06/05 10:00 fix use cookieJarSettings for save image
+// @version       2021/04/25 20:00 fix TypeError: this._linkdocURLs is undefined, TypeError: target.ownerDocument is null
 // @version       2021/04/11 12:00 workaround 選択テキストで検索 Bug 360332
 // @version       2021/04/11 12:00 workaround: use finder.getInitialSelection
 // @version       2021/02/09 15:00 Bug 1685801 - Move most things out of BrowserUtils.jsm
@@ -136,7 +138,7 @@ var ucjsMouseGestures = {
             //        aIsContentWindowPrivate,
             //        aPrincipal)
             saveURL(url, url, null, false,
-                    true, null, null,
+                    true, gBrowser.selectedBrowser.referrerInfo, gBrowser.selectedBrowser.cookieJarSettings,
                     null,
                     PrivateBrowsingUtils.isWindowPrivate(window),
                     Services.scriptSecurityManager.createNullPrincipal({}));
@@ -153,8 +155,8 @@ var ucjsMouseGestures = {
               false, // skip cache or not
                "SaveImageTitle", // FilePickerTitleKey
               null, // chosen data
-              null, //referrerInfo
-              null, //cookieJarSettings
+              gBrowser.selectedBrowser.referrerInfo, //referrerInfo
+              gBrowser.selectedBrowser.cookieJarSettings, //cookieJarSettings
               null, // initiating doc
               false, // don't skip prompt for where to save
               null, // cache key
@@ -738,6 +740,7 @@ let ucjsMouseGestures_framescript = {
 
 
     let framescript = {
+      _linkdocURLs: [],
       _linkURLs: [],
       _linkElts: [],
       _target: null,
@@ -887,7 +890,7 @@ let ucjsMouseGestures_framescript = {
 
       _getSelectedText: function(target) {
         let win;
-        if (target != undefined) {
+        if (target != undefined && target.ownerDocument) {
           win = target.ownerDocument.defaultView;
         } else {
           win = content;
