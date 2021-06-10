@@ -6,6 +6,7 @@
 // @compatibility  Firefox 89
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2021/06/10 00:00 tab css color is leaking.
 // @version        2021/06/02 00:00 hide titlebar if :not([tabsintitlebar])[Menubarinactive="true"]
 // @version        2021/04/08 20:00 Wip proton
 // @version        2021/02/09 20:00 Rewrite `X.setAttribute("hidden", Y)` to `X.hidden = Y`
@@ -73,13 +74,14 @@ function verticalTabLiteforFx() {
     min-width: 1px !important;
     width: 4px !important;
     background-image: none !important;
-    background-color: transparent !important;
+    background-color: var(--toolbar-bgcolor) !important;
     margin-inline-start: -4px !important;
     position: relative;
   }
 
   #tabbrowser-tabs {
     height: calc(100vh - 2 * ${verticalTab_height}px) !important;
+    margin-right: 4px;
   }
 
   .tabbrowser-tab {
