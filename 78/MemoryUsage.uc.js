@@ -6,14 +6,12 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 78
+// @version       2021/06/17 22:00 use ChromeUtils.requestProcInfo
 // @version       2021/06/17 19:00 
 // @version       2021/06/15
 // ==/UserScript==
 var ucjsMemoryUsage = {
   INTERVAL: 10, //sec 重いかも
-
-  MRM : Components.classes['@mozilla.org/memory-reporter-manager;1']
-         .getService(Components.interfaces.nsIMemoryReporterManager),
 
   init: function() {
     try {
@@ -60,20 +58,12 @@ var ucjsMemoryUsage = {
   requestMemory: async function() {
     let winTop = Services.wm.getMostRecentWindow("navigator:browser");
     if (winTop == window) {
-      let total =0;
-      const regex = new RegExp("^resident-unique$");
-      const handleReport = (aProcess, aPath, aKind, aUnits, aAmount) => {
-        if(regex.test(aPath)) {
-          //Services.console.logStringMessage("aPath " + aPath);
-          total += aAmount;
-        }
-      };
-
-      await new Promise((r) => {
-        ucjsMemoryUsage.MRM
-           .getReports(handleReport, null, r, null, false);
-        }
-      );
+      let parentProc = await ChromeUtils.requestProcInfo();
+      let total = parentProc.residentUniqueSize;
+      for (i = 0; i < parentProc.children.length; i++) {
+        let childProc = parentProc.children[i];
+        total += childProc.residentUniqueSize;
+      }
       //Services.console.logStringMessage("total " + txt);
       let txt = Math.ceil(total/1024/1024);
       for (let win of Services.wm.getEnumerator("navigator:browser")) {
