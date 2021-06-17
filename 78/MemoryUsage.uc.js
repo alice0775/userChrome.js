@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 78
+// @version       2021/06/17 19:00 
 // @version       2021/06/15
 // ==/UserScript==
 var ucjsMemoryUsage = {
@@ -47,9 +48,9 @@ var ucjsMemoryUsage = {
       sss.loadAndRegisterSheet(uri, sss.AUTHOR_SHEET);
 
 
-    messageManager.addMessageListener("ucjsMemoryUsage_sendMemoryUsage", this);
     window.addEventListener("unload", this, false);
     window.setInterval(this.requestMemory, this.INTERVAL * 1000);
+    this.requestMemory();
   },
 
   uninit: function() {
@@ -57,27 +58,33 @@ var ucjsMemoryUsage = {
   },
 
   requestMemory: async function() {
-    const btn = document.getElementById("memoryUsageButton");
-    if (!btn)
-      return;
+    let winTop = Services.wm.getMostRecentWindow("navigator:browser");
+    if (winTop == window) {
+      let total =0;
+      const regex = new RegExp("^resident-unique$");
+      const handleReport = (aProcess, aPath, aKind, aUnits, aAmount) => {
+        if(regex.test(aPath)) {
+          //Services.console.logStringMessage("aPath " + aPath);
+          total += aAmount;
+        }
+      };
 
-    let total =0;
-    const regex = new RegExp("^resident-unique$");
-    const handleReport = (aProcess, aPath, aKind, aUnits, aAmount) => {
-      if(regex.test(aPath)) {
-        //Services.console.logStringMessage("aPath " + aPath);
-        total += aAmount;
+      await new Promise((r) => {
+        ucjsMemoryUsage.MRM
+           .getReports(handleReport, null, r, null, false);
+        }
+      );
+      //Services.console.logStringMessage("total " + txt);
+      let txt = Math.ceil(total/1024/1024);
+      for (let win of Services.wm.getEnumerator("navigator:browser")) {
+        if (win.closed || !win.gBrowser) {
+          continue;
+        }
+        let btn = win.document.getElementById("memoryUsageButton");
+        if (btn)
+         btn.setAttribute("label", txt + "MB");
       }
-    };
-
-    await new Promise((r) => {
-      ucjsMemoryUsage.MRM
-         .getReports(handleReport, null, r, null, false);
-      }
-    );
-    //Services.console.logStringMessage("total " + txt);
-    let txt = Math.ceil(total/1024/1024);
-    memoryUsageButton.setAttribute("label", txt + "MB");
+    }
   },
 
   handleEvent: function(event) {
@@ -88,5 +95,6 @@ var ucjsMemoryUsage = {
     }
   }
 }
-
 ucjsMemoryUsage.init();
+
+
