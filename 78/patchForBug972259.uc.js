@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/06/30 ignore abput:xxx
 // @version        2021/06/29
 // ==/UserScript==
 
@@ -15,7 +16,11 @@
       let index = sessionHistory.index;
     	let entry = sessionHistory.entries[index];
     	let uri = entry.url;
-      for (let i = index - 1; i >= 0; i--) {
+    	if (/^about:/.test(uri)) {
+    	  this.selectedBrowser.goBack(requireUserInteraction);
+    	  return;
+    	}
+    	for (let i = index - 1; i >= 0; i--) {
         let entry1  = sessionHistory.entries[i];
         if (uri != entry1.url) {
           gBrowser.webNavigation.gotoIndex(i);
@@ -30,6 +35,10 @@
       let length = sessionHistory.entries.length;
     	let entry = sessionHistory.entries[index];
     	let uri = entry.url;
+    	if (/^about:/.test(uri)) {
+    	  this.selectedBrowser.goForward(requireUserInteraction);
+    	  return;
+    	}
       for (let i = index + 1; i < length; i++) {
         let entry1  = sessionHistory.entries[i];
         if (uri != entry1.url) {
