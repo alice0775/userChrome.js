@@ -15,6 +15,7 @@
 // ==/UserScript==
 const addHistoryFindbar78 = {
   typingSpeed: 1000,
+  maxEntriesToShow:10,
   
   init: function() {
 
@@ -82,6 +83,7 @@ const addHistoryFindbar78 = {
     menupopup.setAttribute("position", "before_end");
     menupopup.setAttribute("oncommand", "addHistoryFindbar78.copyToFindfield(event);");
     menupopup.setAttribute("onclick", "addHistoryFindbar78.onclick(event);");
+    menupopup.setAttribute("onmouseup", "addHistoryFindbar78.shouldPreventHide(event);");
     menu.appendChild(menupopup);
 
     gFindBar._findField.lastInputValue = "";
@@ -124,12 +126,27 @@ const addHistoryFindbar78 = {
       return
 
     let target = aEvent.originalTarget;
+	let parentNode = target.parentNode;
     let value  = target.getAttribute("data");
-    target.parentNode.removeChild(target);
+    parentNode.removeChild(target);
 
     addHistoryFindbar_storage.deleteValue("findbar-history", value);
+	addHistoryFindbar78.onpopupshowing(aEvent, parentNode)
   },
-
+  shouldPreventHide: function(aEvent) {
+		const menuitem = event.target;
+		if (event.button == 1 && !event.ctrlKey) 
+		{
+			menuitem.setAttribute('closemenu', 'none');
+			menuitem.parentNode.addEventListener('popuphidden', () => {
+				menuitem.removeAttribute('closemenu');
+			}, { once: true });
+		} 
+		else 
+		{
+			menuitem.removeAttribute('closemenu');
+		}
+  },
   copyToFindfield: function(aEvent) {
     var target = aEvent.originalTarget;
     //本来のfindbar-textboxに転記して, ダミーイベント送信
@@ -170,10 +187,9 @@ const addHistoryFindbar78 = {
     return addHistoryFindbar_storage.getValues("findbar-history", "last_used", true, max);
   },
 
-  onpopupshowing: function(event) {
-    let max = 20;
-    let results = this.getHistory(max);
-    let popup = event.target;
+  onpopupshowing: function(event, menupopup) {
+    let results = this.getHistory(this.maxEntriesToShow);
+    let popup = menupopup || event.target;
     while(popup.lastChild) {
       popup.removeChild(popup.lastChild);
     }
@@ -191,7 +207,7 @@ const addHistoryFindbar78 = {
         }
         text = text.substr(0, truncLength) + this.ellipsis;
       }
-      element.setAttribute("label", text);
+      element.setAttribute("label", entry.value);
       popup.appendChild(element);
     }
     let element = document.createElementNS(this.kNSXUL, "menuseparator");
