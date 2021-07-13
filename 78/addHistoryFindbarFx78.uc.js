@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/07/14 06:00 fixes for middleclicking, maxEntriesToShow and show popup after delete item, Marged some patch #64(Thanks sdavidg)
 // @version        2020/12/16 22:30 use LIMIT
 // @version        2020/12/16 22:00 fix typo
 // @version        2020/12/16 09:30 order by last_used
@@ -15,7 +16,8 @@
 // ==/UserScript==
 const addHistoryFindbar78 = {
   typingSpeed: 1000,
-  
+  maxEntriesToShow:10,
+    
   init: function() {
 
     var style = `
@@ -82,6 +84,7 @@ const addHistoryFindbar78 = {
     menupopup.setAttribute("position", "before_end");
     menupopup.setAttribute("oncommand", "addHistoryFindbar78.copyToFindfield(event);");
     menupopup.setAttribute("onclick", "addHistoryFindbar78.onclick(event);");
+    menupopup.setAttribute("onmouseup", "addHistoryFindbar78.shouldPreventHide(event);");
     menu.appendChild(menupopup);
 
     gFindBar._findField.lastInputValue = "";
@@ -124,10 +127,25 @@ const addHistoryFindbar78 = {
       return
 
     let target = aEvent.originalTarget;
+    let parentNode = target.parentNode;
     let value  = target.getAttribute("data");
-    target.parentNode.removeChild(target);
+    parentNode.removeChild(target);
 
     addHistoryFindbar_storage.deleteValue("findbar-history", value);
+	  addHistoryFindbar78.onpopupshowing(aEvent, parentNode);
+  },
+
+  shouldPreventHide: function(aEvent) {
+		const menuitem = event.target;
+		if (event.button == 1) 
+		{
+			menuitem.setAttribute('closemenu', 'none');
+			menuitem.parentNode.addEventListener('popuphidden', () => {
+				menuitem.removeAttribute('closemenu');
+			}, { once: true });
+			if (event.ctrlKey)
+		  	menuitem.parentNode.hidePopup();
+		}
   },
 
   copyToFindfield: function(aEvent) {
@@ -170,10 +188,9 @@ const addHistoryFindbar78 = {
     return addHistoryFindbar_storage.getValues("findbar-history", "last_used", true, max);
   },
 
-  onpopupshowing: function(event) {
-    let max = 20;
-    let results = this.getHistory(max);
-    let popup = event.target;
+  onpopupshowing: function(event, menupopup) {
+    let results = this.getHistory(this.maxEntriesToShow);
+    let popup = menupopup || event.target;
     while(popup.lastChild) {
       popup.removeChild(popup.lastChild);
     }
@@ -182,10 +199,11 @@ const addHistoryFindbar78 = {
       let text = entry.value;
       let element = document.createElementNS(this.kNSXUL, "menuitem");
       element.setAttribute("data", text);
-
-      if (text.length > 15) {
-        let truncLength = 15;
-        let truncChar = text[15].charCodeAt(0);
+      
+      let maxLabelLength =35;
+      if (text.length > maxLabelLength) {
+        let truncLength = maxLabelLength;
+        let truncChar = text[maxLabelLength].charCodeAt(0);
         if (truncChar >= 0xdc00 && truncChar <= 0xdfff) {
           truncLength++;
         }
