@@ -4,7 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 91
-// @version        2021/07/22 -moz-context-properties seeps does not work in 91+
+// @version        2021/07/22 -moz-context-properties seems do not work in 91+
 // @version        2021/07/08 fix drop-down svg
 // @version        2021/04/26 Bug 1620467 - Support standard 'appearance' CSS property unprefixed
 // @version        2020/01/26 22:00 fix typo & simplify
