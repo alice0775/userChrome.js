@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 91
+// @version        2021/07/22 -moz-context-properties seeps does not work in 91+
 // @version        2021/07/08 fix drop-down svg
 // @version        2021/04/26 Bug 1620467 - Support standard 'appearance' CSS property unprefixed
 // @version        2020/01/26 22:00 fix typo & simplify
@@ -73,9 +74,12 @@ var showSearchBarHistroryDropmarker = {
         background-color: var(--toolbarbutton-hover-background);
       }
       toolbar[brighttext] .searchBar-history-dropmarker {
+        list-style-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 12 12"><path fill="rgb(251, 251, 254)" fill-opacity="1.0" d="M6 9a1 1 0 0 1-.707-.293l-3-3a1 1 0 0 1 1.414-1.414L6 6.586l2.293-2.293a1 1 0 0 1 1.414 1.414l-3 3A1 1 0 0 1 6 9z"/></svg>');
+        /*seems does not work on 91+ 
         -moz-context-properties: fill, fill-opacity;
         fill: currentColor;
         fill-opacity: var(--toolbarbutton-icon-fill-opacity);
+        */
       }
       `.replace(/\s+/g, " ");
 
