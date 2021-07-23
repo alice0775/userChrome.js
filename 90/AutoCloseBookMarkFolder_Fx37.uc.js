@@ -1,25 +1,28 @@
 // ==UserScript==
-// @name          acHistoryFolder_Fx37
+// @name          acBookMarkTreeFolder_Fx37
 // @namespace     http://www.sephiroth-j.de/mozilla/
-// @description   Autoclose History Folders
-// @include       chrome://browser/content/places/historySidebar.xhtml
-// @include       chrome://browser/content/places/historySidebar.xul
-// @compatibility Firefox 78+
+// @description   Autoclose BookMark Folders
+// @include       chrome://browser/content/places/bookmarksSidebar.xhtml
+// @include       chrome://browser/content/places/bookmarksSidebar.xul
+// @compatibility Firefox 80
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
-// @version       2021/07/23 remove restriction scroll position
+// @version       2021/04/26 Bug 1620467 - Support standard 'appearance' CSS property unprefixed
+// @version       2021/03/20 fix right click on folder should not toggle
+// @version       2020/12/13 fix scroll position
 // @version       2020/12/12 remove prefs and simplify
 // @version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
 // @version       2019/01/18 fix for 66(Bug 1482389 - Convert TreeBoxObject to XULTreeElement)
 // @version       2019/01/18 fix dark theme
+// @version       2018/08/10 fix target scroll listener
 // @version       2018/08/13 61+
-// @version       2017/11/18 nsIPrefBranch2 to nsIPrefBranch
-// @version       2008/11/28 Firefox3.1b3pre tboの初期化に時間が掛かるようでsetTimeoutするようにした
+// @version       2012/12/07 //aEvent.preventDefault();
 // @Note          http://space.geocities.yahoo.co.jp/gl/alice0775
 // @Note          I got permission to open this script to the public from Mr.Sephiroth on July 28,2007.
 // ==/UserScript==
-// @version       2007/07/16
+// @version       2008/11/28 Firefox3.1b3pre tboの初期化に時間が掛かるようでsetTimeoutするようにした
+// @version       2007/12/09 21:00
 /* ***** BEGIN LICENSE BLOCK *****
 * Author: Ronny Perinke http://www.sephiroth-j.de
 *
@@ -34,11 +37,13 @@
 * I'd like to include them in the official xpi on my server. You will list you in the contributors list.
 *
 * ***** END LICENSE BLOCK ***** */
-var acHistoryFolder = {
-  kPrefROWPOSITION: "ac-HistoryTreeFolder.lastHistory.",
+
+var acBookMarkTreeFolder = {
+
+  kPrefROWPOSITION: "ac-BookMarkTreeFolder.lastBookmarkFolder",
 
   get _BTree() {
-    return document.getElementById("historyTree");
+    return document.getElementById("bookmarks-view");
   },
 
   init: function(){
@@ -49,23 +54,20 @@ var acHistoryFolder = {
     this._BTree.addEventListener('click', this, false);
     document.querySelector(".sidebar-placesTreechildren")
             .addEventListener("scroll", this, false);
-            
+
     this.addToolbar();
 
     if (this._BTree.result) {
-      setTimeout(() => {
-        var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
-        var lastRowToSelect = Services.prefs.getIntPref(
-                              this.kPrefROWPOSITION + viewtype, 0);
-        this._BTree.scrollToRow(lastRowToSelect);
-      }, 250);
+      var pos = Services.prefs.getIntPref(this.kPrefROWPOSITION, 0);
+      this._BTree.scrollToRow(pos);
     }
+
   },
 
   uninit: function(){
     this._BTree.removeEventListener('click', this, false);
     document.querySelector(".sidebar-placesTreechildren")
-        .removeEventListener("scroll", this, false);
+            .removeEventListener("scroll", this, false);
   },
 
   handleEvent: function(aEvent){
@@ -84,52 +86,40 @@ var acHistoryFolder = {
 
   _stimer: null,
   onScroll: function(){
-    console.log("onScroll");
+    if (document.getElementById("search-box").value)
+      return;
+
     if (this._stimer)
       clearTimeout(this._stimer);
     this._stimer = setTimeout(() => {
-      var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
       var getRow = this._BTree.getFirstVisibleRow();
-      Services.prefs.setIntPref(this.kPrefROWPOSITION + viewtype, getRow);
+      Services.prefs.setIntPref(this.kPrefROWPOSITION, getRow);
     }, 50);
   },
 
   addToolbar: function(){
     const kXULNS =
            "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    var toolbar = document.getElementById("acHistoryFolder-toolbar");
+    var toolbar = document.getElementById("acBookMarkTreeFolder-toolbar");
     if (toolbar){
       return;
     }
     var toolbox = document.createElementNS(kXULNS, "toolbox");
-    toolbox.setAttribute("style", "-moz-appearance: none;");
+    toolbox.setAttribute("style", "appearance: none;");
     toolbar = document.createElementNS(kXULNS, "toolbar");
-    toolbar.setAttribute("id", "acHistoryFolder-toolbar");
-    var closeAllButton = document.createElementNS(kXULNS, "toolbarbutton");
+    toolbar.setAttribute("id", "acBookMarkTreeFolder-toolbar");
+   var closeAllButton = document.createElementNS(kXULNS, "toolbarbutton");
     closeAllButton.setAttribute("label", "\u6298\u7573");//折畳
-    closeAllButton.setAttribute("oncommand", "acHistoryFolder.closeAll();");
+    closeAllButton.setAttribute("oncommand", "acBookMarkTreeFolder.closeAll();");
     var openAllButton = document.createElementNS(kXULNS, "toolbarbutton");
     openAllButton.setAttribute("label", "\u5c55\u958b");//展開
-    openAllButton.setAttribute("oncommand", "acHistoryFolder.openAll();");
+    openAllButton.setAttribute("oncommand", "acBookMarkTreeFolder.openAll();");
 
     toolbar.appendChild(closeAllButton);
     toolbar.appendChild(openAllButton);
     toolbox.appendChild(toolbar);
     this._BTree.parentNode.insertBefore(toolbox, this._BTree);
-    var viewbutton = document.getElementById("viewButton");
-    if (viewbutton){
-      viewbutton.addEventListener("command", acHistoryFolder.updateTBButtons, false);
-      var enabled = (viewbutton.getAttribute("selectedsort") == "day" || viewbutton.getAttribute("selectedsort") == "dayandsite");
-      closeAllButton.disabled = !enabled;
-      openAllButton.disabled = !enabled;
-    }
-  },
-
-  updateTBButtons: function(aEvent){
-    var enabled = (aEvent.target.id == "byday" || aEvent.target.id == "bydayandsite");
-    var toolbar = document.getElementById("acHistoryFolder-toolbar");
-    toolbar.firstChild.disabled = !enabled;
-    toolbar.lastChild.disabled = !enabled;
+    return;
   },
 
   onClick: function(aEvent){
@@ -142,6 +132,8 @@ var acHistoryFolder = {
     let cell = this._BTree.getCellAt(aEvent.clientX, aEvent.clientY);
     if (cell.row == -1)
       return;
+//alert(this._BTree.selectedNode.itemId);
+
     if(!aView.isContainer(cell.row))
       return;
     if (this._BTree.currentIndex != cell.row){
@@ -163,7 +155,7 @@ var acHistoryFolder = {
       }
     }
     this._BTree.ensureRowIsVisible(this._BTree.currentIndex);
-    aEvent.preventDefault();
+    //aEvent.preventDefault();
   },
 
   closeAll: function(){
@@ -192,4 +184,4 @@ var acHistoryFolder = {
   }
 }
 
-acHistoryFolder.init();
+acBookMarkTreeFolder.init();

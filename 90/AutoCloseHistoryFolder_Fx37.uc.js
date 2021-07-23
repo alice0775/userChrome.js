@@ -4,11 +4,12 @@
 // @description   Autoclose History Folders
 // @include       chrome://browser/content/places/historySidebar.xhtml
 // @include       chrome://browser/content/places/historySidebar.xul
-// @compatibility Firefox 78+
+// @compatibility Firefox 80
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
-// @version       2021/07/23 remove restriction scroll position
+// @version        2021/07/23 remove restriction scroll position
+// @version        2021/04/26 Bug 1620467 - Support standard 'appearance' CSS property unprefixed
 // @version       2020/12/12 remove prefs and simplify
 // @version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
 // @version       2019/01/18 fix for 66(Bug 1482389 - Convert TreeBoxObject to XULTreeElement)
@@ -102,7 +103,7 @@ var acHistoryFolder = {
       return;
     }
     var toolbox = document.createElementNS(kXULNS, "toolbox");
-    toolbox.setAttribute("style", "-moz-appearance: none;");
+    toolbox.setAttribute("style", "appearance: none;");
     toolbar = document.createElementNS(kXULNS, "toolbar");
     toolbar.setAttribute("id", "acHistoryFolder-toolbar");
     var closeAllButton = document.createElementNS(kXULNS, "toolbarbutton");
