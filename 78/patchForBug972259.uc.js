@@ -5,6 +5,8 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/07/23 add fall back
+// @version        2021/06/30 hide entry if sane url
 // @version        2021/06/30 ignore abput:xxx
 // @version        2021/06/29
 // ==/UserScript==
@@ -24,29 +26,39 @@
         let entry1  = sessionHistory.entries[i];
         if (uri != entry1.url) {
           gBrowser.webNavigation.gotoIndex(i);
-          break;
+          return;
         }
       }
+      // fall back
+      if (index - 1 >= 0)
+        this.selectedBrowser.goBack(requireUserInteraction);
     };
 
-    gBrowser.goForward = function(requireUserInteraction) {
+    window.addEventListener("popupshown", remeveDuplicate, true);
+    function remeveDuplicate(event) {
+      let popup = event.target;
+      if (popup.getAttribute("onpopupshowing") != "return FillHistoryMenu(event.target);")
+        return;
       let sessionHistory = SessionStore.getSessionHistory(gBrowser.selectedTab);
-      let index = sessionHistory.index;
-      let length = sessionHistory.entries.length;
-    	let entry = sessionHistory.entries[index];
-    	let uri = entry.url;
-    	if (/^about:/.test(uri)) {
-    	  this.selectedBrowser.goForward(requireUserInteraction);
-    	  return;
-    	}
-      for (let i = index + 1; i < length; i++) {
-        let entry1  = sessionHistory.entries[i];
-        if (uri != entry1.url) {
-          gBrowser.webNavigation.gotoIndex(i);
-          break;
+      for (let i = 0; i < popup.children.length - 2; i++) {
+        if (!popup.children[i].hasAttribute("index") ||
+            !popup.children[i + 1].hasAttribute("index"))
+          continue;
+        let index2 = popup.children[i].getAttribute("index");
+      	let entry2 = sessionHistory.entries[index2];
+      	let uri2 = entry2.url;
+      	if (/^about:/.test(uri2))
+      	 continue;
+        let index1 = popup.children[i + 1].getAttribute("index");
+      	let entry1 = sessionHistory.entries[index1];
+      	let uri1 = entry1.url;
+      	if (/^about:/.test(uri1))
+      	 continue;
+      	if (uri2 == uri1) {
+          popup.children[i + 1].style.setProperty("display", "none", "important");
         }
       }
-    };
+    }
   }
 
   // We should only start the redirection if the browser window has finished
