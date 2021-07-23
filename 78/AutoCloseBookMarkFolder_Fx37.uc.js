@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2021/07/23 restore scroll position more aggressively
 // @version       2021/03/20 fix right click on folder should not toggle
 // @version       2020/12/13 fix scroll position
 // @version       2020/12/12 remove prefs and simplify
@@ -45,6 +46,10 @@ var acBookMarkTreeFolder = {
     return document.getElementById("bookmarks-view");
   },
 
+  get _searchbox() {
+    return document.getElementById("search-box");
+  },
+
   init: function(){
     if (!this._BTree)
       return;
@@ -54,12 +59,20 @@ var acBookMarkTreeFolder = {
     document.querySelector(".sidebar-placesTreechildren")
             .addEventListener("scroll", this, false);
 
+
     this.addToolbar();
 
-    if (this._BTree.result) {
-      var pos = Services.prefs.getIntPref(this.kPrefROWPOSITION, 0);
-      this._BTree.scrollToRow(pos);
+    searchBookmarks_org = searchBookmarks; 
+    searchBookmarks = function(aSearchString) {
+      searchBookmarks_org(aSearchString);
+      setTimeout(() => {
+        acBookMarkTreeFolder.restoreScrollPosition();
+      }, 250);
     }
+
+    setTimeout(() => {
+      this.restoreScrollPosition();
+    }, 250);
 
   },
 
@@ -85,7 +98,7 @@ var acBookMarkTreeFolder = {
 
   _stimer: null,
   onScroll: function(){
-    if (document.getElementById("search-box").value)
+    if (this._searchbox.value)
       return;
 
     if (this._stimer)
@@ -119,6 +132,16 @@ var acBookMarkTreeFolder = {
     toolbox.appendChild(toolbar);
     this._BTree.parentNode.insertBefore(toolbox, this._BTree);
     return;
+  },
+
+  restoreScrollPosition() {
+    if (this._searchbox.value)
+      return;
+
+    if (this._BTree.result) {
+      var pos = Services.prefs.getIntPref(this.kPrefROWPOSITION, 0);
+      this._BTree.scrollToRow(pos);
+    }
   },
 
   onClick: function(aEvent){

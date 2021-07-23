@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2021/07/23 restore scroll position more aggressively
 // @version        2021/07/23 remove restriction scroll position
 // @version        2021/04/26 Bug 1620467 - Support standard 'appearance' CSS property unprefixed
 // @version       2020/12/12 remove prefs and simplify
@@ -42,6 +43,10 @@ var acHistoryFolder = {
     return document.getElementById("historyTree");
   },
 
+  get _searchbox() {
+    return document.getElementById("search-box");
+  },
+
   init: function(){
     if (!this._BTree)
       return;
@@ -53,14 +58,18 @@ var acHistoryFolder = {
             
     this.addToolbar();
 
-    if (this._BTree.result) {
+    this._BTree.load_org = this._BTree.load;
+    this._BTree.load = function(query, options) {
+      this.load_org(query, options);
       setTimeout(() => {
-        var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
-        var lastRowToSelect = Services.prefs.getIntPref(
-                              this.kPrefROWPOSITION + viewtype, 0);
-        this._BTree.scrollToRow(lastRowToSelect);
+        acHistoryFolder.restoreScrollPosition();
       }, 250);
     }
+
+    setTimeout(() => {
+      this.restoreScrollPosition();
+    }, 250);
+
   },
 
   uninit: function(){
@@ -85,7 +94,9 @@ var acHistoryFolder = {
 
   _stimer: null,
   onScroll: function(){
-    console.log("onScroll");
+    if (this._searchbox.value)
+      return;
+
     if (this._stimer)
       clearTimeout(this._stimer);
     this._stimer = setTimeout(() => {
@@ -95,6 +106,18 @@ var acHistoryFolder = {
     }, 50);
   },
 
+  restoreScrollPosition() {
+    if (this._searchbox.value)
+      return;
+
+    var viewtype = document.getElementById("viewButton").getAttribute('selectedsort');
+    var lastRowToSelect = Services.prefs.getIntPref(
+                          this.kPrefROWPOSITION + viewtype, 0);
+    if (this._BTree.result) {
+      this._BTree.scrollToRow(lastRowToSelect);
+    }
+  },
+  
   addToolbar: function(){
     const kXULNS =
            "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
