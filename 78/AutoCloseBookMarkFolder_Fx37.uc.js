@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2021/07/24 remove setTimeout
 // @version       2021/07/23 restore scroll position more aggressively
 // @version       2021/03/20 fix right click on folder should not toggle
 // @version       2020/12/13 fix scroll position
@@ -65,14 +66,10 @@ var acBookMarkTreeFolder = {
     searchBookmarks_org = searchBookmarks; 
     searchBookmarks = function(aSearchString) {
       searchBookmarks_org(aSearchString);
-      setTimeout(() => {
-        acBookMarkTreeFolder.restoreScrollPosition();
-      }, 250);
+      acBookMarkTreeFolder.restoreScrollPosition();
     }
 
-    setTimeout(() => {
-      this.restoreScrollPosition();
-    }, 250);
+    this.restoreScrollPosition();
 
   },
 

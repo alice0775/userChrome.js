@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2021/07/24 remove setTimeout
 // @version       2021/07/23 restore scroll position more aggressively
 // @version        2021/07/23 remove restriction scroll position
 // @version        2021/04/26 Bug 1620467 - Support standard 'appearance' CSS property unprefixed
@@ -61,14 +62,10 @@ var acHistoryFolder = {
     this._BTree.load_org = this._BTree.load;
     this._BTree.load = function(query, options) {
       this.load_org(query, options);
-      setTimeout(() => {
-        acHistoryFolder.restoreScrollPosition();
-      }, 250);
+      acHistoryFolder.restoreScrollPosition();
     }
 
-    setTimeout(() => {
-      this.restoreScrollPosition();
-    }, 250);
+    this.restoreScrollPosition();
 
   },
 
