@@ -5,6 +5,7 @@
 // @include        chrome://browser/content/preferences/dialogs/fonts.xhtml
 // @include        about:preferences
 // @compatibility  78+
+// @version        2020/08/07 01:00 add resizer for Advanced font dialog
 // @version        2020/08/06 23:00 add tooltip and sample text
 // @version        2020/08/05 02:00 fix open with hash
 // @version        2020/04/23 02:00 fix Bug 1201243
@@ -16,6 +17,10 @@ if (location.href == "chrome://browser/content/preferences/dialogs/fonts.xhtml")
   {
   window.optionFont = {
     init: function() {
+      let vbox = window.opener.document.querySelector('.dialogBox[resizable="false"][role="dialog"]')
+      vbox.setAttribute("resizable", "true");
+      vbox.style.setProperty("min-width", "60vw", "");
+
       ["serif", "sans-serif", "monospace"].forEach(id => 
       {
         let menulist = document.getElementById(id);
@@ -32,7 +37,7 @@ if (location.href == "chrome://browser/content/preferences/dialogs/fonts.xhtml")
     },
 
     setMenuPopupFont: async function(menupopup) {
-      const MIHON = "Il1O0rn口ロ力カ";
+      const MIHON = "Il1O0rn口ロプブ";
       let menuitems = menupopup.querySelectorAll("menuitem");
       menuitems.forEach(elm => 
       {
@@ -71,7 +76,7 @@ if (location.href == "chrome://browser/content/preferences/dialogs/fonts.xhtml")
     },
 
     setMenuPopupFont: async function(menupopup) {
-      const MIHON = "Il1O0rn口ロ力カ";
+      const MIHON = "Il1O0rn口ロプブ";
       let menuitems = menupopup.querySelectorAll("menuitem");
       menuitems.forEach(elm => 
       {
