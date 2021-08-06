@@ -6,6 +6,8 @@
 // @compatibility  Firefox 91
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2021/08/05 00:00 fix event is undefined
+// @version        2021/08/03 00:00 fix drag over
 // @version        2021/06/22 00:00 remove -moz-proton
 // @version        2021/06/18 00:00 Bug 1710237 - do not show .tab-icon-overlay for PiP anymore
 // @version        2021/06/11 00:00 adjust splitter width
@@ -512,7 +514,7 @@ function verticalTabLiteforFx() {
     });
   }
 
-  gBrowser.tabContainer._getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
+  //gBrowser.tabContainer._getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
   gBrowser.tabContainer.lastVisibleTab = function() {
     var tabs = this.allTabs;
     for (let i = tabs.length - 1; i >= 0; i--){
@@ -549,11 +551,13 @@ function verticalTabLiteforFx() {
     return tab;
   }
   
+  gBrowser.tabContainer._dragOverDelay = 1000; //350;
   gBrowser.tabContainer.on_dragover = function(event) {
     this.clearDropIndicator();
     var effects = this._getDropEffectForTabDrag(event);
     event.preventDefault();
     event.stopPropagation();
+    console.log(effects);
     if (effects == "link") {
       let tab = this._getDragTargetTab(event, true);
       if (tab) {
@@ -569,6 +573,7 @@ function verticalTabLiteforFx() {
     var newIndex = this._getDropIndex(event, effects == "link");
     if (newIndex == null)
       return;
+
     if (newIndex < this.allTabs.length) {
       this.allTabs[newIndex].querySelector(".tab-background").style.setProperty("box-shadow","0px 2px 0px 0px #f00 inset, 0px -2px 0px 0px #f00","important");
       this.allTabs[newIndex].setAttribute("dragover", true);
@@ -765,23 +770,29 @@ function verticalTabLiteforFx() {
   gBrowser.tabContainer.addEventListener('SSTabRestoring', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
   function ensureVisible(event) {
-    setTimeout(() => {
-      let tab = gBrowser.selectedTab;
-      let tabContainer = gBrowser.tabContainer;
-      if ( tab.screenY + tab.getBoundingClientRect().height + 1 >
-             tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
-        tab.scrollIntoView(false);
-      } else if ( tab.screenY < tabContainer.screenY ) {
-        tab.scrollIntoView(true);
-      }
-    }, gReduceMotion ? 0 : 150);
+    let aTab = event?.target;
+    setTimeout((aTab) => {
+      ensureVisibleTab(aTab);
+    }, gReduceMotion ? 0 : 150, aTab);
+  }
+  function ensureVisibleTab(aTab, allowScrollUp = true) {
+    let tab = gBrowser.selectedTab;
+    if (tab != aTab)
+      return;
+    let tabContainer = gBrowser.tabContainer;
+    if ( tab.screenY + tab.getBoundingClientRect().height + 1 >
+           tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
+      tab.scrollIntoView(false);
+    } else if ( tab.screenY < tabContainer.screenY && allowScrollUp) {
+      tab.scrollIntoView(true);
+    }
   }
 
   // check width only while dragging of splitter
   const resizeObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
       if(entry.contentBoxSize) {
-        ensureVisible();
+        ensureVisibleTab(gBrowser.selectedTab);
         if (vtbSplitter.getAttribute("state") == "dragging" ||
             document.getElementById("SM_splitter")?.getAttribute("state") == "dragging" ||
             SidebarUI._splitter.getAttribute("state") == "dragging") {

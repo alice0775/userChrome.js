@@ -6,6 +6,9 @@
 // @compatibility  Firefox 78ESR
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2021/08/05 00:00 fix event is undefined
+// @version        2021/08/03 00:00 fix drag over
+// @version        2021/06/11 12:00 fix css
 // @version        2020/10/21 12:00 fix resize vtb when drag Sidebar splitter
 // @version        2020/10/18 00:00 fix detach Tab Threshold
 // @version        2020/09/25 05:00 use ResizeObserver instead resize event
@@ -108,7 +111,15 @@ function verticalTabLiteforFx() {
   .tab-drop-indicator {
     display: none !important;
   }
-
+  .tab-background[selected="true"] {
+    border-top-color: var(--toolbar-bgcolor) !important;
+  }
+  .tabbrowser-tab:hover > .tab-stack > .tab-background > .tab-line:not([selected="true"]),
+  .tabbrowser-tab:hover > .tab-stack > .tab-background > .tab-line:not([multiselected]),
+  .tab-line[selected="true"],
+  .tab-line[multiselected] {
+     background-color: transparent !important;
+  }
 
   /* always show toolbuttons*/
   tabs:not([overflow="true"]):not([hashiddentabs]) ~ #new-tab-button,
@@ -257,7 +268,8 @@ function verticalTabLiteforFx() {
   `;
   var sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
   var uri = makeURI('data:text/css;charset=UTF=8,' + encodeURIComponent(css));
-  sss.loadAndRegisterSheet(uri, sss.AGENT_SHEET);
+  if(! sss.sheetRegistered(uri, sss.AGENT_SHEET))
+    sss.loadAndRegisterSheet(uri, sss.AGENT_SHEET);
 
 
   var ref = document.getElementById('SM_toolbox') ||
@@ -385,7 +397,7 @@ function verticalTabLiteforFx() {
     });
   }
 
-  gBrowser.tabContainer._getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
+  //gBrowser.tabContainer._getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
   gBrowser.tabContainer.lastVisibleTab = function() {
     var tabs = this.allTabs;
     for (let i = tabs.length - 1; i >= 0; i--){
@@ -421,6 +433,7 @@ function verticalTabLiteforFx() {
     return tab;
   }
   
+  gBrowser.tabContainer._dragOverDelay = 1000; //350;
   gBrowser.tabContainer.on_dragover = function(event) {
     this.clearDropIndicator();
     var effects = this._getDropEffectForTabDrag(event);
@@ -634,23 +647,29 @@ function verticalTabLiteforFx() {
   gBrowser.tabContainer.addEventListener('SSTabRestoring', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
   function ensureVisible(event) {
-    setTimeout(() => {
-      let tab = gBrowser.selectedTab;
-      let tabContainer = gBrowser.tabContainer;
-      if ( tab.screenY + tab.getBoundingClientRect().height + 1 >
-             tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
-        tab.scrollIntoView(false);
-      } else if ( tab.screenY < tabContainer.screenY ) {
-        tab.scrollIntoView(true);
-      }
-    }, gReduceMotion ? 0 : 150);
+    let aTab = event?.target;
+    setTimeout((aTab) => {
+      ensureVisibleTab(aTab);
+    }, gReduceMotion ? 0 : 150, aTab);
+  }
+  function ensureVisibleTab(aTab, allowScrollUp = true) {
+    let tab = gBrowser.selectedTab;
+    if (tab != aTab)
+      return;
+    let tabContainer = gBrowser.tabContainer;
+    if ( tab.screenY + tab.getBoundingClientRect().height + 1 >
+           tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
+      tab.scrollIntoView(false);
+    } else if ( tab.screenY < tabContainer.screenY && allowScrollUp) {
+      tab.scrollIntoView(true);
+    }
   }
 
   // check width only while dragging of splitter
   const resizeObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
       if(entry.contentBoxSize) {
-        ensureVisible();
+        ensureVisibleTab(gBrowser.selectedTab);
         if (vtbSplitter.getAttribute("state") == "dragging" ||
             SidebarUI._splitter.getAttribute("state") == "dragging") {
           let width = vtbTabsToolbar.getBoundingClientRect().width;
