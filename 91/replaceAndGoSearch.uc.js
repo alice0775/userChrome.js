@@ -3,7 +3,7 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    replace selection with clipboard text and go/search
 // @include        main
-// @compatibility  Firefox 78
+// @compatibility  Firefox 91
 // @author         Alice0775
 // @version        2021/08/21 12:00
 // ==/UserScript==
