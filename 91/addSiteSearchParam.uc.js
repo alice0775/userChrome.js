@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2021/08/28 06:00
 // @version        2021/08/21 12:00
 // ==/UserScript==
 var addSiteSearchParam = {
