@@ -6,6 +6,7 @@
 // @compatibility  Firefox 91
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2021/08/09 00:00 compactmode
 // @version        2021/08/05 00:00 fix event is undefined
 // @version        2021/08/03 00:00 fix drag over
 // @version        2021/06/22 00:00 remove -moz-proton
@@ -62,7 +63,12 @@ function verticalTabLiteforFx() {
   let verticalTab_height = 18;
 
   var css =`@-moz-document url-prefix("chrome://browser/content/browser.xhtml") {
-
+  :root:not([uidensity="compact"]) {
+    --tab-min-height: 24px !important;
+  }
+  :root[uidensity="compact"] {
+      --tab-min-height: 22px !important;
+  }
   /* vertical tabs */
   #vtb_TabsToolbar {
     max-width: ${verticalTabbar_maxWidth}px !important;
@@ -225,12 +231,21 @@ function verticalTabLiteforFx() {
       direction: ltr;
       mask-image: linear-gradient(to left, transparent, black 0.05em) !important;
   }
-  .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
-  .tabbrowser-tab:hover > .tab-stack > .tab-content > .tab-close-button {
+
+  :root:not([uidensity="compact"]) .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
+  :root:not([uidensity="compact"]) .tabbrowser-tab:hover > .tab-stack > .tab-content > .tab-close-button {
       margin-inline-end: calc(var(--inline-tab-padding) / -2);
       width: 19px !important;
       height: 23px !important;
       padding: 7px 5px !important; /*[上下][左右]*/
+      border-radius: 8px !important;
+  }
+  :root[uidensity="compact"] .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
+  :root[uidensity="compact"] .tabbrowser-tab:hover > .tab-stack > .tab-content > .tab-close-button {
+      margin-inline-end: calc(var(--inline-tab-padding) / -2);
+      width: 19px !important;
+      height: 19px !important;
+      padding: 5px 5px !important;
       border-radius: 8px !important;
   }
 
@@ -284,7 +299,6 @@ function verticalTabLiteforFx() {
       --toolbarbutton-inner-padding: unset !important;
   }
   :root {
-    --tab-min-height: 24px !important;
     --tab-border-radius: 0 !important;
     --tab-shadow-max-size: 0 !important;
     --proton-tab-block-margin: 0 !important;
