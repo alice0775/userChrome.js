@@ -5,15 +5,9 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 88
+// @compatibility 77
 // @version       2021/08/25 15:00 fix Principal for about:* link and checkLoadURIStrWithPrincipal flag
-// @version       2021/06/05 10:00 fix use cookieJarSettings for save image
-// @version       2021/04/25 20:00 fix TypeError: this._linkdocURLs is undefined, TypeError: target.ownerDocument is null
-// @version       2021/04/11 12:00 workaround 選択テキストで検索 Bug 360332
-// @version       2021/04/11 12:00 workaround: use finder.getInitialSelection
-// @version       2021/02/09 15:00 Bug 1685801 - Move most things out of BrowserUtils.jsm
 // @version       2020/12/19 15:00 fix typo and remove refferer
-// @version       2020/12/19 00:00 Bug 1641270 - Saving already-loaded images from a webpage yields "not an image".
 // @version       2020/12/14 09:00 add urlSecurityCheck for _linkURL, _linkURLs
 // @version       2020/11/29 20:00 add コンテナータブを指定してリンクを開く
 // @version       2020/08/22 21:11 fix すべてのタブを閉じる
@@ -111,10 +105,13 @@ var ucjsMouseGestures = {
         ['LRL', '<< 巻き戻し', function(){ ucjsNavigation?.fastNavigationBackForward(-1); } ],
 
         ['RULD', 'ひとつ上の階層へ移動', function(){ ucjsMouseGestures_helper.goUpperLevel(); } ],
-        ['ULDR', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
-        ['DLUR', '数値を減らして移動', function(){ ucjsMouseGestures_helper.goNumericURL(-1); } ],
+/*
+        ['RL', '数値を増やして移動', function(){ ucjsMouseGestures_helper.goNumericURL(+1); } ],
+        ['LR', '数値を減らして移動', function(){ ucjsMouseGestures_helper.goNumericURL(-1); } ],
+*/
         ['RL', '[次へ]等のリンクへ移動', function(){ ucjsNavigation?.advancedNavigateLink(1); } ],
         ['LR', '[戻る]等のリンクへ移動', function(){ ucjsNavigation?.advancedNavigateLink(-1); } ],
+
 
         ['UD', 'リロード', function(){ document.getElementById("Browser:Reload").doCommand(); } ],
         ['UDU', 'リロード(キャッシュ無視)', function(){ document.getElementById("Browser:ReloadSkipCache").doCommand(); } ],
@@ -139,12 +136,12 @@ var ucjsMouseGestures = {
           function(){
             let url = ucjsMouseGestures._linkURL;
             //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-            //        aSkipPrompt, aReferrer, aCookieJarSettings,
+            //        aSkipPrompt, aReferrer
             //        aSourceDocument,
             //        aIsContentWindowPrivate,
             //        aPrincipal)
             saveURL(url, url, null, false,
-                    true, gBrowser.selectedBrowser.referrerInfo, gBrowser.selectedBrowser.cookieJarSettings,
+                    true, null,
                     null,
                     PrivateBrowsingUtils.isWindowPrivate(window),
                     Services.scriptSecurityManager.createNullPrincipal({}));
@@ -161,8 +158,7 @@ var ucjsMouseGestures = {
               false, // skip cache or not
                "SaveImageTitle", // FilePickerTitleKey
               null, // chosen data
-              gBrowser.selectedBrowser.referrerInfo, //referrerInfo
-              gBrowser.selectedBrowser.cookieJarSettings, //cookieJarSettings
+              null, //referrerInfo
               null, // initiating doc
               false, // don't skip prompt for where to save
               null, // cache key
@@ -192,7 +188,6 @@ var ucjsMouseGestures = {
         ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
         ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
         ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
-        /*['DRU', '閉じたタブを元に戻す(一個ずつ)', function(){undoCloseTab(0); } ],*/
         ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
         ['', 'すべてのタブを閉じる', function(){ var browser = gBrowser; var ctab = browser.addTrustedTab(BROWSER_NEW_TAB_URL, {skipAnimation: true,}); browser.removeAllTabsBut(ctab); } ],
         ['', 'ウインドウを閉じる', function(){ document.getElementById("cmd_closeWindow").doCommand(); } ],
@@ -228,9 +223,9 @@ var ucjsMouseGestures = {
 
         ['', '選択テキストで検索',
           function(){
-            ucjsMouseGestures_helper._loadSearchWithDefaultEngine(
-              ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT,
-              false);
+            BrowserSearch.loadSearchFromContext(ucjsMouseGestures._selectedTXT,
+                          false,
+                          Services.scriptSecurityManager.createNullPrincipal({}));
           } ],
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
         ['DR', '選択テキストを検索バーにコピー',
@@ -285,12 +280,12 @@ var ucjsMouseGestures = {
                 let IMGtitle = ("000"+i).slice(-3);
                 i--;
                 //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-                //        aSkipPrompt, aReferrer, aCookieJarSettings,
+                //        aSkipPrompt, aReferrer
                 //        aSourceDocument,
                 //        aIsContentWindowPrivate,
                 //        aPrincipal)
                 saveURL(data[i], IMGtitle + ".png", null, false,
-                        true, null, null,
+                        true, null,
                         null,
                         PrivateBrowsingUtils.isWindowPrivate(window),
                         Services.scriptSecurityManager.createNullPrincipal({}));
@@ -483,12 +478,7 @@ var ucjsMouseGestures = {
         this._imgTYPE = message.data.imgTYPE;
         this._mediaSRC = message.data.mediaSRC;
         this._selectedTXT = message.data.selectedTXT;
-        try {
-          gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-            this._selectedTXT = r.selectedText;
-        })
-        } catch(e) {}
-      break;
+        break;
       case "ucjsMouseGestures_linkURLs_stop":
         this._linkdocURLs = message.data.linkdocURLs.split(" ");
         this._linkURLs = message.data.linkURLs.split(" ");
@@ -616,7 +606,7 @@ var ucjsMouseGestures = {
     var distanceX = Math.abs(x - this._lastX);
     var distanceY = Math.abs(y - this._lastY);
     // minimal movement where the gesture is recognized
-    const tolerance = 10;
+    const tolerance = 20;
     if (distanceX < tolerance && distanceY < tolerance)
       return;
     // determine current direction
@@ -903,15 +893,7 @@ let ucjsMouseGestures_framescript = {
       },
 
       _getSelectedText: function(target) {
-        let win;
-        if (target != undefined && target.ownerDocument) {
-          win = target.ownerDocument.defaultView;
-        } else {
-          win = content;
-        }
-        let selection = win.getSelection();
-        selectionStr = selection.toString();
-        return selectionStr.substr(0, 16384);
+        return BrowserUtils.getSelectionDetails(content).fullText;
       },
   
       _getLinkURL: function(aNode) {
@@ -939,7 +921,7 @@ let ucjsMouseGestures_framescript = {
             let aContentDisp = null;
             try {
               let aDoc = aNode.ownerDocument;
-              aURL = Services.io.newURI(aURL, aDoc.characterSet);
+              aURL = BrowserUtils.makeURI(aURL, aDoc.characterSet);
               var imageCache = Cc["@mozilla.org/image/tools;1"]
                                  .getService(Ci.imgITools)
                                  .getImgCacheForDocument(aDoc);
@@ -1411,7 +1393,7 @@ let ucjsMouseGestures_helper = {
 							menuitem.setAttribute("tooltiptext", "Stay on this page");
 							menuitem.className = "unified-nav-current";
 						} else {
-							let entryURI = Services.io.newURI(entry.url, entry.charset, null);
+							let entryURI = BrowserUtils.makeURI(entry.url, entry.charset, null);
 							PlacesUtils.favicons.getFaviconURLForPage(entryURI, function(aURI) {
 								if (!aURI)
 									return;
@@ -1528,21 +1510,6 @@ let ucjsMouseGestures_helper = {
       triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
 		});
   },
-  _loadSearchWithDefaultEngine: async function(text, inBackground) {
-		let engine = await Services.search.getDefault();
-		if (!engine)
-			return;
-		let submission = engine.getSubmission(text, null);
-		if (!submission)
-			return;
-
-		gBrowser.loadOneTab(submission.uri.spec, {
-			postData: submission.postData,
-			relatedToCurrent: true,
-			inBackground: inBackground,
-      triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
-		});
-  },
 
   // 再起動
   restart: function() {
@@ -1587,12 +1554,12 @@ let ucjsMouseGestures_helper = {
       if (!linkURL)
         continue;
       //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-      //        aSkipPrompt, aReferrer, aCookieJarSettings,
+      //        aSkipPrompt, aReferrer,
       //        aSourceDocument,
       //        aIsContentWindowPrivate,
       //        aPrincipal)
       saveURL(linkURL, null, null, false,
-              true, null, null,
+              true, null,
               null,
               PrivateBrowsingUtils.isWindowPrivate(window),
               Services.scriptSecurityManager.createNullPrincipal({}));
@@ -1700,7 +1667,9 @@ let ucjsMouseGestures_helper = {
 		if (URLs.length > 0)
 			this.openURLs(URLs);
 		else
-      ucjsMouseGestures_helper._loadSearchWithDefaultEngine(sel, true);
+      BrowserSearch.loadSearchFromContext(sel,
+                false,
+                Services.scriptSecurityManager.createNullPrincipal({}));
 	},
 
   // ホバーしたリンクをすべてタブで開く
@@ -1733,7 +1702,7 @@ let ucjsMouseGestures_helper = {
       			    Services.io.newURI(linkURL),
       			    gBrowser.selectedBrowser.contentPrincipal.originAttributes
       			  )
-      	};
+        };
         gBrowser.loadOneTab(linkURL, param);
       }
   },
@@ -1745,9 +1714,9 @@ let ucjsMouseGestures_helper = {
     			inBackground: true, relatedToCurrent: true,
     			triggeringPrincipal:
     			  Services.scriptSecurityManager.createContentPrincipal(
-      			  Services.io.newURI(aURL),
-      			  gBrowser.selectedBrowser.contentPrincipal.originAttributes
-      			)
+    			    Services.io.newURI(aURL),
+    			    gBrowser.selectedBrowser.contentPrincipal.originAttributes
+    			  )
     	};
 			gBrowser.loadOneTab(aURL, param);
 		}
@@ -1916,5 +1885,8 @@ let ucjsMouseGestures_helper = {
     popup.appendChild(docfrag);
     return true;
   },
+
+
+
 
 }
