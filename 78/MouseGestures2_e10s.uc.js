@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 78
+// @version       2021/08/31 23:30 Fix surplus selection after "L<R"
 // @version       2021/08/31 22:30 use mouseleave instead mouseout
 // @version       2021/08/31 22:00 fix left button status after "L>R"
 // @version       2021/08/25 15:00 fix Principal for about:* link and checkLoadURIStrWithPrincipal flag
@@ -519,6 +520,8 @@ var ucjsMouseGestures = {
           this._suppressContext = false;
           this._startGesture(event);
           if (this.enableRockerGestures && this._isMouseDownL) {
+            event.preventDefault();
+            event.stopPropagation();
             gBrowser.tabpanels.addEventListener("mouseleave", this, false);
             this._isMouseDownR = false;
             this._suppressContext = true;
@@ -528,6 +531,8 @@ var ucjsMouseGestures = {
         } else if (this.enableRockerGestures && event.button == 0) {
           this._isMouseDownL = true;
           if (this._isMouseDownR) {
+            event.preventDefault();
+            event.stopPropagation();
             this._isMouseDownL = false;
             this._suppressContext = true;
             this._directionChain = "L<R";
