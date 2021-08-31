@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 88
+// @version       2021/08/31 22:30 use mouseleave instead mouseout
 // @version       2021/08/31 22:00 fix left button status after "L>R"
 // @version       2021/08/25 15:00 fix Principal for about:* link and checkLoadURIStrWithPrincipal flag
 // @version       2021/06/05 10:00 fix use cookieJarSettings for save image
@@ -440,7 +441,7 @@ var ucjsMouseGestures = {
     gBrowser.tabpanels.removeEventListener("mousedown", this, false);
     gBrowser.tabpanels.removeEventListener("mousemove", this, false);
     gBrowser.tabpanels.removeEventListener("mouseup", this, false);
-    gBrowser.tabpanels.removeEventListener("mouseout", this, false);
+    gBrowser.tabpanels.removeEventListener("mouseleave", this, false);
     gBrowser.tabpanels.removeEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
       window.removeEventListener('wheel', this, true);
@@ -528,7 +529,7 @@ var ucjsMouseGestures = {
           this._suppressContext = false;
           this._startGesture(event);
           if (this.enableRockerGestures && this._isMouseDownL) {
-            gBrowser.tabpanels.addEventListener("mouseout", this, false);
+            gBrowser.tabpanels.addEventListener("mouseleave", this, false);
             this._isMouseDownR = false;
             this._suppressContext = true;
             this._directionChain = "L>R";
@@ -563,12 +564,12 @@ var ucjsMouseGestures = {
             this._displayContextMenu(event);
           }
         } else if (this.enableRockerGestures && event.button == 0 && this._isMouseDownL) {
-          gBrowser.tabpanels.removeEventListener("mouseout", this, false);
+          gBrowser.tabpanels.removeEventListener("mouseleave", this, false);
           this._isMouseDownL = false;
         }
         break;
-      case "mouseout": 
-        gBrowser.tabpanels.removeEventListener("mouseout", this, false);
+      case "mouseleave": 
+        gBrowser.tabpanels.removeEventListener("mouseleave", this, false);
         this._isMouseDownL = false;
         break;
       case "contextmenu": 
