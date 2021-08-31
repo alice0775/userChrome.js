@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 77
+// @compatibility 78
+// @version       2021/08/31 22:00 fix left button status after "L>R"
 // @version       2021/08/25 15:00 fix Principal for about:* link and checkLoadURIStrWithPrincipal flag
 // @version       2020/12/19 15:00 fix typo and remove refferer
 // @version       2020/12/14 09:00 add urlSecurityCheck for _linkURL, _linkURLs
@@ -344,7 +345,7 @@ var ucjsMouseGestures = {
 
               // このframeスクリプトからChromeスクリプトを実行するテスト
               ucjsMouseGestures.executeInChrome(
-                function aChromeScript(url, inBackground) {
+                function aChromeScript(url, inBackground = true) {
                   gBrowser.loadOneTab(
                     url, {
                     relatedToCurrent: true,
@@ -415,9 +416,9 @@ var ucjsMouseGestures = {
   init: function() {
     this._version = Services.appinfo.version.split(".")[0];
     this._isMac = navigator.platform.indexOf("Mac") == 0;
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousedown", this, false);
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mouseup", this, false);
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("contextmenu", this, true);
+    gBrowser.tabpanels.addEventListener("mousedown", this, false);
+    gBrowser.tabpanels.addEventListener("mouseup", this, false);
+    gBrowser.tabpanels.addEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
       window.addEventListener('wheel', this, true);
 
@@ -431,10 +432,11 @@ var ucjsMouseGestures = {
   },
 
   uninit: function() {
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mousedown", this, false);
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mousemove", this, false);
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mouseup", this, false);
-    (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("contextmenu", this, true);
+    gBrowser.tabpanels.removeEventListener("mousedown", this, false);
+    gBrowser.tabpanels.removeEventListener("mousemove", this, false);
+    gBrowser.tabpanels.removeEventListener("mouseup", this, false);
+    gBrowser.tabpanels.removeEventListener("mouseout", this, false);
+    gBrowser.tabpanels.removeEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
       window.removeEventListener('wheel', this, true);
 
@@ -511,11 +513,12 @@ var ucjsMouseGestures = {
     switch (event.type) {
       case "mousedown": 
         if (event.button == 2) {
-          (gBrowser.mPanelContainer || gBrowser.tabpanels).addEventListener("mousemove", this, false);
+          gBrowser.tabpanels.addEventListener("mousemove", this, false);
           this._isMouseDownR = true;
           this._suppressContext = false;
           this._startGesture(event);
           if (this.enableRockerGestures && this._isMouseDownL) {
+            gBrowser.tabpanels.addEventListener("mouseout", this, false);
             this._isMouseDownR = false;
             this._suppressContext = true;
             this._directionChain = "L>R";
@@ -538,7 +541,7 @@ var ucjsMouseGestures = {
         break;
       case "mouseup": 
         gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_mouseup");
-        (gBrowser.mPanelContainer || gBrowser.tabpanels).removeEventListener("mousemove", this, false);
+        gBrowser.tabpanels.removeEventListener("mousemove", this, false);
         if ((this._isMouseDownR && event.button == 2) ||
             (this._isMouseDownR && this._isMac && event.button == 0 && event.ctrlKey)) {
           this._isMouseDownR = false;
@@ -550,8 +553,13 @@ var ucjsMouseGestures = {
             this._displayContextMenu(event);
           }
         } else if (this.enableRockerGestures && event.button == 0 && this._isMouseDownL) {
+          gBrowser.tabpanels.removeEventListener("mouseout", this, false);
           this._isMouseDownL = false;
         }
+        break;
+      case "mouseout": 
+        gBrowser.tabpanels.removeEventListener("mouseout", this, false);
+        this._isMouseDownL = false;
         break;
       case "contextmenu": 
         if (this._suppressContext || this._isMouseDownR) {
@@ -1689,14 +1697,14 @@ let ucjsMouseGestures_helper = {
   },
 
   // リンクをすべてタブに開く
-  openURLsInTabs: function(linkURLs) {
+  openURLsInTabs: function(linkURLs, inBackground = true) {
       for (let i = 0; i < linkURLs.length; i++) {
         let linkURL = linkURLs[i];
         if (!linkURL)
           continue;
         let param = {
             relatedToCurrent: true,
-            inBackground: true,
+            inBackground: inBackground,
       			triggeringPrincipal:
       			  Services.scriptSecurityManager.createContentPrincipal(
       			    Services.io.newURI(linkURL),
@@ -1708,10 +1716,11 @@ let ucjsMouseGestures_helper = {
   },
 
   // リンクをタブに開く
-	openURLs: function(aURLs) {
+	openURLs: function(aURLs, inBackground = true) {
 		for (let aURL of aURLs) {
       let param = {
-    			inBackground: true, relatedToCurrent: true,
+    			inBackground: inBackground,
+    			relatedToCurrent: true,
     			triggeringPrincipal:
     			  Services.scriptSecurityManager.createContentPrincipal(
     			    Services.io.newURI(aURL),
@@ -1805,12 +1814,12 @@ let ucjsMouseGestures_helper = {
 		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
   },
 
-  openLinkInTabFromContainerMenu: function(event) {
+  openLinkInTabFromContainerMenu: function(event, inBackground = true) {
     let that = ucjsMouseGestures;
     let linkURL = that._linkURL || that._docURL; // link url or docment url
     let param = {
       relatedToCurrent: true,
-      inBackground: true,
+      inBackground: inBackground,
 			triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({}),
 		  userContextId: parseInt(event.target.getAttribute("data-usercontextid")),
     };
