@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/09/04 0700
 // @version        2021/08/21 12:00
 // ==/UserScript==
 var replaceAndGoSearch = {
@@ -14,6 +15,7 @@ var replaceAndGoSearch = {
     if (!Services.search.isInitialized) {
       await Services.search.init();
     }
+    this.urlBarMenu();
     this.searchBarMenu();
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
@@ -51,6 +53,10 @@ var replaceAndGoSearch = {
       // because paste and go doesn't want a result selection.
       gURLBar.view.close();
 
+      if (!contextMenu.querySelector("#replace-and-go")) {
+        insertLocation.insertAdjacentElement("afterend", replaceAndGo);
+      }
+
       let controller = document.commandDispatcher.getControllerForCommand(
         "cmd_paste"
       );
@@ -61,8 +67,6 @@ var replaceAndGoSearch = {
         replaceAndGo.setAttribute("disabled", "true");
       }
     });
-
-    insertLocation.insertAdjacentElement("afterend", replaceAndGo);
   },
 
 
@@ -113,6 +117,7 @@ var replaceAndGoSearch = {
   handleEvent: function(event){
     switch (event.type) {
       case "aftercustomization":
+        this.urlBarMenu();
         this.searchBarMenu();
         break;
       case 'unload':
