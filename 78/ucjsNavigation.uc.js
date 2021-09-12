@@ -4,6 +4,7 @@
 // @include        main
 // @compatibility  Firefox 78+
 // @author         Alice0775
+// @version        2021/09/12 remove the misjudged part on Reddit 
 // @version        2020/08/04 add fastNavigationBackForward
 // @version        2020/01/15 78+
 // @version        2015/01/15 Fixed strictmode
@@ -63,15 +64,16 @@ var ucjsNavigation = {
 
     //次のページ
       _navigateNext: function() {
+        //   const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
         // linkタグ
         let win = content;
         let arrTags = win.document.getElementsByTagName('link');
         for(let i=0,len=arrTags.length; i<len; i++) {
           if(!arrTags[i].hasAttribute('rel') || !arrTags[i].hasAttribute('href')) continue;
           if(!arrTags[i].getAttribute('rel').match(/next/i)) continue;
+        //   Services.console.logStringMessage('link ' + arrTags[i].href);
           return arrTags[i].href;
         }
-          
         // Eigene: Go to Link named Next
         const XPATH = 'descendant::text()';
         arrTags = win.document.links;
@@ -97,9 +99,11 @@ var ucjsNavigation = {
              || link.match(/\u9032\u3080\s?[\u2192\u00bb]?\n?$/)
              || link.match(/\u7d9a\u304f\n?$/)
              || link.match(/\u3064\u3065\u304f\n?$/) )          {
+        //   Services.console.logStringMessage('next ' + arrTags[i].href);
               return arrTags[i].href;
             }
           }
+/*
           //さらに
           for(let i=0; i<arrTags.length; i++) {
             let result = win.document.evaluate(XPATH,arrTags[i],null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
@@ -113,9 +117,11 @@ var ucjsNavigation = {
              || link.match(/^[>\s\(]?next(\s?\d+?\s?)?(search)?\s?(pages?|results?)?/i) )
 
             {
+        //   Services.console.logStringMessage('number ' + arrTags[i].href);
               return arrTags[i].href;
             }
           }
+*/
         }
 /*
         let arr = ['次','続き','進む','next','もっと読む','>>','xBB','＞'];
