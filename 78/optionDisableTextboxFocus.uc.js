@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name           optionDisableTextboxFocus.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description    optionFont
+// @description    workaround Bug 1727888 - Unable to unfocus searchbox of the preferences with mouse
 // @include        about:preferences
 // @compatibility  78+
 // @version        2020/08/07 01:00
