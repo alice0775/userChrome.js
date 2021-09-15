@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 78
+// @version       2021/09/16 00:30 Fix to detect links correctly.
 // @version       2021/09/15 14:30 Fix openURLsInSelection
 // @version       2021/08/31 23:30 Fix surplus selection after "L<R"
 // @version       2021/08/31 22:30 use mouseleave instead mouseout
@@ -1669,15 +1670,22 @@ let ucjsMouseGestures_helper = {
 			throw "No selection";
 		let URLs = [];
 		sel.split(/\s/).forEach((str) => {
-			str = str.match(/([\w\+\-\=\$;:\?\.%,!#~\*\/@&]{8,})/);
-			if (!str || str[1].indexOf(".") < 0)
-				return;
-			if (str[1].split("/").length < 3 && str[1].split(".").length < 3)
-				return;
-			str = str[1];
-			if (str.indexOf("ttp://") == 0 || str.indexOf("ttps://") == 0)
-				str = "h" + str;
-			URLs.push(str);
+			let arrUrl = str.match(/((((h?t)?tps?|h..ps?)(:\/\/))?[a-zA-Z0-9+$;?.%,!#~*/:@&=_-]+)/ig);
+			if (!arrUrl)
+			  return;
+			for(let i = 0; i < arrUrl.length; i++) {
+  			if (!arrUrl[i] || arrUrl[i].indexOf(".") < 0 || arrUrl[i].length < 8)
+  				continue;
+        // ttp等を http等に
+        let url = arrUrl[i].replace(/^(ttp|tp|h..p):\/\//i,'http://');
+        const URIFixup = Services.uriFixup;
+        let uri = URIFixup.createFixupURI(
+                  url,
+                  URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP );
+        if(!uri) continue;
+        // if(!isValidTld(uri) continue; //todo
+  			URLs.push(uri.spec);
+  	  }
 		});
 		if (URLs.length > 0)
 			this.openURLs(URLs);
@@ -1685,7 +1693,7 @@ let ucjsMouseGestures_helper = {
       BrowserSearch.loadSearchFromContext(sel,
                 false,
                 Services.scriptSecurityManager.createNullPrincipal({}));
-	},
+  },
 
   // ホバーしたリンクをすべてタブで開く
   openHoverLinksInTabs: function() {
