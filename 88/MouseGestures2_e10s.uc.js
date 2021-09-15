@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 88
+// @version       2021/09/15 14:30 Fix openURLsInSelection
 // @version       2021/08/31 23:30 Fix surplus selection after "L<R"
 // @version       2021/08/31 22:30 use mouseleave instead mouseout
 // @version       2021/08/31 22:00 fix left button status after "L>R"
@@ -1700,7 +1701,7 @@ let ucjsMouseGestures_helper = {
 		if (!sel)
 			throw "No selection";
 		let URLs = [];
-		sel.split("\n").forEach((str) => {
+		sel.split(/\s/).forEach((str) => {
 			str = str.match(/([\w\+\-\=\$;:\?\.%,!#~\*\/@&]{8,})/);
 			if (!str || str[1].indexOf(".") < 0)
 				return;
