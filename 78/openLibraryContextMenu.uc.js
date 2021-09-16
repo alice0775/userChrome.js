@@ -7,6 +7,7 @@
 // @include        chrome://browser/content/places/bookmarksSidebar.xhtml
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/09/16 Allow library from contentarea
 // @version        2020/09/14 fix posiotion of menu
 // @version        2020/08/17
 // ==/UserScript==
@@ -45,8 +46,12 @@ var openLibraryContextMenu = {
     this.organizer = wm.getMostRecentWindow("Places:Organizer");
 
     if (!this.organizer) {
-      this.organizer = openDialog("chrome://browser/content/places/places.xhtml",
+      try {
+       let win = wm.getMostRecentWindow("navigator:browser");
+       this.organizer = win.openDialog("chrome://browser/content/places/places.xhtml",
                              "", "chrome,toolbar=yes,dialog=no,resizable");
+      } catch(ex) {
+      }
       this.organizer.addEventListener("load", this, false);
     } else {
       this.selectNode(this.node);
