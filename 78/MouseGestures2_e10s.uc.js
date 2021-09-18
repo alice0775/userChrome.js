@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 78
+// @version       2021/09/19 00:30 fix use referrer for saveImage and saveLink
 // @version       2021/09/16 00:30 Fix to detect links correctly.
 // @version       2021/09/15 14:30 Fix openURLsInSelection
 // @version       2021/08/31 23:30 Fix surplus selection after "L<R"
@@ -125,12 +126,12 @@ var ucjsMouseGestures = {
 
         ['', 'コンテナータブを指定してリンクを開く', function(){ ucjsMouseGestures_helper.openLinkInContainerTab(); } ],
 
-        ['', 'テキストリンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
+        ['', '選択範囲のテキストリンクをすべてタブに開く(リンクが無い場合は規定の検索エンジンで検索)', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
         ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
         ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
         ['', 'リンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLs([ucjsMouseGestures._linkURL]); } ],
 
-        ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
+        ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveSelectedLinks(); } ],
         ['', '通過したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
 
         ['', 'コピー', function(){ ucjsMouseGestures_helper.copyText(ucjsMouseGestures.selectedTXT); } ],
@@ -138,39 +139,9 @@ var ucjsMouseGestures = {
         ['', '選択したリンクをコピー', function(){ ucjsMouseGestures_helper.copySelectedLinks(); } ],
 
         ['', 'リンクを保存',
-          function(){
-            let url = ucjsMouseGestures._linkURL;
-            //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-            //        aSkipPrompt, aReferrer
-            //        aSourceDocument,
-            //        aIsContentWindowPrivate,
-            //        aPrincipal)
-            saveURL(url, url, null, false,
-                    true, null,
-                    null,
-                    PrivateBrowsingUtils.isWindowPrivate(window),
-                    Services.scriptSecurityManager.createNullPrincipal({}));
-          } ],
+          function(){ ucjsMouseGestures_helper.saveLink(ucjsMouseGestures._linkURL, ucjsMouseGestures._linkReferrerInfo); } ],
         ['LDR', '画像を保存',
-          function() {
-            let that = ucjsMouseGestures;
-            internalSave(
-              that._imgSRC, // dataURL
-              null, // aDocument
-              null, // aFilename
-              that._imgDISP, // content disposition
-              that._imgTYPE || "image/jpeg", // content type - keep in sync with ContextMenuChild!
-              false, // skip cache or not
-               "SaveImageTitle", // FilePickerTitleKey
-              null, // chosen data
-              null, //referrerInfo
-              null, // initiating doc
-              false, // don't skip prompt for where to save
-              null, // cache key
-              PrivateBrowsingUtils.isWindowPrivate(window),
-              Services.scriptSecurityManager.createNullPrincipal({})
-            );
-          } ],
+          function() { ucjsMouseGestures_helper.saveImage(ucjsMouseGestures._imgSRC); } ],
 
         ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
         ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
@@ -322,17 +293,12 @@ var ucjsMouseGestures = {
             //frameスクリプトを実行
             ucjsMouseGestures_helper.executeInContent(function aFrameScript(window) {
               // the following are available in frame script
-              // content                        // window object
-              // ucjsMouseGestures._document    // content.document
-              // ucjsMouseGestures._target      // element at star mouse gestures
               // ucjsMouseGestures._linkURL     // link url at star mouse gestures(string)
               // ucjsMouseGestures._linkTXT     //      linktext (string)
               // ucjsMouseGestures._imgSRC      // image src at star mouse gestures(string)(string)
               // ucjsMouseGestures._imgTYPE     //       mime/type (string)
               // ucjsMouseGestures._imgDISP     //       cpntent-disposition (string)
               // ucjsMouseGestures._mediaSRC    // media src at star mouse gestures(string)(string)(string)
-              // ucjsMouseGestures._linkElts    // links hoverd (array)
-              // ucjsMouseGestures._selLinkElts // links selected (array)
               // ucjsMouseGestures.executeInChrome: function(func, args) // function oject, array [string, ...]
 
 
@@ -341,10 +307,8 @@ var ucjsMouseGestures = {
               Services.console.logStringMessage("contentScript this: " + this);
               Services.console.logStringMessage("contentScript content: " + content);
               Services.console.logStringMessage("contentScript this === content: " + (this === content));
-              Services.console.logStringMessage("contentScript _target: " + ucjsMouseGestures._target);
+
               Services.console.logStringMessage("contentScript test: " + ucjsMouseGestures._imgSRC);
-              Services.console.logStringMessage("contentScript test: " +
-                                        ucjsMouseGestures._getLinkTEXT(ucjsMouseGestures._target)) ;
               */
 
               // このframeスクリプトからChromeスクリプトを実行するテスト
@@ -372,8 +336,10 @@ var ucjsMouseGestures = {
   _directionChain: "",
   _linkdocURLs: [],
   _linkURLs: [],
+  _linkReferrerInfos: [],
   _selLinkdocURLs: [],
   _selLinkURLs: [],
+  _selLinkReferrerInfos: [],
   _docURL: "",
   _linkURL: "",
   _linkTXT: "",
@@ -480,16 +446,28 @@ var ucjsMouseGestures = {
         this._docCHARSET = message.data.docCHARSET;
         this._linkURL = message.data.linkURL;
         this._linkTXT = message.data.linkTXT;
+        this._linkReferrerInfo = E10SUtils.deserializeReferrerInfo(message.data.linkReferrerInfo);
         this._imgSRC = message.data.imgSRC;
         this._imgTYPE = message.data.imgTYPE;
         this._mediaSRC = message.data.mediaSRC;
         this._selectedTXT = message.data.selectedTXT;
+        this._referrerInfo = E10SUtils.deserializeReferrerInfo(message.data.referrerInfo);
         break;
       case "ucjsMouseGestures_linkURLs_stop":
         this._linkdocURLs = message.data.linkdocURLs.split(" ");
         this._linkURLs = message.data.linkURLs.split(" ");
+        this._linkReferrerInfos = message.data.linkReferrerInfos.split(" ");
+        for(let i = 0; i < this._linkReferrerInfos.length; i++) {
+          this._linkReferrerInfos[i] =
+            E10SUtils.deserializeReferrerInfo(this._linkReferrerInfos[i])
+        }
         this._selLinkdocURLs = message.data.selLinkdocURLs.split(" ");
         this._selLinkURLs = message.data.selLinkURLs.split(" ");
+        this._selLinkReferrerInfos = message.data.selLinkReferrerInfos.split(" ");
+        for(let i = 0; i < this._selLinkReferrerInfos.length; i++) {
+          this._selLinkReferrerInfos[i] =
+            E10SUtils.deserializeReferrerInfo(this._selLinkReferrerInfos[i])
+        }
         break;
       case "ucjsMouseGestures_linkURL_dragstart":
         if (this.enableRockerGestures)
@@ -654,27 +632,11 @@ var ucjsMouseGestures = {
         }
       this.statusinfo = "Gesture: " + this._directionChain + " " + commandName;
     }
-/*
-    // ホバーしたリンクのURLを記憶
-    var linkURL = this._getLinkURL(event.target);
-    if (linkURL && this._linkURLs.indexOf(linkURL) == -1)
-      this._linkURLs.push(linkURL);
-*/
     // save current position
     this._lastX = x;
     this._lastY = y;
   },
-/*
-  _getLinkURL: function(aNode)
-  {
-    while (aNode) {
-      if ((aNode instanceof HTMLAnchorElement || aNode instanceof HTMLAreaElement) && aNode.href)
-        return aNode.href;
-      aNode = aNode.parentNode;
-    }
-    return null;
-  },
-*/
+
   _stopGesture: function(event) {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
@@ -760,10 +722,15 @@ let ucjsMouseGestures_framescript = {
     let framescript = {
       _linkdocURLs: [],
       _linkURLs: [],
+      _linkReferrerInfos: [],
       _linkElts: [],
-      _target: null,
 
       init: function(isMac, enableWheelGestures) {
+        const { E10SUtils } = ChromeUtils.import(
+          "resource://gre/modules/E10SUtils.jsm"
+        );
+        this.E10SUtils = E10SUtils;
+        delete E10SUtils;
         this._isMac = isMac;
         this.enableWheelGestures = enableWheelGestures;
         addMessageListener("ucjsMouseGestures_mouseup", this);
@@ -773,8 +740,6 @@ let ucjsMouseGestures_framescript = {
         addEventListener("mousedown", this, true);
         if (this.enableWheelGestures)
           addEventListener('wheel', this, true);
-
-        ucjsMouseGestures = this;
       },
 
       receiveMessage: function(message) {
@@ -785,18 +750,18 @@ let ucjsMouseGestures_framescript = {
             this.clearStyle();
             break;
           case "ucjsMouseGestures_linkURLs_request":
-            let [_selLinkElts, selLinkURLs, selLinkdocURLs] = this.gatherLinkURLsInSelection();
+            let [_selLinkElts, selLinkURLs, selLinkdocURLs, selLinkReferrerInfos] = this.gatherLinkURLsInSelection();
             let json = {
               linkdocURLs: this._linkdocURLs.join(" "),
               linkURLs: this._linkURLs.join(" "),
+              linkReferrerInfos: this._linkReferrerInfos.join(" "),
               selLinkdocURLs: selLinkdocURLs.join(" "),
-              selLinkURLs: selLinkURLs.join(" ")
+              selLinkURLs: selLinkURLs.join(" "),
+              selLinkReferrerInfos: selLinkReferrerInfos.join(" ")
             };
             sendSyncMessage("ucjsMouseGestures_linkURLs_stop",
               json
             );
-            ucjsMouseGestures._linkElts = this._linkElts;
-            ucjsMouseGestures._selLinkElts = _selLinkElts;
             this.clearStyle();
             break;
           case "ucjsMouseGestures_dispatchKeyEvent":
@@ -831,50 +796,59 @@ let ucjsMouseGestures_framescript = {
             addEventListener("dragstart", this, true);
             this._linkdocURLs = [];
             this._linkURLs = [];
+            this._linkReferrerInfos = [];
             this._linkElts = [];
             this._selLinkdocURLs = [];
             this._selLinkURLs = [];
+            this._selLinkReferrerInfos = [];
             [imgSRC, imgTYPE, imgDISP] = this._getImgSRC(event.target);
+            linkURL = null;
+            let linkReferrerInfo = null;
             try {
-              let URL = this._getLinkURL(event.target);
+              let node = this._getLinkURL(event.target);
+              let url = node.href;
               Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
                 event.target.ownerDocument.nodePrincipal,
-                URL,
+                url,
                 Services.scriptSecurityManager
               );
-              linkURL = URL;
-            } catch (ex) {
-              linkURL = null;
-            }
+              linkURL = url;
+              linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
+                                     .createInstance(Ci.nsIReferrerInfo);
+              linkReferrerInfo.initWithElement(node);
+            } catch (ex) {}
+            
             linkTXT = this._getLinkTEXT(this.link);
             mediaSRC = this._getMediaSRC(event.target);
             selectedTXT = this._getSelectedText(event.target);
+            let doc = event.target.ownerDocument;
             json = {
-              docURL: event.target.ownerDocument.location.href,
-              docCHARSET: event.target.ownerDocument.charset,
+              docURL: doc.location.href,
+              docCHARSET: doc.charset,
               linkURL: linkURL,
               linkTXT: linkTXT,
               imgSRC: imgSRC,
               imgTYPE: imgTYPE,
               imgDISP: imgDISP,
               mediaSRC: mediaSRC,
-              selectedTXT: selectedTXT
+              //selectedTXT: selectedTXT,
+              referrerInfo: this.E10SUtils.serializeReferrerInfo(
+                                   doc.referrerInfo
+                                 ),
+              linkReferrerInfo: this.E10SUtils.serializeReferrerInfo(
+                                   linkReferrerInfo
+                                 )                                 
             };
             sendSyncMessage("ucjsMouseGestures_linkURL_start",
               json
             );
-            ucjsMouseGestures._document = content.document;
-            ucjsMouseGestures._target   = event.target;
-            ucjsMouseGestures._linkURL  = linkURL;
-            ucjsMouseGestures._linkTXT  = linkTXT;
-            ucjsMouseGestures._imgSRC   = imgSRC;
-            ucjsMouseGestures._imgTYPE  = imgTYPE;
-            ucjsMouseGestures._imgDISP  = imgDISP;
-            ucjsMouseGestures._mediaSRC = mediaSRC;
             break;
           case "mousemove":
                 // ホバーしたリンクのURLを記憶
-            linkURL = this._getLinkURL(event.target);
+            let node = this._getLinkURL(event.target);
+            if (!node)
+              break;
+            linkURL = node.href;
             if (linkURL && this._linkURLs.indexOf(linkURL) == -1) {
               try {
                 Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
@@ -887,6 +861,11 @@ let ucjsMouseGestures_framescript = {
               }
               this._linkdocURLs.push(event.target.ownerDocument.location.href);
               this._linkURLs.push(linkURL);
+              let linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
+                                      .createInstance(Ci.nsIReferrerInfo);
+              linkReferrerInfo.initWithElement(node);
+              this._linkReferrerInfos.push(this.E10SUtils.serializeReferrerInfo(linkReferrerInfo));
+
               this._linkElts.push(event.target);
               event.target.style.outline = "1px dashed darkorange";
             }
@@ -917,7 +896,7 @@ let ucjsMouseGestures_framescript = {
         while (aNode) {
           if ((aNode instanceof content.HTMLAnchorElement || aNode instanceof content.HTMLAreaElement) && aNode.href) {
             this.link = aNode;
-            return aNode.href;
+            return aNode;
           }
           try {
             aNode = aNode.parentNode;
@@ -1051,11 +1030,12 @@ let ucjsMouseGestures_framescript = {
         var win = content;
         var sel = win.getSelection();
         if (!sel || sel.isCollapsed)
-          return [[], [], []];
+          return [[], [], [], []];
         var doc = win.document;
         var LinkElts = [];
         var linkdocURLs = [];
         var linkURLs = [];
+        var linkReferrerInfos = [];
         for (var i = 0; i < sel.rangeCount; i++) {
           var range = sel.getRangeAt(i);
           var fragment = range.cloneContents();
@@ -1069,13 +1049,17 @@ let ucjsMouseGestures_framescript = {
                 LinkElts.push(node);
                 linkdocURLs.push(fragment.ownerDocument.location.href);
                 linkURLs.push(node.href);
-              }
-              catch(ex) {
-              }
+                let linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
+                  .createInstance(Ci.nsIReferrerInfo);
+                linkReferrerInfo.initWithElement(node);
+                linkReferrerInfos.push(this.E10SUtils.serializeReferrerInfo(
+                                       linkReferrerInfo
+                                   ));
+              } catch(ex) {}
             }
           }
         }
-        return [LinkElts, linkURLs, linkdocURLs]
+        return [LinkElts, linkURLs, linkdocURLs, linkReferrerInfos]
       },
 
       // func       // function object
@@ -1551,7 +1535,7 @@ let ucjsMouseGestures_helper = {
   saveHoverLinks: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      this.saveLinks(that._linkURLs)
+      this.saveLinks(that._linkURLs, that._linkReferrerInfos)
 		}, 500);
   },
   
@@ -1559,29 +1543,115 @@ let ucjsMouseGestures_helper = {
   saveSelectedLinks: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      this.saveLinks(that._selLinkURLs)
+      this.saveLinks(that._selLinkURLs, that._selLinkReferrerInfos)
 		}, 500);
   },
 
+  // リンクを保存
+  saveLink: function(aLinkURL, aLinkReferrerInfo) {
+    let that = ucjsMouseGestures;
+    if (typeof(aLinkReferrerInfo) == "string") {
+      try {
+        aLinkReferrerInfo = new ReferrerInfo(
+          Ci.nsIReferrerInfo.EMPTY,
+          true,
+          aLinkReferrerInfo
+        )
+      } catch(ex){}
+    }
+    else if (typeof aLinkReferrerInfo == "undefined")
+      aLinkReferrerInfo = that._referrerInfo;
+
+    //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+    //        aSkipPrompt, aReferrerInfo,
+    //        aSourceDocument,
+    //        aIsContentWindowPrivate,
+    //        aPrincipal)
+    saveURL(aLinkURL, aLinkURL, null, true,
+            true,
+            aLinkReferrerInfo, //referrerInfo
+            null,
+            PrivateBrowsingUtils.isWindowPrivate(window),
+            Services.scriptSecurityManager.createNullPrincipal({}));
+  },
+
   // リンクをすべて保存
-  saveLinks: function(linkURLs) {
-    for (let i = 0; i < linkURLs.length; i++) {
-      let linkURL = linkURLs[i];
+  saveLinks: function(aLinkURLs, aLinkReferrerInfos) {
+    for (let i = 0; i < aLinkURLs.length; i++) {
+      let linkURL = aLinkURLs[i];
       if (!linkURL)
         continue;
-      //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
-      //        aSkipPrompt, aReferrer,
-      //        aSourceDocument,
-      //        aIsContentWindowPrivate,
-      //        aPrincipal)
-      saveURL(linkURL, null, null, false,
-              true, null,
-              null,
-              PrivateBrowsingUtils.isWindowPrivate(window),
-              Services.scriptSecurityManager.createNullPrincipal({}));
+      let linkReferrerInfo = null;
+      if (Array.isArray(aLinkReferrerInfos)) {
+        try {
+          linkReferrerInfo = aLinkReferrerInfos[i];
+        } catch(e) {}
+      }
+      this.saveLink(linkURL, linkReferrerInfo);
     }
   },
 
+  getImageInfo: function(aURL) {
+    try {
+      aURL = Services.io.newURI(aURL);
+      var imageCache = Cc["@mozilla.org/image/tools;1"]
+                         .getService(Ci.imgITools)
+                         .getImgCacheForDocument(null);
+      var props =
+        imageCache.findEntryProperties(aURL);
+    } catch (e) {
+    }
+    let aContentType = aContentDisp = "";
+    if (props) {
+      try {
+        aContentType = props.get("type",  Ci.nsISupportsCString).data;
+      } catch (e) {
+        aContentType = "image/jpeg"
+      }
+      try {
+        aContentDisp = props.get(
+          "content-disposition",
+          Ci.nsISupportsCString
+        ).data;
+      } catch (e) {
+      }
+    }
+    return [aContentType, aContentDisp];
+  },
+
+  // 画像を保存
+  saveImage: function(src, referrerInfo) {
+    let that = ucjsMouseGestures;
+    if (typeof(referrerInfo) == "string") {
+      try {
+        referrerInfo = new ReferrerInfo(
+          Ci.nsIReferrerInfo.EMPTY,
+          true,
+          referrerInfo
+        )
+      } catch(ex){}
+    }
+    else if (typeof referrerInfo == "undefined")
+      referrerInfo = that._referrerInfo;
+
+    let [aContentType, aContentDisp] = this.getImageInfo(src);
+    internalSave(
+      that._imgSRC, // dataURL
+      null, // aDocument
+      null, // aFilename
+      aContentDisp, // content disposition
+      aContentType, // content type - keep in sync with ContextMenuChild!
+      false, // skip cache or not
+       "SaveImageTitle", // FilePickerTitleKey
+      null, // chosen data
+      referrerInfo, //referrerInfo
+      null, // initiating doc
+      false, // don't skip prompt for where to save
+      null, // cache key
+      PrivateBrowsingUtils.isWindowPrivate(window),
+      Services.scriptSecurityManager.createNullPrincipal({})
+    );
+  },
 
   // textをクリップボードにコピー
   copyText: function(text) {
@@ -1699,7 +1769,7 @@ let ucjsMouseGestures_helper = {
   openHoverLinksInTabs: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      ucjsMouseGestures_helper.openURLsInTabs(that._linkURLs);
+      ucjsMouseGestures_helper.openURLs(that._linkURLs, that._linkReferrerInfos);
     }, 500);
   },
 
@@ -1707,44 +1777,45 @@ let ucjsMouseGestures_helper = {
   openSelectedLinksInTabs: function() {
     let that = ucjsMouseGestures;
     setTimeout(() => {
-      ucjsMouseGestures_helper.openURLsInTabs(that._selLinkURLs);
+      ucjsMouseGestures_helper.openURLs(that._selLinkURLs, that._selLinkReferrerInfos);
     }, 500);
   },
 
   // リンクをすべてタブに開く
-  openURLsInTabs: function(linkURLs, inBackground = true) {
+  openURLs: function(linkURLs, linkReferrerInfos = null, inBackground = true) {
       for (let i = 0; i < linkURLs.length; i++) {
         let linkURL = linkURLs[i];
         if (!linkURL)
           continue;
+
+        let linkReferrerInfo = null;
+        if (typeof(linkReferrerInfos) == "string") {
+          try {
+            linkReferrerInfo = new ReferrerInfo(
+              Ci.nsIReferrerInfo.EMPTY,
+              true,
+              linkReferrerInfos
+            )
+          } catch(ex){}
+        }
+        else if (Array.isArray(linkReferrerInfos)) {
+          try {
+            linkReferrerInfo = linkReferrerInfos[i];
+          } catch(e) {}
+        }
         let param = {
             relatedToCurrent: true,
+            referrerInfo: linkReferrerInfo,
             inBackground: inBackground,
       			triggeringPrincipal:
       			  Services.scriptSecurityManager.createContentPrincipal(
       			    Services.io.newURI(linkURL),
       			    gBrowser.selectedBrowser.contentPrincipal.originAttributes
       			  )
-        };
+      	};
         gBrowser.loadOneTab(linkURL, param);
       }
   },
-
-  // リンクをタブに開く
-	openURLs: function(aURLs, inBackground = true) {
-		for (let aURL of aURLs) {
-      let param = {
-    			inBackground: inBackground,
-    			relatedToCurrent: true,
-    			triggeringPrincipal:
-    			  Services.scriptSecurityManager.createContentPrincipal(
-    			    Services.io.newURI(aURL),
-    			    gBrowser.selectedBrowser.contentPrincipal.originAttributes
-    			  )
-    	};
-			gBrowser.loadOneTab(aURL, param);
-		}
-	},
 
   // 左側または右側のタブをすべて閉じる
 	closeMultipleTabs: function(aLeftRight) {
