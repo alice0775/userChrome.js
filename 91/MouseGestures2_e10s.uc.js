@@ -144,7 +144,10 @@ var ucjsMouseGestures = {
         ['', 'リンクを保存',
           function(){ ucjsMouseGestures_helper.saveLink(ucjsMouseGestures._linkURL, ucjsMouseGestures._linkReferrerInfo); } ],
         ['LDR', '画像を保存',
-          function() { ucjsMouseGestures_helper.saveImage(ucjsMouseGestures._imgSRC); } ],
+          function() { ucjsMouseGestures_helper.saveImage(ucjsMouseGestures._imgSRC,
+                                                          ucjsMouseGestures._referrerInfo,
+                                                          ucjsMouseGestures._imgTYPE,
+                                                          ucjsMouseGestures._imgDISP); } ],
 
         ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
         ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
@@ -455,6 +458,7 @@ var ucjsMouseGestures = {
         this._linkReferrerInfo = E10SUtils.deserializeReferrerInfo(message.data.linkReferrerInfo);
         this._imgSRC = message.data.imgSRC;
         this._imgTYPE = message.data.imgTYPE;
+        this._imgDISP = message.data.imgDISP;
         this._mediaSRC = message.data.mediaSRC;
         //this._selectedTXT = message.data.selectedTXT;
         try {
@@ -1660,7 +1664,7 @@ let ucjsMouseGestures_helper = {
 
 
   // 画像を保存
-  saveImage: function(src, referrerInfo) {
+  saveImage: function(src, referrerInfo, aContentType, aContentDisp) {
     let that = ucjsMouseGestures;
     if (typeof(referrerInfo) == "string") {
       try {
@@ -1673,8 +1677,10 @@ let ucjsMouseGestures_helper = {
     }
     else if (typeof referrerInfo == "undefined")
       referrerInfo = that._referrerInfo;
+Services.console.logStringMessage("aContentType " + aContentType);
+    if (typeof aContentType == "undefined")
+      [aContentType, aContentDisp] = this.getImageInfo(src);
 
-    let [aContentType, aContentDisp] = this.getImageInfo(src);
     internalSave(
       that._imgSRC, // dataURL
       null, // aDocument
