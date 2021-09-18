@@ -5,13 +5,17 @@
 // @include       main
 // @charset       UTF-8
 // @author        Alice0775
-// @compatibility 78
+// @compatibility 89
+// @version       2021/09/18 20:00 missing MRM
 // @version       2021/06/17 22:00 use ChromeUtils.requestProcInfo
 // @version       2021/06/17 19:00 
 // @version       2021/06/15
 // ==/UserScript==
 var ucjsMemoryUsage = {
   INTERVAL: 10, //sec 重いかも
+
+  MRM : Components.classes['@mozilla.org/memory-reporter-manager;1']
+         .getService(Components.interfaces.nsIMemoryReporterManager),
 
   init: function() {
     try {
