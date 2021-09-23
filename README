@@ -1,21 +1,46 @@
-Firefox62+
-  1. Firefox のプロファイルフォルダー内に、『chrome』フォルダーを作成する
-  2.  chrome フォルダー内に、『userChrome.css』ファイルを作成する (UTF-8 BOM無しテキスト)
-    userChrome.css 内に、以下を追記して保存する
+ディレクトリ番号が大きいものほど新しく/更新されたスクリプト
+FirefoxのバージョンNoより大きいディレクトリ番号内のスクリプトはそのバージョンでは動かない
+FirefoxのバージョンNoより小さいディレクトリ番号内のスクリプトは動くかも知れない
 
-    toolbarbutton#alltabs-button { -moz-binding: url("userChrome.xml#js"); }
+スクリプト名をクリック、[RAW]ボタンをクリック、名前を付けて保存
+ファイルはUTF-8のBOMなしで保存
 
-   3. chrome フォルダー内に、https://raw.githubusercontent.com/alice0775/userChrome.js/master/userChrome.xml を『userChrome.xml』として保存する
-      (ESR60 は https://raw.githubusercontent.com/alice0775/userChrome.js/065b7b4e58f57caad39ee9415762e882802d9f90/userChrome.xml を『userChrome.xml』として保存する)
-   4. chrome フォルダー内に、https://raw.githubusercontent.com/alice0775/userChrome.js/master/userChrome.js を『userChrome.js』として保存する
-   5. chrome フォルダー内に、userChrome.js用スクリプトを配置する
-   6. (任意) 念のためスタートアップキャッシュを消すため
-        firefox.exe -purgecaches オプション付きで起動する
+Firefox92+
+
+1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを保存する
+92/install_folder/config.js
+
+2. アプリケーションインストールフォルダ\defaults\pref 直下に以下のファイルを保存する
+92/install_folder\defaults\pref\config-prefs.js
+
+
+3. プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルを保存する
+92/userChrome.css
+92/userChrome.js
+
+4. 必要なスクリプトファイルを保存する
+
+5. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+
+
+Firefox72+
+
+1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを保存する
+72/install_folder/config.js
+
+2. アプリケーションインストールフォルダ\defaults\pref 直下に以下のファイルを保存する
+72/install_folder\defaults\pref\config-prefs.js
+
+
+3. プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルを保存する
+72/userChrome.css
+72/userChrome.js
+
+4. 必要なスクリプトファイルを保存する
+
+5. 念のため 一回 %ProgramFiles%\Mozilla Firefoxfirefox.exe -purgecaches オプション付きで起動する
+
 
 免責事項
-    でーたのご利用は利用者の責任において行ってください。
-    でーたの利用、またはリンク先により生じた損害に対する責任を負いません。
-    でーたの利用した事によるいかなる損害も作者は一切の責任を負いません。
+    一切の責任を負いません。
     自己の責任の上で使用して下さい。
-    でーたを使用することで直接的に利益を生じる使い方をする場合は連絡して下さい。
-    要望、不具合はIssueからお願いします。
