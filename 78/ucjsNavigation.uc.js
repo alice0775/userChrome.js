@@ -4,6 +4,7 @@
 // @include        main
 // @compatibility  Firefox 78+
 // @author         Alice0775
+// @version        2021/09/25 add flags for fallback or not
 // @version        2021/09/12 remove the misjudged part on Reddit 
 // @version        2020/08/04 add fastNavigationBackForward
 // @version        2020/01/15 78+
@@ -333,35 +334,47 @@ var ucjsNavigation_tabFocusManager = {
     window.removeEventListener("unload", this, false);
   },
 
-  advancedFocusTab: function(aPrev) {
+  advancedFocusTab: function(aPrev, fallback = false) {
     if (aPrev <= 0 ) {
-      this.focusPrevSelectedTab();
+      this.focusPrevSelectedTab(fallback);
     } else {
-      this.focusNextSelectedTab();
+      this.focusNextSelectedTab(fallback);
     }
   },
 
-  focusPrevSelectedTab: function() {
+  focusPrevSelectedTab: function(fallback = false) {
     let currentPanel = gBrowser.selectedTab.getAttribute("linkedpanel");
     while (this._tabHistory.length > 0) {
       let panel = this._tabHistory.pop();
-      this._tabHistory2.push(panel);
-      if (this._tabHistory2.length > 32) this._tabHistory2.shift();
-      if (panel == currentPanel) continue;
+      if (panel == currentPanel) {
+        continue;
+      }
       let tab = this.getTabFromPanel(panel);
       if (!tab || tab.getAttribute('hidden'))
         continue;
+      if (this._tabHistory2[this._tabHistory2.length - 1] != currentPanel)
+        this._tabHistory2.push(currentPanel);
+      if (this._tabHistory2.length > 32) this._tabHistory2.shift();
       gBrowser.selectedTab = tab;
-      return;
+      break;
+    }
+    if (this._tabHistory.length == 0) {
+       this._tabHistory.push(gBrowser.selectedTab.getAttribute("linkedpanel"));
+       return;
     }
     // fallback
-    gBrowser.tabContainer.advanceSelectedTab(-1, false);
+    if (fallback) {
+      gBrowser.tabContainer.advanceSelectedTab(-1, false);
+      if (this._tabHistory2[this._tabHistory2.length - 1] != currentPanel)
+        this._tabHistory2.push(currentPanel);
+      if (this._tabHistory2.length > 32) this._tabHistory2.shift();
+    }
   },
 
-  focusNextSelectedTab: function() {
-    let currentPanel = gBrowser.selectedTab.getAttribute("linkedpanel");
-    while (this._tabHistory2.length > 0) {
-      let panel = this._tabHistory2.pop();
+  focusNextSelectedTab: function(fallback = false) {
+    let panel,
+        currentPanel = gBrowser.selectedTab.getAttribute("linkedpanel");
+    while (panel = this._tabHistory2.pop()) {
       if (panel == currentPanel) continue;
       let tab = this.getTabFromPanel(panel);
       if (!tab || tab.getAttribute('hidden'))
@@ -370,7 +383,8 @@ var ucjsNavigation_tabFocusManager = {
       return;
     }
     // fallback
-    gBrowser.tabContainer.advanceSelectedTab(1, false);
+    if (fallback)
+      gBrowser.tabContainer.advanceSelectedTab(1, false);
   },
 
   getTabFromPanel: function(panel) {
@@ -392,7 +406,7 @@ var ucjsNavigation_tabFocusManager = {
         break;
       case "TabOpen":
       case "SSTabRestored":
-        if (!event.target.select)
+        if (!event.target.selected)
           return;
       case "TabSelect":
         let panel = event.target.getAttribute("linkedpanel");
