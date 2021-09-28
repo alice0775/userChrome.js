@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Alice0775
-// @compatibility 89
+// @compatibility 94
+// @version       2021/09/18 20:00 no longer available resident-unique from MRM due to Bug 1665318. so use commit size instead of resident-unique size
 // @version       2021/09/18 20:00 missing MRM
 // @version       2021/06/17 22:00 use ChromeUtils.requestProcInfo
 // @version       2021/06/17 19:00 
@@ -63,10 +64,12 @@ var ucjsMemoryUsage = {
     let winTop = Services.wm.getMostRecentWindow("navigator:browser");
     if (winTop == window) {
       let parentProc = await ChromeUtils.requestProcInfo();
-      let total = parentProc.residentUniqueSize;
+Services.console.logStringMessage("parentProc " + parentProc);
+      let total = parentProc.memory; //residentUniqueSize;
+Services.console.logStringMessage("parentProc.residentUniqueSize " + parentProc.residentUniqueSize);
       for (i = 0; i < parentProc.children.length; i++) {
         let childProc = parentProc.children[i];
-        total += childProc.residentUniqueSize;
+        total += childProc.memory; //residentUniqueSize;
       }
       //Services.console.logStringMessage("total " + txt);
       let txt = Math.ceil(total/1024/1024);
