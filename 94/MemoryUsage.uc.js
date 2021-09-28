@@ -64,9 +64,7 @@ var ucjsMemoryUsage = {
     let winTop = Services.wm.getMostRecentWindow("navigator:browser");
     if (winTop == window) {
       let parentProc = await ChromeUtils.requestProcInfo();
-Services.console.logStringMessage("parentProc " + parentProc);
       let total = parentProc.memory; //residentUniqueSize;
-Services.console.logStringMessage("parentProc.residentUniqueSize " + parentProc.residentUniqueSize);
       for (i = 0; i < parentProc.children.length; i++) {
         let childProc = parentProc.children[i];
         total += childProc.memory; //residentUniqueSize;
