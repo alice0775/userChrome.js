@@ -6,6 +6,7 @@
 // @compatibility  Firefox 91
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2021/09/30 22:00 change splitter color
 // @version        2021/08/09 00:00 compactmode
 // @version        2021/08/05 00:00 fix event is undefined
 // @version        2021/08/03 00:00 fix drag over
