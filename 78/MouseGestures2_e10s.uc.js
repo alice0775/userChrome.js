@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 78
+// @version       2021/10/16 19:30 fix to regression selectedTXT
 // @version       2021/09/19 00:30 fix use referrer for saveImage and saveLink
 // @version       2021/09/16 00:30 Fix to detect links correctly.
 // @version       2021/09/15 14:30 Fix openURLsInSelection
@@ -690,6 +691,14 @@ var ucjsMouseGestures = {
     throw "Unknown Gesture: " + this._directionChain;
 
     this._directionChain = "";
+
+    this._isMouseDownL = false;
+    this._isMouseDownR = false;
+    this._suppressContext = false;
+    this._shouldFireContext = false; // for Linux 
+    this._isWheelCanceled = false;
+    this._laststatusinfo  = "";
+
   }
 
 };
@@ -834,7 +843,7 @@ let ucjsMouseGestures_framescript = {
               imgTYPE: imgTYPE,
               imgDISP: imgDISP,
               mediaSRC: mediaSRC,
-              //selectedTXT: selectedTXT,
+              selectedTXT: selectedTXT,
               referrerInfo: this.E10SUtils.serializeReferrerInfo(
                                    doc.referrerInfo
                                  ),
@@ -1104,12 +1113,11 @@ let ucjsMouseGestures_framescript = {
       }
 
     }; // end framescript
-    window.messageManager.loadFrameScript(
-       'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource() +
+    let src = 'data:application/javascript,'
+        + encodeURIComponent(framescript.toSource().replace(/\n[ ]+/g, "\n ") +
         ".init(" + navigator.platform.indexOf("Mac") + "," + 
-         ucjsMouseGestures.enableWheelGestures + ");")
-      , true, true);
+         ucjsMouseGestures.enableWheelGestures + ");");
+    window.messageManager.loadFrameScript(src, true, true);
   }
 }
 ucjsMouseGestures_framescript.init();
