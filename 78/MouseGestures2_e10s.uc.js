@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 78
+// @version       2021/10/16 20:00 update go button after change value of searchbar
 // @version       2021/10/16 19:30 fix to regression selectedTXT
 // @version       2021/09/19 00:30 fix use referrer for saveImage and saveLink
 // @version       2021/09/16 00:30 Fix to detect links correctly.
@@ -210,20 +211,27 @@ var ucjsMouseGestures = {
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
         ['DR', '選択テキストを検索バーにコピー',
           function(){ 
-            if (BrowserSearch.searchBar)
+            if (BrowserSearch.searchBar) {
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+              BrowserSearch.searchBar.updateGoButtonVisibility();
+            }
           } ],
         ['', '選択テキストを検索バーに追加',
           function(){ 
             if (BrowserSearch.searchBar.value){
               BrowserSearch.searchBar.value = BrowserSearch.searchBar.value + " " +
                      (ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT);
+               BrowserSearch.searchBar.updateGoButtonVisibility();
             }else{
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT ||
                                               ucjsMouseGestures._linkTXT;
+              BrowserSearch.searchBar.updateGoButtonVisibility();
             }
           } ],
-        ['', '検索バー（Web検索ボックス）をクリア', function(){ document.getElementById("searchbar").value = ""; } ],
+        ['', '検索バー（Web検索ボックス）をクリア', function(){
+          document.getElementById("searchbar").value = "";
+          BrowserSearch.searchBar.updateGoButtonVisibility();
+        } ],
         ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
 
         ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],

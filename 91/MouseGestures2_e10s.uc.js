@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 88
+// @compatibility 91
+// @version       2021/10/16 20:00 update go button after change value of searchbar// @version       2021/10/14 00:00 @compatibility 91
 // @version       2021/09/19 00:30 fix use cookieJarSettings and referrer for saveImage  and saveLink
 // @version       2021/09/16 00:30 Fix to detect links correctly.
 // @version       2021/09/15 14:30 Fix openURLsInSelection
@@ -213,20 +214,28 @@ var ucjsMouseGestures = {
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
         ['DR', '選択テキストを検索バーにコピー',
           function(){ 
-            if (BrowserSearch.searchBar)
+            if (BrowserSearch.searchBar) {
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+              BrowserSearch.searchBar.updateGoButtonVisibility();
+            }
           } ],
         ['', '選択テキストを検索バーに追加',
           function(){ 
             if (BrowserSearch.searchBar.value){
               BrowserSearch.searchBar.value = BrowserSearch.searchBar.value + " " +
                      (ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT);
+              BrowserSearch.searchBar.updateGoButtonVisibility();
             }else{
               BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT ||
                                               ucjsMouseGestures._linkTXT;
+              BrowserSearch.searchBar.updateGoButtonVisibility();
             }
           } ],
-        ['', '検索バー（Web検索ボックス）をクリア', function(){ document.getElementById("searchbar").value = ""; } ],
+        ['', '検索バー（Web検索ボックス）をクリア',
+          function(){
+            document.getElementById("searchbar").value = "";
+            BrowserSearch.searchBar.updateGoButtonVisibility();
+          } ],
         ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
 
         ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
@@ -703,6 +712,14 @@ var ucjsMouseGestures = {
     throw "Unknown Gesture: " + this._directionChain;
 
     this._directionChain = "";
+
+    this._isMouseDownL = false;
+    this._isMouseDownR = false;
+    this._suppressContext = false;
+    this._shouldFireContext = false; // for Linux 
+    this._isWheelCanceled = false;
+    this._laststatusinfo  = "";
+
   }
 
 };
@@ -1130,7 +1147,7 @@ let ucjsMouseGestures_framescript = {
     }; // end framescript
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource() +
+        + encodeURIComponent(framescript.toSource().replace(/\n[ ]+/g, "\n ") +
         ".init(" + navigator.platform.indexOf("Mac") + "," + 
          ucjsMouseGestures.enableWheelGestures + ");")
       , true, true);
@@ -1677,7 +1694,7 @@ let ucjsMouseGestures_helper = {
     }
     else if (typeof referrerInfo == "undefined")
       referrerInfo = that._referrerInfo;
-Services.console.logStringMessage("aContentType " + aContentType);
+//Services.console.logStringMessage("aContentType " + aContentType);
     if (typeof aContentType == "undefined")
       [aContentType, aContentDisp] = this.getImageInfo(src);
 
