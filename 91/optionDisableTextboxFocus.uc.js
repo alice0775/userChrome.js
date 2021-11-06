@@ -3,21 +3,17 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    workaround Bug 1727888 - Unable to unfocus searchbox of the preferences with mouse
 // @include        about:preferences
-// @compatibility  94+
+// @compatibility  78+
 // @version        2020/11/07 01:00 defocus with key
-// @version        2020/11/01 01:00
 // @version        2020/08/07 01:00
 // ==/UserScript==
   window.optionDisableTextboxFocus = {
     init: function() {
       let style = `
-@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
         .main-content,
         .pane-container {
           -moz-user-focus: normal !important;
         }
-        #defaultBrowserBox,
-        #siteDataGroup > hbox:nth-child(2) > vbox:nth-child(1),
         groupbox[data-category]:not([hidden="true"]):not([id="startupGroup"]):not([id="oneClickSearchProvidersGroup"]):not([id="applicationsGroup"]):not([id="fontsGroup"]):not([id="homepageGroup"]):not([id="downloadsGroup"]):not([id="homeContentsGroup"])
         {
           display: inline-block;
