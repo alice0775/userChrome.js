@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 95
+// @version       2021/11/07 00:00 L>R
 // @version       2021/10/16 20:00 update go button after change value of searchbar
 // @version       2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
 // @version       2021/10/14 00:00 @compatibility 91
@@ -169,6 +170,8 @@ var ucjsMouseGestures = {
             gBrowser.moveTabTo(newTab, orgTab._tPos + 1);
           } ],
         ['LD', 'タブを閉じる', function(){ document.getElementById("cmd_close").doCommand(); } ],
+        ['', 'タブ(Pinnedタブを除く)を閉じる', function(){ if (!gBrowser.selectedTab.pinned) { document.getElementById("cmd_close").doCommand(); } } ],
+
         ['', '左側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("left"); } ],
         ['', '右側のタブをすべて閉じる', function(){ ucjsMouseGestures_helper.closeMultipleTabs("right"); } ],
         ['', '他のタブをすべて閉じる', function(){ gBrowser.removeAllTabsBut(gBrowser.selectedTab); } ],
@@ -533,7 +536,14 @@ var ucjsMouseGestures = {
             this._isMouseDownR = false;
             this._suppressContext = true;
             this._directionChain = "L>R";
-            this._stopGesture(event);
+            try {
+              gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+                this._selectedTXT = r.selectedText;
+                this._stopGesture(event);
+              })
+            } catch(ex){
+              this._stopGesture(event);
+            }
           }
         } else if (this.enableRockerGestures && event.button == 0) {
           this._isMouseDownL = true;
@@ -1158,7 +1168,8 @@ let ucjsMouseGestures_framescript = {
         + encodeURIComponent(framescript.toSource() +
         ".init(" + navigator.platform.indexOf("Mac") + "," + 
          ucjsMouseGestures.enableWheelGestures + ");")
-      , true, true);
+      , true); // Set the second parameter, allowDelayedLoad, to true, to automatically load the desired frame script in newly created browsers/tabs (of possibly newly created windows) as well. the third parameter, allow global access.
+    delete framescript; 
   }
 }
 ucjsMouseGestures_framescript.init();
@@ -1182,7 +1193,7 @@ let ucjsMouseGestures_helper = {
     try {
       let script = 'data:application/javascript;charset=utf-8,' +
                     encodeURIComponent('{let f = ' + func.toString() + '; f.apply(content, []);}');
-      gBrowser.selectedBrowser.messageManager.loadFrameScript(script, false, true);
+      gBrowser.selectedBrowser.messageManager.loadFrameScript(script, false);
 
     } catch(ex) {
       Services.console.logStringMessage("Error in executeInContent : " /*+ ex*/);

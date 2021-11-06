@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 91
+// @version       2021/11/07 00:00 L>R
 // @version       2021/10/16 20:00 update go button after change value of searchbar// @version       2021/10/14 00:00 @compatibility 91
 // @version       2021/09/19 00:30 fix use cookieJarSettings and referrer for saveImage  and saveLink
 // @version       2021/09/16 00:30 Fix to detect links correctly.
@@ -531,7 +532,14 @@ var ucjsMouseGestures = {
             this._isMouseDownR = false;
             this._suppressContext = true;
             this._directionChain = "L>R";
-            this._stopGesture(event);
+            try {
+              gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+                this._selectedTXT = r.selectedText;
+                this._stopGesture(event);
+              })
+            } catch(ex){
+              this._stopGesture(event);
+            }
           }
         } else if (this.enableRockerGestures && event.button == 0) {
           this._isMouseDownL = true;
@@ -1150,7 +1158,8 @@ let ucjsMouseGestures_framescript = {
         + encodeURIComponent(framescript.toSource().replace(/\n[ ]+/g, "\n ") +
         ".init(" + navigator.platform.indexOf("Mac") + "," + 
          ucjsMouseGestures.enableWheelGestures + ");")
-      , true, true);
+      , true); // Set the second parameter, allowDelayedLoad, to true, to automatically load the desired frame script in newly created browsers/tabs (of possibly newly created windows) as well. the third parameter, allow global access.
+    delete framescript; 
   }
 }
 ucjsMouseGestures_framescript.init();
