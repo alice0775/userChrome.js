@@ -5,13 +5,14 @@
 // @include        main
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2021/11/12 00:00 stop surplus navigation
 // @version        2021/11/11 00:00 working w/ addHistoryFindbarFx78.uc.js
 // @version        2021/11/07 00:00
 // @note           HOME/END key does not support
 // ==/UserScript==
 const ucjs_allowPageScrollWithFindBar = {
   init: function() {
-    gBrowser.tabContainer.addEventListener('TabFindInitialized', this, false);
+    gBrowser.tabContainer.addEventListener('TabFindInitialized', this, true);
   },
 
   initFindBar: function() {
@@ -31,43 +32,76 @@ const ucjs_allowPageScrollWithFindBar = {
   },
 
   patch: function(findbar) {
-    ["find-next", "find-previous", "highlight",
-     "find-case-sensitive", "find-match-diacritics", "find-entire-word", "historydropmarker"]
-     .forEach(element => {findbar.getElement(element)?.addEventListener("keypress", ucjs_page_scroll, false)});
+    findbar.addEventListener("keypress", ucjs_page_scroll, true);
+    findbar.addEventListener("keypress", ucjs_page_scroll2, true);
 
     function ucjs_page_scroll(event) {
-      let data = {
-          keyCode: event.keyCode,
-          ctrlKey: event.ctrlKey,
-          metaKey: event.metaKey,
-          altKey: event.altKey,
-          shiftKey: event.shiftKey,
-      }
-      switch (event.keyCode) {
-        /*case KeyEvent.DOM_VK_END:
-        case KeyEvent.DOM_VK_HOME:*/
-        case KeyEvent.DOM_VK_PAGE_UP:
-        case KeyEvent.DOM_VK_PAGE_DOWN:
-          if (
-            !event.altKey &&
-            !event.ctrlKey &&
-            !event.metaKey &&
-            !event.shiftKey
-          ) {
-            let aEvent = new KeyboardEvent("keypress", data);
-            findbar.getElement("findbar-textbox").dispatchEvent(aEvent)
-            event.preventDefault();
+      ["find-next", "find-previous", "highlight",
+       "find-case-sensitive", "find-match-diacritics", "find-entire-word", "historydropmarker"]
+       .forEach(element => {
+        if (event.originalTarget == findbar.getElement(element)) {
+          let data = {
+              keyCode: event.keyCode,
+              ctrlKey: event.ctrlKey,
+              metaKey: event.metaKey,
+              altKey: event.altKey,
+              shiftKey: event.shiftKey,
           }
-          break;
-        case KeyEvent.DOM_VK_UP:
-        case KeyEvent.DOM_VK_DOWN:
-          let aEvent = new KeyboardEvent("keypress", data);
-          findbar.getElement("findbar-textbox").dispatchEvent(aEvent)
-          event.preventDefault();
-          break;
-      }
+          switch (event.keyCode) {
+            /*case KeyEvent.DOM_VK_END:
+            case KeyEvent.DOM_VK_HOME:*/
+            case KeyEvent.DOM_VK_PAGE_UP:
+            case KeyEvent.DOM_VK_PAGE_DOWN:
+              if (
+                !event.altKey &&
+                !event.ctrlKey &&
+                !event.metaKey &&
+                !event.shiftKey
+              ) {
+                let aEvent = new KeyboardEvent("keypress", data);
+                findbar.getElement("findbar-textbox").dispatchEvent(aEvent)
+                event.preventDefault();
+              }
+              break;
+            case KeyEvent.DOM_VK_UP:
+            case KeyEvent.DOM_VK_DOWN:
+              let aEvent = new KeyboardEvent("keypress", data);
+              findbar.getElement("findbar-textbox").dispatchEvent(aEvent)
+              event.stopPropagation();
+              event.preventDefault();
+              break;
+          }
+        }
+      });
     }
-
+    function ucjs_page_scroll2(event) {
+      ["highlight",
+     "find-case-sensitive", "find-match-diacritics", "find-entire-word", "historydropmarker"]
+     .forEach(element => {
+        if (event.originalTarget == findbar.getElement(element)) {
+          let data = {
+              keyCode: event.keyCode,
+              ctrlKey: event.ctrlKey,
+              metaKey: event.metaKey,
+              altKey: event.altKey,
+              shiftKey: event.shiftKey,
+          }
+          switch (event.keyCode) {
+            case KeyEvent.DOM_VK_RETURN:
+              if (
+                !event.altKey &&
+                !event.ctrlKey &&
+                !event.metaKey
+              ) {
+                let aEvent = new KeyboardEvent("keypress", data);
+                findbar.getElement("findbar-textbox").dispatchEvent(aEvent)
+                event.preventDefault();
+              }
+              break;
+          }
+        }
+      });
+    }
   },
 
   handleEvent: function(event){
