@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2021/11/11 00:00 working w/ addHistoryFindbarFx78.uc.js
 // @version        2021/11/07 00:00
 // @note           HOME/END key does not support
 // ==/UserScript==
@@ -31,8 +32,8 @@ const ucjs_allowPageScrollWithFindBar = {
 
   patch: function(findbar) {
     ["find-next", "find-previous", "highlight",
-     "find-case-sensitive", "find-match-diacritics", "find-entire-word"]
-     .forEach(element => {findbar.getElement(element).addEventListener("keypress", ucjs_page_scroll, false)});
+     "find-case-sensitive", "find-match-diacritics", "find-entire-word", "historydropmarker"]
+     .forEach(element => {findbar.getElement(element)?.addEventListener("keypress", ucjs_page_scroll, false)});
 
     function ucjs_page_scroll(event) {
       let data = {
