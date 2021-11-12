@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/11/12 21:00 space key open popup
 // @version        2021/11/12 16:00 move focus after click the entry
 // @version        2021/07/14 06:00 fixes for middleclicking, maxEntriesToShow and show popup after delete item, Marged some patch #64(Thanks sdavidg)
 // @version        2020/12/16 22:30 use LIMIT
@@ -79,6 +80,8 @@ const addHistoryFindbar78 = {
     menu.setAttribute("label", "▽");
     //menu.setAttribute("accesskey", "h");
     menu.setAttribute("tooltiptext", "Find term History");
+    menu.addEventListener("keydown", (event) => {let popup=findbar.getElement("historypopup");if(event.keyCode==KeyEvent.DOM_VK_SPACE)if(popup.state !='open')popup.openPopup(findbar.getElement("historydropmarker"),"before_end");});
+    
     let menupopup = document.createElementNS(this.kNSXUL, "menupopup");
     menupopup.setAttribute("onpopupshowing", "addHistoryFindbar78.onpopupshowing(event);");
     menupopup.setAttribute("anonid", "historypopup");
