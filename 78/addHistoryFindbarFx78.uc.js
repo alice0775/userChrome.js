@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 78
 // @author         Alice0775
+// @version        2021/11/12 16:00 move focus after click the entry
 // @version        2021/07/14 06:00 fixes for middleclicking, maxEntriesToShow and show popup after delete item, Marged some patch #64(Thanks sdavidg)
 // @version        2020/12/16 22:30 use LIMIT
 // @version        2020/12/16 22:00 fix typo
@@ -152,7 +153,7 @@ const addHistoryFindbar78 = {
     var target = aEvent.originalTarget;
     //本来のfindbar-textboxに転記して, ダミーイベント送信
     gFindBar._findField.value  = target.getAttribute("data");
-    
+    gFindBar._findField.focus();
     gFindBar._findField.removeAttribute('status');
     var evt = document.createEvent("UIEvents");
     evt.initUIEvent("input", true, false, window, 0);
