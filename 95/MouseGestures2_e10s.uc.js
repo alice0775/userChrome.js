@@ -1359,7 +1359,7 @@ let ucjsMouseGestures_helper = {
       undoPopup.appendChild(document.createXULElement("menuseparator"));
 
       // populate menu
-      let undoItems = eval("(" + ss.getClosedTabData(window) + ")");
+      let undoItems = ss.getClosedTabData(window);
       for (let i = 0; i < undoItems.length; i++) {
         var entries = undoItems[i].state.entries;
         var tooltiptext = "";
