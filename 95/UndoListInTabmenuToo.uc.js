@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    UndoListInTabmenuToo.uc.js
 // @include        main
-// @compatibility  Firefox 87
+// @compatibility  Firefox 95
 // @author         Alice0775
+// @version        2021/12/09 remove JSON.parse
 // @version        2021/04/25 fix 1689378
 // @version        2019/11/14 remove eval
 // @version        2019/06/30 10:00 Bug 1555060 Convert <tabs> to a custom element
@@ -125,7 +126,7 @@ var UndoListInTabmenu = {
     undoPopup.insertBefore(document.createXULElement("menuseparator"), undoPopup.childNodes[1]);
 
     // populate tab historis for tooltip
-    var undoItems = JSON.parse(UndoListInTabmenu._ss.getClosedTabData(window));
+    var undoItems = UndoListInTabmenu._ss.getClosedTabData(window);
     for (var i = 0; i < undoItems.length; i++) {
       var entries = undoItems[i].state.entries;
       var tooltiptext = "";
