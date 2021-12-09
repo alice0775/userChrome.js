@@ -6,7 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 95
-// @version       2021/12/09 09:00 remove eval
+// @version       2021/12/09 11:00 no longer require MiddleClick handler
+// @version       2021/12/09 09:00 remove eval(Bug 1733425)
 // @version       2021/11/07 00:00 L>R
 // @version       2021/10/16 20:00 update go button after change value of searchbar
 // @version       2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
@@ -1281,7 +1282,7 @@ let ucjsMouseGestures_helper = {
     document.getElementById("mainPopupSet").appendChild(popup);
     popup.setAttribute("id", "ucjsMouseGestures_popup");
     popup.setAttribute("oncommand", "ucjsMouseGestures_helper.doCommand(event);");
-    popup.setAttribute("onclick", "checkForMiddleClick(this, event);");
+    /*popup.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
 
 		for (let i =0; i < that.commands.length; i++) {
       let command = that.commands[i];
@@ -1371,7 +1372,7 @@ let ucjsMouseGestures_helper = {
         m.setAttribute("class", "menuitem-iconic bookmark-item");
         m.setAttribute("value", i);
         m.setAttribute("oncommand", "undoCloseTab(" + i + ");");
-        m.setAttribute("onclick", "ucjsMouseGestures_helper._undoCloseMiddleClick(event);");
+        /*m.setAttribute("onclick", "ucjsMouseGestures_helper._undoCloseMiddleClick(event);");*/
         if (i == 0)
           m.setAttribute("key", "key_undoCloseTab");
         undoPopup.appendChild(m);
@@ -1423,7 +1424,7 @@ let ucjsMouseGestures_helper = {
     document.getElementById("mainPopupSet").appendChild(popup);
     popup.setAttribute("id", "ucjsMouseGestures_popup");
     popup.setAttribute("oncommand", "gotoHistoryIndex(event); event.stopPropagation();");
-    popup.setAttribute("onclick", "checkForMiddleClick(this, event);");
+    /*popup.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
     popup.setAttribute("context", "");
 
     SessionStore.getSessionHistory(gBrowser.selectedTab, 
@@ -1506,7 +1507,8 @@ let ucjsMouseGestures_helper = {
     document.getElementById("mainPopupSet").appendChild(popup);
     popup.setAttribute("id", "ucjsMouseGestures_popup");
     popup.setAttribute("oncommand", "ucjsMouseGestures_helper._loadSearch(event);");
-    popup.setAttribute("onclick", "checkForMiddleClick(this, event);");
+    /*popup.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
+    popup.setAttribute("style", "width:300px");
 
 		for (let i = engines.length - 1; i >= 0; --i) {
 			let menuitem = document.createXULElement("menuitem");
