@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 95
+// @version       2021/12/09 09:00 remove eval
 // @version       2021/11/07 00:00 L>R
 // @version       2021/10/16 20:00 update go button after change value of searchbar
 // @version       2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
@@ -1322,13 +1323,7 @@ let ucjsMouseGestures_helper = {
     let popup = document.createXULElement("menupopup");
     document.getElementById("mainPopupSet").appendChild(popup);
 
-    let ss;
-    try {
-      ss = Cc["@mozilla.org/browser/sessionstore;1"].
-                 getService(Ci.nsISessionStore);
-    } catch(x) {
-      ss = SessionStore;
-    }
+    let ss = SessionStore;
 
     populatePopup(popup);
 
@@ -1359,7 +1354,7 @@ let ucjsMouseGestures_helper = {
       undoPopup.appendChild(document.createXULElement("menuseparator"));
 
       // populate menu
-      let undoItems = eval("(" + ss.getClosedTabData(window) + ")");
+      let undoItems = ss.getClosedTabData(window);
       for (let i = 0; i < undoItems.length; i++) {
         var entries = undoItems[i].state.entries;
         var tooltiptext = "";
