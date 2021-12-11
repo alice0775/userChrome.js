@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 95
+// @version       2021/12/11 23:00 workaround for left mouseup event does not fire on select element
 // @version       2021/12/09 11:00 no longer require MiddleClick handler
 // @version       2021/12/09 09:00 remove eval(Bug 1733425)
 // @version       2021/11/07 00:00 L>R
@@ -526,6 +527,15 @@ var ucjsMouseGestures = {
   handleEvent: function(event) {
     switch (event.type) {
       case "mousedown": 
+        if (this._isMouseDownL) {
+          var x = event.screenX;
+          var y = event.screenY;
+          var distanceX = Math.abs(x - this._lastX);
+          var distanceY = Math.abs(y - this._lastY);
+          const tolerance = 10;
+          if (distanceX > tolerance || distanceY > tolerance) // xxx workaround
+            this._isMouseDownL = false;
+        }
         if (event.button == 2) {
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
           this._isMouseDownR = true;
@@ -549,6 +559,8 @@ var ucjsMouseGestures = {
           }
         } else if (this.enableRockerGestures && event.button == 0) {
           this._isMouseDownL = true;
+          this._lastX = event.screenX;
+          this._lastY = event.screenY;
           if (this._isMouseDownR) {
             event.preventDefault();
             event.stopPropagation();

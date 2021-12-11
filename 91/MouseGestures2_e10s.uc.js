@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 91
+// @version       2021/12/11 23:00 workaround for left mouseup event does not fire on select element
 // @version       2021/12/09 11:00 no longer require MiddleClick handler
 // @version       2021/10/16 20:00 update go button after change value of searchbar// @version       2021/10/14 00:00 @compatibility 91
 // @version       2021/09/19 00:30 fix use cookieJarSettings and referrer for saveImage  and saveLink
@@ -520,6 +521,15 @@ var ucjsMouseGestures = {
   handleEvent: function(event) {
     switch (event.type) {
       case "mousedown": 
+        if (this._isMouseDownL) {
+          var x = event.screenX;
+          var y = event.screenY;
+          var distanceX = Math.abs(x - this._lastX);
+          var distanceY = Math.abs(y - this._lastY);
+          const tolerance = 10;
+          if (distanceX > tolerance || distanceY > tolerance) // xxx workaround
+            this._isMouseDownL = false;
+        }
         if (event.button == 2) {
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
           this._isMouseDownR = true;
@@ -536,6 +546,8 @@ var ucjsMouseGestures = {
           }
         } else if (this.enableRockerGestures && event.button == 0) {
           this._isMouseDownL = true;
+          this._lastX = event.screenX;
+          this._lastY = event.screenY;
           if (this._isMouseDownR) {
             event.preventDefault();
             event.stopPropagation();
