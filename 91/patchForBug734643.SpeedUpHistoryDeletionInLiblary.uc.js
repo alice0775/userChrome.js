@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/places/places.xhtml
 // @compatibility Firefox 91
 // @author        alice0775
+// @version       2021/12/13 10:00 preserve sorting mode and scroll position
 // @version       2021/11/10 17:00 wait for init
 // @version       2021/11/10
 // ==/UserScript==
@@ -33,7 +34,11 @@ let patchForBug734643_timer = setInterval(() => {
         if (URIs.size) {
           if (this._view.place) {
             // de-selection
+            let oldFirstVisibleRow = this._view.getFirstVisibleRow()
+            let oldSortingMode = this._view._view._result.sortingMode;
             this._view.place = this._view.place;
+            this._view._view._result.sortingMode = oldSortingMode;
+            this._view.scrollToRow(oldFirstVisibleRow);
           }
           await PlacesUtils.history.remove([...URIs]);
         }
