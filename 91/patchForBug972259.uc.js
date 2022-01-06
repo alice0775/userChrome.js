@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Workaround Bug 972259 - User is forced to press back button twice to go back to previous page on some websites
 // @include        main
-// @compatibility  Firefox 78
+// @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2022/01/06 compare uri using decodeURIComponent(Bug 1748669) and null check
 // @version        2021/07/23 add fall back
 // @version        2021/06/30 hide entry if sane url
 // @version        2021/06/30 ignore abput:xxx
@@ -27,21 +28,22 @@ Services.console.logStringMessage("FillHistoryMenu");
 
       let index = parseInt(document.querySelector("#back-button menupopup menuitem[checked='true']").getAttribute("index"));
 Services.console.logStringMessage("index " + index);
-    	let uri = gBrowser.selectedBrowser.currentURI.spec;
-Services.console.logStringMessage("entry.url" + uri);
+    	let uri = decodeURIComponent(gBrowser.selectedBrowser.currentURI.spec);
+Services.console.logStringMessage("entry.url " + uri);
     	if (uri && /^about:/.test(uri)) {
     	  this.selectedBrowser.goBack(requireUserInteraction);
     	  return;
     	}
     	for (let i = index - 1; i >= 0; i--) {
-        let uri2 = document.querySelector("#back-button menupopup menuitem[index='"+i+"']").getAttribute("uri");
+        let uri2 = decodeURIComponent(document.querySelector("#back-button menupopup menuitem[index='"+i+"']")?.getAttribute("uri"));
 Services.console.logStringMessage("i " + i + " " + uri2);
-        if (uri2 && uri != uri2) {
+        if (uri2 != "undefined" && uri != uri2) {
           gBrowser.gotoIndex(i);
           return;
         }
       }
       // fall back
+Services.console.logStringMessage("fall backed ");
       if (index - 1 >= 0)
         this.selectedBrowser.goBack(requireUserInteraction);
     };
@@ -55,13 +57,13 @@ Services.console.logStringMessage("i " + i + " " + uri2);
         if (!popup.children[i].hasAttribute("index") ||
             !popup.children[i + 1].hasAttribute("index"))
           continue;
-      	let uri2 = popup.children[i].getAttribute("uri");
+      	let uri2 = decodeURIComponent(popup.children[i].getAttribute("uri"));
       	if (/^about:/.test(uri2))
       	 continue;
-      	let uri1 = popup.children[i + 1].getAttribute("uri");
+      	let uri1 = decodeURIComponent(popup.children[i + 1].getAttribute("uri"));
       	if (/^about:/.test(uri1))
       	 continue;
-      	if (uri2 == uri1) {
+      	if (uri2 == "undefined" || uri2 == uri1) {
           popup.children[i + 1].style.setProperty("display", "none", "important");
         }
       }
