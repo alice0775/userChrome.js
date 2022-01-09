@@ -3,9 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 96
+// @compatibility  Firefox 97
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/01/10 06:00 Bug 1702501 - Remove print.tab_modal.enabled pref and old frontend print preview code
+// @version        2021/12/12 20:00 window control
 // @version        2021/12/12 20:00 window control
 // @version        2021/11/21 18:00 Bug 1742111 - Rename internal accentcolor and textcolor properties to be more consistent with the webext theme API
 // @version        2021/11/03 00:00 border
@@ -166,11 +168,6 @@ function verticalTabLiteforFx() {
   }
   
   :root[inFullscreen] #vtb_splitter {
-    display: none;
-  }
-
-  /*Print Preview*/
-  :root[printpreview] #vtb_TabsToolbar {
     display: none;
   }
 
@@ -464,17 +461,6 @@ function verticalTabLiteforFx() {
 
   // ignore lock tab width when closing
   gBrowser.tabContainer._lockTabSizing = function (aTab, tabWidth){};
-
-  // print preview
-  PrintPreviewListener._toggleAffectedChrome_org = PrintPreviewListener._toggleAffectedChrome;
-  PrintPreviewListener._toggleAffectedChrome = function() {
-    PrintPreviewListener._toggleAffectedChrome_org();
-    if (!gInPrintPreviewMode)
-      document.getElementById("main-window").removeAttribute("printpreview");
-    else
-      document.getElementById("main-window").setAttribute("printpreview", "true");
-
-  };
 
   // control buttons
   let spacer = tabsToolbar.querySelector('.titlebar-spacer[type="post-tabs"]');
