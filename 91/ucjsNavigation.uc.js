@@ -2,10 +2,10 @@
 // @name           ucjsNavigation.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @include        main
-// @compatibility  Firefox 95
+// @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2022/01/09 null check
 // @version        2021/11/10 Change link tag
-// @version        2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
 // @version        2021/10/05 Change word '次''前' → '次へ''前へ' to prevent wrong target
 // @version        2021/09/25 add flags for fallback or not
 // @version        2021/09/12 remove the misjudged part on Reddit 
@@ -28,13 +28,6 @@ var ucjsNavigation = {
     Services.console.logStringMessage("ucjsNavigation.init ");
     let frameScript = {
       init: function() {
-	      /*
-	      const { Services } = ChromeUtils.import(
-	        "resource://gre/modules/Services.jsm"
-	      );
-        this.Services = Services;
-        delete Services;
-        */
         addMessageListener("ucjsNavigation_unload", this);
         addMessageListener("ucjsNavigation_getNextLink", this);
         addMessageListener("ucjsNavigation_getPrevLink", this);
@@ -47,7 +40,7 @@ var ucjsNavigation = {
       },
 
       receiveMessage: function(message) {
-        // this.Services.console.logStringMessage("====" + message.name);
+        Services.console.logStringMessage("====" + message.name);
         let url;
         switch(message.name) {
           case "ucjsNavigation_unload":
@@ -55,7 +48,7 @@ var ucjsNavigation = {
             break;
           case "ucjsNavigation_getNextLink":
             url = this._navigateNext();
-            // this.Services.console.logStringMessage("ucjsNavigation_getNextLink: " + url);
+Services.console.logStringMessage("ucjsNavigation_getNextLink: " + url);
             if (url) {
               let win = content;
               win.location.href = url;
@@ -63,7 +56,7 @@ var ucjsNavigation = {
             break;
           case "ucjsNavigation_getPrevLink":
             url = this._navigatePrev();
-            // this.Services.console.logStringMessage("ucjsNavigation_getPrevLink: " + url);
+Services.console.logStringMessage("ucjsNavigation_getPrevLink: " + url);
             if (url) {
               let win = content;
               win.location.href = url;
@@ -75,9 +68,9 @@ var ucjsNavigation = {
 
     //次のページ
       _navigateNext: function() {
+        //   const { Services } = ChromeUtils.import("resource://gre/modules/Services.jsm");
         let win = content;
         let arrTags;
-
         // Eigene: Go to Link named Next
         const XPATH = 'descendant::text()';
         arrTags = win.document.links;
@@ -103,7 +96,7 @@ var ucjsNavigation = {
              || link.match(/\u9032\u3080\s?[\u2192\u00bb]?\n?$/)
              || link.match(/\u7d9a\u304f\n?$/)
              || link.match(/\u3064\u3065\u304f\n?$/) )          {
-        //   this.Services.console.logStringMessage('next ' + arrTags[i].href);
+Services.console.logStringMessage('next ' + arrTags[i].href);
               return arrTags[i].href;
             }
           }
@@ -121,12 +114,13 @@ var ucjsNavigation = {
              || link.match(/^[>\s\(]?next(\s?\d+?\s?)?(search)?\s?(pages?|results?)?/i) )
 
             {
-        //   this.Services.console.logStringMessage('number ' + arrTags[i].href);
+Services.console.logStringMessage('number ' + arrTags[i].href);
               return arrTags[i].href;
             }
           }
 */
         }
+        delete arrTags;
 /*
         let arr = ['次へ','続き','進む','next','もっと読む','>>','xBB','＞'];
 */
@@ -141,6 +135,7 @@ var ucjsNavigation = {
         let x = win.document.evaluate(nextLink, win.document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         if (x.snapshotLength){
           next = x.snapshotItem(x.snapshotLength-1);
+Services.console.logStringMessage('next.href ' + next.href);
           return next.href;
         }
 
@@ -148,27 +143,29 @@ var ucjsNavigation = {
         if (x && x.href){
           return x.href;
         }
-        
+
         // linkタグ
         arrTags = win.document.getElementsByTagName('link');
         for(let i=0,len=arrTags.length; i<len; i++) {
           if(!arrTags[i].hasAttribute('rel') || !arrTags[i].hasAttribute('href')) continue;
           if(!arrTags[i].getAttribute('rel').match(/next/i)) continue;
-        //   this.Services.console.logStringMessage('link ' + arrTags[i].href);
+Services.console.logStringMessage('link ' + arrTags[i].href);
           return arrTags[i].href;
         }
 
-      // Eigene: Go to Next numbered Page
+        // Eigene: Go to Next numbered Page
         let aURL = this._numberedPage(win.location.href, 1)
         if(aURL){
+Services.console.logStringMessage('Next numbered Page ' + aURL);
           return aURL;
         }
 
         return null;
       },
+
     //前のページ
       _navigatePrev: function() {
-        let win = content;
+        let win = content;;
         let arrTags;
 
         // Eigene: Go to Link named Previous
@@ -200,6 +197,7 @@ var ucjsNavigation = {
             }
           }
         }
+        delete arrTags;
 /*
         let arr = ['前へ','戻る','prev','<<','xAB','＜'];
 */
@@ -222,7 +220,7 @@ var ucjsNavigation = {
         if (x && x.href){
           return x.href;
         }
-        
+
         // linkタグ
         arrTags = win.document.getElementsByTagName('link');
         for(let i=0; i<arrTags.length; i++) {
@@ -230,7 +228,7 @@ var ucjsNavigation = {
           if(!arrTags[i].getAttribute('rel').match(/prev/i)) continue;
           return arrTags[i].href;
         }
-
+        
         // Eigene: Go to Previous numbered Page
         let aURL = this._numberedPage(win.location.href, -1)
         if(aURL){
@@ -239,7 +237,7 @@ var ucjsNavigation = {
         return null;
       },
 
-    // Eigene: solve URL to numbered Page
+      // Eigene: solve URL to numbered Page
       _numberedPage: function(aURL, direction) {
         //dump('Parsing numbered Page of url : ' + aURL);
         let urlParts = aURL.match(/^(.+?:\/\/)([^\/]+@)?([^\/]*)(.*)$/);
@@ -349,8 +347,7 @@ var ucjsNavigation = {
     FillHistoryMenu(popup);
     setTimeout(()=>{
       popup.hidePopup();
-      popup
-              .style.removeProperty("display");
+      popup.style.removeProperty("display");
     },1000);
     let index = parseInt(document.querySelector("#back-button menupopup menuitem[checked='true']").getAttribute("index"));
     let host = this.getHost(document.querySelector("#back-button menupopup menuitem[index='"+index+"']")?.getAttribute("uri"));
