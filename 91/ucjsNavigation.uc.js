@@ -4,6 +4,7 @@
 // @include        main
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2022/01/09 revert the change of fastNavigationBackForward
 // @version        2022/01/09 null check
 // @version        2021/11/10 Change link tag
 // @version        2021/10/05 Change word '次''前' → '次へ''前へ' to prevent wrong target
@@ -307,7 +308,7 @@ Services.console.logStringMessage('Next numbered Page ' + aURL);
     }
     return url
   },
-/*  
+
   fastNavigationBackForward: function fastNavigationBackForward(fastBack) {
     let sessionHistory = SessionStore.getSessionHistory(gBrowser.selectedTab);
     let index = sessionHistory.index;
@@ -338,42 +339,6 @@ Services.console.logStringMessage('Next numbered Page ' + aURL);
       }
       // fallback ホストの最後のエントリまで進む
       gBrowser.webNavigation.gotoIndex(sessionHistory.entries.length - 1);
-    }
-  },
-*/
-  fastNavigationBackForward: function fastNavigationBackForward(fastBack) {
-    let popup = document.querySelector("#back-button menupopup");
-    popup.style.setProperty("display", "none", "");
-    FillHistoryMenu(popup);
-    setTimeout(()=>{
-      popup.hidePopup();
-      popup.style.removeProperty("display");
-    },1000);
-    let index = parseInt(document.querySelector("#back-button menupopup menuitem[checked='true']").getAttribute("index"));
-    let host = this.getHost(document.querySelector("#back-button menupopup menuitem[index='"+index+"']")?.getAttribute("uri"));
-  	
-    if (fastBack < 0) {
-      // 異なるホストの最新エントリまでさかのぼる
-    	for (let i = index - 1; i >= 0; i--) {
-        let host1 = this.getHost(document.querySelector("#back-button menupopup menuitem[index='"+i+"']")?.getAttribute("uri"));
-        if (host1 && host != host1) {
-          gBrowser.webNavigation.gotoIndex(i);
-          return;
-        }
-      }
-      // fallback ホストの最初のエントリまでさかのぼる
-      gBrowser.webNavigation.gotoIndex(0);
-    } else {
-      // 異なるホストの最古エントリまで進む
-    	for (let i = index + 1; i < popup.childNodes.length; i++) {
-        let host1 = this.getHost(document.querySelector("#back-button menupopup menuitem[index='"+i+"']")?.getAttribute("uri"));
-        if (host1 && host != host1) {
-          gBrowser.webNavigation.gotoIndex(i);
-          return;
-        }
-      }
-      // fallback ホストの最後のエントリまで進む
-      gBrowser.webNavigation.gotoIndex(popup.childNodes.length - 1);
     }
   }
 }
