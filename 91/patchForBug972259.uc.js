@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2022/01/11 hide unnecessary popup
 // @version        2022/01/06 compare uri using decodeURIComponent(Bug 1748669) and null check
 // @version        2021/07/23 add fall back
 // @version        2021/06/30 hide entry if sane url
@@ -15,37 +16,53 @@
 {
   function patchForBug972259_init() {
     gBrowser.goBack = function(requireUserInteraction) {
-Services.console.logStringMessage("gBrowser.goBack");
-      document.querySelector("#back-button menupopup")
-              .style.setProperty("display", "none","");
-      FillHistoryMenu(document.querySelector("#back-button menupopup"))
-Services.console.logStringMessage("FillHistoryMenu");
-      setTimeout(()=>{
-        document.querySelector("#back-button menupopup").hidePopup();
-        document.querySelector("#back-button menupopup")
-                .style.removeProperty("display");
-      },1000);
-
-      let index = parseInt(document.querySelector("#back-button menupopup menuitem[checked='true']").getAttribute("index"));
-Services.console.logStringMessage("index " + index);
-    	let uri = decodeURIComponent(gBrowser.selectedBrowser.currentURI.spec);
-Services.console.logStringMessage("entry.url " + uri);
-    	if (uri && /^about:/.test(uri)) {
-    	  this.selectedBrowser.goBack(requireUserInteraction);
-    	  return;
-    	}
-    	for (let i = index - 1; i >= 0; i--) {
-        let uri2 = decodeURIComponent(document.querySelector("#back-button menupopup menuitem[index='"+i+"']")?.getAttribute("uri"));
-Services.console.logStringMessage("i " + i + " " + uri2);
-        if (uri2 != "undefined" && uri != uri2) {
-          gBrowser.gotoIndex(i);
+      let sessionHistory = gBrowser.selectedBrowser.browsingContext.sessionHistory;
+      if (sessionHistory?.count) {
+        let index = sessionHistory.index;
+      	let entry = sessionHistory.getEntryAtIndex(index);
+      	let uri = decodeURIComponent(gBrowser.selectedBrowser.currentURI.spec);
+      	if (uri && /^about:/.test(uri)) {
+      	  this.selectedBrowser.goBack(requireUserInteraction);
+      	  return;
+      	}
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry2 = sessionHistory.getEntryAtIndex(i);
+          let uri2 = decodeURIComponent(entry2.URI.spec);
+          if (uri2 != "undefined" && uri != uri2) {
+            gBrowser.gotoIndex(i);
+            return;
+          }
+        }
+        // fall back
+        if (index - 1 >= 0) {
+          this.selectedBrowser.goBack(requireUserInteraction);
+          return;
+        }
+      } else {
+        sessionHistory = SessionStore.getSessionHistory(
+          gBrowser.selectedTab
+        );
+        let index = sessionHistory.index;
+      	let entry = sessionHistory.entries[index];
+      	let uri = decodeURIComponent(gBrowser.selectedBrowser.currentURI.spec);
+      	if (uri && /^about:/.test(uri)) {
+      	  this.selectedBrowser.goBack(requireUserInteraction);
+      	  return;
+      	}
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry2 = sessionHistory.entries[i];
+          let uri2 = decodeURIComponent(entry2.url);
+          if (uri2 != "undefined" && uri != uri2) {
+            gBrowser.gotoIndex(i);
+            return;
+          }
+        }
+        // fall back
+        if (index - 1 >= 0) {
+          this.selectedBrowser.goBack(requireUserInteraction);
           return;
         }
       }
-      // fall back
-Services.console.logStringMessage("fall backed ");
-      if (index - 1 >= 0)
-        this.selectedBrowser.goBack(requireUserInteraction);
     };
 
     window.addEventListener("popupshown", remeveDuplicate, true);

@@ -4,6 +4,7 @@
 // @include        main
 // @compatibility  Firefox 95
 // @author         Alice0775
+// @version        2022/01/11 fission
 // @version        2022/01/09 revert the change of fastNavigationBackForward
 // @version        2021/11/10 Change link tag
 // @version        2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
@@ -26,7 +27,7 @@
 var ucjsNavigation = {
 
   init: function() {
-    Services.console.logStringMessage("ucjsNavigation.init ");
+    //Services.console.logStringMessage("ucjsNavigation.init ");
     let frameScript = {
       init: function() {
 	      /*
@@ -266,7 +267,7 @@ var ucjsNavigation = {
       }
       
     }; // frameScript
-    Services.console.logStringMessage("framescript: " + frameScript);
+    //Services.console.logStringMessage("framescript: " + frameScript);
     window.messageManager.loadFrameScript(
       'data:application/javascript,' +
        encodeURIComponent(frameScript.toSource().replace(/\n[ ]+/g, "\n ") + ".init();"),
@@ -312,35 +313,70 @@ var ucjsNavigation = {
   },
 
   fastNavigationBackForward: function fastNavigationBackForward(fastBack) {
-    let sessionHistory = SessionStore.getSessionHistory(gBrowser.selectedTab);
-    let index = sessionHistory.index;
-  	let entry = sessionHistory.entries[index];
-    let host = this.getHost(entry.url);
-  	
-    if (fastBack < 0) {
-      // 異なるホストの最新エントリまでさかのぼる
-    	for (let i = index - 1; i >= 0; i--) {
-        let entry1  = sessionHistory.entries[i];
-        let host1 = this.getHost(entry1.url);
-        if (host != host1) {
-          gBrowser.webNavigation.gotoIndex(i);
-          return;
+    let sessionHistory = gBrowser.selectedBrowser.browsingContext.sessionHistory;
+    if (sessionHistory?.count) {
+      let index = sessionHistory.index;
+    	let entry = sessionHistory.getEntryAtIndex(index);
+      let host = this.getHost(entry.URI.spec);
+    	
+      if (fastBack < 0) {
+        // 異なるホストの最新エントリまでさかのぼる
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry1  = sessionHistory.getEntryAtIndex(i);
+          let host1 = this.getHost(entry1.URI.spec);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
         }
+        // fallback ホストの最初のエントリまでさかのぼる
+        gBrowser.webNavigation.gotoIndex(0);
+      } else {
+        // 異なるホストの最古エントリまで進む
+      	for (let i = index + 1; i < sessionHistory.count; i++) {
+          let entry1  = sessionHistory.getEntryAtIndex(i);
+          let host1 = this.getHost(entry1.URI.spec);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
+        }
+        // fallback ホストの最後のエントリまで進む
+        gBrowser.webNavigation.gotoIndex(sessionHistory.count - 1);
       }
-      // fallback ホストの最初のエントリまでさかのぼる
-      gBrowser.webNavigation.gotoIndex(0);
     } else {
-      // 異なるホストの最古エントリまで進む
-    	for (let i = index + 1; i < sessionHistory.entries.length; i++) {
-        let entry1  = sessionHistory.entries[i];
-        let host1 = this.getHost(entry1.url);
-        if (host != host1) {
-          gBrowser.webNavigation.gotoIndex(i);
-          return;
+      sessionHistory = SessionStore.getSessionHistory(
+        gBrowser.selectedTab
+      );
+      let index = sessionHistory.index;
+    	let entry = sessionHistory.entries[index];
+      let host = this.getHost(entry.url);
+    	
+      if (fastBack < 0) {
+        // 異なるホストの最新エントリまでさかのぼる
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry1  = sessionHistory.entries[i];
+          let host1 = this.getHost(entry1.url);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
         }
+        // fallback ホストの最初のエントリまでさかのぼる
+        gBrowser.webNavigation.gotoIndex(0);
+      } else {
+        // 異なるホストの最古エントリまで進む
+      	for (let i = index + 1; i < sessionHistory.entries.length; i++) {
+          let entry1  = sessionHistory.entries[i];
+          let host1 = this.getHost(entry1.url);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
+        }
+        // fallback ホストの最後のエントリまで進む
+        gBrowser.webNavigation.gotoIndex(sessionHistory.entries.length - 1);
       }
-      // fallback ホストの最後のエントリまで進む
-      gBrowser.webNavigation.gotoIndex(sessionHistory.entries.length - 1);
     }
   },
 }

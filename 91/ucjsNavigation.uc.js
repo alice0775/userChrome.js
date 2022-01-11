@@ -4,6 +4,7 @@
 // @include        main
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2022/01/11 fission
 // @version        2022/01/09 revert the change of fastNavigationBackForward
 // @version        2022/01/09 null check
 // @version        2021/11/10 Change link tag
@@ -26,7 +27,7 @@
 var ucjsNavigation = {
 
   init: function() {
-    Services.console.logStringMessage("ucjsNavigation.init ");
+    //Services.console.logStringMessage("ucjsNavigation.init ");
     let frameScript = {
       init: function() {
         addMessageListener("ucjsNavigation_unload", this);
@@ -41,7 +42,7 @@ var ucjsNavigation = {
       },
 
       receiveMessage: function(message) {
-        Services.console.logStringMessage("====" + message.name);
+        //Services.console.logStringMessage("====" + message.name);
         let url;
         switch(message.name) {
           case "ucjsNavigation_unload":
@@ -49,7 +50,7 @@ var ucjsNavigation = {
             break;
           case "ucjsNavigation_getNextLink":
             url = this._navigateNext();
-Services.console.logStringMessage("ucjsNavigation_getNextLink: " + url);
+//Services.console.logStringMessage("ucjsNavigation_getNextLink: " + url);
             if (url) {
               let win = content;
               win.location.href = url;
@@ -57,7 +58,7 @@ Services.console.logStringMessage("ucjsNavigation_getNextLink: " + url);
             break;
           case "ucjsNavigation_getPrevLink":
             url = this._navigatePrev();
-Services.console.logStringMessage("ucjsNavigation_getPrevLink: " + url);
+//Services.console.logStringMessage("ucjsNavigation_getPrevLink: " + url);
             if (url) {
               let win = content;
               win.location.href = url;
@@ -97,7 +98,7 @@ Services.console.logStringMessage("ucjsNavigation_getPrevLink: " + url);
              || link.match(/\u9032\u3080\s?[\u2192\u00bb]?\n?$/)
              || link.match(/\u7d9a\u304f\n?$/)
              || link.match(/\u3064\u3065\u304f\n?$/) )          {
-Services.console.logStringMessage('next ' + arrTags[i].href);
+//Services.console.logStringMessage('next ' + arrTags[i].href);
               return arrTags[i].href;
             }
           }
@@ -115,7 +116,7 @@ Services.console.logStringMessage('next ' + arrTags[i].href);
              || link.match(/^[>\s\(]?next(\s?\d+?\s?)?(search)?\s?(pages?|results?)?/i) )
 
             {
-Services.console.logStringMessage('number ' + arrTags[i].href);
+//Services.console.logStringMessage('number ' + arrTags[i].href);
               return arrTags[i].href;
             }
           }
@@ -136,7 +137,7 @@ Services.console.logStringMessage('number ' + arrTags[i].href);
         let x = win.document.evaluate(nextLink, win.document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         if (x.snapshotLength){
           next = x.snapshotItem(x.snapshotLength-1);
-Services.console.logStringMessage('next.href ' + next.href);
+//Services.console.logStringMessage('next.href ' + next.href);
           return next.href;
         }
 
@@ -150,14 +151,14 @@ Services.console.logStringMessage('next.href ' + next.href);
         for(let i=0,len=arrTags.length; i<len; i++) {
           if(!arrTags[i].hasAttribute('rel') || !arrTags[i].hasAttribute('href')) continue;
           if(!arrTags[i].getAttribute('rel').match(/next/i)) continue;
-Services.console.logStringMessage('link ' + arrTags[i].href);
+//Services.console.logStringMessage('link ' + arrTags[i].href);
           return arrTags[i].href;
         }
 
         // Eigene: Go to Next numbered Page
         let aURL = this._numberedPage(win.location.href, 1)
         if(aURL){
-Services.console.logStringMessage('Next numbered Page ' + aURL);
+//Services.console.logStringMessage('Next numbered Page ' + aURL);
           return aURL;
         }
 
@@ -166,7 +167,7 @@ Services.console.logStringMessage('Next numbered Page ' + aURL);
 
     //前のページ
       _navigatePrev: function() {
-        let win = content;;
+        let win = content;
         let arrTags;
 
         // Eigene: Go to Link named Previous
@@ -264,7 +265,7 @@ Services.console.logStringMessage('Next numbered Page ' + aURL);
       }
       
     }; // frameScript
-    Services.console.logStringMessage("framescript: " + frameScript);
+    //Services.console.logStringMessage("framescript: " + frameScript);
     window.messageManager.loadFrameScript(
       'data:application/javascript,' +
        encodeURIComponent(frameScript.toSource().replace(/\n[ ]+/g, "\n ") + ".init();"),
@@ -310,37 +311,72 @@ Services.console.logStringMessage('Next numbered Page ' + aURL);
   },
 
   fastNavigationBackForward: function fastNavigationBackForward(fastBack) {
-    let sessionHistory = SessionStore.getSessionHistory(gBrowser.selectedTab);
-    let index = sessionHistory.index;
-  	let entry = sessionHistory.entries[index];
-    let host = this.getHost(entry.url);
-  	
-    if (fastBack < 0) {
-      // 異なるホストの最新エントリまでさかのぼる
-    	for (let i = index - 1; i >= 0; i--) {
-        let entry1  = sessionHistory.entries[i];
-        let host1 = this.getHost(entry1.url);
-        if (host != host1) {
-          gBrowser.webNavigation.gotoIndex(i);
-          return;
+    let sessionHistory = gBrowser.selectedBrowser.browsingContext.sessionHistory;
+    if (sessionHistory?.count) {
+      let index = sessionHistory.index;
+    	let entry = sessionHistory.getEntryAtIndex(index);
+      let host = this.getHost(entry.URI.spec);
+    	
+      if (fastBack < 0) {
+        // 異なるホストの最新エントリまでさかのぼる
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry1  = sessionHistory.getEntryAtIndex(i);
+          let host1 = this.getHost(entry1.URI.spec);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
         }
+        // fallback ホストの最初のエントリまでさかのぼる
+        gBrowser.webNavigation.gotoIndex(0);
+      } else {
+        // 異なるホストの最古エントリまで進む
+      	for (let i = index + 1; i < sessionHistory.count; i++) {
+          let entry1  = sessionHistory.getEntryAtIndex(i);
+          let host1 = this.getHost(entry1.URI.spec);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
+        }
+        // fallback ホストの最後のエントリまで進む
+        gBrowser.webNavigation.gotoIndex(sessionHistory.count - 1);
       }
-      // fallback ホストの最初のエントリまでさかのぼる
-      gBrowser.webNavigation.gotoIndex(0);
     } else {
-      // 異なるホストの最古エントリまで進む
-    	for (let i = index + 1; i < sessionHistory.entries.length; i++) {
-        let entry1  = sessionHistory.entries[i];
-        let host1 = this.getHost(entry1.url);
-        if (host != host1) {
-          gBrowser.webNavigation.gotoIndex(i);
-          return;
+      sessionHistory = SessionStore.getSessionHistory(
+        gBrowser.selectedTab
+      );
+      let index = sessionHistory.index;
+    	let entry = sessionHistory.entries[index];
+      let host = this.getHost(entry.url);
+    	
+      if (fastBack < 0) {
+        // 異なるホストの最新エントリまでさかのぼる
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry1  = sessionHistory.entries[i];
+          let host1 = this.getHost(entry1.url);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
         }
+        // fallback ホストの最初のエントリまでさかのぼる
+        gBrowser.webNavigation.gotoIndex(0);
+      } else {
+        // 異なるホストの最古エントリまで進む
+      	for (let i = index + 1; i < sessionHistory.entries.length; i++) {
+          let entry1  = sessionHistory.entries[i];
+          let host1 = this.getHost(entry1.url);
+          if (host != host1) {
+            gBrowser.webNavigation.gotoIndex(i);
+            return;
+          }
+        }
+        // fallback ホストの最後のエントリまで進む
+        gBrowser.webNavigation.gotoIndex(sessionHistory.entries.length - 1);
       }
-      // fallback ホストの最後のエントリまで進む
-      gBrowser.webNavigation.gotoIndex(sessionHistory.entries.length - 1);
     }
-  }
+  },
 }
 
 
