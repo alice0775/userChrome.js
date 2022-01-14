@@ -4,6 +4,8 @@
 // @include        main
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2022/01/14 fix _numberedPage
+// @version        2022/01/13 add fastRewindBackForward 巻き戻し/早送り(同一ホスト内)
 // @version        2022/01/11 fission
 // @version        2022/01/09 revert the change of fastNavigationBackForward
 // @version        2022/01/09 null check
@@ -19,8 +21,10 @@
 /*
         ['RL', '[次へ]等のリンクへ移動', function(){ ucjsNavigation?.advancedNavigateLink(1); } ],
         ['LR', '[戻る]等のリンクへ移動', function(){ ucjsNavigation?.advancedNavigateLink(-1); } ],
-        ['URL', '<< 巻き戻し', function(){ ucjsNavigation?.fastNavigationBackForward(-1); } ],
+        ['ULR', '<< 巻き戻し', function(){ ucjsNavigation?.fastNavigationBackForward(-1); } ],
         ['URL', '>> 早送り', function(){ ucjsNavigation?.fastNavigationBackForward(1); } ],
+        ['LRL', '<< 巻き戻し(同一ホスト内)', function(){ ucjsNavigation?.fastRewindBackForward(-1); } ],
+        ['RLR', '>> 早送り(同一ホスト内)', function(){ ucjsNavigation?.fastRewindBackForward(1); } ],
         ['ULR', '直前に選択していたタブ', function(){ ucjsNavigation_tabFocusManager?.advancedFocusTab(-1); } ],
         ['URL', '直前に選択していたタブを一つ戻る', function(){ ucjsNavigation_tabFocusManager?.advancedFocusTab(1); } ],
 */
@@ -241,16 +245,17 @@ var ucjsNavigation = {
 
       // Eigene: solve URL to numbered Page
       _numberedPage: function(aURL, direction) {
-        //dump('Parsing numbered Page of url : ' + aURL);
-        let urlParts = aURL.match(/^(.+?:\/\/)([^\/]+@)?([^\/]*)(.*)$/);
-        if (!urlParts) return false;
-        for(let i=0; i<urlParts.length; i++){
-          if(!urlParts[i]) urlParts[i] = '';
+        let uri;
+        try {
+          uri = new URL(aURL);
+        } catch(ex) {
+          return false;
         }
-        let path= urlParts[4];
+        let path= uri.pathname + uri.search + uri.hash;
         //dump(path);
         let w = path.split(/(%[0-7|a-f]+)|(\d+)/i);
-        for(let i = w.length-1; i>=0; i--){
+        let i;
+        for(i = w.length-1; i>=0; i--){
           if (w[i].match(/^\d+/)) break;
         }
         if (i >= 0) {
@@ -259,7 +264,7 @@ var ucjsNavigation = {
             w[i] = ( parseInt(w[i],10)+1000000000 + (direction>0 ? +1 : -1) ).toString().substr(-l);
           else
             w[i] = parseInt(w[i]) + (direction>0 ? +1 : -1);
-          return urlParts[1]+urlParts[2]+urlParts[3]+w.join('');
+          return uri.origin + w.join('');
         }
         return false
       }
@@ -310,9 +315,11 @@ var ucjsNavigation = {
     return url
   },
 
+  // 異なるホスト移動
   fastNavigationBackForward: function fastNavigationBackForward(fastBack) {
     let sessionHistory = gBrowser.selectedBrowser.browsingContext.sessionHistory;
     if (sessionHistory?.count) {
+      // ship-fission
       let index = sessionHistory.index;
     	let entry = sessionHistory.getEntryAtIndex(index);
       let host = this.getHost(entry.URI.spec);
@@ -327,10 +334,11 @@ var ucjsNavigation = {
             return;
           }
         }
-        // fallback ホストの最初のエントリまでさかのぼる
-        gBrowser.webNavigation.gotoIndex(0);
+        // fallback
+        if (gBrowser.webNavigation.canGoBack)
+          gBrowser.webNavigation.gotoIndex(0);
       } else {
-        // 異なるホストの最古エントリまで進む
+        // 異なるホストの最初エントリまで進む
       	for (let i = index + 1; i < sessionHistory.count; i++) {
           let entry1  = sessionHistory.getEntryAtIndex(i);
           let host1 = this.getHost(entry1.URI.spec);
@@ -339,10 +347,12 @@ var ucjsNavigation = {
             return;
           }
         }
-        // fallback ホストの最後のエントリまで進む
-        gBrowser.webNavigation.gotoIndex(sessionHistory.count - 1);
+        // fallback
+        if (gBrowser.webNavigation.canGoForward)
+          gBrowser.webNavigation.gotoIndex(sessionHistory.count - 1);
       }
     } else {
+      // non ship-fission
       sessionHistory = SessionStore.getSessionHistory(
         gBrowser.selectedTab
       );
@@ -360,10 +370,11 @@ var ucjsNavigation = {
             return;
           }
         }
-        // fallback ホストの最初のエントリまでさかのぼる
-        gBrowser.webNavigation.gotoIndex(0);
+        // fallback
+        if (gBrowser.webNavigation.canGoBack)
+          gBrowser.webNavigation.gotoIndex(0);
       } else {
-        // 異なるホストの最古エントリまで進む
+        // 異なるホストのの最初のエントリまで進む
       	for (let i = index + 1; i < sessionHistory.entries.length; i++) {
           let entry1  = sessionHistory.entries[i];
           let host1 = this.getHost(entry1.url);
@@ -372,8 +383,84 @@ var ucjsNavigation = {
             return;
           }
         }
-        // fallback ホストの最後のエントリまで進む
-        gBrowser.webNavigation.gotoIndex(sessionHistory.entries.length - 1);
+        // fallback
+        if (gBrowser.webNavigation.canGoForward)
+          gBrowser.webNavigation.gotoIndex(sessionHistory.entries.length - 1);
+      }
+    }
+  },
+
+  // 同じホスト内移動
+  fastRewindBackForward: function fastRewindBackForward(fastBack) {
+    let sessionHistory = gBrowser.selectedBrowser.browsingContext.sessionHistory;
+    if (sessionHistory?.count) {
+      // ship-fission
+      let index = sessionHistory.index;
+    	let entry = sessionHistory.getEntryAtIndex(index);
+      let host = this.getHost(entry.URI.spec);
+    	
+      if (fastBack < 0) {
+        // 同じホストの最初のエントリまでさかのぼる
+        let j = index - 1;
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry1  = sessionHistory.getEntryAtIndex(i);
+          let host1 = this.getHost(entry1.URI.spec);
+          if (host != host1) {
+            break;
+          }
+          j = i;
+        }
+        if (j >= 0 && j != index)
+          gBrowser.webNavigation.gotoIndex(j);
+      } else {
+        // 同じホストの最後のエントリまで進む
+        let j = index + 1;
+      	for (let i = index + 1; i < sessionHistory.count; i++) {
+          let entry1  = sessionHistory.getEntryAtIndex(i);
+          let host1 = this.getHost(entry1.URI.spec);
+          if (host != host1) {
+            break;
+          }
+          j = i;
+        }
+        if (j < sessionHistory.count && j != index)
+          gBrowser.webNavigation.gotoIndex(j);
+      }
+    } else {
+      // non ship-fission
+      sessionHistory = SessionStore.getSessionHistory(
+        gBrowser.selectedTab
+      );
+      let index = sessionHistory.index;
+    	let entry = sessionHistory.entries[index];
+      let host = this.getHost(entry.url);
+    	
+      if (fastBack < 0) {
+        // 同じホストの最初のエントリまでさかのぼる
+        let j = index - 1;
+      	for (let i = index - 1; i >= 0; i--) {
+          let entry1  = sessionHistory.entries[i];
+          let host1 = this.getHost(entry1.url);
+          if (host != host1) {
+            break;
+          }
+          j = i;
+        }
+        if (j >= 0 && j != index)
+          gBrowser.webNavigation.gotoIndex(j);
+      } else {
+        // 同じホストの最後のエントリまで進む
+        let j = index + 1;
+      	for (let i = index + 1; i < sessionHistory.entries.length; i++) {
+          let entry1  = sessionHistory.entries[i];
+          let host1 = this.getHost(entry1.url);
+          if (host != host1) {
+            break;
+          }
+          j = i;
+        }
+        if (j < sessionHistory.entries.length && j != index)
+          gBrowser.webNavigation.gotoIndex(j);
       }
     }
   },
