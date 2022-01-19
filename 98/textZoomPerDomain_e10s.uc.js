@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Text Zoom Per Domain
 // @include        main
-// @compatibility  Firefox 87+
+// @compatibility  Firefox 98+
 // @author         Alice0775
+// @version        2022/01/20 06:00 Bug 1747461 Remove FileUtils.getFile from browser/
 // @version        2021/07/16 15:00 add textZoomPerDomain_menu.enlargeTextZoom(), reduceTextZoom, resetTextZoom
 // @version        2021/02/09 20:00 RBug 1691274 - Rewrite `X.setAttribute("hidden", Y)` to `X.hidden = Y` in browser/
 // @version        2020/06/23 10:00 remove content script
@@ -41,7 +42,7 @@ var textZoomPerDomain = {
     }
   },
 
-  init: function() {
+  init: async function() {
     ZoomManager.setZoomForBrowser = function ZoomManager_setZoomForBrowser(aBrowser, aVal) {
       if (aVal < this.MIN || aVal > this.MAX)
         throw Cr.NS_ERROR_INVALID_ARG;
@@ -63,7 +64,7 @@ var textZoomPerDomain = {
       }
     };
 
-    textZoomPerDomain_storage.initDB();
+    await textZoomPerDomain_storage.initDB();
     this.ioService = Cc["@mozilla.org/network/io-service;1"]
                       .getService(Ci.nsIIOService);
 
@@ -173,8 +174,13 @@ var textZoomPerDomain = {
 
 var textZoomPerDomain_storage = {
   db: null,
-  initDB: function() {
-    let file = FileUtils.getFile("UChrm", ["textZoom.sqlite"]);
+  initDB: async function() {
+    //let file = FileUtils.getFile("UChrm", ["textZoom.sqlite"]);
+   let targetPath = PathUtils.join(
+      await PathUtils.getProfileDir(),
+      "chrome", "textZoom.sqlite"
+    );
+    let file = new FileUtils.File(targetPath);
     if (!file.exists()) {
       this.db = Services.storage.openDatabase(file);
       let stmt = this.db.createStatement(

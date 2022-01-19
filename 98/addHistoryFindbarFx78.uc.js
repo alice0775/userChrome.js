@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    add History to Findbar
 // @include        main
-// @compatibility  Firefox 78
+// @compatibility  Firefox 98+
 // @author         Alice0775
+// @version        2022/01/20 06:00 Bug 1747461 Remove FileUtils.getFile from browser/
 // @version        2021/11/12 21:00 space key open popup
 // @version        2021/11/12 16:00 move focus after click the entry
 // @version        2021/07/14 06:00 fixes for middleclicking, maxEntriesToShow and show popup after delete item, Marged some patch #64(Thanks sdavidg)
@@ -233,9 +234,14 @@ const addHistoryFindbar78 = {
 
 var addHistoryFindbar_storage = {
   db: null,
-  initDB: function() {
-    let file = FileUtils.getFile("UChrm", ["HistoryFindbar1.sqlite"]);
-    if (!file.exists()) {
+  initDB: async function() {
+    //let file = FileUtils.getFile("UChrm", ["HistoryFindbar1.sqlite"]);
+     let targetPath = PathUtils.join(
+        await PathUtils.getProfileDir(),
+        "chrome", "HistoryFindbar1.sqlite"
+      );
+      let file = new FileUtils.File(targetPath);
+      if (!file.exists()) {
       this.db = Services.storage.openDatabase(file);
       let stmt = this.db.createStatement(
         "CREATE TABLE HistoryFindbar (id INTEGER PRIMARY KEY AUTOINCREMENT, fieldname TEXT NOT NULL, value TEXT NOT NULL, count INTEGER, last_used TIMESTAMP)"
