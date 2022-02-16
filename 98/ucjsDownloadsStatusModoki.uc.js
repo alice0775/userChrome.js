@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Downloads Status Modoki
 // @include        main
-// @compatibility  Firefox 73+
+// @compatibility  Firefox 98+
 // @author         Alice0775
 // @note           ucjsDownloadsStatusModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version       2022/02/16 Bug 1747422 - Remove preprocessor variable use from downloads CSS
 // @version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser
 // @version        2019/10/20 12:30 workaround Bug 1497200: Apply Meta CSP to about:downloads, Bug 1513325 - Remove textbox binding
 // @version        2019/09/08 19:30 fix scrollbox
@@ -74,10 +75,10 @@ var ucjsDownloadsStatusModoki = {
 
     var toolbar = document.createXULElement("vbox");
     toolbar.setAttribute("id", "downloadsStatusModokiBar");
-    toolbar.setAttribute("collapsed", true);
+    toolbar.collapsed = true;
 
     var bottombox = document.getElementById("browser-bottombox");
-    bottombox.appendChild(toolbar);
+    bottombox.insertBefore(toolbar, bottombox.firstChild);
     var browser = toolbar.appendChild(document.createXULElement("browser"));
     browser.setAttribute("disablehistory", true);
     browser.setAttribute("remote", false);
@@ -225,7 +226,7 @@ var ucjsDownloadsStatusModoki = {
 
 /*
     // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
-    var listBox = doc.getElementById("downloadsRichListBox");
+    var listBox = doc.getElementById("downloadsListBox");
     var placesView = listBox._placesView;
     if (placesView) {
       var place = placesView.place;
@@ -235,7 +236,7 @@ var ucjsDownloadsStatusModoki = {
 */
     win.ucjsDownloadsStatusModoki_clearDownloads = function ucjs_clearDownloads() {
       var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
-      var richListBox = doc.getElementById("downloadsRichListBox");
+      var richListBox = doc.getElementById("downloadsListBox");
 
       Cu.import("resource://gre/modules/Services.jsm");
       var places = [];
@@ -297,7 +298,7 @@ var ucjsDownloadsStatusModoki = {
     };
 
     win.ucjsDownloadsStatusModoki_doSearch = function ucjs_doSearch(filterString) {
-      var richListBox = doc.getElementById("downloadsRichListBox");
+      var richListBox = doc.getElementById("downloadsListBox");
       richListBox._placesView.searchTerm = filterString;
     };
 

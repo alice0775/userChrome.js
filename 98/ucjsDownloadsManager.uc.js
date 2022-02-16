@@ -4,8 +4,9 @@
 // @description    Donloads Manager
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xhtml
-// @compatibility  Firefox 73+
+// @compatibility  Firefox 98+
 // @author         Alice0775
+// @version        2022/02/16 Bug 1747422 - Remove preprocessor variable use from downloads CSS
 // @version        2020/12/19 WIP:Workaround to avoid closing the manager if download.error/download.canceled.
 // @version        2020/12/18 fix closeWhenDone if small size downloaded
 // @version        2020/09/24 fix emptylist layout
@@ -274,7 +275,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         #contentAreaDownloadsView { \
           padding: 0 ; \
         } \
-        #downloadsRichListBox:empty + #downloadsListEmptyDescription { \
+        #downloadsListBox:empty + #downloadsListEmptyDescription { \
           pointer-events: none; \
         } \
        '.replace(/\s+/g, " ");
@@ -320,7 +321,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
 /*
       // xxx Bug 1279329 "Copy Download Link" of context menu in Library is grayed out
-      var listBox = document.getElementById("downloadsRichListBox");
+      var listBox = document.getElementById("downloadsListBox");
       var placesView = listBox._placesView;
       var place = placesView.place;
       placesView.place= null;
@@ -462,7 +463,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
 
     clearDownloads: function ucjs_clearDownloads() {
       var DO_NOT_DELETE_HISTORY = true; /* custmizable true or false */
-      var richListBox = document.getElementById("downloadsRichListBox");
+      var richListBox = document.getElementById("downloadsListBox");
 
       var places = [];
       function addPlace(aURI, aTitle, aVisitDate) {
@@ -508,7 +509,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
     },
 
     doSearch: function ucjs_doSearch(filterString) {
-      var richListBox = document.getElementById("downloadsRichListBox");
+      var richListBox = document.getElementById("downloadsListBox");
       richListBox._placesView.searchTerm = filterString;
     }
   };

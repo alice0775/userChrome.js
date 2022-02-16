@@ -1,4 +1,5 @@
 @charset "utf-8";
+/*@version       2022/02/16 Bug 1747422 - Remove preprocessor variable use from downloads CSS*/
 /*@version       2020/03/13 fix for 74, broken listitem orient due to Bug 1606130
 /*@version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser */
 /*@version        2019/10/20 12:30*/
@@ -12,7 +13,7 @@
 #contentAreaDownloadsView[ucjsDownloadsStatusModoki] > stack:first-child {
 }
 
-#contentAreaDownloadsView[ucjsDownloadsStatusModoki] #downloadsRichListBox { 
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] #downloadsListBox { 
   background-color: -moz-dialog !important; 
   display:inline-block !important; 
   overflow-y: auto !important; 
@@ -24,7 +25,7 @@
 {
   --downloads-item-height: 38px; 
 }
-#contentAreaDownloadsView[ucjsDownloadsStatusModoki] richlistitem { 
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] richlistitem:not([hidden]) { 
   min-width:200px !important;
   max-width:200px !important;
   font-size: 13px !important;
