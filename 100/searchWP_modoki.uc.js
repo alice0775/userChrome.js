@@ -4,8 +4,10 @@
 // @description    serachWPもどき  まだまだtodo未実装だらけ
 // @charset        utf-8
 // @include        main
-// @compatibility  Firefox 78+
+// @compatibility  Firefox 100+
 // @author         Alice0775
+// @version        2022/03/19 07:00 use weheel event instead of DOMMouseScroll event
+// ==/UserScript==
 // @version        2020/06/06 07:00 workaround(highlightAll in findBar should be ignored in a new tab)
 // @version        2020/01/26 20:00 fix an error
 // @version        2019/11/22 01:00 remove unnecessary
@@ -23,7 +25,6 @@
 // @version        2018/04/14 21:45 workaround for SearchEngineWheelScroll.uc.js()
 // @version        2018/04/14 20:00 fix chraracter code for TinySegmenter
 // @version        2018/04/13 17:00 initial wip
-// ==/UserScript==
 // usage(使い方)
 // 選択語句ある場合は選択語句で,  なき場合は日本語のトークンを自動判定した語句でそれぞれ以下を実行
 // 語句上で alt+中クリック : 強調表示 on/off
@@ -64,7 +65,10 @@ var serachWP_modoki = {
   _highlightAll: false,
   _prevHighLitedTerm: "",
 
-  init: function() {
+  init: async function() {
+    if (!Services.search.isInitialized) {
+      await Services.search.init();
+    }
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     window.addEventListener("resize", this, false);
@@ -81,7 +85,7 @@ var serachWP_modoki = {
     window.removeEventListener("click", this, true);
     if (!this._textbox)
       return;
-    this._textbox.removeEventListener("DOMMouseScroll", this, true);
+    this._textbox.removeEventListener("wheel", this, true);
     this._textbox.removeEventListener("blur", this, false);
   },
 
@@ -89,7 +93,7 @@ var serachWP_modoki = {
     setTimeout((function(){
       if (!this.searchbar)
         return;
-      this._textbox.addEventListener("DOMMouseScroll", this, true);
+      this._textbox.addEventListener("wheel", this, true);
       this._textbox.addEventListener("blur", this, false);
     }).bind(this), 1000)
   },
@@ -113,7 +117,7 @@ var serachWP_modoki = {
       case "aftercustomization":
         this.patch();
         break;
-      case "DOMMouseScroll":
+      case "wheel":
         var textbox = event.originalTarget.parentNode;
         if (document.commandDispatcher.focusedElement != textbox) {
           var a = textbox.selectionStart;
@@ -229,7 +233,7 @@ var serachWP_modoki = {
       event.preventDefault();
       event.stopPropagation();
 
-      var findBackwards = event.detail < 0 ? true : false;
+      var findBackwards = event.deltaY < 0 ? true : false;
       var matchCase = event.altKey || event.ctrlKey;
       this._findFast( term, findBackwards,  matchCase).then(result=>{});
     }

@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ページ内検索の「次を検索」と「前を検索」をボタン上のマウスホイールの回転で
 // @include        main
-// @compatibility  Firefox 69
+// @compatibility  Firefox 100+
 // @author         Alice0775
+// @version        2022/03/19 07:00 use weheel event instead of DOMMouseScroll event
+// ==/UserScript==
 // @version        2019/06/24 23:00 wait for gBrowser initialized
 // @version        2018/09/15 18:00 cleanup
 // @version        2018/09/15 08:00 Bug 1411707 - Switch findbar and findbar-textbox from XBL bindings into a Custom Element
@@ -14,7 +16,6 @@
 // @version        2013/05/11 12:00 Bug537013, Bug 893349
 // @version        2009/03/15 23:30 何でこうコロコロと意味のない変更するのかね > Dao  Gottwald (Bug 481397 -  Incorrect tab order of findbar buttons on Linux)
 // @Note
-// ==/UserScript==
 // @version        2010/07/09 07:00
 // @version        2009/03/15 07:30
 // @version        2009/03/15 00:00
@@ -28,21 +29,21 @@ var findNextPrevByMouseWheel = {
 
   patch: function() {
     gFindBar.getElement("find-next")
-    .addEventListener("DOMMouseScroll", function(event) {
+    .addEventListener("wheel", function(event) {
       if (!gFindBar._findField.value)
         return;
       event.preventDefault();
       event.stopPropagation();
-      var findBackwards = event.detail < 0 ? true : false;
+      var findBackwards = event.deltaY < 0 ? true : false;
       gFindBar.onFindAgainCommand(findBackwards);
     }, false);
     gFindBar.getElement("find-previous")
-    .addEventListener("DOMMouseScroll", function(event) {
+    .addEventListener("wheel", function(event) {
       if (!gFindBar._findField.value)
         return;
       event.preventDefault();
       event.stopPropagation();
-      var findBackwards = event.detail < 0 ? true : false;
+      var findBackwards = event.deltaY < 0 ? true : false;
       gFindBar.onFindAgainCommand(findBackwards);
     }, false);
   }

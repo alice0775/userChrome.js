@@ -4,8 +4,10 @@
 // @description    FindBarの選択テキスト上でマウスホイールによる選択テキスでの検索を可能にする。選択なき場合は日本語のトークンを自動判定する
 // @charset        utf-8
 // @include        main
-// @compatibility  Firefox 71
+// @compatibility  Firefox 100+
 // @author         Alice0775
+// @version        2022/03/19 07:00 use weheel event instead of DOMMouseScroll event
+// ==/UserScript==
 // @version        2019/10/01 01:00 Bug 1553384 - Make 'Find in page' work in fission world
 // @version        2019/07/10 10:00 fix 70 Bug 1558914 - Disable Array generics in Nightly
 // @version        2019/06/24 23:00 wait for gBrowser initialized
@@ -21,7 +23,6 @@
 // @version        2013/02/09 19:30 null check
 // @version        2012/05/01 21:30 delete this.xxx;
 // @version        2012/05/01 20:00
-// ==/UserScript==
 var findSelectionInFindbar = {
   // addHistoryFindbarFx3.0.uc.js
   get _findField2(){
@@ -41,7 +42,7 @@ var findSelectionInFindbar = {
     window.addEventListener("unload", this, false);
     setTimeout((function(){
       var target = gFindBar._findField;
-      target.addEventListener("DOMMouseScroll", this, false);
+      target.addEventListener("wheel", this, false);
     }).bind(this), 1000)
   },
 
@@ -49,18 +50,19 @@ var findSelectionInFindbar = {
     window.removeEventListener("unload", this, false);
 
     if (this._findField2)
-      this._findField2.removeEventListener("DOMMouseScroll", this, false);
+      this._findField2.removeEventListener("wheel", this, false);
 
     let findBars = document.querySelectorAll("findbar");
     Array.prototype.forEach.call(findBars, (function (aFindBar) {
       var target = aFindBar._findField;
-      target.removeEventListener("DOMMouseScroll", this, false);
+      target.removeEventListener("wheel", this, false);
     }).bind(this));
+    delete findBars;
   },
 
   handleEvent: function(event) {
     switch(event.type) {
-      case "DOMMouseScroll":
+      case "wheel":
         this.onDOMMouseScroll(event);
         break;
       case "unload":
@@ -119,7 +121,7 @@ var findSelectionInFindbar = {
     if (!!term) {
       event.preventDefault();
       event.stopPropagation();
-      var findBackwards = event.detail < 0 ? true : false;
+      var findBackwards = event.deltaY < 0 ? true : false;
       var matchCase = event.altKey || event.ctrlKey;
       this._findFast( term, findBackwards,  matchCase);
     }
