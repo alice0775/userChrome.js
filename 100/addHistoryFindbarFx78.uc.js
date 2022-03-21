@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    add History to Findbar
 // @include        main
-// @compatibility  Firefox 98+
+// @compatibility  Firefox 100+
 // @author         Alice0775
+// @version        2022/03/10 02:00 Bug 1746667 - PathUtils: Make `get{ProfileDir,LocalProfileDir,TempDir}` sync on main thread
 // @version        2022/01/20 06:00 Bug 1747461 Remove FileUtils.getFile from browser/
 // @version        2021/11/12 21:00 space key open popup
 // @version        2021/11/12 16:00 move focus after click the entry
@@ -237,7 +238,7 @@ var addHistoryFindbar_storage = {
   initDB: async function() {
     //let file = FileUtils.getFile("UChrm", ["HistoryFindbar1.sqlite"]);
      let targetPath = PathUtils.join(
-        await PathUtils.getProfileDir(),
+        PathUtils.profileDir,
         "chrome", "HistoryFindbar1.sqlite"
       );
       let file = new FileUtils.File(targetPath);

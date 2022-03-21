@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Text Zoom Per Domain
 // @include        main
-// @compatibility  Firefox 98+
+// @compatibility  Firefox 100+
 // @author         Alice0775
+// @version        2022/03/10 02:00 Bug 1746667 - PathUtils: Make `get{ProfileDir,LocalProfileDir,TempDir}` sync on main thread
 // @version        2022/01/20 06:00 Bug 1747461 Remove FileUtils.getFile from browser/
 // @version        2021/07/16 15:00 add textZoomPerDomain_menu.enlargeTextZoom(), reduceTextZoom, resetTextZoom
 // @version        2021/02/09 20:00 RBug 1691274 - Rewrite `X.setAttribute("hidden", Y)` to `X.hidden = Y` in browser/
@@ -177,7 +178,7 @@ var textZoomPerDomain_storage = {
   initDB: async function() {
     //let file = FileUtils.getFile("UChrm", ["textZoom.sqlite"]);
    let targetPath = PathUtils.join(
-      await PathUtils.getProfileDir(),
+      PathUtils.profileDir,
       "chrome", "textZoom.sqlite"
     );
     let file = new FileUtils.File(targetPath);
