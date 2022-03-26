@@ -1,0 +1,29 @@
+@charset "utf-8";
+@namespace url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+/*@version        2020/03/13 17:00 use xhtml instead xul*/
+/*@version        2019/10/20 12:30*/
+
+@-moz-document url("chrome://browser/content/downloads/contentAreaDownloadsView.xhtml?SM") {
+      *|*:root
+      {
+        --downloads-item-height: 3.5em;
+      }
+			richlistitem { 
+			  height: 3.5em !important;
+			}       
+      #contentAreaDownloadsView
+      {
+        padding: 0 !important;
+      }
+      .downloadTypeIcon,
+      .downloadBlockedBadge
+      {
+        margin-left:0 !important;
+        margin-right:1px !important;
+      }
+      .downloadButton {
+        padding-left:0 !important;
+        padding-right:0 !important;
+      }
+}
