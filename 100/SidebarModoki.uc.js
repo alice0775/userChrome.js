@@ -7,6 +7,8 @@
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2022/03/26 23:00 Bug 1760342 - Remove :-moz-lwtheme-{brighttext,darktext}
+// @version        2021/11/21 18:00 Bug 1742111 - Rename internal accentcolor and textcolor properties to be more consistent with the webext theme API
 // @version        2021/11/14 13:00 wip change css(Bug 1740230 - moz-lwtheme* pseudo-classes don't get invalidated correctly)
 // @version        2021/09/30 22:00 change splitter color
 // @version        2021/05/18 20:00 fix margin of tabpanels
@@ -47,12 +49,10 @@ var SidebarModoki = {
   SM_RIGHT: false,  // SidebarModoki position
   SM_WIDTH : 130,
   SM_AUTOHIDE : false,  //F11 Fullscreen
-  TAB0_SRC   : "chrome://browser/content/places/bookmarksSidebar.xhtml",
-  TAB0_LABEL : "Bookmarks",
-  TAB1_SRC   : "chrome://browser/content/places/historySidebar.xhtml",
-  TAB1_LABEL : "History",
-  TAB2_SRC   : "chrome://browser/content/downloads/contentAreaDownloadsView.xhtml?SM",
-  TAB2_LABEL : "DL",
+  TAB_SRC : ["chrome://browser/content/places/bookmarksSidebar.xhtml",
+             "chrome://browser/content/places/historySidebar.xhtml",
+             "chrome://browser/content/downloads/contentAreaDownloadsView.xhtml?SM"],
+  TAB_LABEL : ["Bookmarks", "History", "DL"],
   // -- config --
 
   kSM_Open : "userChrome.SidebarModoki.Open",
@@ -132,7 +132,8 @@ var SidebarModoki = {
   init: function() {
     let chromehidden = document.getElementById("main-window").hasAttribute("chromehidden");
     if (chromehidden &&
-        document.getElementById("main-window").getAttribute("chromehidden").includes("extrachrome")) {      return; // do nothing
+        document.getElementById("main-window").getAttribute("chromehidden").includes("extrachrome")) {
+      return; // do nothing
     }
 
     let MARGINHACK = this.SM_RIGHT ? "0 0 0 0" : "0 -5px 0 0";
@@ -146,7 +147,8 @@ var SidebarModoki = {
         text-shadow: none;
       }
       #SM_toolbox:-moz-lwtheme {
-        background-color: var(--lwt-accent-color);
+        /*background-color: var(--lwt-accent-color);*/
+        background-color: var(--lwt-frame);
         color: var(--lwt-text-color);
       }
 
@@ -179,7 +181,7 @@ var SidebarModoki = {
         margin: {MARGINHACK}; /*hack*/
         appearance: unset;
       }
-      #SM_tabbox:-moz-lwtheme-brighttext {
+      toolbar[brighttext]:-moz-lwtheme #SM_tabbox {
         background-color: var(--toolbar-bgcolor);
       }
       #SM_tabs tab {
@@ -192,12 +194,11 @@ var SidebarModoki = {
         color: unset !important;
       }
       
-      #SM_Button,
-      #SM_Button:-moz-lwtheme-darktext
+      #SM_Button
       {
         list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAQ0lEQVQ4jWNgoAL4z8DA8N/AwAArTQRGFSBBI4YBDHhonC6n3AA1NTUMZ6F5gyQXYFNEsheweWnUBfRyAbmYcgMoAgBFX4a/wlDliwAAAABJRU5ErkJggg==');
       }
-      #SM_Button:-moz-lwtheme-brighttext
+      toolbar[brighttext]:-moz-lwtheme #SM_Button
       {
         list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAANklEQVQ4jWP4TyFg+P///38GBgayMHUNwEdjdTrVDcDnTKJdgEsRSV5ACaBRF9DZBQObFygBAMeIxVdCQIJTAAAAAElFTkSuQmCC');
       }
@@ -260,19 +261,19 @@ var SidebarModoki = {
         ],
         ["tabbox", {id:"SM_tabbox", flex: "1", handleCtrlPageUpDown: false, handleCtrlTab: false},
           ["tabs", {id: "SM_tabs"},
-            ["tab", {id: "SM_tab0", label: this.TAB0_LABEL}],
-            ["tab", {id: "SM_tab1", label: this.TAB1_LABEL}],
-            ["tab", {id: "SM_tab2", label: this.TAB2_LABEL}]
+            ["tab", {id: "SM_tab0", label: this.TAB_LABEL[0]}],
+            ["tab", {id: "SM_tab1", label: this.TAB_LABEL[1]}],
+            ["tab", {id: "SM_tab2", label: this.TAB_LABEL[2]}]
           ],
           ["tabpanels", {id: "SM_tabpanels", flex: "1", style: "border: none;"},
             ["tabpanel", {id: "SM_tab0-container", orient: "vertical", flex: "1"},
-              ["browser", {id: "SM_tab0-browser", flex: "1", autoscroll: "false", src: this.TAB0_SRC}]
+              ["browser", {id: "SM_tab0-browser", flex: "1", autoscroll: "false", src: ""}]
             ],
             ["tabpanel", {id: "SM_tab1-container", orient: "vertical", flex: "1"},
-              ["browser", {id: "SM_tab1-browser", flex: "1", autoscroll: "false", src: this.TAB1_SRC}]
+              ["browser", {id: "SM_tab1-browser", flex: "1", autoscroll: "false", src: ""}]
             ],
             ["tabpanel", {id: "SM_tab2-container", orient: "vertical", flex: "1"},
-              ["browser", {id: "SM_tab2-browser", flex: "1", autoscroll: "false", src: this.TAB2_SRC}]
+              ["browser", {id: "SM_tab2-browser", flex: "1", autoscroll: "false", src: ""}]
             ]
           ]
         ]
@@ -406,6 +407,9 @@ var SidebarModoki = {
     let aIndex = document.getElementById("SM_tabpanels").selectedIndex;
     this.prefs.setIntPref(this.kSM_lastSelectedTabIndex, aIndex);
     width = this.getPref(this.kSM_lastSelectedTabWidth + aIndex, "int", this.SM_WIDTH);
+    if (document.getElementById("SM_tab" + aIndex +"-browser").src == "" ) {
+      document.getElementById("SM_tab" + aIndex +"-browser").src = this.TAB_SRC[aIndex];
+    }
     document.getElementById("SM_toolbox").width = width;
   },
   
@@ -420,6 +424,7 @@ var SidebarModoki = {
       width = this.getPref(this.kSM_lastSelectedTabWidth + index, "int", this.SM_WIDTH);
       document.getElementById("SM_toolbox").width = width;
       this.prefs.setBoolPref(this.kSM_Open, true)
+      this.onSelect({});
       addEventListener("resize", this, false);
     } else {
       this.close();
