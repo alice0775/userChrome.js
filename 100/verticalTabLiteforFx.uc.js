@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 98
+// @compatibility  Firefox 100
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/03/28 14:00 Bug 1758295 - Lazy tabs prematurely inserted when dragged into another existing window
 // @version        2022/03/09 18:00 change background-color
 // @version        2022/01/10 06:00 Bug 1702501 - Remove print.tab_modal.enabled pref and old frontend print preview code
 // @version        2021/12/12 20:00 window control
@@ -705,17 +706,29 @@ function verticalTabLiteforFx() {
         }
       }
     } else if (draggedTab) {
-      let newIndex = this._getDropIndex(event, false);
-      let newTabs = [];
-      for (let tab of movingTabs) {
-        let newTab = gBrowser.adoptTab(tab, newIndex++, tab == draggedTab);
-        newTabs.push(newTab);
-      }
-      // Restore tab selection
-      gBrowser.addRangeToMultiSelectedTabs(
-          newTabs[0],
-          newTabs[newTabs.length - 1]
-      );
+        // Move the tabs. To avoid multiple tab-switches in the original window,
+        // the selected tab should be adopted last.
+        let dropIndex = this._getDropIndex(event, false);
+        let newIndex = dropIndex;
+        let selectedIndex = -1;
+        for (let i = 0; i < movingTabs.length; ++i) {
+          let tab = movingTabs[i];
+          if (tab.selected) {
+            selectedIndex = i;
+          } else {
+            gBrowser.adoptTab(tab, newIndex++, tab == draggedTab);
+          }
+        }
+        if (selectedIndex >= 0) {
+          let tab = movingTabs[selectedIndex];
+          gBrowser.adoptTab(tab, dropIndex + selectedIndex, tab == draggedTab);
+        }
+
+        // Restore tab selection
+        gBrowser.addRangeToMultiSelectedTabs(
+          gBrowser.tabs[dropIndex],
+          gBrowser.tabs[dropIndex + movingTabs.length - 1]
+        );
     } else {
       // Pass true to disallow dropping javascript: or data: urls
       let links;
@@ -741,8 +754,9 @@ function verticalTabLiteforFx() {
           event
       );
       (async () => {
-        if (urls.length >=
-            Services.prefs.getIntPref("browser.tabs.maxOpenBeforeWarn")
+        if (
+          urls.length >=
+          Services.prefs.getIntPref("browser.tabs.maxOpenBeforeWarn")
         ) {
           // Sync dialog cannot be used inside drop event handler.
           let answer = await OpenInTabsUtils.promiseConfirmOpenInTabs(
