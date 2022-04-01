@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 100+
 // @author         Alice0775
+// @version        2022/04/01 remove nsIIOService
 // @version        2022/03/10 02:00 Bug 1746667 - PathUtils: Make `get{ProfileDir,LocalProfileDir,TempDir}` sync on main thread
 // @version        2022/01/20 06:00 Bug 1747461 Remove FileUtils.getFile from browser/
 // @version        2021/07/16 15:00 add textZoomPerDomain_menu.enlargeTextZoom(), reduceTextZoom, resetTextZoom
@@ -66,8 +67,7 @@ var textZoomPerDomain = {
     };
 
     await textZoomPerDomain_storage.initDB();
-    this.ioService = Cc["@mozilla.org/network/io-service;1"]
-                      .getService(Ci.nsIIOService);
+    this.ioService = Services.io;
 
     // cache to minimize accessing sqlite db
     this.initCache();
@@ -382,8 +382,7 @@ var textZoomPerDomain_menu = {
   
   init :function() {
     textZoomPerDomain.init();
-    this.ioService = Cc["@mozilla.org/network/io-service;1"]
-                      .getService(Ci.nsIIOService);
+    this.ioService = Services.io;
 
     let template = 
         ["menu", {id: "textZoomPerDomain", label: "Text Zoom Level", accesskey:"Z"},

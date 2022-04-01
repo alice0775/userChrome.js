@@ -3,10 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TST
 // @include        main
-// @compatibility  Firefox 96
+// @compatibility  Firefox 100
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2022/04/01 23:00 Convert Components.utils.import to ChromeUtils.import
 // @version        2022/03/26 23:00 Bug 1760342 - Remove :-moz-lwtheme-{brighttext,darktext}
 // @version        2021/11/21 18:00 Bug 1742111 - Rename internal accentcolor and textcolor properties to be more consistent with the webext theme API
 // @version        2021/11/14 13:00 wip change css(Bug 1740230 - moz-lwtheme* pseudo-classes don't get invalidated correctly)
@@ -218,7 +219,7 @@ var SidebarModoki = {
       return document.documentElement.getAttribute(name);
     };
 */
-    Components.utils.import("resource:///modules/CustomizableUI.jsm");
+    ChromeUtils.import("resource:///modules/CustomizableUI.jsm");
     // xxxx try-catch may need for 2nd window
     try {
       CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
