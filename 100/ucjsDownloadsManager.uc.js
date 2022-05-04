@@ -6,6 +6,7 @@
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xhtml
 // @compatibility  Firefox 100
 // @author         Alice0775
+// @version        2022/05/04 11:00 missing scope of DownloadIntegration
 // @version        2022/04/01 23:00 Convert Components.utils.import to ChromeUtils.import
 // @version        2022/02/16 Bug 1747422 - Remove preprocessor variable use from downloads CSS
 // @version        2020/12/19 WIP:Workaround to avoid closing the manager if download.error/download.canceled.
@@ -419,7 +420,7 @@ if (window.opener && location.href == "chrome://browser/content/downloads/conten
         var closeWhenDone = Services.prefs.getBoolPref(this.kcloseWhenDone, false);
         var closeWhenDoneIfAutoOpened = Services.prefs.getBoolPref(this.kcloseWhenDoneIfAutoOpened, false) && window.autoOpened;
         if (this.success && (closeWhenDone || closeWhenDoneIfAutoOpened)) {
-          DownloadIntegration?._store?.save();
+          window.DownloadIntegration?._store?.save();
           window.close();
         }
 
