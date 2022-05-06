@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 95
+// @compatibility 100
+// @version       2022/05/08 23:00 fix ページ内検索バー(check gFindBarInitialized before reffering hidden attribute.)
 // @version       2022/03/08 13:00 add 新しいコンテナータブを開く
 // @version       2021/12/11 23:00 workaround for left mouseup event does not fire on select element
 // @version       2021/12/09 11:00 no longer require MiddleClick handler
@@ -201,19 +202,13 @@ var ucjsMouseGestures = {
 
         ['DL', 'ページ内検索バー',
           function(){
-            if (ucjsMouseGestures._version <= "60") {
-              if (gBrowser.getFindBar()) {
-                gFindBar.hidden? gFindBar.onFindCommand(): gFindBar.close();
-              } else {
-                gLazyFindCommand("onFindCommand");
-              }
+            if (gFindBarInitialized) {
+              gFindBar.hidden? gFindBar.onFindCommand(): gFindBar.close();
             } else {
-              // 61+
-              gBrowser.getFindBar().then(findbar => {
-                findbar.hidden? findbar.onFindCommand(): findbar.close();
-              });
+              gLazyFindCommand("onFindCommand");
             }
           } ],
+
 
         ['', '選択テキストで検索',
           function(){
