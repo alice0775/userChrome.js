@@ -5,6 +5,7 @@
 // @include       *
 // @compatibility Firefox 91
 // @author        alice0775
+// @version       2022/6/20 00:00 fix issue #69
 // @version       2021/10/02 00:00 do not close popup when middle mouse click on the undo/redo menu
 // @version       2019/11/20 23:00 Bug 1553188 - Rename browser.xul to browser.xhtml
 // @version       2019/11/20 23:00 fix redeclaration error
@@ -97,7 +98,7 @@ if (typeof window.undobookmarksmenu == "undefined") {
         menuitem.setAttribute('disabled', PlacesTransactions.topRedoEntry == null);
     },
 
-    shouldPreventHide: function(aEvent) {
+    shouldPreventHide: function(event) {
   		const menuitem = event.target;
   		if (event.button == 1) 
   		{
