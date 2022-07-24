@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 103
+// @version       2022/07/25 23:00 fix Bug 1766030 take2
 // @version       2022/07/25 23:00 fix Bug 1766030
 // @version       2022/05/08 23:00 fix ページ内検索バー(check gFindBarInitialized before reffering hidden attribute.)
 // @version       2022/03/08 13:00 add 新しいコンテナータブを開く
@@ -1730,6 +1731,7 @@ Services.console.logStringMessage("aContentType " + aContentType);
 
     internalSave(
       that._imgSRC, // dataURL
+      that._imgSRC, // aOriginalURL
       null, // aDocument
       null, // aFilename
       aContentDisp, // content disposition
