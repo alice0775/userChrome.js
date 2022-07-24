@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 103
+// @version       2022/07/25 23:00 fix Bug 1766030 take3
 // @version       2022/07/25 23:00 fix Bug 1766030 take2
 // @version       2022/07/25 23:00 fix Bug 1766030
 // @version       2022/05/08 23:00 fix ページ内検索バー(check gFindBarInitialized before reffering hidden attribute.)
@@ -283,7 +284,7 @@ var ucjsMouseGestures = {
                 //        aSourceDocument,
                 //        aIsContentWindowPrivate,
                 //        aPrincipal)
-                saveURL(data[i], data[i], IMGtitle + ".png", null, false,
+                saveURL(data[i], null, IMGtitle + ".png", null, false,
                         true,
                         ucjsMouseGestures._referrerInfo, //referrerInfo
                         ucjsMouseGestures._cookieJarSettings, //cookieJarSettings
@@ -1657,7 +1658,7 @@ let ucjsMouseGestures_helper = {
     //        aSourceDocument,
     //        aIsContentWindowPrivate,
     //        aPrincipal)
-    saveURL(aLinkURL, aLinkURL, aLinkURL, null, true,
+    saveURL(aLinkURL, null, aLinkURL, null, true,
             true,
             aLinkReferrerInfo, //referrerInfo
             that._cookieJarSettings, //cookieJarSettings
@@ -1731,7 +1732,7 @@ Services.console.logStringMessage("aContentType " + aContentType);
 
     internalSave(
       that._imgSRC, // dataURL
-      that._imgSRC, // aOriginalURL
+      null, // aOriginalURL
       null, // aDocument
       null, // aFilename
       aContentDisp, // content disposition

@@ -12,6 +12,7 @@
 // @note           shift + Left DblClick : open current on new tab but focus oppsite
 // @note           ctrl + Left DblClick  : open current tab
 // @note           alt + Left DblClick   : save as link
+// @version        2022/07/25 23:00 fix Bug 1766030 take3
 // @version        2022/07/25 23:00 fix Bug 1766030
 // @version        2022/04/01 remove nsIIOService
 // @version        2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
@@ -541,7 +542,7 @@ function ucjs_textlink_main() {
       //        aPrincipal)
     saveURL(
         url,
-        url,
+        null,
         null,
         null,
         true,

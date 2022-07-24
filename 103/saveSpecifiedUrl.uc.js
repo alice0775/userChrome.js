@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 103
 // @author         Alice0775
+// @version        2022/07/25 23:00 fix Bug 1766030 take3
 // @version        2022/07/25 23:00 fix Bug 1766030
 // @version        2020/12/19 15:00 remove refferer
 // @version        2020/12/19 00:00 Bug 1641270 - Saving already-loaded images from a webpage yields "not an image".
@@ -47,7 +48,7 @@ var saveSpecifiedUrl = {
     //        aPrincipal)
     saveURL(
         url,
-        url,
+        null,
         null,
         null,
         true,
