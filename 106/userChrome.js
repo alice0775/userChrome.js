@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.63mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.64mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// @version       2022/08/26 Bug 1695435 - Remove @@hasInstance for IDL interfaces in chrome context
 // @version       2022/08/26 fix load sidebar
 // @version       2022/04/01 remove nsIIOService
 // @version       2021/08/05 fix for 92+ port Bug 1723723 - Switch JS consumers from getURLSpecFromFile to either getURLSpecFromActualFile or getURLSpecFromDir
@@ -531,6 +532,8 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
       } catch (e) {
         return;
       }
+      if (!HTMLDocument.isInstance(doc))
+          return;
 
       var script, aScript, url;
       const Cc = Components.classes;
