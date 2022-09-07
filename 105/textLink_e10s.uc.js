@@ -6,13 +6,16 @@
 // @include        chrome://browser/content/web-panels.xul
 // @include        chrome://messenger/content/messenger.xul
 // @include        chrome://messenger/content/messageWindow.xul
-// @compatibility  Firefox 100
+// @compatibility  Firefox 105
 // @author         Alice0775
 // @note           Left DblClick         : open link on new tab
 // @note           shift + Left DblClick : open current on new tab but focus oppsite
 // @note           ctrl + Left DblClick  : open current tab
 // @note           alt + Left DblClick   : save as link
 // @version        2022/09/07 00:00 check numberof irems
+// @version        2022/08/19 00:00 remove "Services" from frame scripts
+// @version        2022/07/25 23:00 fix Bug 1766030 take3
+// @version        2022/07/25 23:00 fix Bug 1766030
 // @version        2022/04/01 remove nsIIOService
 // @version        2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
 // @version        2021/04/25 12:00 revert 04/25. workaround textlink failing on specific case #62.
@@ -103,17 +106,22 @@
 * ***** END LICENSE BLOCK ***** */
 
 function ucjs_textlink(event) {
+  function debug(aMsg){
+    Components.classes["@mozilla.org/consoleservice;1"]
+      .getService(Components.interfaces.nsIConsoleService)
+      .logStringMessage(aMsg);
+  }
+
+  
   if(event.button != 0 && event.keyCode != 13) return;
 
   ChromeUtils.defineModuleGetter(this, "E10SUtils",
                                  "resource://gre/modules/E10SUtils.jsm");
-  const { Services } = ChromeUtils.import(
-    "resource://gre/modules/Services.jsm"
-  );
   var Start = new Date().getTime();
 
   const RELATIVE = true; //相対urlを解決するかどうか
-  const ioService = Services.io;
+  const ioService = Components.classes["@mozilla.org/network/io-service;1"].
+              getService(Components.interfaces.nsIIOService);
 /*
 /(([\w-]+:\/\/?|[\w\d]+[.])?[^\s()<>]+[.](?:\([\w\d]+\)|([^`!()\[\]{};:'\".,<>?«»“”‘’\s]|\/)+))/
 */
@@ -173,6 +181,7 @@ function ucjs_textlink(event) {
       root = doc;
     if (!root)
       return;
+//debug("root " + root.textContent);
 
   //親ブロック要素の文字列をすべて得る
     const allowedParents = [
@@ -185,12 +194,13 @@ function ucjs_textlink(event) {
     var xpath = ".//text()[(parent::" + allowedParents.join(" or parent::") + ")]";
 
     var candidates = doc.evaluate(xpath, root, null, 6 /*XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE */, null);
-    
+//debug("candidates.snapshotLength " + candidates.snapshotLength);
+
     if (candidates.snapshotLength < 1) {
       str1 = sNode.nodeValue.substr(0,soffset);
       str2 = sNode.nodeValue.substr(eoffset);
     } else {
-    //レンジより前にある文字列
+      //レンジより前にある文字列
       var i1 = - 1;
       for (var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
         if(candidates.snapshotItem(i) != sNode) continue;
@@ -220,10 +230,11 @@ function ucjs_textlink(event) {
       str2 = str1;
       if(sNode.nodeValue && soffset > 0) str1 = str1 + sNode.nodeValue.substr(0,soffset);
 
-    //レンジより後ろにある文字列
+      //レンジより後ろにある文字列
       for(var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
         if(sOyaNode == oyaNode(candidates.snapshotItem(i))) {
           str2 = str2 + candidates.snapshotItem(i).nodeValue;
+//debug(candidates.snapshotItem(i).nodeValue);
           if (i > i1 + 1 && /[ 　]/.test(candidates.snapshotItem(i).nodeValue))
             break;
         } else {
@@ -277,6 +288,11 @@ function ucjs_textlink(event) {
   }
   //文末の.は無いことに
   allStr = allStr.replace(/\.$/ ,'');
+  
+//debug("2 " + str2);
+//debug("Str " + text);
+//debug("1 " + str1);
+//debug("all " + allStr);
 
 
 //すべての文字列の中でURLと思しき文字列を配列として得る
@@ -286,9 +302,12 @@ function ucjs_textlink(event) {
 //見つかったURLと思しき文字列の中にレンジが含まれているかどうか
     i2 = 0;
     for (var i = 0, len = arrUrl.length; i < len; i++){
+//debug(i + "] " + arrUrl[i]);
       i1 = allStr.indexOf(arrUrl[i],i2);
       i2 = i1 + arrUrl[i].length;
+//debug(i1 <= si && ei <= i2);
       if(i1 <= si && ei <= i2){
+//debug(arrUrl[i]);
         //このURLと思しき文字列の中にレンジが含まれていたので,これをURLとして新しいタブで開きましょう
         var url = arrUrl[i];
         url = additionalFixUpURL(url);
@@ -297,8 +316,8 @@ function ucjs_textlink(event) {
         url = /^(ftp|\uff46\uff54\uff50)/i.test(url)
                     ? url.replace(urlRx1,'://')
                     : url.replace(urlRx,'http').replace(urlRx1,'://');
-        var URIFixup = Services.uriFixup; /* Components.classes['@mozilla.org/docshell/urifixup;1']
-                       .getService(Components.interfaces.nsIURIFixup);*/
+        var URIFixup = Components.classes['@mozilla.org/docshell/uri-fixup;1']
+                       .getService(Components.interfaces.nsIURIFixup);
         var uri = URIFixup.getFixupURIInfo(
                   url,
                   URIFixup.FIXUP_FLAG_ALLOW_KEYWORD_LOOKUP )?.fixedURI;
@@ -306,6 +325,7 @@ function ucjs_textlink(event) {
         if (!isValidTld(uri))
           return;
         uri = ioService.newURI(uri.spec, null, null);
+//debug('Parsing ucjs_textlink: '+((new Date()).getTime()-Start) +'msec\n');
         textlink(event, uri);
         return;
       }
@@ -348,8 +368,8 @@ function ucjs_textlink(event) {
       }
 
       if (!mailRx.test(url) && url.indexOf(url.match(urlRegex)) > 1) return;
-      var URIFixup = Services.uriFixup; /*Components.classes['@mozilla.org/docshell/urifixup;1']
-                     .getService(Components.interfaces.nsIURIFixup);*/
+      var URIFixup = Components.classes['@mozilla.org/docshell/uri-fixup;1']
+                     .getService(Components.interfaces.nsIURIFixup);
       try{
         var uri = URIFixup.getFixupURIInfo(
             url,
@@ -539,13 +559,14 @@ function ucjs_textlink_main() {
     }else if (json.shiftKey) {
       openLinkIn(url, "tabshifted", param);
     }else if (json.altKey) {
-      //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+      //saveURL(aURL, aOriginalURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
       //        aSkipPrompt, aReferrerInfo, aCookieJarSettings,
       //        aSourceDocument,
       //        aIsContentWindowPrivate,
       //        aPrincipal)
     saveURL(
         url,
+        null,
         null,
         null,
         true,

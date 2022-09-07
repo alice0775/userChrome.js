@@ -12,6 +12,7 @@
 // @note           shift + Left DblClick : open current on new tab but focus oppsite
 // @note           ctrl + Left DblClick  : open current tab
 // @note           alt + Left DblClick   : save as link
+// @version        2022/09/07 00:00 check numberof irems
 // @version        2022/07/25 23:00 fix Bug 1766030 take3
 // @version        2022/07/25 23:00 fix Bug 1766030
 // @version        2022/04/01 remove nsIIOService
@@ -187,59 +188,64 @@ function ucjs_textlink(event) {
 
     var candidates = doc.evaluate(xpath, root, null, 6 /*XPathResult.UNORDERED_NODE_SNAPSHOT_TYPE */, null);
 
-  //レンジより前にある文字列
-    var i1 = - 1;
-    for (var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
-      if(candidates.snapshotItem(i) != sNode) continue;
-      i1 = i - 1;
-      break;
-    }
-    str1 ="";
-    if (i >= 0) {
-      for (var i = i1; i >= 0 ; i--){
-        if(sOyaNode == oyaNode(candidates.snapshotItem(i))){
-          if (candidates.snapshotItem(i).nextSibling &&
-              /^br$/i.test(candidates.snapshotItem(i).nextSibling.localName)) {
+    if (candidates.snapshotLength < 1) {
+      str1 = sNode.nodeValue.substr(0,soffset);
+      str2 = sNode.nodeValue.substr(eoffset);
+    } else {
+    //レンジより前にある文字列
+      var i1 = - 1;
+      for (var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
+        if(candidates.snapshotItem(i) != sNode) continue;
+        i1 = i - 1;
+        break;
+      }
+      str1 ="";
+      if (i >= 0) {
+        for (var i = i1; i >= 0 ; i--){
+          if(sOyaNode == oyaNode(candidates.snapshotItem(i))){
+            if (candidates.snapshotItem(i).nextSibling &&
+                /^br$/i.test(candidates.snapshotItem(i).nextSibling.localName)) {
+              break;
+            }
+            if (/^a$/i.test(candidates.snapshotItem(i).parentNode.localName) &&
+                candidates.snapshotItem(i).parentNode.hasAttribute("href") )
+              break;
+            str1 = candidates.snapshotItem(i).nodeValue + str1;
+
+            if (/[ 　]/.test(str1))
+              break;
+          } else {
             break;
           }
-          if (/^a$/i.test(candidates.snapshotItem(i).parentNode.localName) &&
-              candidates.snapshotItem(i).parentNode.hasAttribute("href") )
-            break;
-          str1 = candidates.snapshotItem(i).nodeValue + str1;
+        }
+      }
+      str2 = str1;
+      if(sNode.nodeValue && soffset > 0) str1 = str1 + sNode.nodeValue.substr(0,soffset);
 
-          if (/[ 　]/.test(str1))
+    //レンジより後ろにある文字列
+      for(var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
+        if(sOyaNode == oyaNode(candidates.snapshotItem(i))) {
+          str2 = str2 + candidates.snapshotItem(i).nodeValue;
+          if (i > i1 + 1 && /[ 　]/.test(candidates.snapshotItem(i).nodeValue))
             break;
         } else {
           break;
         }
-      }
-    }
-    str2 = str1;
-    if(sNode.nodeValue && soffset > 0) str1 = str1 + sNode.nodeValue.substr(0,soffset);
 
-  //レンジより後ろにある文字列
-    for(var i = i1 + 1, len = candidates.snapshotLength; i < len; i++) {
-      if(sOyaNode == oyaNode(candidates.snapshotItem(i))) {
-        str2 = str2 + candidates.snapshotItem(i).nodeValue;
-        if (i > i1 + 1 && /[ 　]/.test(candidates.snapshotItem(i).nodeValue))
+        if (candidates.snapshotItem(i).nextSibling &&
+            /^br$/i.test(candidates.snapshotItem(i).nextSibling.localName)) {
           break;
-      } else {
-        break;
+        }
+        if (!candidates.snapshotItem(i).nextSibling &&
+            candidates.snapshotItem(i).parentNode &&
+            candidates.snapshotItem(i).parentNode.nextSibling &&
+            /^br$/i.test(candidates.snapshotItem(i).parentNode.nextSibling.localName)) {
+          break;
+        }
       }
 
-      if (candidates.snapshotItem(i).nextSibling &&
-          /^br$/i.test(candidates.snapshotItem(i).nextSibling.localName)) {
-        break;
-      }
-      if (!candidates.snapshotItem(i).nextSibling &&
-          candidates.snapshotItem(i).parentNode &&
-          candidates.snapshotItem(i).parentNode.nextSibling &&
-          /^br$/i.test(candidates.snapshotItem(i).parentNode.nextSibling.localName)) {
-        break;
-      }
+      str2 = str2.substr(str1.length + text.length);
     }
-
-    str2 = str2.substr(str1.length + text.length);
   } else {
     // この elseブロックは textarea等の処理
     // readonlyでないなら何もしない
