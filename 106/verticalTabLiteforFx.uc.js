@@ -6,6 +6,7 @@
 // @compatibility  Firefox 106
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/09/09 fix Bug 1771831
 // @version        2022/08/25 fix new tab button
 // @version        2022/08/11 margin adjust
 // @version        2022/08/08 Bug 1773042 - Remove the accessibility indicator
@@ -565,7 +566,7 @@ function verticalTabLiteforFx() {
     });
   }
 
-  //gBrowser.tabContainer._getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
+  //gBrowser.tabContainer.getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
   gBrowser.tabContainer.lastVisibleTab = function() {
     var tabs = this.allTabs;
     for (let i = tabs.length - 1; i >= 0; i--){
@@ -605,7 +606,7 @@ function verticalTabLiteforFx() {
   gBrowser.tabContainer._dragOverDelay = 1000; //350;
   gBrowser.tabContainer.on_dragover = function(event) {
     this.clearDropIndicator();
-    var effects = this._getDropEffectForTabDrag(event);
+    var effects = this.getDropEffectForTabDrag(event);
     event.preventDefault();
     event.stopPropagation();
     console.log(effects);
