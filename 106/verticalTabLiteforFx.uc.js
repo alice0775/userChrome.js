@@ -6,6 +6,7 @@
 // @compatibility  Firefox 106
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/09/14 fix Bug 1790299
 // @version        2022/09/09 fix Bug 1771831
 // @version        2022/08/25 fix new tab button
 // @version        2022/08/11 margin adjust
@@ -75,7 +76,7 @@ window.addEventListener("MozAfterPaint", function () {
 }, { once: true });
 
 function verticalTabLiteforFx() {
-  let verticalTabbar_maxWidth = 225;  /* タブバーの横幅 px */
+  let verticalTabbar_maxWidth = 500;  /* タブバーの横幅 px */
   /* not yet */
   //let verticalTabPinned_width = 27; /* ピン留めタブの横幅 px */
   //let verticalScrollbar_width = 11; /* スクロールバー幅 px */
@@ -95,7 +96,7 @@ function verticalTabLiteforFx() {
   #vtb_TabsToolbar {
     max-width: ${verticalTabbar_maxWidth}px !important;
     min-width: calc(0px + ${verticalTabbar_minWidth}px) !important;
-    width: ${verticalTabbar_width}px !important;
+    width: ${verticalTabbar_width}px;
     background-color: var(--toolbar-bgcolor);
   }
 
@@ -130,11 +131,12 @@ function verticalTabLiteforFx() {
     max-height: ${verticalTab_height}px !important;
     font-size: calc(${verticalTab_height}px - 3px) !important;
     padding-inline-start: 0 !important;
+    margin-inline-end: 2px !important;
   }
 
   .tabbrowser-tab:not([pinned]) {
     width: auto !important;
-    max-width: auto !important;
+    max-width: none !important;
     transition: none !important;
   }
 
