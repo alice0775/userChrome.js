@@ -5,7 +5,9 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 100
+// @compatibility 102
+// @version       2022/09/22 15:00 fix workaround xxx
+// @version       2022/09/22 13:00 fix Bug 1766030 take3
 // @version       2022/08/02 18:00 Images in child nodes are also targeted.
 // @version       2022/05/08 23:00 fix ページ内検索バー(check gFindBarInitialized before reffering hidden attribute.)
 // @version       2022/03/08 13:00 add 新しいコンテナータブを開く
@@ -153,7 +155,7 @@ var ucjsMouseGestures = {
 
         ['', 'リンクを保存',
           function(){ ucjsMouseGestures_helper.saveLink(ucjsMouseGestures._linkURL, ucjsMouseGestures._linkReferrerInfo); } ],
-        ['LDR', '画像を保存',
+        ['', '画像を保存',
           function() { ucjsMouseGestures_helper.saveImage(ucjsMouseGestures._imgSRC,
                                                           ucjsMouseGestures._referrerInfo,
                                                           ucjsMouseGestures._imgTYPE,
@@ -277,12 +279,12 @@ var ucjsMouseGestures = {
               while(i){
                 let IMGtitle = ("000"+i).slice(-3);
                 i--;
-                //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+                //saveURL(aURL, aOriginalURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
                 //        aSkipPrompt, aReferrerInfo, aCookieJarSettings,
                 //        aSourceDocument,
                 //        aIsContentWindowPrivate,
                 //        aPrincipal)
-                saveURL(data[i], IMGtitle + ".png", null, false,
+                saveURL(data[i], null, IMGtitle + ".png", null, false,
                         true,
                         ucjsMouseGestures._referrerInfo, //referrerInfo
                         ucjsMouseGestures._cookieJarSettings, //cookieJarSettings
@@ -530,9 +532,12 @@ var ucjsMouseGestures = {
           var y = event.screenY;
           var distanceX = Math.abs(x - this._lastX);
           var distanceY = Math.abs(y - this._lastY);
-          const tolerance = 10;
-          if (distanceX > tolerance || distanceY > tolerance) // xxx workaround
-            this._isMouseDownL = false;
+          const tolerance = 30;
+          if (distanceX > tolerance || distanceY > tolerance) {// xxx workaround
+            if (!this.enableRockerGestures && event.button == 2) {
+              this._isMouseDownL = false;
+            }
+          }
         }
         if (event.button == 2) {
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
@@ -565,7 +570,14 @@ var ucjsMouseGestures = {
             this._isMouseDownL = false;
             this._suppressContext = true;
             this._directionChain = "L<R";
-            this._stopGesture(event);
+            try {
+              gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+                this._selectedTXT = r.selectedText;
+                this._stopGesture(event);
+              })
+            } catch(ex){
+              this._stopGesture(event);
+            }
           }
         }
         break;
@@ -1653,12 +1665,12 @@ let ucjsMouseGestures_helper = {
     else if (typeof aLinkReferrerInfo == "undefined")
       aLinkReferrerInfo = that._referrerInfo;
 
-    //saveURL(aURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
+    //saveURL(aURL, aOriginalURL, aFileName, aFilePickerTitleKey, aShouldBypassCache,
     //        aSkipPrompt, aReferrerInfo, aCookieJarSettings,
     //        aSourceDocument,
     //        aIsContentWindowPrivate,
     //        aPrincipal)
-    saveURL(aLinkURL, aLinkURL, null, true,
+    saveURL(aLinkURL, null, aLinkURL, null, true,
             true,
             aLinkReferrerInfo, //referrerInfo
             that._cookieJarSettings, //cookieJarSettings
@@ -1732,6 +1744,7 @@ Services.console.logStringMessage("aContentType " + aContentType);
 
     internalSave(
       that._imgSRC, // dataURL
+      null, // aOriginalURL
       null, // aDocument
       null, // aFilename
       aContentDisp, // content disposition
