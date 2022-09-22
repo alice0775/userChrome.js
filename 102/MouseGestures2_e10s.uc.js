@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 102
+// @version       2022/09/22 22:00 removed workaround xxx
 // @version       2022/09/22 15:00 fix workaround xxx
 // @version       2022/09/22 13:00 fix Bug 1766030 take3
 // @version       2022/08/02 18:00 Images in child nodes are also targeted.
@@ -525,19 +526,14 @@ var ucjsMouseGestures = {
   },
 
   handleEvent: function(event) {
+    var x = event.screenX;
+    var y = event.screenY;
     switch (event.type) {
       case "mousedown": 
         if (this._isMouseDownL) {
-          var x = event.screenX;
-          var y = event.screenY;
           var distanceX = Math.abs(x - this._lastX);
           var distanceY = Math.abs(y - this._lastY);
           const tolerance = 30;
-          if (distanceX > tolerance || distanceY > tolerance) {// xxx workaround
-            if (!this.enableRockerGestures && event.button == 2) {
-              this._isMouseDownL = false;
-            }
-          }
         }
         if (event.button == 2) {
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
@@ -562,8 +558,8 @@ var ucjsMouseGestures = {
           }
         } else if (this.enableRockerGestures && event.button == 0) {
           this._isMouseDownL = true;
-          this._lastX = event.screenX;
-          this._lastY = event.screenY;
+          this._lastX = x;
+          this._lastY = y;
           if (this._isMouseDownR) {
             event.preventDefault();
             event.stopPropagation();
@@ -584,6 +580,14 @@ var ucjsMouseGestures = {
       case "mousemove": 
         if (this._isMouseDownR && !(this._suppressContext)) { // bousyo
           this._progressGesture(event);
+        }
+        let tabpanels = gBrowser.tabpanels;
+        if (x < tabpanels.screenX ||
+            y < tabpanels.screenY ||
+            x > tabpanels.screenX + tabpanels.clientWidth ||
+            y > tabpanels.screenY + tabpanels.clientHeight ) {
+          this._isMouseDownL = false;
+          this._isMouseDownR = false;
         }
         break;
       case "mouseup": 
