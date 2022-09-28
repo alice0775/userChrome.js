@@ -7,6 +7,7 @@
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2022/09/29 fix Bug 1689816 
 // @version        2022/09/28 ordinal position
 // @version        2022/09/14 fix Bug 1790299
 // @version        2022/09/14 use toolbarspring instead of spacer
@@ -195,6 +196,9 @@ var SidebarModoki = {
 
       toolbar[brighttext]:-moz-lwtheme #SM_tabbox {
         background-color: var(--toolbar-bgcolor);
+      }
+      #SM_tabs {
+        overflow-x: hidden;
       }
       #SM_tabs tab {
         appearance: none !important;
