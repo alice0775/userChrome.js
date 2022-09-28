@@ -7,6 +7,7 @@
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2022/09/28 ordinal position
 // @version        2022/09/14 fix Bug 1790299
 // @version        2022/09/14 use toolbarspring instead of spacer
 // @version        2022/08/26 Bug 1695435 - Remove @@hasInstance for IDL interfaces in chrome context
@@ -378,13 +379,24 @@ var SidebarModoki = {
     window.addEventListener("MozDOMFullscreen:Exited", this,
                             /* useCapture */ true,
                             /* wantsUntrusted */ false);
-    
+/*
+    SidebarUI.setPosition_org = SidebarUI.setPosition;
+    SidebarUI.setPosition = function() {
+      SidebarUI.setPosition_org();
+      if (SidebarModoki && SidebarModoki.ToolBox) 
+      SidebarModoki.ToolBox.style.setProperty("-moz-box-ordinal-group", SidebarModoki.SM_RIGHT ? "10" : "0", "");
+      if (SidebarModoki && SidebarModoki.Splitter) 
+      SidebarModoki.Splitter.style.setProperty("-moz-box-ordinal-group", SidebarModoki.SM_RIGHT ? "9" : "0", "");
+    };
+*/
   },
 
 
   observe: function() {
     this.ToolBox = document.getElementById("SM_toolbox");
     this.Splitter = document.getElementById("SM_splitter");
+    this.ToolBox.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "10" : "0", "");
+    this.Splitter.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "9" : "0", "");
 
     if (this.getPref(this.kSM_Open, "bool", true)) {
       this.toggle(true);
