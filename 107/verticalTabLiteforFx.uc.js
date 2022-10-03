@@ -6,6 +6,7 @@
 // @compatibility  Firefox 107
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/10/03 fix scrollbar
 // @version        2022/10/01 workaround method2 Bug 1789168 
 // @version        2022/09/14 fix Bug 1790299
 // @version        2022/09/09 fix Bug 1771831
@@ -488,7 +489,7 @@ function verticalTabLiteforFx() {
   arrowScrollbox.setAttribute("orient", "vertical");
   var scrollbox = arrowScrollbox.shadowRoot.querySelector("scrollbox");
   scrollbox.setAttribute("orient", "vertical");
-  scrollbox.style.setProperty("overflow-y", "auto", "");
+  // scrollbox.style.setProperty("overflow-y", "auto", "");
   // scrollbox.style.setProperty("scrollbar-width", "thin", "");
 
   // hide scroll buttons
