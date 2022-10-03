@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 106
+// @compatibility  Firefox 107
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/10/01 workaround method2 Bug 1789168 
 // @version        2022/09/14 fix Bug 1790299
 // @version        2022/09/09 fix Bug 1771831
 // @version        2022/08/25 fix new tab button
@@ -113,15 +114,20 @@ function verticalTabLiteforFx() {
   }
 
   #tabbrowser-tabs {
-    height: calc(100vh - 2 * ${verticalTab_height}px) !important;
+    height: 0; /*calc(100vh - 2 * ${verticalTab_height}px) !important;*/
     margin-right: 1px;
+    overflow-y: auto;
+    scrollbar-width: thin;
   }
 
+/*
   [customizing="true"] #vtb_TabsToolbar {
     height: 20vh !important;
     overflow-x: hidden !important;
     overflow-y: scroll !important;
   }
+*/
+
   :is(#firefox-view-button, #wrapper-firefox-view-button) + #tabbrowser-tabs {
     padding-inline-start: 0px !important;
     margin-inline-start: 0px !important;
@@ -483,7 +489,7 @@ function verticalTabLiteforFx() {
   var scrollbox = arrowScrollbox.shadowRoot.querySelector("scrollbox");
   scrollbox.setAttribute("orient", "vertical");
   scrollbox.style.setProperty("overflow-y", "auto", "");
-  scrollbox.style.setProperty("scrollbar-width", "thin", "");
+  // scrollbox.style.setProperty("scrollbar-width", "thin", "");
 
   // hide scroll buttons
   var scrollButtonUp = arrowScrollbox.shadowRoot.getElementById("scrollbutton-up");
@@ -847,6 +853,7 @@ function verticalTabLiteforFx() {
   
   gBrowser.tabContainer.addEventListener('SSTabRestoring', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
+  gBrowser.tabContainer.addEventListener('dragend', ensureVisible, false);
   function ensureVisible(event) {
     let aTab = event?.target;
     setTimeout((aTab) => {
