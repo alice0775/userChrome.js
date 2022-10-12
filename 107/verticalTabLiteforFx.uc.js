@@ -6,6 +6,8 @@
 // @compatibility  Firefox 107
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/10/12 Bug 1794630
+// @version        2022/10/07 tweak timer
 // @version        2022/10/06 fix Bug 1793662
 // @version        2022/10/03 fix scrollbar
 // @version        2022/10/01 workaround method2 Bug 1789168 
@@ -463,8 +465,8 @@ function verticalTabLiteforFx() {
   vtbSplitter.setAttribute("id", "vtb_splitter");
   vtbSplitter.setAttribute("state", "open");
   vtbSplitter.setAttribute("collapse", "before");
-  vtbSplitter.setAttribute("resizebefore", "closest");
-  vtbSplitter.setAttribute("resizeafter", "closest");
+  vtbSplitter.setAttribute("resizebefore", "sibling");
+  vtbSplitter.setAttribute("resizeafter", "none");
   document.getElementById("browser").insertBefore(vtbSplitter, ref);
 
   tabsToolbar.setAttribute("orient", "vertical");
@@ -848,7 +850,7 @@ function verticalTabLiteforFx() {
     let aTab = event?.target;
     setTimeout((aTab) => {
       ensureVisibleTab(aTab);
-    }, gReduceMotion ? 0 : 150, aTab);
+    }, 150, aTab);
   }
   function ensureVisibleTab(aTab, allowScrollUp = true) {
     let tab = gBrowser.selectedTab;
