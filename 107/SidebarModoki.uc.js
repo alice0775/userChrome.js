@@ -3,10 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TST
 // @include        main
-// @compatibility  Firefox 106
+// @compatibility  Firefox 107
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2022/10/12 Bug 1794630
 // @version        2022/09/29 fix Bug 1689816 
 // @version        2022/09/28 ordinal position
 // @version        2022/09/14 fix Bug 1790299
@@ -298,7 +299,7 @@ var SidebarModoki = {
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
     template =
-      ["splitter", {id: "SM_splitter", style: this.SM_RIGHT ? "-moz-box-ordinal-group:9" : "-moz-box-ordinal-group:0", state: "open", collapse: this.SM_RIGHT ? "after" :"before", resizebefore: "closest", resizeafter: "farthest"},
+      ["splitter", {id: "SM_splitter", style: this.SM_RIGHT ? "-moz-box-ordinal-group:9" : "-moz-box-ordinal-group:0", state: "open", collapse: this.SM_RIGHT ? "after" :"before", resizebefore:"sibling", resizeafter:"none"},
         ["grippy", {}]
       ];
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
