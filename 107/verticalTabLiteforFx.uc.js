@@ -6,6 +6,7 @@
 // @compatibility  Firefox 107
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/10/14 tweak css
 // @version        2022/10/14 Bug 1790616 
 // @version        2022/10/12 Bug 1794630
 // @version        2022/10/07 tweak timer
@@ -111,11 +112,15 @@ function verticalTabLiteforFx() {
     -moz-appearance: none !important;
     border: 0 solid !important;
     min-width: 1px !important;
-    width: 1px !important;
+    width: 2px !important;
     background-image: none !important;
     background-color: var(--toolbar-bgcolor) !important;
     margin-inline-start: -1px !important;
     position: relative;
+  }
+
+  #vtb_splitter[state="collapsed"] {
+    border: 0 solid !important;
   }
 
   #tabbrowser-tabs {
