@@ -3,6 +3,7 @@
 // @description  履歴表示件数を上限なしにする
 // @charset      UTF-8
 // @include      main
+// @version      2022/10*18 10:00 fix Bug 1790616
 // @version      2019/06/24 23:00 fix 69 wait for gBrowser initialized
 // @version      2018-07-21 fix at startup
 // @version      2018-07-20
@@ -11,6 +12,7 @@ const no_Limit_Result_SearchBar_History = {
   init: function() {
     window.addEventListener('unload', this, false);
     window.addEventListener('aftercustomization', this, false);
+    document.querySelector("#PopupSearchAutoComplete").addEventListener('popupshowing', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     this.patch();
   },
@@ -18,6 +20,7 @@ const no_Limit_Result_SearchBar_History = {
   uninit: function() {
     window.removeEventListener('unload', this, false);
     window.removeEventListener('aftercustomization', this, false);
+    document.querySelector("#PopupSearchAutoComplete").removeEventListener('popupshowing', this, false);
     Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
   },
 
@@ -38,6 +41,9 @@ const no_Limit_Result_SearchBar_History = {
 
   handleEvent: function(event) {
     switch(event.type) {
+      case "popupshowing":
+        document.querySelector(".search-panel-tree").style.setProperty("max-height", "20em", "");
+        break;
       case "aftercustomization":
         this.patch();
         break;
