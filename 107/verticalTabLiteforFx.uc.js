@@ -6,6 +6,7 @@
 // @compatibility  Firefox 107
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/10/25 increse splitter width
 // @version        2022/10/14 tweak css
 // @version        2022/10/14 Bug 1790616 
 // @version        2022/10/12 Bug 1794630
@@ -112,15 +113,21 @@ function verticalTabLiteforFx() {
     -moz-appearance: none !important;
     border: 0 solid !important;
     min-width: 1px !important;
-    width: 2px !important;
+    width: 3px !important;
     background-image: none !important;
-    background-color: var(--toolbar-bgcolor) !important;
-    margin-inline-start: -1px !important;
+    background-color: transparent;
+    margin-inline-start: -2px !important;
+    margin-inline-end: -1px !important;
     position: relative;
+    z-index:99999999;
   }
 
   #vtb_splitter[state="collapsed"] {
     border: 0 solid !important;
+    min-width: 1px !important;
+    width: 1px !important;
+    margin-inline-start: 0 !important;
+    margin-inline-end: 0 !important;
   }
 
   #tabbrowser-tabs {
