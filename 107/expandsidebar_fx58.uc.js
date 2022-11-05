@@ -3,11 +3,13 @@
 // @description    サイドバーの自動開閉
 // @namespace      http://forums.mozillazine.org/viewtopic.php?p=2592073#2592073
 // @include        main
-// @compatibility  Firefox 106
+// @compatibility  Firefox 107
 // @author         Alice0775
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2022/10/14 20:00 sidebar width:100%
+// @version        2022/09/30 20:00 Bug 1792748
 // @version        2022/09/14 11:00 box width:auto
 // @version        2022/08/26 Bug 1695435 - Remove @@hasInstance for IDL interfaces in chrome context
 // @version        2021/11/14 21:00 css
@@ -180,12 +182,12 @@ var ucjs_expand_sidebar = {
       -moz-box-align: center; 
       -moz-box-pack: center; 
       cursor: ew-resize; 
-      border-width: 0 2px; 
+      border-width: 0;
       border-style: solid; 
       width: 2px; 
       max-width: 2px; 
       min-width: 0px; 
-      background-color: var(--toolbar-bgcolor);
+      background-color: transparent;
       border-inline-start-color: var(--toolbar-bgcolor);
       border-inline-end-color: var(--toolbar-bgcolor);
       margin-left: 0px; 
@@ -221,6 +223,8 @@ var ucjs_expand_sidebar = {
         display: block; 
         z-index: 55555; 
         left: 4px; 
+        min-width: unset;
+        max-width: unset;
         }
         :root:not([lwtheme-image]) #sidebar-box { 
         background-color: var(--toolbar-bgcolor); 
@@ -462,6 +466,7 @@ var ucjs_expand_sidebar = {
 
     this._sidebar.style.removeProperty('max-width');
     this._sidebar.style.removeProperty('min-width');
+    this._sidebar.style.setProperty('width', '100%', '');
 
     this._content = document.getElementById("content");
 
@@ -725,7 +730,7 @@ var ucjs_expand_sidebar = {
 
           if (this._FLOATING_SIDEBAR) {
             this._sidebar_box.style.setProperty('width', this.sizes[index + 1] + "px", "");
-            this._sidebar.style.setProperty('width', this.sizes[index + 1] - 1  + "px", "");
+            //this._sidebar.style.setProperty('width', this.sizes[index + 1] - 1  + "px", "");
           } else
             this._sidebar_box.style.setProperty('width', this.sizes[index + 1] + "px", "");
           return;
@@ -735,7 +740,7 @@ var ucjs_expand_sidebar = {
       if (this._sidebar_box.getBoundingClientRect().width == 0) {
         if (this._FLOATING_SIDEBAR) {
           this._sidebar_box.style.setProperty('width', this._defaultWidth + "px", "");
-          this._sidebar.style.setProperty('width', this._defaultWidth - 1  + "px", "");
+          //this._sidebar.style.setProperty('width', this._defaultWidth - 1  + "px", "");
         } else {
           this._sidebar_box.style.setProperty('width', this._defaultWidth + "px", "");
         }
@@ -836,7 +841,7 @@ var ucjs_expand_sidebar = {
     var sidebar_box = this._sidebar_box;
     if (sidebar_box.getBoundingClientRect().width == 0) {
       sidebar_box.style.setProperty('width', this._defaultWidth + "px", "");//デフォルトサイドバー幅
-      this._sidebar.style.setProperty('width', this._defaultWidth - 1 + "px", "");//デフォルトサイドバー幅
+      //this._sidebar.style.setProperty('width', this._defaultWidth - 1 + "px", "");//デフォルトサイドバー幅
     }
 //this.debug(event.target.localName);
 /*
@@ -1054,6 +1059,8 @@ var sidebarpopuppanelResize = {
   },
 
   start: function(event){
+    this.checked = ucjs_expand_sidebar._checkbox.checked;
+    ucjs_expand_sidebar._checkbox.checked = true;
     this.drag = true;
     this.size = {height:parseInt(this.sidebarbox.getBoundingClientRect().height),
                  width:parseInt(this.sidebarbox.getBoundingClientRect().width)};
@@ -1063,6 +1070,7 @@ var sidebarpopuppanelResize = {
   },
 
   mouseup: function(event) {
+    ucjs_expand_sidebar._checkbox.checked = this.checked;
     this.drag = false;
     window.removeEventListener("mousemove", this, true);
     window.removeEventListener("mouseup", this, true);
@@ -1072,18 +1080,18 @@ var sidebarpopuppanelResize = {
   mousemove: function(event) {
     if (this.drag) {
       var newValue;
-      var h = this.sidebarbox.getBoundingClientRect().height;
-      newValue = this.size.height + event.screenY - this.offset.y;
-      if (newValue <= screen.height - 50 && newValue >= 10) {
+      var h = this.size.height;
+      newValue = h + event.screenY - this.offset.y;
+      if (newValue <= h - 50) {
         h = newValue;
       }
 
-      var w = this.sidebarbox.getBoundingClientRect().width;
+      var w = this.size.width;
       if (this.isRTL)
-        newValue = this.size.width - (event.screenX - this.offset.x);
+        newValue = w - (event.screenX - this.offset.x);
       else
-        newValue = this.size.width + event.screenX - this.offset.x;
-      if (newValue <= screen.width && newValue >= 100) {
+        newValue = w + event.screenX - this.offset.x;
+      if (newValue <= screen.width) {
         w = newValue;
       }
       this.setSize(h, w);
