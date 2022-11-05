@@ -3,11 +3,12 @@
 // @description    サイドバーの自動開閉
 // @namespace      http://forums.mozillazine.org/viewtopic.php?p=2592073#2592073
 // @include        main
-// @compatibility  Firefox 91
+// @compatibility  Firefox 102
 // @author         Alice0775
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2021/11/14 21:00 css
 // @version        2021/11/14 13:00 no longer close when print preview
 // @version        2021/09/30 22:00 change splitter color
 // @version        2020/12/14 00:00 vtb
@@ -163,8 +164,14 @@ var ucjs_expand_sidebar = {
     this._sidebar_box = document.getElementById('sidebar-box');
 
     var style = ` 
-    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul); 
- 
+    @namespace url(http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul);     
+    #sidebar-checkbox {
+      border: 1px solid currentColor !important;
+      width: 16px !important;
+      height: 16px !important;
+      overflow-x: hidden !important;
+    }
+    
     #sidebar-splitter 
     { 
       -moz-box-align: center; 
@@ -210,21 +217,25 @@ var ucjs_expand_sidebar = {
         position: fixed ; 
         display: block; 
         z-index: 55555; 
-        background-color: -moz-dialog; 
         left: 4px; 
         } 
+        :root:not([lwtheme-image]) #sidebar-box { 
+        background-color: var(--toolbar-bgcolor); 
+        } 
+        :root[lwtheme-image] #sidebar-box { 
+        background-color: var(--tabpanel-background-color); 
+        } 
+
         #sidebar-box #sidebar-header 
         { 
         width :100%; 
         } 
         #sidebar-box #sidebar 
         { 
-        position: fixed ; 
-        display: block; 
         height: calc(100vh - 210px); 
-        border-left:3px solid -moz-dialog; 
-        border-right:3px solid -moz-dialog; 
-        border-bottom:3px solid -moz-dialog; 
+        border-left:3px solid var(--toolbar-bgcolor); 
+        border-right:3px solid var(--toolbar-bgcolor); 
+        border-bottom:3px solid var(--toolbar-bgcolor); 
         } 
         #sidebar-box #sidebar:-moz-lwtheme
         { 
@@ -234,11 +245,11 @@ var ucjs_expand_sidebar = {
         } 
  
         #sidebar-box { 
-          border-right: 1px solid ThreeDShadow; 
-          border-bottom: 1px solid ThreeDShadow; 
+          border-right: 1px solid var(--sidebar-border-color); 
+          border-bottom: 1px solid var(--sidebar-border-color); 
         } 
         #sidebar-box:-moz-locale-dir(rtl) { 
-          border-left: 1px solid ThreeDHighlight; 
+          border-left: 1px solid var(--sidebar-border-color); 
         } 
         #sidebar-box:-moz-lwtheme { 
           background-color: var(--sidebar-background-color);
@@ -252,7 +263,7 @@ var ucjs_expand_sidebar = {
           border-top: 1px solid ThreeDHighlight; 
         } 
         #sidebar-box #sidebarpopuppanel-bottom { 
-        background-color: -moz-dialog; 
+        background-color: var(--toolbar-bgcolor); 
         width:100%; 
         }
         #sidebar-box #sidebarpopuppanel-bottom:-moz-lwtheme { 
@@ -442,6 +453,8 @@ var ucjs_expand_sidebar = {
       }
 
     }, 500, this);
+
+    this._sidebar.style.removeProperty('max-width');
 
     this._content = document.getElementById("content");
 
