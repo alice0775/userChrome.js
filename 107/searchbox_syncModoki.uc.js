@@ -3,6 +3,7 @@
 // @description  Synchronize the searchbox content ウェブで検索をした際に検索バーに検索語句を取り込む
 // @charset      utf-8
 // @include      main
+// @version      2022/11/06 17:00 107 Bug 1793414
 // @version      2022/09/15 00:00 Fix rules so that excluding after #
 // @version      2019/06/24 23:00 wait for gBrowser initialized
 // @version		   2019/03/20 fix 66
@@ -50,6 +51,10 @@ let searchboxsync = {
   },
 
   init: function() {
+    XPCOMUtils.defineLazyModuleGetters(this, {
+      FormHistory: "resource://gre/modules/FormHistory.jsm",
+    });
+
     this.rules = this.loadRules(this.rules);
     this.lib();
     
@@ -106,7 +111,7 @@ let searchboxsync = {
     return rules;
   },
 
-  onload: function(browser) {
+  onload: async function(browser) {
     if (!this.searchbar) {
       return;
     }
@@ -131,9 +136,8 @@ let searchboxsync = {
       this.searchbar.updateGoButtonVisibility();
 
     // save to form history
-    if (typeof this.searchbar.FormHistory == "object") {
       if (!PrivateBrowsingUtils.isWindowPrivate(window)) {
-        this.searchbar.FormHistory.update(
+        await this.FormHistory.update(
           { op : "bump",
             fieldname : this.searchbar._textbox.getAttribute("autocompletesearchparam"),
             value : terms },
@@ -141,7 +145,6 @@ let searchboxsync = {
               Components.utils.reportError("Saving search to form history failed: " + aError.message);
           }});
       }
-    }
   },
 
   extractTerms: function(aUrlRegex, aUrl) {
