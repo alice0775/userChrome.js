@@ -4,8 +4,9 @@
 // @description    Donloads Manager
 // @include        main
 // @include        chrome://browser/content/downloads/contentAreaDownloadsView.xhtml
-// @compatibility  Firefox 100
+// @compatibility  Firefox 108
 // @author         Alice0775
+// @version        2022/11/08 11:00 Bug 1798212
 // @version        2022/05/04 11:00 missing scope of DownloadIntegration
 // @version        2022/04/01 23:00 Convert Components.utils.import to ChromeUtils.import
 // @version        2022/02/16 Bug 1747422 - Remove preprocessor variable use from downloads CSS
@@ -230,7 +231,9 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
 if (window.opener && location.href == "chrome://browser/content/downloads/contentAreaDownloadsView.xhtml") {
   
   ChromeUtils.import("resource://gre/modules/Services.jsm");
-  ChromeUtils.import("resource://gre/modules/DownloadIntegration.jsm");
+  ChromeUtils.importESModule(
+    "resource://gre/modules/DownloadIntegration.sys.mjs"
+   );
 
   window.ucjs_downloadManagerMain = {
     originalTitle:"",
