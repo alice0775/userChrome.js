@@ -3,9 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 107
+// @compatibility  Firefox 108
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/11/13 tweak .tab-icon-overlay css
+// @version        2022/10/26 Bug 1549057 - Update naming of getCSP and getCsp to be consistent
 // @version        2022/10/25 increse splitter width
 // @version        2022/10/14 tweak css
 // @version        2022/10/14 Bug 1790616 
@@ -365,7 +367,11 @@ function verticalTabLiteforFx() {
   #TabsToolbar .tabbrowser-tab:not([dragover]) .tab-background {
     box-shadow: unset !important;
   }
-
+  
+  .tab-icon-overlay[indicator-replaces-favicon] {
+    stroke: black !important;
+    color: white !important;
+  }
   .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay),
   :is(#toolbar-menubar:hover + #TabsToolbar, #TabsToolbar:hover) .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay) {
       opacity: 1 !important;
@@ -807,7 +813,7 @@ function verticalTabLiteforFx() {
       let replace = !!targetTab;
       let newIndex = this._getDropIndex(event, true);
       let urls = links.map(link => link.url);
-      let csp = browserDragAndDrop.getCSP(event);
+      let csp = browserDragAndDrop.getCsp(event);
       let triggeringPrincipal = browserDragAndDrop.getTriggeringPrincipal(
           event
       );
