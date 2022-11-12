@@ -6,6 +6,7 @@
 // @compatibility  Firefox 103
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/11/13 tweak .tab-icon-overlay css take2
 // @version        2022/11/13 tweak .tab-icon-overlay css
 // @version        2022/08/11 margin adjust
 // @version        2022/06/26 Delayed initialization a bit more.
@@ -352,8 +353,8 @@ function verticalTabLiteforFx() {
   }
   
   .tab-icon-overlay[indicator-replaces-favicon] {
-    stroke: black;
-    color: white;
+    stroke: black !important;
+    color: white !important;
   }
   .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay),
   :is(#toolbar-menubar:hover + #TabsToolbar, #TabsToolbar:hover) .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay) {
