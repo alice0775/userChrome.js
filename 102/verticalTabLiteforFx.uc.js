@@ -3,9 +3,13 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 102
+// @compatibility  Firefox 103
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/11/13 tweak .tab-icon-overlay css
+// @version        2022/08/11 margin adjust
+// @version        2022/06/26 Delayed initialization a bit more.
+// @version        2022/06/13 font-size of tab-label.
 // @version        2022/06/12 display while customization and tweaking firefox-view-button.
 // @version        2022/06/06 "MozAfterPaint"
 // @version        2022/04/07 remove mask-image
@@ -54,6 +58,7 @@
 window.addEventListener("MozAfterPaint", function () {
   if (gBrowserInit.delayedStartupFinished) {
     verticalTabLiteforFx();
+
   } else {
     let delayedStartupFinished = (subject, topic) => {
       if (topic == "browser-delayed-startup-finished" &&
@@ -89,12 +94,10 @@ function verticalTabLiteforFx() {
     max-width: ${verticalTabbar_maxWidth}px !important;
     min-width: calc(0px + ${verticalTabbar_minWidth}px) !important;
     width: ${verticalTabbar_width}px !important;
-    background-color: transparent;
+    background-color: var(--toolbar-bgcolor);
   }
-  #vtb_TabsToolbar:-moz-lwtheme {
-      background-color: var(--lwt-accent-color);
-      /*background-color: var(--lwt-frame);*/
-  }
+
+
   #vtb_splitter:not([state="collapsed"]) {
     -moz-appearance: none !important;
     border: 0 solid !important;
@@ -111,7 +114,7 @@ function verticalTabLiteforFx() {
     margin-right: 1px;
   }
 
-  [customizing="true"] #tabbrowser-tabs {
+  [customizing="true"] #vtb_TabsToolbar {
     height: 20vh !important;
     overflow-x: hidden !important;
     overflow-y: scroll !important;
@@ -120,9 +123,11 @@ function verticalTabLiteforFx() {
     padding-inline-start: 0px !important;
     margin-inline-start: 0px !important;
   }
+  
   .tabbrowser-tab {
     max-height: ${verticalTab_height}px !important;
     font-size: calc(${verticalTab_height}px - 3px) !important;
+    padding-inline-start: 0 !important;
   }
 
   .tabbrowser-tab:not([pinned]) {
@@ -130,6 +135,13 @@ function verticalTabLiteforFx() {
     max-width: auto !important;
     transition: none !important;
   }
+
+@media not (prefers-contrast) {
+  .tabbrowser-tab[usercontextid] .tab-background[selected]:not([multiselected="true"]):-moz-lwtheme {
+    outline: 1px solid var(--identity-icon-color, var(--lwt-tabs-border-color, currentColor)) !important;
+  }
+}
+
   
   .tabbrowser-tab::after, .tabbrowser-tab::before {
     border-left: none !important;
@@ -247,7 +259,9 @@ function verticalTabLiteforFx() {
 */
   /*cosme*/
   .tab-content {
-    padding: 0 2px !important;
+    /* 上 | 右 | 下 | 左 */
+    padding: 0 2px 0 3px!important;
+    margin-inline-start: 1px;
   }
   .tab-label {
       line-height: 1.5em !important;
@@ -336,7 +350,11 @@ function verticalTabLiteforFx() {
   #TabsToolbar .tabbrowser-tab:not([dragover]) .tab-background {
     box-shadow: unset !important;
   }
-
+  
+  .tab-icon-overlay[indicator-replaces-favicon] {
+    stroke: black;
+    color: white;
+  }
   .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay),
   :is(#toolbar-menubar:hover + #TabsToolbar, #TabsToolbar:hover) .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay) {
       opacity: 1 !important;
@@ -381,6 +399,7 @@ function verticalTabLiteforFx() {
     height: unset !important;
     width: 2px !important;
     margin: 0 0 0 !important;
+    padding-inline-end: 3px !important; /*太く*/
   }
 
   .tab-icon-overlay {
@@ -434,7 +453,6 @@ function verticalTabLiteforFx() {
   var uri = makeURI('data:text/css;charset=UTF=8,' + encodeURIComponent(css));
   if(!sss.sheetRegistered(uri, sss.AGENT_SHEET))
     sss.loadAndRegisterSheet(uri, sss.AGENT_SHEET);
-
 
   var ref = /*document.getElementById('SM_toolbox') ||*/
             document.getElementById('sidebar-box') ||
