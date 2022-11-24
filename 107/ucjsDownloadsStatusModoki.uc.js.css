@@ -7,15 +7,12 @@
 
 #contentAreaDownloadsView[ucjsDownloadsStatusModoki] { 
   -moz-box-orient: horizontal; 
-  background-color: -moz-dialog !important;
+  background-color: var(--in-content-box-background) !important; 
   padding: 0 !important; 
 } 
 
-#contentAreaDownloadsView[ucjsDownloadsStatusModoki] > stack:first-child {
-}
 
 #contentAreaDownloadsView[ucjsDownloadsStatusModoki] #downloadsListBox { 
-  background-color: -moz-dialog !important; 
   display:inline-block !important; 
   overflow-y: auto !important; 
   scrollbar-width: thin;
