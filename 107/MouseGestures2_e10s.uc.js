@@ -5,12 +5,15 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 102
+// @compatibility 107
 // @version       2022/11/26 18:00 revert removed workaround changes xxx
 // @version       2022/09/22 22:00 removed workaround xxx
 // @version       2022/09/22 15:00 fix workaround xxx
-// @version       2022/09/22 13:00 fix Bug 1766030 take3
+// @version       2022/08/19 00:00 remove "Services" from frame scripts
 // @version       2022/08/02 18:00 Images in child nodes are also targeted.
+// @version       2022/07/25 23:00 fix Bug 1766030 take3
+// @version       2022/07/25 23:00 fix Bug 1766030 take2
+// @version       2022/07/25 23:00 fix Bug 1766030
 // @version       2022/05/08 23:00 fix ページ内検索バー(check gFindBarInitialized before reffering hidden attribute.)
 // @version       2022/03/08 13:00 add 新しいコンテナータブを開く
 // @version       2021/12/11 23:00 workaround for left mouseup event does not fire on select element
@@ -813,11 +816,15 @@ let ucjsMouseGestures_framescript = {
         );
         this.E10SUtils = E10SUtils;
         delete E10SUtils;
+/*
 	      const { Services } = ChromeUtils.import(
 	        "resource://gre/modules/Services.jsm"
 	      );
         this.Services = Services;
         delete Services;
+*/
+        this.console = Cc["@mozilla.org/consoleservice;1"]
+                       .getService(Ci.nsIConsoleService);
         this._isMac = isMac;
         this.enableWheelGestures = enableWheelGestures;
         addMessageListener("ucjsMouseGestures_mouseup", this);
@@ -830,7 +837,7 @@ let ucjsMouseGestures_framescript = {
       },
 
       receiveMessage: function(message) {
-//        this.Services.console.logStringMessage("====" + message.name);
+//        this.console.logStringMessage("====" + message.name);
         switch(message.name) {
           case "ucjsMouseGestures_mouseup":
             removeEventListener("mousemove", this, false);
@@ -872,9 +879,10 @@ let ucjsMouseGestures_framescript = {
       },
 
       handleEvent: function(event) {
-        //this.Services.console.logStringMessage("====" + event.type);
+        //this.console.logStringMessage("====" + event.type);
         let imgSRC, imgTYPE, imgDISP, linkURL, linkTXT, mediaSRC, selectedTXT, json;
         let _isWheelCanceled;
+        let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(Ci.nsIScriptSecurityManager);
         switch(event.type) {
           case "mousedown":
             if (event.button == 2) {
@@ -894,10 +902,17 @@ let ucjsMouseGestures_framescript = {
             try {
               let node = this._getLinkURL(event.target);
               let url = node.href;
+              /*
               this.Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
                 event.target.ownerDocument.nodePrincipal,
                 url,
                 this.Services.scriptSecurityManager
+              );
+              */
+              secMan.checkLoadURIStrWithPrincipal(
+                event.target.ownerDocument.nodePrincipal,
+                url,
+                secMan
               );
               linkURL = url;
               linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
@@ -936,16 +951,23 @@ let ucjsMouseGestures_framescript = {
           case "mousemove":
                 // ホバーしたリンクのURLを記憶
             let node = this._getLinkURL(event.target);
-            // this.Services.console.logStringMessage("node " + node);
+            // this.console.logStringMessage("node " + node);
             if (!node)
               break;
             linkURL = node.href;
             if (linkURL && this._linkURLs.indexOf(linkURL) == -1) {
               try {
+                /*
                 this.Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
                   event.target.ownerDocument.nodePrincipal,
                   linkURL,
                   this.Services.scriptSecurityManager
+                );
+                */
+                secMan.checkLoadURIStrWithPrincipal(
+                  event.target.ownerDocument.nodePrincipal,
+                  linkURL,
+                  secMan
                 );
               } catch (ex) {
                 break
@@ -1015,9 +1037,11 @@ let ucjsMouseGestures_framescript = {
             let aURL = aNode.src
             let aContentType = null;
             let aContentDisp = null;
+            let ios = Components.classes["@mozilla.org/network/io-service;1"].
+              getService(Components.interfaces.nsIIOService);
             try {
               let aDoc = aNode.ownerDocument;
-              aURL = this.Services.io.newURI(aURL, aDoc.characterSet);
+              aURL = ios.newURI(aURL, aDoc.characterSet);
               var imageCache = Cc["@mozilla.org/image/tools;1"]
                                  .getService(Ci.imgITools)
                                  .getImgCacheForDocument(aDoc);
@@ -1171,7 +1195,7 @@ let ucjsMouseGestures_framescript = {
           func : func.toString(),
           args : JSON.stringify(args)
         }
-        //this.Services.console.logStringMessage("this " + content);
+        //this.console.logStringMessage("this " + content);
         sendAsyncMessage("ucjsMouseGestures_executeInChrome",
               json
         );
