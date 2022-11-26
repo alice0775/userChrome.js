@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 102
+// @version       2022/11/27 00:21 fix WheelGestures
 // @version       2022/11/27 00:10 fix clear statusinfo
 // @version       2022/11/27 00:00 fix unexpected command fire
 // @version       2022/11/26 21:00 Simplified.
@@ -707,7 +708,11 @@ var ucjsMouseGestures = {
           this.statusinfo =  "";
         })
       } catch(ex) {
-        this.statusinfo = ex;
+         try {
+           this._selectedTXT = gBrowser.selectedBrowser.contentWindow.getSelection().toString();
+           this._performAction(event);
+           this.statusinfo =  "";
+         } catch(ex) {}
       }
     }
 /*
@@ -750,9 +755,6 @@ var ucjsMouseGestures = {
 
     this._directionChain = "";
 
-    this._isMouseDownL = false;
-    this._isMouseDownR = false;
-    this._suppressContext = false;
     this._shouldFireContext = false; // for Linux 
     this._isWheelCanceled = false;
     this._laststatusinfo  = "";
