@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/11/27 00:00 fix unexpected command fire
 // @version       2022/11/26 21:00 Simplified.
 // @version       2022/11/26 19:00 fix _selectedTXT for iframe
 // @version       2022/11/26 18:00 revert removed workaround changes xxx
@@ -696,20 +697,18 @@ var ucjsMouseGestures = {
     this._lastY = y;
   },
 
-  _stopGesture: async function(event) {
+  _stopGesture: function(event) {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
-    try {
-      if (this._directionChain) {
-        try {
-          this._selectedTXT = (await gBrowser.selectedBrowser.finder.getInitialSelection()).selectedText;
-        } finally {
+    if (this._directionChain) {
+      try {
+        gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+          this._selectedTXT = r.selectedText;
           this._performAction(event);
-        }
+        })
+      } catch(ex) {
+        this.statusinfo = ex;
       }
-    }
-    catch(ex) {
-      this.statusinfo = ex;
     }
 /*
     this._directionChain = "";
@@ -736,7 +735,7 @@ var ucjsMouseGestures = {
     }
     // These are the mouse gesture mappings.
     for (let command of this.commands) {
-      if (command[0] == this._directionChain) {
+      if (this._directionChain !== "" && command[0] == this._directionChain) {
         try {
           command[2]();
         } catch(ex) {
