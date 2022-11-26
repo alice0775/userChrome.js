@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/11/26 21:00 Simplified.
 // @version       2022/11/26 19:00 fix _selectedTXT for iframe
 // @version       2022/11/26 18:00 revert removed workaround changes xxx
 // @version       2022/09/22 22:00 removed workaround xxx
@@ -695,21 +696,17 @@ var ucjsMouseGestures = {
     this._lastY = y;
   },
 
-  _stopGesture: function(event) {
+  _stopGesture: async function(event) {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
     try {
       if (this._directionChain) {
         try {
-          gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-            this._selectedTXT = r.selectedText;
-            this._performAction(event);
-          })
-        } catch(ex){
+          this._selectedTXT = (await gBrowser.selectedBrowser.finder.getInitialSelection()).selectedText;
+        } finally {
           this._performAction(event);
         }
       }
-      this.statusinfo = "";
     }
     catch(ex) {
       this.statusinfo = ex;
