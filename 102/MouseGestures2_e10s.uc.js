@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 102
+// @version       2022/11/26 19:00 fix _selectedTXT for iframe
 // @version       2022/11/26 18:00 revert removed workaround changes xxx
 // @version       2022/09/22 22:00 removed workaround xxx
 // @version       2022/09/22 15:00 fix workaround xxx
@@ -151,7 +152,7 @@ var ucjsMouseGestures = {
         ['', '選択したリンクを保存', function(){ ucjsMouseGestures_helper.saveSelectedLinks(); } ],
         ['', '通過したリンクを保存', function(){ ucjsMouseGestures_helper.saveHoverLinks(); } ],
 
-        ['', 'コピー', function(){ ucjsMouseGestures_helper.copyText(ucjsMouseGestures.selectedTXT); } ],
+        ['', 'コピー', function(){ ucjsMouseGestures_helper.copyText(ucjsMouseGestures._selectedTXT); } ],
         ['', '通過したリンクをコピー', function(){ ucjsMouseGestures_helper.copyHoverLinks(); } ],
         ['', '選択したリンクをコピー', function(){ ucjsMouseGestures_helper.copySelectedLinks(); } ],
 
@@ -480,11 +481,6 @@ var ucjsMouseGestures = {
         this._imgDISP = message.data.imgDISP;
         this._mediaSRC = message.data.mediaSRC;
         //this._selectedTXT = message.data.selectedTXT;
-        try {
-          gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-            this._selectedTXT = r.selectedText;
-        })
-        } catch(e) {}
         this._cookieJarSettings = E10SUtils.deserializeCookieJarSettings(message.data.cookieJarSettings);
          this._referrerInfo = E10SUtils.deserializeReferrerInfo(message.data.referrerInfo);
       break;
@@ -553,14 +549,7 @@ var ucjsMouseGestures = {
             this._isMouseDownR = false;
             this._suppressContext = true;
             this._directionChain = "L>R";
-            try {
-              gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-                this._selectedTXT = r.selectedText;
-                this._stopGesture(event);
-              })
-            } catch(ex){
-              this._stopGesture(event);
-            }
+            this._stopGesture(event);
           }
         } else if (this.enableRockerGestures && event.button == 0) {
           this._isMouseDownL = true;
@@ -572,14 +561,7 @@ var ucjsMouseGestures = {
             this._isMouseDownL = false;
             this._suppressContext = true;
             this._directionChain = "L<R";
-            try {
-              gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-                this._selectedTXT = r.selectedText;
-                this._stopGesture(event);
-              })
-            } catch(ex){
-              this._stopGesture(event);
-            }
+            this._stopGesture(event);
           }
         }
         break;
@@ -715,9 +697,16 @@ var ucjsMouseGestures = {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
     try {
-      if (this._directionChain)
-        this._performAction(event);
-      this.statusinfo = "";
+      if (this._directionChain) {
+        try {
+          gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+            this._selectedTXT = r.selectedText;
+            this._performAction(event);
+          })
+        } catch(ex){
+          this._performAction(event);
+        }
+      }      this.statusinfo = "";
     }
     catch(ex) {
       this.statusinfo = ex;
