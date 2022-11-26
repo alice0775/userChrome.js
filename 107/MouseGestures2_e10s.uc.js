@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/11/27 00:10 fix clear statusinfo
 // @version       2022/11/27 00:00 fix unexpected command fire
 // @version       2022/11/26 21:00 Simplified.
 // @version       2022/11/26 19:00 fix _selectedTXT for iframe
@@ -705,6 +706,7 @@ var ucjsMouseGestures = {
         gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
           this._selectedTXT = r.selectedText;
           this._performAction(event);
+          this.statusinfo =  "";
         })
       } catch(ex) {
         this.statusinfo = ex;
@@ -746,7 +748,7 @@ var ucjsMouseGestures = {
       }
     }
     // Unknown Gesture
-    throw "Unknown Gesture: " + this._directionChain;
+    // throw "Unknown Gesture: " + this._directionChain;
 
     this._directionChain = "";
 
