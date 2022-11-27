@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/11/27 23:00 fix can't access property "selectedText", r is undefined
 // @version       2022/11/27 00:21 fix WheelGestures
 // @version       2022/11/27 00:10 fix clear statusinfo
 // @version       2022/11/27 00:00 fix unexpected command fire
@@ -705,7 +706,7 @@ var ucjsMouseGestures = {
     if (this._directionChain) {
       try {
         gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-          this._selectedTXT = r.selectedText;
+          this._selectedTXT = r?.selectedText;
           this._performAction(event);
           this.statusinfo =  "";
         })
