@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/11/30 23:00 stop using finder
 // @version       2022/11/27 23:00 fix can't access property "selectedText", r is undefined
 // @version       2022/11/27 00:21 fix WheelGestures
 // @version       2022/11/27 00:10 fix clear statusinfo
@@ -488,6 +489,7 @@ var ucjsMouseGestures = {
         this._imgTYPE = message.data.imgTYPE;
         this._imgDISP = message.data.imgDISP;
         this._mediaSRC = message.data.mediaSRC;
+        this._selectedTXT = message.data.selectedTXT;
         this._cookieJarSettings = E10SUtils.deserializeCookieJarSettings(message.data.cookieJarSettings);
          this._referrerInfo = E10SUtils.deserializeReferrerInfo(message.data.referrerInfo);
       break;
@@ -704,19 +706,8 @@ var ucjsMouseGestures = {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
     if (this._directionChain) {
-      try {
-        gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-          this._selectedTXT = r?.selectedText;
-          this._performAction(event);
-          this.statusinfo =  "";
-        })
-      } catch(ex) {
-         try {
-           this._selectedTXT = gBrowser.selectedBrowser.contentWindow.getSelection().toString();
-           this._performAction(event);
-           this.statusinfo =  "";
-         } catch(ex) {}
-      }
+      this._performAction(event);
+      this.statusinfo =  "";
     }
 /*
     this._directionChain = "";
@@ -806,13 +797,13 @@ let ucjsMouseGestures_framescript = {
         );
         this.E10SUtils = E10SUtils;
         delete E10SUtils;
-/*
+
 	      const { Services } = ChromeUtils.import(
 	        "resource://gre/modules/Services.jsm"
 	      );
         this.Services = Services;
         delete Services;
-*/
+
         this.console = Cc["@mozilla.org/consoleservice;1"]
                        .getService(Ci.nsIConsoleService);
         this._isMac = isMac;
@@ -912,7 +903,7 @@ let ucjsMouseGestures_framescript = {
 
             linkTXT = this._getLinkTEXT(this.link);
             mediaSRC = this._getMediaSRC(event.target);
-            //selectedTXT = this._getSelectedText(event.target);
+            selectedTXT = this._getSelectedText(event.originalTarget);
             let doc = event.target.ownerDocument;
             json = {
               docURL: doc.location.href,
@@ -923,7 +914,7 @@ let ucjsMouseGestures_framescript = {
               imgTYPE: imgTYPE,
               imgDISP: imgDISP,
               mediaSRC: mediaSRC,
-              //selectedTXT: selectedTXT,
+              selectedTXT: selectedTXT,
               cookieJarSettings: this.E10SUtils.serializeCookieJarSettings(
                                    doc.cookieJarSettings
                                  ),
@@ -991,17 +982,42 @@ let ucjsMouseGestures_framescript = {
       },
 
       _getSelectedText: function(target) {
-        let win;
-        if (target != undefined && target.ownerDocument) {
-          win = target.ownerDocument.defaultView;
-        } else {
-          win = content;
+        let focusedWindow = {};
+        let focusedElement = this.Services.focus.getFocusedElementForWindow(
+          content,
+          true,
+          focusedWindow
+        );
+        focusedWindow = focusedWindow.value;
+
+        let selText;
+
+        // If this is a remote subframe, return an empty string but
+        // indiciate which browsing context was focused.
+        if (
+          focusedElement &&
+          "frameLoader" in focusedElement &&
+          BrowsingContext.isInstance(focusedElement.browsingContext)
+        ) {
+          return  "";
         }
-        let selection = win.getSelection();
-        selectionStr = selection.toString();
-        return selectionStr.substr(0, 16384);
+
+        if (focusedElement && focusedElement.editor) {
+          // The user may have a selection in an input or textarea.
+          selText = focusedElement.editor.selectionController
+            .getSelection(Ci.nsISelectionController.SELECTION_NORMAL)
+            .toString();
+        } else {
+          // Look for any selected text on the actual page.
+          selText = focusedWindow.getSelection().toString();
+        }
+
+        if (!selText) {
+          return "" ;
+        }
+        return selText.substr(0, 16384);
       },
-  
+    
       _getLinkURL: function(aNode) {
         this.link = null;
         while (aNode) {
