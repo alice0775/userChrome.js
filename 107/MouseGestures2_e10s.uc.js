@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/11/30 23:00 workaround for focusing delay
 // @version       2022/11/30 23:00 stop using finder
 // @version       2022/11/27 23:00 fix can't access property "selectedText", r is undefined
 // @version       2022/11/27 00:21 fix WheelGestures
@@ -880,54 +881,59 @@ let ucjsMouseGestures_framescript = {
             [imgSRC, imgTYPE, imgDISP] = this._getImgSRC(event.target);
             linkURL = null;
             let linkReferrerInfo = null;
-            try {
-              let node = this._getLinkURL(event.target);
-              let url = node.href;
-              /*
-              this.Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
-                event.target.ownerDocument.nodePrincipal,
-                url,
-                this.Services.scriptSecurityManager
-              );
-              */
-              secMan.checkLoadURIStrWithPrincipal(
-                event.target.ownerDocument.nodePrincipal,
-                url,
-                secMan
-              );
-              linkURL = url;
-              linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
-                                     .createInstance(Ci.nsIReferrerInfo);
-              linkReferrerInfo.initWithElement(node);
-            } catch (ex) {}
 
-            linkTXT = this._getLinkTEXT(this.link);
-            mediaSRC = this._getMediaSRC(event.target);
-            selectedTXT = this._getSelectedText(event.originalTarget);
-            let doc = event.target.ownerDocument;
-            json = {
-              docURL: doc.location.href,
-              docCHARSET: doc.charset,
-              linkURL: linkURL,
-              linkTXT: linkTXT,
-              imgSRC: imgSRC,
-              imgTYPE: imgTYPE,
-              imgDISP: imgDISP,
-              mediaSRC: mediaSRC,
-              selectedTXT: selectedTXT,
-              cookieJarSettings: this.E10SUtils.serializeCookieJarSettings(
-                                   doc.cookieJarSettings
-                                 ),
-              referrerInfo: this.E10SUtils.serializeReferrerInfo(
-                                   doc.referrerInfo
-                                 ),
-              linkReferrerInfo: this.E10SUtils.serializeReferrerInfo(
-                                   linkReferrerInfo
-                                 )                                 
-            };
-            sendSyncMessage("ucjsMouseGestures_linkURL_start",
-              json
-            );
+            // Now it is time to create the timer...
+            let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+            timer.init( _ => {
+              try {
+                let node = this._getLinkURL(event.target);
+                let url = node.href;
+                /*
+                this.Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
+                  event.target.ownerDocument.nodePrincipal,
+                  url,
+                  this.Services.scriptSecurityManager
+                );
+                */
+                secMan.checkLoadURIStrWithPrincipal(
+                  event.target.ownerDocument.nodePrincipal,
+                  url,
+                  secMan
+                );
+                linkURL = url;
+                linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
+                                       .createInstance(Ci.nsIReferrerInfo);
+                linkReferrerInfo.initWithElement(node);
+              } catch (ex) {}
+
+              linkTXT = this._getLinkTEXT(this.link);
+              mediaSRC = this._getMediaSRC(event.target);
+              selectedTXT = this._getSelectedText(event.originalTarget);
+              let doc = event.target.ownerDocument;
+              json = {
+                docURL: doc.location.href,
+                docCHARSET: doc.charset,
+                linkURL: linkURL,
+                linkTXT: linkTXT,
+                imgSRC: imgSRC,
+                imgTYPE: imgTYPE,
+                imgDISP: imgDISP,
+                mediaSRC: mediaSRC,
+                selectedTXT: selectedTXT,
+                cookieJarSettings: this.E10SUtils.serializeCookieJarSettings(
+                                     doc.cookieJarSettings
+                                   ),
+                referrerInfo: this.E10SUtils.serializeReferrerInfo(
+                                     doc.referrerInfo
+                                   ),
+                linkReferrerInfo: this.E10SUtils.serializeReferrerInfo(
+                                     linkReferrerInfo
+                                   )                                 
+              };
+              sendSyncMessage("ucjsMouseGestures_linkURL_start",
+                json
+              );
+            }, 0, Ci.nsITimer.TYPE_ONE_SHOT); 
             break;
           case "mousemove":
                 // ホバーしたリンクのURLを記憶
