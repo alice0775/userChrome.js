@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/12/10 12:00 xxxx workaround: cancel gesture
 // @version       2022/11/30 23:00 workaround for focusing delay
 // @version       2022/11/30 23:00 stop using finder
 // @version       2022/11/27 23:00 fix can't access property "selectedText", r is undefined
@@ -706,6 +707,14 @@ var ucjsMouseGestures = {
   _stopGesture: function(event) {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
+    if (!document.hasFocus()) {
+      // xxxx workaround
+      this._isMouseDownR = false;
+      this._isMouseDownL = false;
+      this._directionChain = "";
+      this._isWheelCanceled = false;
+      return;
+    }
     if (this._directionChain) {
       this._performAction(event);
       this.statusinfo =  "";

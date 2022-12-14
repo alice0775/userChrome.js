@@ -5,7 +5,11 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 102
+// @version       2022/12/10 12:00 xxxx workaround: cancel gesture
+// @version       2022/12/01 16:00 TypeError: can't access dead object
+// @version       2022/12/01 12:00 workarround selected text w/ fission autostart. (the other property such as linkURL etc does not work w/ fission autostart)
+// @version       2022/11/30 23:00 workaround for focusing delay
+// @version       2022/11/30 23:00 stop using finder
 // @version       2022/11/27 23:00 fix can't access property "selectedText", r is undefined
 // @version       2022/11/27 00:21 fix WheelGestures
 // @version       2022/11/27 00:10 fix clear statusinfo
@@ -15,8 +19,11 @@
 // @version       2022/11/26 18:00 revert removed workaround changes xxx
 // @version       2022/09/22 22:00 removed workaround xxx
 // @version       2022/09/22 15:00 fix workaround xxx
-// @version       2022/09/22 13:00 fix Bug 1766030 take3
+// @version       2022/08/19 00:00 remove "Services" from frame scripts
 // @version       2022/08/02 18:00 Images in child nodes are also targeted.
+// @version       2022/07/25 23:00 fix Bug 1766030 take3
+// @version       2022/07/25 23:00 fix Bug 1766030 take2
+// @version       2022/07/25 23:00 fix Bug 1766030
 // @version       2022/05/08 23:00 fix ページ内検索バー(check gFindBarInitialized before reffering hidden attribute.)
 // @version       2022/03/08 13:00 add 新しいコンテナータブを開く
 // @version       2021/12/11 23:00 workaround for left mouseup event does not fire on select element
@@ -485,7 +492,7 @@ var ucjsMouseGestures = {
         this._imgTYPE = message.data.imgTYPE;
         this._imgDISP = message.data.imgDISP;
         this._mediaSRC = message.data.mediaSRC;
-        //this._selectedTXT = message.data.selectedTXT;
+        this._selectedTXT = message.data.selectedTXT;
         this._cookieJarSettings = E10SUtils.deserializeCookieJarSettings(message.data.cookieJarSettings);
          this._referrerInfo = E10SUtils.deserializeReferrerInfo(message.data.referrerInfo);
       break;
@@ -673,6 +680,13 @@ var ucjsMouseGestures = {
     // compare to last direction
     var lastDirection = this._directionChain.charAt(this._directionChain.length - 1);
     if (direction != lastDirection) {
+      //workarround selected text w/ fission autostart. 
+      //(the other property such as linkURL does not work w/ fission autostart)
+      setTimeout(() => {
+        gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+        this._selectedTXT = r?.selectedText;
+      })}, 0);
+
       this._directionChain += direction;
       let commandName = "";
       for (let command of this.commands) {
@@ -701,20 +715,17 @@ var ucjsMouseGestures = {
   _stopGesture: function(event) {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
     gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_linkURLs_request");
+    if (!document.hasFocus()) {
+      // xxxx workaround
+      this._isMouseDownR = false;
+      this._isMouseDownL = false;
+      this._directionChain = "";
+      this._isWheelCanceled = false;
+      return;
+    }
     if (this._directionChain) {
-      try {
-        gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
-          this._selectedTXT = r?.selectedText;
-          this._performAction(event);
-          this.statusinfo =  "";
-        })
-      } catch(ex) {
-         try {
-           this._selectedTXT = gBrowser.selectedBrowser.contentWindow.getSelection().toString();
-           this._performAction(event);
-           this.statusinfo =  "";
-         } catch(ex) {}
-      }
+      this._performAction(event);
+      this.statusinfo =  "";
     }
 /*
     this._directionChain = "";
@@ -804,11 +815,15 @@ let ucjsMouseGestures_framescript = {
         );
         this.E10SUtils = E10SUtils;
         delete E10SUtils;
+
 	      const { Services } = ChromeUtils.import(
 	        "resource://gre/modules/Services.jsm"
 	      );
         this.Services = Services;
         delete Services;
+
+        this.console = Cc["@mozilla.org/consoleservice;1"]
+                       .getService(Ci.nsIConsoleService);
         this._isMac = isMac;
         this.enableWheelGestures = enableWheelGestures;
         addMessageListener("ucjsMouseGestures_mouseup", this);
@@ -821,7 +836,7 @@ let ucjsMouseGestures_framescript = {
       },
 
       receiveMessage: function(message) {
-//        this.Services.console.logStringMessage("====" + message.name);
+//        this.console.logStringMessage("====" + message.name);
         switch(message.name) {
           case "ucjsMouseGestures_mouseup":
             removeEventListener("mousemove", this, false);
@@ -863,9 +878,10 @@ let ucjsMouseGestures_framescript = {
       },
 
       handleEvent: function(event) {
-        //this.Services.console.logStringMessage("====" + event.type);
+        //this.console.logStringMessage("====" + event.type);
         let imgSRC, imgTYPE, imgDISP, linkURL, linkTXT, mediaSRC, selectedTXT, json;
         let _isWheelCanceled;
+        let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(Ci.nsIScriptSecurityManager);
         switch(event.type) {
           case "mousedown":
             if (event.button == 2) {
@@ -882,61 +898,80 @@ let ucjsMouseGestures_framescript = {
             [imgSRC, imgTYPE, imgDISP] = this._getImgSRC(event.target);
             linkURL = null;
             let linkReferrerInfo = null;
-            try {
-              let node = this._getLinkURL(event.target);
-              let url = node.href;
-              this.Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
-                event.target.ownerDocument.nodePrincipal,
-                url,
-                this.Services.scriptSecurityManager
-              );
-              linkURL = url;
-              linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
-                                     .createInstance(Ci.nsIReferrerInfo);
-              linkReferrerInfo.initWithElement(node);
-            } catch (ex) {}
 
-            linkTXT = this._getLinkTEXT(this.link);
-            mediaSRC = this._getMediaSRC(event.target);
-            //selectedTXT = this._getSelectedText(event.target);
-            let doc = event.target.ownerDocument;
-            json = {
-              docURL: doc.location.href,
-              docCHARSET: doc.charset,
-              linkURL: linkURL,
-              linkTXT: linkTXT,
-              imgSRC: imgSRC,
-              imgTYPE: imgTYPE,
-              imgDISP: imgDISP,
-              mediaSRC: mediaSRC,
-              //selectedTXT: selectedTXT,
-              cookieJarSettings: this.E10SUtils.serializeCookieJarSettings(
-                                   doc.cookieJarSettings
-                                 ),
-              referrerInfo: this.E10SUtils.serializeReferrerInfo(
-                                   doc.referrerInfo
-                                 ),
-              linkReferrerInfo: this.E10SUtils.serializeReferrerInfo(
-                                   linkReferrerInfo
-                                 )                                 
-            };
-            sendSyncMessage("ucjsMouseGestures_linkURL_start",
-              json
-            );
+            // Now it is time to create the timer...
+            let timer = Cc["@mozilla.org/timer;1"].createInstance(Ci.nsITimer);
+            timer.init( _ => {
+              try {
+                let node = this._getLinkURL(event.target);
+                let url = node.href;
+                /*
+                this.Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
+                  event.target.ownerDocument.nodePrincipal,
+                  url,
+                  this.Services.scriptSecurityManager
+                );
+                */
+                secMan.checkLoadURIStrWithPrincipal(
+                  event.target.ownerDocument.nodePrincipal,
+                  url,
+                  secMan
+                );
+                linkURL = url;
+                linkReferrerInfo = Cc["@mozilla.org/referrer-info;1"]
+                                       .createInstance(Ci.nsIReferrerInfo);
+                linkReferrerInfo.initWithElement(node);
+              } catch (ex) {}
+
+              linkTXT = this._getLinkTEXT(this.link);
+              mediaSRC = this._getMediaSRC(event.target);
+              selectedTXT = this._getSelectedText(event.originalTarget);
+              let doc = event.target.ownerDocument;
+              json = {
+                docURL: doc.location.href,
+                docCHARSET: doc.charset,
+                linkURL: linkURL,
+                linkTXT: linkTXT,
+                imgSRC: imgSRC,
+                imgTYPE: imgTYPE,
+                imgDISP: imgDISP,
+                mediaSRC: mediaSRC,
+                selectedTXT: selectedTXT,
+                cookieJarSettings: this.E10SUtils.serializeCookieJarSettings(
+                                     doc.cookieJarSettings
+                                   ),
+                referrerInfo: this.E10SUtils.serializeReferrerInfo(
+                                     doc.referrerInfo
+                                   ),
+                linkReferrerInfo: this.E10SUtils.serializeReferrerInfo(
+                                     linkReferrerInfo
+                                   )                                 
+              };
+              sendSyncMessage("ucjsMouseGestures_linkURL_start",
+                json
+              );
+            }, 0, Ci.nsITimer.TYPE_ONE_SHOT); 
             break;
           case "mousemove":
                 // ホバーしたリンクのURLを記憶
             let node = this._getLinkURL(event.target);
-            // this.Services.console.logStringMessage("node " + node);
+            // this.console.logStringMessage("node " + node);
             if (!node)
               break;
             linkURL = node.href;
             if (linkURL && this._linkURLs.indexOf(linkURL) == -1) {
               try {
+                /*
                 this.Services.scriptSecurityManager.checkLoadURIStrWithPrincipal(
                   event.target.ownerDocument.nodePrincipal,
                   linkURL,
                   this.Services.scriptSecurityManager
+                );
+                */
+                secMan.checkLoadURIStrWithPrincipal(
+                  event.target.ownerDocument.nodePrincipal,
+                  linkURL,
+                  secMan
                 );
               } catch (ex) {
                 break
@@ -970,17 +1005,42 @@ let ucjsMouseGestures_framescript = {
       },
 
       _getSelectedText: function(target) {
-        let win;
-        if (target != undefined && target.ownerDocument) {
-          win = target.ownerDocument.defaultView;
-        } else {
-          win = content;
+        let focusedWindow = {};
+        let focusedElement = this.Services.focus.getFocusedElementForWindow(
+          content,
+          true,
+          focusedWindow
+        );
+        focusedWindow = focusedWindow.value;
+
+        let selText;
+
+        // If this is a remote subframe, return an empty string but
+        // indiciate which browsing context was focused.
+        if (
+          focusedElement &&
+          "frameLoader" in focusedElement &&
+          BrowsingContext.isInstance(focusedElement.browsingContext)
+        ) {
+          return  "";
         }
-        let selection = win.getSelection();
-        selectionStr = selection.toString();
-        return selectionStr.substr(0, 16384);
+
+        if (focusedElement && focusedElement.editor) {
+          // The user may have a selection in an input or textarea.
+          selText = focusedElement.editor.selectionController
+            .getSelection(Ci.nsISelectionController.SELECTION_NORMAL)
+            .toString();
+        } else {
+          // Look for any selected text on the actual page.
+          selText = focusedWindow.getSelection().toString();
+        }
+
+        if (!selText) {
+          return "" ;
+        }
+        return selText.substr(0, 16384);
       },
-  
+    
       _getLinkURL: function(aNode) {
         this.link = null;
         while (aNode) {
@@ -1006,9 +1066,11 @@ let ucjsMouseGestures_framescript = {
             let aURL = aNode.src
             let aContentType = null;
             let aContentDisp = null;
+            let ios = Components.classes["@mozilla.org/network/io-service;1"].
+              getService(Components.interfaces.nsIIOService);
             try {
               let aDoc = aNode.ownerDocument;
-              aURL = this.Services.io.newURI(aURL, aDoc.characterSet);
+              aURL = ios.newURI(aURL, aDoc.characterSet);
               var imageCache = Cc["@mozilla.org/image/tools;1"]
                                  .getService(Ci.imgITools)
                                  .getImgCacheForDocument(aDoc);
@@ -1115,7 +1177,9 @@ let ucjsMouseGestures_framescript = {
       clearStyle: function() {
         if (this._linkElts) 
           this._linkElts.forEach((aElt) => {
-            if (aElt) aElt.style.outline = "";
+            try {
+              if (aElt) aElt.style.outline = "";
+            } catch(ex) {}
           });
       },
 
@@ -1162,7 +1226,7 @@ let ucjsMouseGestures_framescript = {
           func : func.toString(),
           args : JSON.stringify(args)
         }
-        //this.Services.console.logStringMessage("this " + content);
+        //this.console.logStringMessage("this " + content);
         sendAsyncMessage("ucjsMouseGestures_executeInChrome",
               json
         );
