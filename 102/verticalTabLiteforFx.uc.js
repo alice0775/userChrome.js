@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 103
+// @compatibility  Firefox 102
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2022/12/19 window control in Fullscreen
 // @version        2022/11/13 tweak .tab-icon-overlay css take2
 // @version        2022/11/13 tweak .tab-icon-overlay css
 // @version        2022/08/11 margin adjust
@@ -231,7 +232,7 @@ function verticalTabLiteforFx() {
   }
 
   /* window control and  drag space */
-  :root[tabsintitlebar]:not([Menubarinactive]) #nav-bar .titlebar-buttonbox{
+  :root:not([inFullscreen])[tabsintitlebar]:not([Menubarinactive]) #nav-bar .titlebar-buttonbox{
      display: none !important;
   }
   :root:not([inFullscreen])[tabsintitlebar]:not([Menubarinactive]) .titlebar-spacer[type="post-tabs"] {
