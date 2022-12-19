@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 107
+// @version       2022/12/19 19:00 fix label of 検索エンジンポップアップ
 // @version       2022/12/10 12:00 xxxx workaround: cancel gesture
 // @version       2022/11/30 23:00 workaround for focusing delay
 // @version       2022/11/30 23:00 stop using finder
@@ -1598,7 +1599,7 @@ let ucjsMouseGestures_helper = {
 			menuitem.setAttribute("label", engines[i].name);
 			menuitem.setAttribute("class", "menuitem-iconic searchbar-engine-menuitem menuitem-with-favicon");
 			if (engines[i].iconURI) {
-        menuitem.setAttribute("style", "list-style-image: url('"+ engines[i].iconURI.spec +"'); -moz-image-region: auto !important; width: 16px;");
+        menuitem.setAttribute("style", "list-style-image: url('"+ engines[i].iconURI.spec +"'); -moz-image-region: auto !important;");
 				menuitem.setAttribute("src", engines[i].iconURI.spec);
 		  }
 			popup.insertBefore(menuitem, popup.firstChild);
