@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 111
+// @version       2023/02/08 10:00 fix triggeringPrincipal
 // @version       2023/02/08 10:00 Bug 1815439 - Remove useless loadURI wrapper from browser.js
 // @version       2023/01/04 19:00 fix Bug 1475606 - Extend addTab to allow selecting a tab and remove the loadOneTab() API
 // @version       2022/12/19 19:00 fix label of 検索エンジンポップアップ
@@ -1868,6 +1869,10 @@ Services.console.logStringMessage("aContentType " + aContentType);
     */
     openLinkIn(url, "current", {
         allowThirdPartyFixup: false,
+        triggeringPrincipal: Services.scriptSecurityManager.createContentPrincipal(
+          Services.io.newURI(url),
+          {}
+        )
       });
   },
 
