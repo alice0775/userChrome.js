@@ -5,38 +5,14 @@
 // @include       main
 // @compatibility Firefox 110
 // @author        alice0775
+// @version       2023/02/17 15:00 Remove redundancy
 // @version       2023/02/17 00:00
 // ==/UserScript==
 "use strict";
 var bug1809084 = {
 
-  menupopup: ["bookmarksMenuPopup",
-              'PlacesToolbar',
-              'BMB_bookmarksPopup'],
-  timer:[],
-  count:[],
-
   init: function(){
-    window.addEventListener("aftercustomization", this, false);
-    this.delayedStartup();
-  },
-
-  //delayed startup
-  delayedStartup: function(){
-    //wait till construction of bookmarksBarContent is completed.
-    for (var i = 0; i < this.menupopup.length; i++){
-      this.count[i] = 0;
-      this.timer[i] = setInterval(function(self, i){
-        if(++self.count[i] > 50 || document.getElementById(self.menupopup[i])){
-          clearInterval(self.timer[i]);
-          var menupopup = document.getElementById(self.menupopup[i]);
-          if (menupopup) {
-            menupopup.addEventListener('popupshowing', self, false);
-            menupopup.addEventListener('popuphiding', self, false);
-          }
-        }
-      }, 250, this, i);
-    }
+    window.addEventListener('popupshowing', this, true);
   },
 
   handleEvent: function(event){
@@ -46,9 +22,6 @@ var bug1809084 = {
         break;
       case 'popuphiding':
         this.popuphiding(event);
-        break;
-      case "aftercustomization":
-        setTimeout(() => {this.delayedStartup();}, 0);
         break;
     }
   },
@@ -60,7 +33,12 @@ var bug1809084 = {
   },
 
   popupshowing: function(event) {
-    let menupopup = event.originalTarget;
+    let menupopup = event.target;
+    if (menupopup.localName != "menupopup" || !menupopup.hasAttribute("placespopup")) {
+      return;
+    }
+
+    menupopup.addEventListener('popuphiding', this, {capture: false, once: true});
     let y = menupopup.bug1809084;
     setTimeout(() => {menupopup.scrollBox.scrollbox.scrollTop = y;},0);
   }
