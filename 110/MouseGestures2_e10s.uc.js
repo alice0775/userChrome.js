@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 110
+// @version       2023/02/17 19:00 fix show favicon in タブの履歴をポップアップ
 // @version       2023/01/04 19:00 fix Bug 1475606 - Extend addTab to allow selecting a tab and remove the loadOneTab() API
 // @version       2022/12/19 19:00 fix label of 検索エンジンポップアップ
 // @version       2022/12/10 12:00 xxxx workaround: cancel gesture
@@ -1502,66 +1503,147 @@ let ucjsMouseGestures_helper = {
     if (typeof screenY == "undefined")
       screenY = that._lastY;
 
+    const MAX_HISTORY_MENU_ITEMS = 15;
+    const tooltipBack = gNavigatorBundle.getString("tabHistory.goBack");
+    const tooltipCurrent = gNavigatorBundle.getString("tabHistory.reloadCurrent");
+    const tooltipForward = gNavigatorBundle.getString("tabHistory.goForward");
+
     if(document.getElementById("ucjsMouseGestures_popup")) {
       document.getElementById("mainPopupSet").
                removeChild(document.getElementById("ucjsMouseGestures_popup"));
     }
-    let popup = document.createXULElement("menupopup");
-    document.getElementById("mainPopupSet").appendChild(popup);
-    popup.setAttribute("id", "ucjsMouseGestures_popup");
-    popup.setAttribute("oncommand", "gotoHistoryIndex(event); event.stopPropagation();");
-    /*popup.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
-    popup.setAttribute("context", "");
+    let aParent = document.createXULElement("menupopup");
+    document.getElementById("mainPopupSet").appendChild(aParent);
+    aParent.setAttribute("id", "ucjsMouseGestures_popup");
+    aParent.setAttribute("oncommand", "gotoHistoryIndex(event); event.stopPropagation();");
+    /*aParent.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
+    aParent.setAttribute("context", "");
+    let children = aParent.children;
 
-    SessionStore.getSessionHistory(gBrowser.selectedTab, 
+    // If session history in parent is available, use it. Otherwise, get the session history
+    // from session store.
+    let sessionHistory = gBrowser.selectedBrowser.browsingContext.sessionHistory;
+    if (sessionHistory?.count) {
+      // Don't show the context menu if there is only one item.
+      if (sessionHistory.count <= 1) {
+        return false;
+      }
 
-				function callback(sessionHistory, initial) {
-					if (popup.firstChild)
-						return;
-					let count = sessionHistory.entries.length;
-					if (count < 1)
-						throw "No back/forward history for this tab.";
-					var curIdx = sessionHistory.index;
-					for (let i = 0; i < count; i++) {
-						let entry = sessionHistory.entries[i];
-						let menuitem = document.createXULElement("menuitem");
-						popup.insertBefore(menuitem, popup.firstChild);
-						menuitem.setAttribute("label", entry.title || entry.url);
-						menuitem.setAttribute("statustext", entry.url);
-						menuitem.setAttribute("index", i);
-						menuitem.setAttribute("historyindex", i - curIdx);
-						menuitem.index = i;
-						if (i == curIdx) {
-							menuitem.setAttribute("type", "radio");
-							menuitem.setAttribute("checked", "true");
-							menuitem.setAttribute("default", "true");
-							menuitem.setAttribute("tooltiptext", "Stay on this page");
-							menuitem.className = "unified-nav-current";
-						} else {
-							let entryURI = Services.io.newURI(entry.url, entry.charset, null);
-							PlacesUtils.favicons.getFaviconURLForPage(entryURI, function(aURI) {
-								if (!aURI)
-									return;
-								let iconURL = PlacesUtils.favicons.getFaviconLinkForIcon(aURI).spec;
-								menuitem.style.listStyleImage = "url(" + iconURL + ")";
-							});
-							menuitem.className = i < curIdx
-							                   ? "unified-nav-back menuitem-iconic menuitem-with-favicon"
-							                   : "unified-nav-forward menuitem-iconic menuitem-with-favicon";
-							menuitem.setAttribute("tooltiptext", i < curIdx
-							                   ? "Go back to this page"
-							                   : "Go forward to this page");
-						}
-					}
-				});
+      updateSessionHistory(sessionHistory, true, true);
+    } else {
+      sessionHistory = SessionStore.getSessionHistory(
+        gBrowser.selectedTab,
+        updateSessionHistory
+      );
+      updateSessionHistory(sessionHistory, true, false);
+    }
+  	let ratio = 1;
+  	let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
+  	if (os == "Darwin") {
+  		ratio = aParent.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
+  	            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
+  	}
+  	aParent.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
 
-		let ratio = 1;
-		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
-		if (os == "Darwin") {
-			ratio = popup.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
-		            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
-		}
-		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
+    function updateSessionHistory(sessionHistory, initial, ssInParent) {
+      let count = ssInParent
+        ? sessionHistory.count
+        : sessionHistory.entries.length;
+
+      if (!initial) {
+        if (count <= 1) {
+          // if there is only one entry now, close the popup.
+          aParent.hidePopup();
+          return;
+        } else if (aParent.id != "backForwardMenu" && !aParent.parentNode.open) {
+          // if the popup wasn't open before, but now needs to be, reopen the menu.
+          // It should trigger FillHistoryMenu again. This might happen with the
+          // delay from click-and-hold menus but skip this for the context menu
+          // (backForwardMenu) rather than figuring out how the menu should be
+          // positioned and opened as it is an extreme edgecase.
+          aParent.parentNode.open = true;
+          return;
+        }
+      }
+
+      let index = sessionHistory.index;
+      let half_length = Math.floor(MAX_HISTORY_MENU_ITEMS / 2);
+      let start = Math.max(index - half_length, 0);
+      let end = Math.min(
+        start == 0 ? MAX_HISTORY_MENU_ITEMS : index + half_length + 1,
+        count
+      );
+      if (end == count) {
+        start = Math.max(count - MAX_HISTORY_MENU_ITEMS, 0);
+      }
+
+      let existingIndex = 0;
+
+      for (let j = end - 1; j >= start; j--) {
+        let entry = ssInParent
+          ? sessionHistory.getEntryAtIndex(j)
+          : sessionHistory.entries[j];
+        // Explicitly check for "false" to stay backwards-compatible with session histories
+        // from before the hasUserInteraction was implemented.
+        if (
+          BrowserUtils.navigationRequireUserInteraction &&
+          entry.hasUserInteraction === false &&
+          // Always allow going to the first and last navigation points.
+          j != end - 1 &&
+          j != start
+        ) {
+          continue;
+        }
+        let uri = ssInParent ? entry.URI.spec : entry.url;
+
+        let item =
+          existingIndex < children.length
+            ? children[existingIndex]
+            : document.createXULElement("menuitem");
+
+        item.setAttribute("uri", uri);
+        item.setAttribute("label", entry.title || uri);
+        item.setAttribute("index", j);
+
+        // Cache this so that gotoHistoryIndex doesn't need the original index
+        item.setAttribute("historyindex", j - index);
+
+        if (j != index) {
+          // Use list-style-image rather than the image attribute in order to
+          // allow CSS to override this.
+          item.style.listStyleImage = `url(page-icon:${uri})`;
+        }
+
+        if (j < index) {
+          item.className =
+            "unified-nav-back menuitem-iconic menuitem-with-favicon";
+          item.setAttribute("tooltiptext", tooltipBack);
+        } else if (j == index) {
+          item.setAttribute("type", "radio");
+          item.setAttribute("checked", "true");
+          item.className = "unified-nav-current";
+          item.setAttribute("tooltiptext", tooltipCurrent);
+        } else {
+          item.className =
+            "unified-nav-forward menuitem-iconic menuitem-with-favicon";
+          item.setAttribute("tooltiptext", tooltipForward);
+        }
+
+        if (!item.parentNode) {
+          aParent.appendChild(item);
+        }
+
+        existingIndex++;
+      }
+
+      if (!initial) {
+        let existingLength = children.length;
+        while (existingIndex < existingLength) {
+          aParent.removeChild(aParent.lastElementChild);
+          existingIndex++;
+        }
+      }
+    }
   },
 
   // Web search selected text with search engins popup
