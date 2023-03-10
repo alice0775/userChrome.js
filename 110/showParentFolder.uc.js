@@ -5,6 +5,7 @@
 // @include       chrome://browser/content/places/places.xhtml
 // @compatibility Firefox 110
 // @author        alice0775
+// @version       2023/03/10 fix column ordinal / -moz-box-ordinal-group
 // @version       2023/01/10 Bug 1382992 - Remove the synchronous getFolderIdForItem()
 // @version       2021/05/18 22:00 fix splitter ordinal 
 // @version       2021/02/09 20:00 Rewrite `X.setAttribute("hidden", Y)` to `X.hidden = Y`
@@ -34,9 +35,12 @@
       let splitter = document.createXULElement("splitter");
       splitter.setAttribute("class", "tree-splitter");
       splitter.setAttribute("resizeafter", "farthest");
-      splitter.setAttribute("style", "-moz-box-ordinal-group: 14;");
+      splitter.setAttribute("style", "-moz-box-ordinal-group: " + (ordinal - 1) + ";");
+      splitter.setAttribute("ordinal", (ordinal - 1));
       let treecol = document.createXULElement("treecol");
+      treecol.setAttribute("style", "-moz-box-ordinal-group: " + ordinal + ";");
       treecol.setAttribute("ordinal", ordinal);
+      treecol.style.setProperty("width", width+"px", "");
       treecol.setAttribute("width", width);
       treecols.insertBefore(splitter, treecolpicker);
       treecols.insertBefore(treecol, treecolpicker);
@@ -48,6 +52,15 @@
       treecol.setAttribute("persist", "width hidden ordinal sortActive sortDirection");
       //Bug 196509  Search for bookmark should show parent folder
       PlacesTreeView.prototype.COLUMN_TYPE_PARENTFOLDER = 999;
+      let l = treecols.childNodes.length;
+      for (let i = 0; i < 13 ;i++) {
+        let elm = treecols.childNodes[i];
+        let o = parseInt(elm.getAttribute("ordinal"));
+        if (o >= ordinal -1) {
+          elm.setAttribute("ordinal", o + 2);
+          elm.style.setProperty("-moz-box-ordinal-group", o + 2, "");
+        }
+      }
 
       var func = PlacesTreeView.prototype._getColumnType.toString();
       func = func.replace(
