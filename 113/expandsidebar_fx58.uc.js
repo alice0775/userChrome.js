@@ -3,11 +3,12 @@
 // @description    サイドバーの自動開閉
 // @namespace      http://forums.mozillazine.org/viewtopic.php?p=2592073#2592073
 // @include        main
-// @compatibility  Firefox 107
+// @compatibility  Firefox 113
 // @author         Alice0775
 // @Note           _SIDEBARPOSITIONにあなたの環境におけるサイドバーの位置を指示しておく
 // @Note           keycongigやmousegesture等には SidebarUI.toggle(何タラ);
 // @Note
+// @version        2023/03/09 Bug 1820534 - Move front-end to modern flexbox.
 // @version        2022/10/14 20:00 sidebar width:100%
 // @version        2022/09/30 20:00 Bug 1792748
 // @version        2022/09/14 11:00 box width:auto
@@ -176,11 +177,16 @@ var ucjs_expand_sidebar = {
       height: 16px !important;
       overflow-x: hidden !important;
     }
+    #sidebar-checkbox .checkbox-check {
+      min-width: 14px !important;
+      min-height: 14px !important;
+    }
     
     #sidebar-splitter 
     { 
-      -moz-box-align: center; 
-      -moz-box-pack: center; 
+      /*-moz-box-align: center;*/  /*Bug 1820534*/ 
+      /*-moz-box-pack: center;*/
+      justify-content: center;
       cursor: ew-resize; 
       border-width: 0;
       border-style: solid; 
@@ -300,7 +306,7 @@ var ucjs_expand_sidebar = {
       };
       let template = 
         ["hbox", {id: "sidebarpopuppanel-bottom"},
-          ["spacer", {flex: "1"}],
+          ["spacer", {style: "flex: auto;"}],
           ["image", {class: "PopupResizerGripper",
              onmousedown: "if (event.target == this) sidebarpopuppanelResize.start(event);"}]
         ];
@@ -733,6 +739,8 @@ var ucjs_expand_sidebar = {
             //this._sidebar.style.setProperty('width', this.sizes[index + 1] - 1  + "px", "");
           } else
             this._sidebar_box.style.setProperty('width', this.sizes[index + 1] + "px", "");
+
+          sidebarpopuppanelResize.setSize(0, this.sizes[index + 1]);
           return;
         }
       }
@@ -1103,7 +1111,7 @@ var sidebarpopuppanelResize = {
 //      this.sidebar.style.setProperty('height', h + "px", "");
     }
     if (w && 0<=w ) {
-      this.sidebar.style.setProperty('width', w - 1 + "px", "");
+      //this.sidebar.style.setProperty('width', w - 1 + "px", "");
       this.sidebarbox.style.setProperty('width', w + "px", "");
     }
   }

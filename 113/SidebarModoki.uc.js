@@ -3,10 +3,11 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    TST
 // @include        main
-// @compatibility  Firefox 107
+// @compatibility  Firefox 113
 // @author         Alice0775
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
 // @note           SidebarModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2023/03/09 Bug 1820534 - Move front-end to modern flexbox.
 // @version        2022/10/12 Bug 1794630
 // @version        2022/09/29 fix Bug 1689816 
 // @version        2022/09/28 ordinal position
@@ -54,7 +55,7 @@
 var SidebarModoki = {
   // -- config --
   SM_RIGHT: false,  // SidebarModoki position
-  SM_WIDTH : 130,
+  SM_WIDTH : 230,
   SM_AUTOHIDE : false,  //F11 Fullscreen
   TAB_SRC : ["chrome://browser/content/places/bookmarksSidebar.xhtml",
              "chrome://browser/content/places/historySidebar.xhtml",
@@ -270,7 +271,7 @@ var SidebarModoki = {
     document.getElementById("mainKeyset").appendChild(this.jsonToDOM(template, document, {}));
 //to do xxx ordinal=xx shoud be replaced with style="-moz-box-ordinal-group: xx;"
     template =
-      ["vbox", {id: "SM_toolbox", style: this.SM_RIGHT ? "-moz-box-ordinal-group:10" : "-moz-box-ordinal-group:0"},
+      ["vbox", {id: "SM_toolbox", style: this.SM_RIGHT ? "/*-moz-box-ordinal-group:10;*/ order: 10;" : "/*-moz-box-ordinal-group:0;*/ order: -1;"},  /*Bug 1820534*/
         ["hbox", {id: "SM_header", align: "center"},
           ["label", {}, "SidebarModoki"],
           ["toolbarspring", {class: "SM_toolbarspring", flex: "1000"}],
@@ -299,7 +300,7 @@ var SidebarModoki = {
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
 
     template =
-      ["splitter", {id: "SM_splitter", style: this.SM_RIGHT ? "-moz-box-ordinal-group:9" : "-moz-box-ordinal-group:0", state: "open", collapse: this.SM_RIGHT ? "after" :"before", resizebefore:"sibling", resizeafter:"none"},
+      ["splitter", {id: "SM_splitter", style: this.SM_RIGHT ? "/*-moz-box-ordinal-group:9;*/ order: 9;" : "/*-moz-box-ordinal-group:0;*/ order: -1;", state: "open", collapse: this.SM_RIGHT ? "after" :"before", resizebefore:"sibling", resizeafter:"none"}, /*Bug 1820534*/
         ["grippy", {}]
       ];
     sidebar.parentNode.insertBefore(this.jsonToDOM(template, document, {}), sidebar);
@@ -400,8 +401,10 @@ var SidebarModoki = {
   observe: function() {
     this.ToolBox = document.getElementById("SM_toolbox");
     this.Splitter = document.getElementById("SM_splitter");
-    this.ToolBox.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "10" : "0", "");
-    this.Splitter.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "9" : "0", "");
+    /*this.ToolBox.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "10" : "0", "");*/ /*Bug 1820534*/
+    this.ToolBox.style.setProperty("order", this.SM_RIGHT ? "10" : "-1", "");
+    /*this.Splitter.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "9" : "0", "");*/ /*Bug 1820534*/
+    this.Splitter.style.setProperty("order", this.SM_RIGHT ? "9" : "-1", "");
 
     if (this.getPref(this.kSM_Open, "bool", true)) {
       this.toggle(true);
@@ -419,8 +422,10 @@ var SidebarModoki = {
           case "hidden":
           case "positionend":
             setTimeout(() => {
-              this.ToolBox.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "10" : "0", "");
-              this.Splitter.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "9" : "0", "");
+              /*this.ToolBox.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "10" : "0", "");*/ /*Bug 1820534*/
+              this.ToolBox.style.setProperty("order", this.SM_RIGHT ? "10" : "-1", "");
+              /*this.Splitter.style.setProperty("-moz-box-ordinal-group", this.SM_RIGHT ? "9" : "0", "");*/ /*Bug 1820534*/
+              this.Splitter.style.setProperty("order", this.SM_RIGHT ? "9" : "-1", "");
             }, 0);
             break;
         }
