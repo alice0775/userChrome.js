@@ -1,0 +1,41 @@
+@charset "utf-8";
+/*@version       2022/11/20 19:00 107+ wip*/
+/*@version       2022/02/16 Bug 1747422 - Remove preprocessor variable use from downloads CSS*/
+/*@version       2020/03/13 fix for 74, broken listitem orient due to Bug 1606130
+/*@version       2019/12/11 fix for 73 Bug 1601094 - Rename remaining .xul files to .xhtml in browser */
+/*@version        2019/10/20 12:30*/
+
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] { 
+  -moz-box-orient: horizontal; 
+  background-color: var(--in-content-box-background) !important; 
+  padding: 0 !important; 
+} 
+
+
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] #downloadsListBox { 
+  display:inline-block !important; 
+  overflow-y: auto !important; 
+  scrollbar-width: thin;
+  border: none !important;
+} 
+
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] richlistitem:not([hidden]) { 
+  border-width: 0 1px 0 0 !important;
+  border-style: solid !important;
+  border-color: black !important;
+  display:-moz-inline-box !important;
+  height: 3.3em !important;
+  min-height: 3.3em !important;
+}
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] .downloadContainer {
+  width: 250px !important;
+}
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] .downloadTypeIcon {
+	margin-inline-end: 4px !important;
+	margin-inline-start: 4px !important;
+}
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] .downloadButton
+{
+	padding-inline-end: 4px !important;
+	padding-inline-start: 4px !important;
+}
