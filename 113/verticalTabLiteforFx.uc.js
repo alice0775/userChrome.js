@@ -7,6 +7,16 @@
 // @author         Alice0775
 // @note           not support pinned tab yet
 // @version        2023/03/09 Bug 1820534 - Move front-end to modern flexbox.
+// @version        2022/12/22 add outline for selectedtab(xxx Bug 1704347)
+// @version        2022/12/19 window control in Fullscreen
+// @version        2022/11/13 tweak .tab-icon-overlay css
+// @version        2022/10/26 Bug 1549057 - Update naming of getCSP and getCsp to be consistent
+// @version        2022/10/25 increse splitter width
+// @version        2022/10/14 tweak css
+// @version        2022/10/14 Bug 1790616 
+// @version        2022/10/12 Bug 1794630
+// @version        2022/10/07 tweak timer
+// @version        2022/10/06 fix Bug 1793662
 // @version        2022/10/03 fix scrollbar
 // @version        2022/10/01 workaround method2 Bug 1789168 
 // @version        2022/09/14 fix Bug 1790299
@@ -108,27 +118,27 @@ function verticalTabLiteforFx() {
     -moz-appearance: none !important;
     border: 0 solid !important;
     min-width: 1px !important;
-    width: 1px !important;
+    width: 3px !important;
     background-image: none !important;
-    background-color: var(--toolbar-bgcolor) !important;
-    margin-inline-start: -1px !important;
+    background-color: transparent;
+    margin-inline-start: -2px !important;
+    margin-inline-end: -1px !important;
     position: relative;
+    z-index:99999999;
   }
 
-  #tabbrowser-tabs {
-    height: 0; /*calc(100vh - 2 * ${verticalTab_height}px) !important;*/
-    margin-right: 1px;
-    overflow-y: auto;
-    scrollbar-width: thin;
+  #vtb_splitter[state="collapsed"] {
+    border: 0 solid !important;
+    min-width: 1px !important;
+    width: 1px !important;
+    margin-inline-start: 0 !important;
+    margin-inline-end: 0 !important;
   }
 
-/*
-  [customizing="true"] #vtb_TabsToolbar {
-    height: 20vh !important;
-    overflow-x: hidden !important;
-    overflow-y: scroll !important;
+  #vtb_TabsToolbar #tabbrowser-tabs {
+    height: 0;
+    flex: 1000 1000 auto !important; /*Bug 1820534*/
   }
-*/
 
   :is(#firefox-view-button, #wrapper-firefox-view-button) + #tabbrowser-tabs {
     padding-inline-start: 0px !important;
@@ -139,7 +149,6 @@ function verticalTabLiteforFx() {
     max-height: ${verticalTab_height}px !important;
     font-size: calc(${verticalTab_height}px - 3px) !important;
     padding-inline-start: 0 !important;
-    margin-inline-end: 2px !important;
   }
 
   .tabbrowser-tab:not([pinned]) {
@@ -182,7 +191,7 @@ function verticalTabLiteforFx() {
   /* always show toolbuttons*/
   #tabbrowser-tabs[hasadjacentnewtabbutton]:not([overflow="true"]) ~ #new-tab-button,
   tabs:not([overflow="true"]):not([hashiddentabs]) ~ #alltabs-button {
-      display: -moz-box !important;
+      /*display: -moz-box !important;*/ /*Bug 1820534*/
       display: flex !important;
   }
   #new-tab-button image,
@@ -243,14 +252,14 @@ function verticalTabLiteforFx() {
   }
 
   /* window control and  drag space */
-  :root[tabsintitlebar]:not([Menubarinactive]) #nav-bar .titlebar-buttonbox{
+  :root:not([inFullscreen])[tabsintitlebar]:not([Menubarinactive]) #nav-bar .titlebar-buttonbox{
      display: none !important;
   }
   :root:not([inFullscreen])[tabsintitlebar]:not([Menubarinactive]) .titlebar-spacer[type="post-tabs"] {
      display: none !important;
   }
   :root:not([inFullscreen])[tabsintitlebar][Menubarinactive] .titlebar-spacer[type="post-tabs"] {
-     display: -moz-box !important;
+     /*display: -moz-box !important;*/ /*Bug 1820534*/
      display: flex !important;
   }
 
@@ -361,10 +370,21 @@ function verticalTabLiteforFx() {
     --tabpanel-background-color: unset !important;
   }
 
+  #TabsToolbar {
+    --lwt-tab-line-color: unset !important; /*xxx Bug 1704347*/
+  }
+  .tab-label:is([selected], [attention]) {
+    font-weight: unset !important; /*xxx Bug 1704347*/
+  }
+
   #TabsToolbar .tabbrowser-tab:not([dragover]) .tab-background {
     box-shadow: unset !important;
   }
-
+  
+  .tab-icon-overlay[indicator-replaces-favicon] {
+    stroke: black !important;
+    color: white !important;
+  }
   .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay),
   :is(#toolbar-menubar:hover + #TabsToolbar, #TabsToolbar:hover) .tab-icon-stack:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) > :not(.tab-icon-overlay) {
       opacity: 1 !important;
@@ -397,7 +417,7 @@ function verticalTabLiteforFx() {
   .tab-background {
     border-radius: unset !important;
     margin-block: unset !important;
-    -moz-box-orient: horizontal !important;
+    /*-moz-box-orient: horizontal !important;*/ /*Bug 1820534*/
     flex-direction: row !important;
   }
 
@@ -478,8 +498,8 @@ function verticalTabLiteforFx() {
   vtbSplitter.setAttribute("id", "vtb_splitter");
   vtbSplitter.setAttribute("state", "open");
   vtbSplitter.setAttribute("collapse", "before");
-  vtbSplitter.setAttribute("resizebefore", "closest");
-  vtbSplitter.setAttribute("resizeafter", "closest");
+  vtbSplitter.setAttribute("resizebefore", "sibling");
+  vtbSplitter.setAttribute("resizeafter", "none");
   document.getElementById("browser").insertBefore(vtbSplitter, ref);
 
   tabsToolbar.setAttribute("orient", "vertical");
@@ -493,8 +513,10 @@ function verticalTabLiteforFx() {
   arrowScrollbox.setAttribute("orient", "vertical");
   var scrollbox = arrowScrollbox.shadowRoot.querySelector("scrollbox");
   scrollbox.setAttribute("orient", "vertical");
-  // scrollbox.style.setProperty("overflow-y", "auto", "");
-  // scrollbox.style.setProperty("scrollbar-width", "thin", "");
+  scrollbox.style.setProperty("overflow-y", "auto", "");
+  scrollbox.style.setProperty("scrollbar-width", "thin", "");
+  var scrollboxClip = arrowScrollbox.shadowRoot.querySelector(".scrollbox-clip");
+  scrollboxClip.style.setProperty("contain", "unset", "");
 
   // hide scroll buttons
   var scrollButtonUp = arrowScrollbox.shadowRoot.getElementById("scrollbutton-up");
@@ -805,7 +827,7 @@ function verticalTabLiteforFx() {
       let replace = !!targetTab;
       let newIndex = this._getDropIndex(event, true);
       let urls = links.map(link => link.url);
-      let csp = browserDragAndDrop.getCSP(event);
+      let csp = browserDragAndDrop.getCsp(event);
       let triggeringPrincipal = browserDragAndDrop.getTriggeringPrincipal(
           event
       );
@@ -863,7 +885,7 @@ function verticalTabLiteforFx() {
     let aTab = event?.target;
     setTimeout((aTab) => {
       ensureVisibleTab(aTab);
-    }, gReduceMotion ? 0 : 150, aTab);
+    }, 150, aTab);
   }
   function ensureVisibleTab(aTab, allowScrollUp = true) {
     let tab = gBrowser.selectedTab;
