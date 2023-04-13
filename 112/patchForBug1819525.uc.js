@@ -5,7 +5,9 @@
 // @include       main
 // @compatibility Firefox 111 (Windows11 only)
 // @author        alice0775
+// @version       2023/04/13 00:00
 // @version       2023/03/10 00:00
+// @note this works click window control button ONLY, not works from taskbar button and keyboard.
 // ==/UserScript==
 "use strict";
 var bug1819525 = {
@@ -50,7 +52,7 @@ var bug1819525 = {
         bug1819525.flag = true;
         setTimeout(() => {
           window.resizeTo(window.screen.availWidth + 15, window.screen.availHeight + 13.9);
-          window.moveTo(-5,1);
+          window.moveTo(-6,-6);
           setTimeout(() => {window.maximize_bug1819525();}, 0);
         }, 400);
       }
