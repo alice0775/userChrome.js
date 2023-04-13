@@ -52,7 +52,7 @@ var bug1819525 = {
         bug1819525.flag = true;
         setTimeout(() => {
           window.resizeTo(window.screen.availWidth + 15, window.screen.availHeight + 13.9);
-          window.moveTo(-6,-6);
+          window.moveTo(-6,-7);
           setTimeout(() => {window.maximize_bug1819525();}, 0);
         }, 400);
       }
