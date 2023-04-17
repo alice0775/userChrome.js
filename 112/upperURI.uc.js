@@ -5,6 +5,8 @@
 // @description    Add upper URIs to the context menu in Location bar.
 // @include        main
 // @author         p-arai
+// @version        2023/04/18 00:20 use openTrustedLinkIn instead of openWebLinkIn
+
 // @version        2023/04/17 22:50 Bug 1817443 - remove openUILinkIn entirely and rename fromChrome
 // @version       2023/02/08 10:00 Bug 1815439 - Remove useless loadURI wrapper from browser.js
 // @version        2022/08/22 09:50 fixed wrong popup
@@ -58,7 +60,7 @@
         if (event.button == 2) return;
         var where = whereToOpenLink ? whereToOpenLink(event, false, true)
                     : BrowserUtils.whereToOpenLink(event, false, true);
-        URILoadingHelper.openWebLinkIn(window, event.originalTarget.getAttribute("value"), where,
+        openTrustedLinkIn(event.originalTarget.getAttribute("value"), where,
         {allowThirdPartyFixup:false,
          postData:null,
          referrerInfo: null,
