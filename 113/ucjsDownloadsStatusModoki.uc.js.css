@@ -1,4 +1,5 @@
 @charset "utf-8";
+/*@version       2023/04/25 fix forfirefox113, inline-blockfirefox113*/
 /*@version       2023/03/09 Bug 1820534 - Move front-end to modern flexbox.*/
 /*@version       2022/11/24 21:00 Bug 1802142 - Remove no longer used browser-bottombox*/
 /*@version       2022/11/20 19:00 107+ wip*/
@@ -32,22 +33,28 @@
 } 
 
 #contentAreaDownloadsView[ucjsDownloadsStatusModoki] richlistitem:not([hidden]) { 
-  border-width: 0 1px 0 0 !important;
-  border-style: solid !important;
-  border-color: black !important;
-  display:-moz-inline-box !important;
-  height: 3.3em !important;
-  min-height: 3.3em !important;
+  border-width: 0 !important;
+  display:inline-block !important;
+  height: 3.0em !important;
+  min-height: 3.0em !important;
 } 
+#contentAreaDownloadsView[ucjsDownloadsStatusModoki] .downloadMainArea {
+	display: inline-block !important;
+}
+
 #contentAreaDownloadsView[ucjsDownloadsStatusModoki] .downloadContainer {
-  width: 250px !important;
+	max-width: 200px !important;
+	display: inline-block !important;
 }
 #contentAreaDownloadsView[ucjsDownloadsStatusModoki] .downloadTypeIcon {
 	margin-inline-end: 4px !important;
 	margin-inline-start: 4px !important;
+	display: inline-block !important;
 }
 #contentAreaDownloadsView[ucjsDownloadsStatusModoki] .downloadButton
 {
+	width: 36px !important;
 	padding-inline-end: 4px !important;
 	padding-inline-start: 4px !important;
+	display: inline-block !important;
 }
