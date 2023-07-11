@@ -5,6 +5,12 @@ FirefoxのバージョンNoより小さいディレクトリ番号内のスク�
 スクリプト名をクリック、[RAW]ボタンをクリック、名前を付けて保存
 ファイルはUTF-8のBOMなしで保存
 
+
+Firefox117+
+* Services.jsmが削除されたため、従来の方法ではuserChrome.jsは動作しません。
+  Firefox117以降は、https://github.com/xiaoxiaoflood/firefox-scripts#instructions に記載の通りに設定すれば再度使えるようになると思います。
+  
+
 Firefox92+
 
 1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを保存する
