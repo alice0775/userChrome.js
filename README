@@ -6,10 +6,14 @@ FirefoxのバージョンNoより小さいディレクトリ番号内のスク�
 ファイルはUTF-8のBOMなしで保存
 
 
+
 Firefox117+
 * Services.jsmが削除されたため、従来の方法ではuserChrome.jsは動作しません。
-  Firefox117以降は、https://github.com/xiaoxiaoflood/firefox-scripts#instructions に記載の通りに設定すれば再度使えるようになると思います。
-  
+  Firefox117以降は、
+  ・117/install_folder/にあるconfig.jsとっさしかえるか,
+  ・または, https://github.com/xiaoxiaoflood/firefox-scripts#instructions に記載の通りに設定すれば再度使えるようになると思います。
+
+
 
 Firefox92+
 
