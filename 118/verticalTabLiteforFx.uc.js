@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 117
+// @compatibility  Firefox 118
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2023/08/24 00:00 workaround Bug 1849141 - Clean up --tab-min-height rules
 // @version        2023/07/19 00:00 add padding-top due to Bug 1705215
 // @version        2023/03/09 Bug 1820534 - Move front-end to modern flexbox.
 // @version        2022/12/22 add outline for selectedtab(xxx Bug 1704347)
@@ -97,7 +98,7 @@ function verticalTabLiteforFx() {
 
   let verticalTabbar_minWidth = Services.prefs.getIntPref("browser.tabs.tabMinWidth", 0);
   let verticalTabbar_width = Services.prefs.getIntPref("ucjs.tabWidth", verticalTabbar_maxWidth);
-  let verticalTab_height = 18;
+  let verticalTab_height = 22;
 
   var css =`@-moz-document url-prefix("chrome://browser/content/browser.xhtml") {
   :root:not([uidensity="compact"]) {
@@ -153,9 +154,16 @@ function verticalTabLiteforFx() {
   }
   
   .tabbrowser-tab {
-    max-height: ${verticalTab_height}px !important;
-    font-size: calc(${verticalTab_height}px - 3px) !important;
+    max-height: calc(${verticalTab_height}px + 0px) !important;
+    font-size: calc(${verticalTab_height}px - 7px) !important;
     padding-inline-start: 0 !important;
+  }
+
+  #tabbrowser-tabs .tab-label-container {
+    height: 1.0em !important;
+  }
+  #tabbrowser-arrowscrollbox {
+      overflow: hidden !important;
   }
 
   .tabbrowser-tab:not([pinned]) {
@@ -163,6 +171,11 @@ function verticalTabLiteforFx() {
     max-width: none !important;
     transition: none !important;
   }
+
+  .tab-background {
+    min-height: unset !important;
+  }
+
 
 @media not (prefers-contrast) {
   .tabbrowser-tab[usercontextid] .tab-background[selected]:not([multiselected="true"]):-moz-lwtheme {
