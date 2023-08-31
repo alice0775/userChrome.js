@@ -1,18 +1,18 @@
-ディレクトリ番号が大きいものほど新しく/更新されたスクリプト
-FirefoxのバージョンNoより大きいディレクトリ番号内のスクリプトはそのバージョンでは動かない
-FirefoxのバージョンNoより小さいディレクトリ番号内のスクリプトは動くかも知れない
+スクリプトファイルの探し方:
+https://github.com/alice0775/userChrome.jsを開いて[Go to file]をクリック, 左のテキスト入力欄に探したいスクリプトのファイル名を入力, リスト内の該当するものをクリック
+  ディレクトリ番号が大きいものほど新しく/更新されたスクリプト
+  FirefoxのバージョンNoより大きいディレクトリ番号内のスクリプトはそのバージョンでは動かない
+  FirefoxのバージョンNoより小さいディレクトリ番号内のスクリプトは動くかも知れない
 
+スクリプトの保存方法:
 スクリプト名をクリック、[RAW]ボタンをクリック、名前を付けて保存
 ファイルはUTF-8のBOMなしで保存
 
 
-
+userchrome.jsのインストール方法:
 Firefox117+
 * Services.jsmが削除されたため、従来の方法ではuserChrome.jsは動作しません。
-  Firefox117以降は、
-  ・117/install_folder/にあるconfig.jsとっさしかえるか,
-  ・または, https://github.com/xiaoxiaoflood/firefox-scripts#instructions に記載の通りに設定すれば再度使えるようになると思います。
-
+  Firefox117以降は、117/install_folder/にあるconfig.jsと差し替える
 
 
 Firefox92+
@@ -31,24 +31,6 @@ Firefox92+
 4. 必要なスクリプトファイルを保存する
 
 5. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
-
-
-Firefox72+
-
-1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを保存する
-72/install_folder/config.js
-
-2. アプリケーションインストールフォルダ\defaults\pref 直下に以下のファイルを保存する
-72/install_folder\defaults\pref\config-prefs.js
-
-
-3. プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルを保存する
-72/userChrome.css
-72/userChrome.js
-
-4. 必要なスクリプトファイルを保存する
-
-5. 念のため 一回 %ProgramFiles%\Mozilla Firefoxfirefox.exe -purgecaches オプション付きで起動する
 
 
 免責事項
