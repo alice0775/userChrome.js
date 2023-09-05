@@ -6,6 +6,8 @@
 // @compatibility  Firefox 119
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2023/09/05 convert private indicator selector due to Bug 1851163
+// @version        2023/09/01 display while customization (xxx all tabs will reflow)
 // @version        2023/08/29 00:00 Bug 1849904 - Convert a bunch of psuedo-boolean tab strip attributes to be standard boolean attributes
 // @version        2023/08/24 00:00 workaround Bug 1849141 - Clean up --tab-min-height rules
 // @version        2023/07/19 00:00 add padding-top due to Bug 1705215
@@ -555,7 +557,8 @@ function verticalTabLiteforFx() {
   // control buttons
   let spacer = tabsToolbar.querySelector('.titlebar-spacer[type="post-tabs"]');
   //let accessibility = tabsToolbar.querySelector('.accessibility-indicator');
-  let private = tabsToolbar.querySelector('.private-browsing-indicator');
+  //let private = tabsToolbar.querySelector('.private-browsing-indicator');
+  let private = tabsToolbar.querySelector('#private-browsing-indicator-with-label');
   let control = tabsToolbar.querySelector('.titlebar-buttonbox-container');
   
   ref = document.getElementById("PanelUI-button");
@@ -973,7 +976,7 @@ function verticalTabLiteforFx() {
   gNavToolbox.addEventListener("customizationready", function(aEvent) {
     switch (aEvent.type) {
       case "customizationready":
-        document.getElementById("browser").collapsed = false;
+        document.getElementById("browser").hidden = false; //xxx all tabs will reflow
         break;
     }
   });
