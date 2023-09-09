@@ -6,6 +6,7 @@
 // @compatibility  Firefox 119
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2023/09/09 adjust height
 // @version        2023/09/05 convert private indicator selector due to Bug 1851163
 // @version        2023/09/01 display while customization (xxx all tabs will reflow)
 // @version        2023/08/29 00:00 Bug 1849904 - Convert a bunch of psuedo-boolean tab strip attributes to be standard boolean attributes
@@ -174,11 +175,6 @@ function verticalTabLiteforFx() {
     max-width: none !important;
     transition: none !important;
   }
-
-  .tab-background {
-    min-height: unset !important;
-  }
-
 
 @media not (prefers-contrast) {
   .tabbrowser-tab[usercontextid] .tab-background[selected]:not([multiselected]):-moz-lwtheme {
