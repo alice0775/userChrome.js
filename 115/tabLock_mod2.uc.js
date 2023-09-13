@@ -5,7 +5,9 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
-// @compatibility  112
+// @compatibility  115
+// @version        2023/09/13 23:00 fix open from history
+// @version        2023/05/11 00:00 fix #76
 // @version        2023/04/18 00:00 Bug 1817443 - Move open*Link* and friends into a module instead of utilityOverlay.js
 // @version        2022/08/19 00:00 remove "Services" from frame scripts
 // @version        2021/10/15 00:00 @compatibility 95, Addressed "Services" not being loaded in frame scripts (Bug 1708243).
@@ -48,57 +50,28 @@
 //  browser.tabs.loadUrlInBackground        ロケーションバーを背面で開くかどうか true/[false]
 
 patch: {
-  if ("openLinkIn" in window) {
-    if (!window.hasOwnProperty("openLinkIn_lockorg")) {
-      window.openLinkIn_lockorg = window.openLinkIn;
-      window.openLinkIn = function(url, where, params) {
-        let w, targetBrowser, targetTab;
-        if (where == "current") {
-          if (params.targetBrowser) {
-            w = params.targetBrowser.ownerGlobal;
-            targetBrowser = params.targetBrowser;
-            targetTab = w.gBrowser.getTabForBrowser(targetBrowser);
-          } else {
-            w = URILoadingHelper.getTargetWindow(window);
-            targetBrowser = w.gBrowser.selectedBrowser;
-            targetTab = w.gBrowser.selectedTab;
-          }
-          if (url && "isLockTab" in w.gBrowser &&
-              w.gBrowser.isLockTab(targetTab) &&
-              !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
-              !w.gBrowser.isHashLink(url, targetBrowser.currentURI.spec)) {
-            where  = "tab";
-          }
+  if (URILoadingHelper && ("openLinkIn" in URILoadingHelper) && !("openLinkIn_org" in URILoadingHelper)) {
+    URILoadingHelper.openLinkIn_org = URILoadingHelper.openLinkIn;
+    URILoadingHelper.openLinkIn = function(window, url, where, params) {
+      if (where == "current") {
+        let w = window, targetBrowser, targetTab;
+        if (params.targetBrowser) {
+          w = params.targetBrowser.ownerGlobal;
+          targetBrowser = params.targetBrowser;
+          targetTab = w.gBrowser.getTabForBrowser(targetBrowser);
+        } else {
+          w = URILoadingHelper.getTargetWindow(window);
+          targetBrowser = w.gBrowser.selectedBrowser;
+          targetTab = w.gBrowser.selectedTab;
         }
-        window.openLinkIn_lockorg(url, where, params);
-      }
-    }
-  }
-
-  if ("openTrustedLinkIn" in window) {
-    if (!window.hasOwnProperty("openTrustedLinkIn_lockorg")) {
-      window.openTrustedLinkIn_lockorg = window.openTrustedLinkIn;
-      window.openTrustedLinkIn = function(url, where, params) {
-        let w, targetBrowser, targetTab;
-        if (where == "current") {
-          if (params.targetBrowser) {
-            w = params.targetBrowser.ownerGlobal;
-            targetBrowser = params.targetBrowser;
-            targetTab = w.gBrowser.getTabForBrowser(targetBrowser);
-          } else {
-            w = URILoadingHelper.getTargetWindow(window);
-            targetBrowser = w.gBrowser.selectedBrowser;
-            targetTab = w.gBrowser.selectedTab;
-          }
-          if (url && "isLockTab" in w.gBrowser &&
-              w.gBrowser.isLockTab(targetTab) &&
-              !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
-              !w.gBrowser.isHashLink(url, targetBrowser.currentURI.spec)) {
-            where  = "tab";
-          }
+        if (url && "isLockTab" in w.gBrowser &&
+            w.gBrowser.isLockTab(targetTab) &&
+            !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
+            !w.gBrowser.isHashLink(url, targetBrowser.currentURI.spec)) {
+          where  = "tab";
         }
-        window.openTrustedLinkIn_lockorg(url, where, params);
       }
+      this.openLinkIn_org(window, url, where, params);
     }
   }
 
@@ -106,30 +79,6 @@ patch: {
   if (location.href != "chrome://browser/content/browser.xhtml")
     break patch;
 
-  gURLBar._loadURL_org = gURLBar._loadURL;
-  gURLBar._loadURL = function _loadURLL(
-    url,
-    event,
-    openUILinkWhere,
-    params,
-    resultDetails = null,
-    browser = this.window.gBrowser.selectedBrowser
-  ) {
-    if (url && openUILinkWhere  == "current" && "isLockTab" in gBrowser &&
-        gBrowser.isLockTab(gBrowser.selectedTab) &&
-        !/^\s*(javascript:|data:|moz-extension:)/.test(url) &&
-        !gBrowser.isHashLink(url, gBrowser.currentURI.spec)) {
-      openUILinkWhere  = "tab";
-    }
-    gURLBar._loadURL_org(
-      url,
-      event,
-      openUILinkWhere,
-      params,
-      resultDetails = null,
-      browser = this.window.gBrowser.selectedBrowser
-    );
-  }
 
   window.tabLock = {
     ignoreNextPrevLink: true, //タブをロックしている状態で, 次のページ, 前のページ などは ロックを無視するかどうかデフォルト値
