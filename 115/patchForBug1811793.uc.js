@@ -5,17 +5,23 @@
 // @include        main
 // @compatibility  Firefox 104+
 // @author         Alice0775
+// @version        2023/01/07 19:30 change init
 // @version        2023/01/07 19:00 workaround Bug 1811793
 // ==/UserScript==
 
 var patchForBug1811793 = {
-  init: function() {
-    gBrowser.tabContainer.addEventListener("TabFindInitialized", function(event){
-      setTimeout(() => {patchForBug1811793.patch();}, 100);
+  init: async function() {
+    patchForBug1811793.patch();
+
+    gBrowser.tabContainer.addEventListener("TabSelect",  async function(event){
+      await patchForBug1811793.patch();
     });
   },
 
-  patch: function() {
+  patch: async function() {
+    if (!gFindBarInitialized) {
+      let findBar = await gFindBarPromise;
+    }
     /*
     if (!gFindBar._findField.value) {
       gFindBar this._foundMatches.dataset.l10nId;
@@ -23,27 +29,44 @@ var patchForBug1811793 = {
       gFindBar._foundMatches.setAttribute("value", "");
     }
     */
-    
     //xxx Bug 1811793 - Findbar status is invalid if activated too quickly
-    gFindBar.onMatchesCountResult =
-      function onMatchesCountResult(result) {
-          if (!this._findField.value || this._findField.value != this.browser.finder.searchString) {
-            delete this._foundMatches.dataset.l10nId;
-            this._foundMatches.hidden = true;
-            this._foundMatches.setAttribute("value", "");
-          } else if (!result.total) {
-            delete this._foundMatches.dataset.l10nId;
-            //this._foundMatches.hidden = true;
-            //this._foundMatches.setAttribute("value", "");
-          } else {
-            const l10nId =
-              result.total === -1
-                ? "findbar-found-matches-count-limit"
-                : "findbar-found-matches";
-            this._foundMatches.hidden = false;
-            document.l10n.setAttributes(this._foundMatches, l10nId, result);
-          }
+    gFindBar.onFindResult = function onFindResult(data) {
+      if (data.result == Ci.nsITypeAheadFind.FIND_NOTFOUND) {
+        // If an explicit Find Again command fails, re-open the toolbar.
+        if (data.storeResult/* && this.open()*/) {
+          this._findField.select();
+          this._findField.focus();
         }
+        this._findFailedString = data.searchString;
+      } else {
+        this._findFailedString = null;
+      }
+
+      this._updateStatusUI(data.result, data.findBackwards);
+      this._updateStatusUIBar(data.linkURL);
+
+      if (this.findMode != this.FIND_NORMAL) {
+        this._setFindCloseTimeout();
+      }
+    }
+    gFindBar.onMatchesCountResult = function onMatchesCountResult(result) {
+      if (!this._findField.value) {
+        delete this._foundMatches.dataset.l10nId;
+        this._foundMatches.hidden = true;
+        this._foundMatches.setAttribute("value", "");
+      } else if (!result.total) {
+        delete this._foundMatches.dataset.l10nId;
+        //this._foundMatches.hidden = true;
+        //this._foundMatches.setAttribute("value", "");
+      } else {
+        const l10nId =
+          result.total === -1
+            ? "findbar-found-matches-count-limit"
+            : "findbar-found-matches";
+        this._foundMatches.hidden = false;
+        document.l10n.setAttributes(this._foundMatches, l10nId, result);
+      }
+    }
   }
 }
 
