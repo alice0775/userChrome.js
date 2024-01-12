@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 104+
 // @author         Alice0775
+// @version        2023/01/12 19:30 early return if already applied
 // @version        2023/01/07 19:30 change init
 // @version        2023/01/07 19:00 workaround Bug 1811793
 // ==/UserScript==
@@ -22,6 +23,9 @@ var patchForBug1811793 = {
     if (!gFindBarInitialized) {
       let findBar = await gFindBarPromise;
     }
+    if ("patchForBug1811793" in gFindBar) 
+      return;
+    gFindBar.patchForBug1811793 = true;
     /*
     if (!gFindBar._findField.value) {
       gFindBar this._foundMatches.dataset.l10nId;
@@ -30,6 +34,7 @@ var patchForBug1811793 = {
     }
     */
     //xxx Bug 1811793 - Findbar status is invalid if activated too quickly
+    if ("serachWP_modoki" in window)
     gFindBar.onFindResult = function onFindResult(data) {
       if (data.result == Ci.nsITypeAheadFind.FIND_NOTFOUND) {
         // If an explicit Find Again command fails, re-open the toolbar.
