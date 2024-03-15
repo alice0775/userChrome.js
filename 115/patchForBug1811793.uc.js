@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 104+
 // @author         Alice0775
+// @version        2023/03/16 00:00 Fixed unexpected selection of input text while typing. ( this may have side-effects) if serachWP_modoki if installed
 // @version        2023/01/12 19:30 early return if already applied
 // @version        2023/01/07 19:30 change init
 // @version        2023/01/07 19:00 workaround Bug 1811793
@@ -38,7 +39,7 @@ var patchForBug1811793 = {
     gFindBar.onFindResult = function onFindResult(data) {
       if (data.result == Ci.nsITypeAheadFind.FIND_NOTFOUND) {
         // If an explicit Find Again command fails, re-open the toolbar.
-        if (data.storeResult/* && this.open()*/) {
+        if (data.storeResult/* && this.open()*/ && gFindBar.hidden) {
           this._findField.select();
           this._findField.focus();
         }
