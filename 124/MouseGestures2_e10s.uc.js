@@ -5,8 +5,12 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 115
+// @compatibility 124
 // @version       2024/03/26 00:00 fix cancel RockerGestures after click select tag
+// @version       2024/03/01 00:00 Bug 1882577 - Make nsISearchEngine.getIconURL an async function
+// @version       2023/12/24 00:00 Bug 1870644 use engine.getIconURL() instead engine.iconURI.spec
+// @version       2023/07/17 00:00 use ES module imports
+// @version       2023/06/20 remove Bug 1780695 - Remove Services.jsm
 // @version       2023/06/16 08:00 Bug 1819675 - Expand recently closed tabs to include all Windows
 // @version       2023/02/17 19:00 fix show favicon in タブの履歴をポップアップ
 // @version       2023/02/08 10:00 remove -moz-image-region
@@ -183,8 +187,6 @@ var ucjsMouseGestures = {
                                                           ucjsMouseGestures._imgTYPE,
                                                           ucjsMouseGestures._imgDISP); } ],
 
-      //['L>R', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
-      //['L<R', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
         ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
         ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
         ['ULR', '直前に選択していたタブ', function(){ ucjsNavigation_tabFocusManager?.advancedFocusTab(-1); } ],
@@ -813,13 +815,11 @@ let ucjsMouseGestures_framescript = {
       _linkElts: [],
 
       init: function(isMac, enableWheelGestures) {
-        const { E10SUtils } = ChromeUtils.import(
-          "resource://gre/modules/E10SUtils.jsm"
-        );
-        this.E10SUtils = E10SUtils;
-        delete E10SUtils;
+        ChromeUtils.defineESModuleGetters(this, {
+          E10SUtils: "resource://gre/modules/E10SUtils.sys.mjs",
+        });
+        this.Services = Services;
 
-        this.Services = globalThis.Services || ChromeUtils.import("resource://gre/modules/Services.jsm").Services;
 
         this.console = Cc["@mozilla.org/consoleservice;1"]
                        .getService(Ci.nsIConsoleService);
@@ -1686,9 +1686,7 @@ let ucjsMouseGestures_helper = {
 			let menuitem = document.createXULElement("menuitem");
 			menuitem.setAttribute("label", engines[i].name);
 			menuitem.setAttribute("class", "menuitem-iconic searchbar-engine-menuitem menuitem-with-favicon");
-			if (engines[i].iconURI) {
-				menuitem.setAttribute("image", engines[i].iconURI.spec);
-		  }
+			menuitem.setAttribute("image", await engines[i].getIconURL());
 			popup.insertBefore(menuitem, popup.firstChild);
 			menuitem.engine = engines[i];
 		}
