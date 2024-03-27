@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 124+
 // @author         Alice0775
+// @version        2024/03/27 00:00
 // @version        2024/03/21 00:00
 // ==/UserScript==
 gURLBar._autofillValue = function _autofillValue({
@@ -18,8 +19,8 @@ gURLBar._autofillValue = function _autofillValue({
     // beginning.  Do not allow it to be trimmed.
     this._setValue(value, false);
     this.inputField.setSelectionRange(selectionStart, selectionEnd);
-    if (!!this.searchMode?.engineName
-        && Services.prefs.getBoolPref("browser.urlbar.suggest.engines", true)) {
+    if (this._searchModeIndicator.style.getProperty("display") != "none" &&
+        Services.prefs.getBoolPref("browser.urlbar.suggest.engines", true)) {
       this._autofillPlaceholder = {
         value,
         type,
