@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 127
+// @version       2024/05/10 Bug 1880914 - Move Browser* helper functions used from global menubar and similar commands to a single object in a separate file, loaded as-needed
 // @version       2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
 // @version       2024/03/26 00:00 fix cancel RockerGestures after click select tag
 // @version       2024/03/01 00:00 Bug 1882577 - Make nsISearchEngine.getIconURL an async function
@@ -147,7 +148,7 @@ var ucjsMouseGestures = {
 
         ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
         ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
-        ['', 'Home', function(){ BrowserHome(); } ],
+        ['', 'Home', function(){ BrowserCommands.home(); } ],
 
         ['', 'タブの履歴をポップアップ', function(){ ucjsMouseGestures_helper.sessionHistoryPopup(); } ],
         ['', '履歴の先頭へ戻る', function(){ SessionStore.getSessionHistory(gBrowser.selectedTab, history => {gBrowser.gotoIndex(history.entries.length = 0)}); } ],
@@ -1521,7 +1522,7 @@ let ucjsMouseGestures_helper = {
     let aParent = document.createXULElement("menupopup");
     document.getElementById("mainPopupSet").appendChild(aParent);
     aParent.setAttribute("id", "ucjsMouseGestures_popup");
-    aParent.setAttribute("oncommand", "gotoHistoryIndex(event); event.stopPropagation();");
+    aParent.setAttribute("oncommand", "BrowserCommands.gotoHistoryIndex(event); event.stopPropagation();");
     /*aParent.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
     aParent.setAttribute("context", "");
     let children = aParent.children;

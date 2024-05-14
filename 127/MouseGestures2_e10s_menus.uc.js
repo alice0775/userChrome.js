@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 127
+// @version       2024/05/10 Bug 1880914 - Move Browser* helper functions used from global menubar and similar commands to a single object in a separate file, loaded as-needed
 // @version       2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
 // @version       2023/09/07 remove to use nsIScriptableUnicodeConverter
 // @version       2021/04/11 12:00 workaround 選択テキストで検索 Bug 360332
@@ -61,7 +62,7 @@ ucjsMouseGestures_menues = {
 
         ['L', '戻る', function(){ document.getElementById("Browser:Back").doCommand(); } ],
         ['R', '進む', function(){ document.getElementById("Browser:Forward").doCommand(); } ],
-        ['', 'Home', function(){ BrowserHome(); } ],
+        ['', 'Home', function(){ BrowserCommands.home(); } ],
 
         ['', 'タブの履歴をポップアップ', function(){ ucjsMouseGestures_helper.sessionHistoryPopup(); } ],
 
