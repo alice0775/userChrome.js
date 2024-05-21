@@ -6,6 +6,7 @@
 // @compatibility  Firefox 126
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/05/21 use[pinned] instead [pinned="true"]
 // @version        2024/03/19 WIP Bug 1884792 - Remove chrome-only :-moz-lwtheme pseudo-class
 // @version        2023/09/09 adjust height
 // @version        2023/09/05 convert private indicator selector due to Bug 1851163
@@ -359,7 +360,7 @@ function verticalTabLiteforFx() {
 
 
   /* ピン留めしたタブにピンマークを付ける */
-  #vtb_TabsToolbar .tabbrowser-tab[pinned="true"] .tab-content::before {
+  #vtb_TabsToolbar .tabbrowser-tab[pinned] .tab-content::before {
     content: url("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAOCAYAAAD9lDaoAAABPUlEQVQokY3RTUtCQRTG8WnRNwj6DDkzotwLBoVBZLeIgsCglYvAct0LSLlICIqLm7LAIIQIAqMWiULaQsyITOkFgtpEuwokiJDE9J6nXWpG9F8efnAOM4zVVY6PH9B+NygxUC7nnSsAWtjPimdOlxF1gI7HQLkJ0OM0KpWQowEZJ2rweUuiuGNDKeUGPfhhvK+jAVFGgo4sKAQFVgcFZq3ielNRWr9BNTfqQtoMIyJw5eNYUAUCw0obY4wxHNraKd71RGkJSprxFuKIuARmpHyprUhxIClBSSuMPY5bP8dipwlrI6q1hrLqPeWHQFEFpTDHpc+E2JSKarY30XDwZ6bvhuJ2vG504MLLcTon8bHbQ01vFA54z++WbfnYJC8s2UVB1yzzTUjTtO2mYX26rvf/+gX1eTwe95/gP30BeHKkcA2on8MAAAAASUVORK5CYII=") !important;
     position: absolute !important;
     z-index: -1 !important;
@@ -370,7 +371,7 @@ function verticalTabLiteforFx() {
     filter: saturate(150%) !important;
   }
   /* タブのfaviconよりもピンマークを上にする */
-  #vtb_TabsToolbar .tabbrowser-tab[pinned="true"] .tab-icon-image {
+  #vtb_TabsToolbar .tabbrowser-tab[pinned] .tab-icon-image {
     position: relative !important;
     z-index: -2 !important;
   }   
