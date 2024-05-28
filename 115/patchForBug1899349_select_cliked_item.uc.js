@@ -5,9 +5,10 @@
 // @include       chrome://browser/content/places/places.xhtml
 // @compatibility Firefox 115
 // @author        Alice0775 
+// @version       2024/05/29 setTimeout
 // @version       2024/05/29 
 // ==/UserScript==
-(function() {
+setTimeout(function() {
   ContentTree.onXXXclick = function onXXXclick(aEvent) {
     if (aEvent.button != 1) return;
     let tree = ContentTree.view;
@@ -18,4 +19,4 @@
   }
   let tree = ContentTree.view;
   tree.addEventListener("mousedown", ContentTree.onXXXclick, true);
-})();
+},1000);
