@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 129
+// @compatibility  Firefox 130
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/07/10 wip undoing Bug 1893656 - Fix drag n' drop in vertical tabstrip
 // @version        2024/06/15 wip undoing Bug 1893655 - Set up the tabstrip to work vertically
 // @version        2024/05/21 use[pinned] instead [pinned="true"]
 // @version        2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
@@ -884,21 +885,146 @@ function verticalTabLiteforFx() {
     }
   };
 
-  func = gBrowser.tabContainer.on_dragend.toString();
-  func = func.replace(
-  'var wX = window.screenX;',
-  'var wX = window.screenX;var wY = window.screenY;'
-  ).replace(
-  'let detachTabThresholdY = window.screenY + rect.top + 1.5 * rect.height;',
-  'let detachTabThresholdX = window.screenX + rect.left + rect.width + 50;'
-  ).replace(
-  'if (eY < detachTabThresholdY && eY > window.screenY) {',
-  'if (eX < detachTabThresholdX && eX > window.screenX) {'
-  );
-  gBrowser.tabContainer.on_dragend = new Function(
-         func.match(/\(([^)]*)/)[1],
-         func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
-  );
+  gBrowser.tabContainer.on_dragend = function(event) {
+
+      var dt = event.dataTransfer;
+      var draggedTab = dt.mozGetDataAt(TAB_DROP_TYPE, 0);
+
+      // Prevent this code from running if a tabdrop animation is
+      // running since calling _finishAnimateTabMove would clear
+      // any CSS transition that is running.
+      if (draggedTab.hasAttribute("tabdrop-samewindow")) {
+        return;
+      }
+
+      this._finishGroupSelectedTabs(draggedTab);
+      this._finishAnimateTabMove();
+
+      if (
+        dt.mozUserCancelled ||
+        dt.dropEffect != "none" ||
+        this._isCustomizing
+      ) {
+        delete draggedTab._dragData;
+        return;
+      }
+
+      // Check if tab detaching is enabled
+      if (!Services.prefs.getBoolPref("browser.tabs.allowTabDetach")) {
+        return;
+      }
+
+      // Disable detach within the browser toolbox
+      var eX = event.screenX;
+      var eY = event.screenY;
+      var wX = window.screenX;var wY = window.screenY;
+      // check if the drop point is horizontally within the window
+      if (eX > wX && eX < wX + window.outerWidth) {
+        // also avoid detaching if the the tab was dropped too close to
+        // the tabbar (half a tab)
+        let rect = window.windowUtils.getBoundsWithoutFlushing(
+          this.arrowScrollbox
+        );
+        let detachTabThresholdX = window.screenX + rect.left + rect.width + 50;
+        if (eX < detachTabThresholdX && eX > window.screenX) {
+          return;
+        }
+      }
+
+      // screen.availLeft et. al. only check the screen that this window is on,
+      // but we want to look at the screen the tab is being dropped onto.
+      var screen = event.screen;
+      var availX = {},
+        availY = {},
+        availWidth = {},
+        availHeight = {};
+      // Get available rect in desktop pixels.
+      screen.GetAvailRectDisplayPix(availX, availY, availWidth, availHeight);
+      availX = availX.value;
+      availY = availY.value;
+      availWidth = availWidth.value;
+      availHeight = availHeight.value;
+
+      // Compute the final window size in desktop pixels ensuring that the new
+      // window entirely fits within `screen`.
+      let ourCssToDesktopScale =
+        window.devicePixelRatio / window.desktopToDeviceScale;
+      let screenCssToDesktopScale =
+        screen.defaultCSSScaleFactor / screen.contentsScaleFactor;
+
+      // NOTE(emilio): Multiplying the sizes here for screenCssToDesktopScale
+      // means that we'll try to create a window that has the same amount of CSS
+      // pixels than our current window, not the same amount of device pixels.
+      // There are pros and cons of both conversions, though this matches the
+      // pre-existing intended behavior.
+      var winWidth = Math.min(
+        window.outerWidth * screenCssToDesktopScale,
+        availWidth
+      );
+      var winHeight = Math.min(
+        window.outerHeight * screenCssToDesktopScale,
+        availHeight
+      );
+
+      // This is slightly tricky: _dragData.offsetX/Y is an offset in CSS
+      // pixels. Since we're doing the sizing above based on those, we also need
+      // to apply the offset with pixels relative to the screen's scale rather
+      // than our scale.
+      var left = Math.min(
+        Math.max(
+          eX * ourCssToDesktopScale -
+            draggedTab._dragData.offsetX * screenCssToDesktopScale,
+          availX
+        ),
+        availX + availWidth - winWidth
+      );
+      var top = Math.min(
+        Math.max(
+          eY * ourCssToDesktopScale -
+            draggedTab._dragData.offsetY * screenCssToDesktopScale,
+          availY
+        ),
+        availY + availHeight - winHeight
+      );
+
+      // Convert back left and top to our CSS pixel space.
+      left /= ourCssToDesktopScale;
+      top /= ourCssToDesktopScale;
+
+      delete draggedTab._dragData;
+
+      if (gBrowser.tabs.length == 1) {
+        // resize _before_ move to ensure the window fits the new screen.  if
+        // the window is too large for its screen, the window manager may do
+        // automatic repositioning.
+        //
+        // Since we're resizing before moving to our new screen, we need to use
+        // sizes relative to the current screen. If we moved, then resized, then
+        // we could avoid this special-case and share this with the else branch
+        // below...
+        winWidth /= ourCssToDesktopScale;
+        winHeight /= ourCssToDesktopScale;
+
+        window.resizeTo(winWidth, winHeight);
+        window.moveTo(left, top);
+        window.focus();
+      } else {
+        // We're opening a new window in a new screen, so make sure to use sizes
+        // relative to the new screen.
+        winWidth /= screenCssToDesktopScale;
+        winHeight /= screenCssToDesktopScale;
+
+        let props = { screenX: left, screenY: top, suppressanimation: 1 };
+        if (AppConstants.platform != "win") {
+          props.outerWidth = winWidth;
+          props.outerHeight = winHeight;
+        }
+        gBrowser.replaceTabsWithWindow(draggedTab, props);
+      }
+      event.stopPropagation();
+    
+  }
+
   
   gBrowser.tabContainer.addEventListener('SSTabRestoring', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
