@@ -3,9 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    CSS入れ替えまくりLiteバージョン
 // @include        main
-// @compatibility  Firefox 127
+// @compatibility  Firefox 129
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/06/15 wip undoing Bug 1893655 - Set up the tabstrip to work vertically
 // @version        2024/05/21 use[pinned] instead [pinned="true"]
 // @version        2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
 // @version        2024/03/19 WIP Bug 1884792 - Remove chrome-only :-moz-lwtheme pseudo-class
@@ -530,7 +531,7 @@ function verticalTabLiteforFx() {
   // scrollbar
   gBrowser.tabContainer.setAttribute("orient", "vertical");
   var arrowScrollbox = gBrowser.tabContainer.arrowScrollbox;
-  arrowScrollbox.setAttribute("orient", "vertical");
+  //arrowScrollbox.setAttribute("orient", "vertical");
   var scrollbox = arrowScrollbox.shadowRoot.querySelector("scrollbox");
   scrollbox.setAttribute("orient", "vertical");
   scrollbox.style.setProperty("overflow-y", "auto", "");
