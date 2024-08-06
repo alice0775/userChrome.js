@@ -6,6 +6,10 @@
 // @compatibility  Firefox 130
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/07/30 wip undoing Bug 1899336 - Style pinned tabs and add new tab button with divider to vertical tabs
+// @version        2024/07/29 wip undoing Bug 1899336
+// @version        2024/07/20 wip undoing Bug 1893655 - Set up the tabstrip to work vertically
+// @version        2024/07/10 wip undoing Bug 1907103 - All tab borders are highlighted
 // @version        2024/07/10 wip undoing Bug 1893656 - Fix drag n' drop in vertical tabstrip
 // @version        2024/06/15 wip undoing Bug 1893655 - Set up the tabstrip to work vertically
 // @version        2024/05/21 use[pinned] instead [pinned="true"]
@@ -184,6 +188,14 @@ function verticalTabLiteforFx() {
     outline: 1px solid var(--identity-icon-color, var(--lwt-tabs-border-color, currentColor)) !important;
   }
 }
+
+
+
+/*xxx Bug 1907103 - All tab borders are highlighted*/
+.tab-background:not([selected]):not([multiselected]) {
+  outline: none !important;
+}
+
 
 
   .tabbrowser-tab::after, .tabbrowser-tab::before {
@@ -529,10 +541,16 @@ function verticalTabLiteforFx() {
   tabsToolbar.querySelector(".toolbar-items").removeAttribute("align");
   tabsToolbar.querySelector("#TabsToolbar-customization-target").setAttribute("orient", "vertical");
 
+
+  // Bug 1899336 - Position pinned tabs and new tab button for vertical tabs mode
+  gBrowser.verticalPinnedTabsContainer.style.setProperty("display", "none", "important");
+  gBrowser.verticalPinnedTabsContainer.nextSibling.style.setProperty("display", "none", "important");
+
+
   // scrollbar
   gBrowser.tabContainer.setAttribute("orient", "vertical");
   var arrowScrollbox = gBrowser.tabContainer.arrowScrollbox;
-  //arrowScrollbox.setAttribute("orient", "vertical");
+  arrowScrollbox.setAttribute("orient", "vertical");
   var scrollbox = arrowScrollbox.shadowRoot.querySelector("scrollbox");
   scrollbox.setAttribute("orient", "vertical");
   scrollbox.style.setProperty("overflow-y", "auto", "");
