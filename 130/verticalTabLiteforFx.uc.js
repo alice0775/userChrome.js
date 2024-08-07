@@ -6,6 +6,7 @@
 // @compatibility  Firefox 130
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/08/07 make verticalMode return false 
 // @version        2024/07/30 wip undoing Bug 1899336 - Style pinned tabs and add new tab button with divider to vertical tabs
 // @version        2024/07/29 wip undoing Bug 1899336
 // @version        2024/07/20 wip undoing Bug 1893655 - Set up the tabstrip to work vertically
@@ -545,6 +546,14 @@ function verticalTabLiteforFx() {
   // Bug 1899336 - Position pinned tabs and new tab button for vertical tabs mode
   gBrowser.verticalPinnedTabsContainer.style.setProperty("display", "none", "important");
   gBrowser.verticalPinnedTabsContainer.nextSibling.style.setProperty("display", "none", "important");
+
+  // disabled verticalMode
+	function accessorDescriptor(field, fun) {
+	  var desc = { enumerable: true, configurable: true };
+	  desc[field] = fun;
+	  return desc;
+	}
+  Object.defineProperty(gBrowser.tabContainer, "verticalMode", accessorDescriptor("get", ()=>{return false}));
 
 
   // scrollbar
