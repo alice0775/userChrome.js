@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 129
 // @author         Alice0775
+// @version        2024/08/13 fix undefined error
 // @version        2024/08/08 Bug 1900381 - Remove inline event handlers from mainPopupSet
 // @version        2022/01/11 hide unnecessary popup
 // @version        2022/01/06 compare uri using decodeURIComponent(Bug 1748669) and null check
@@ -73,9 +74,9 @@
     window.addEventListener("popupshown", remeveDuplicate, true);
     function remeveDuplicate(event) {
       let popup = event.target;
-      if (!(popup.getAttribute("id") == "backForwardMenu" ||
-         popup.parentNode.getAttribute("id") == "back-button" ||
-         popup.parentNode.getAttribute("id") == "forward-button" ||
+      if (!(popup.id == "backForwardMenu" ||
+         popup.parentNode?.id == "back-button" ||
+         popup.parentNode?.id == "forward-button" ||
          popup.getAttribute("oncommand") == "gotoHistoryIndex(event); event.stopPropagation();"))
         return;
       for (let i = 0; i < popup.children.length - 2; i++) {
