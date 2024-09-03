@@ -6,6 +6,7 @@
 // @compatibility  Firefox 130
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/08/17 wip Bug 1899582 - Update styling for vertical tabs
 // @version        2024/08/07 make verticalMode return false 
 // @version        2024/07/30 wip undoing Bug 1899336 - Style pinned tabs and add new tab button with divider to vertical tabs
 // @version        2024/07/29 wip undoing Bug 1899336
@@ -215,6 +216,16 @@ function verticalTabLiteforFx() {
     -moz-window-dragging: no-drag;
   }
 
+
+#tabbrowser-arrowscrollbox[orient="vertical"][overflowing="true"]:not([scrolledtoend="true"]) {
+    mask-image: none !important;
+}
+#tabbrowser-tabs[orient="vertical"]:has(> #tabbrowser-arrowscrollbox[overflowing="true"]) {
+  border-bottom: none !important;
+}
+#tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected]:not([tabProtect])  .tab-close-button {
+    display: unset !important;
+}
   /* hide */
   #tabs-newtab-button,
   .titlebar-spacer[type="pre-tabs"],
