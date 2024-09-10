@@ -6,6 +6,7 @@
 // @compatibility  Firefox 132
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/09/11 00:00 revert Bug 1913279
 // @version        2024/09/09 00:00 add missing arguments
 // @version        2024/09/02 Bug 1916098 - Remove appcontent box.
 // @version        2024/08/23 wip Bug 1913322 - Remove overflow / underflow event usage from arrowscrollbox / tabs.js.
@@ -1083,7 +1084,16 @@ function verticalTabLiteforFx() {
     
   }
 
-  
+  let func = gBrowser.tabContainer.on_overflow.toString();
+  func = func.replace(
+  'event.target != this.arrowScrollbox',
+  'event.target != this.arrowScrollbox || event.originalTarget.getAttribute("orient") == "vertical"'
+  );
+  gBrowser.tabContainer.on_overflow = new Function(
+         func.match(/\(([^)]*)/)[1],
+         func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
+  );
+
   gBrowser.tabContainer.addEventListener('SSTabRestoring', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('TabSelect', ensureVisible, false);
   gBrowser.tabContainer.addEventListener('dragend', ensureVisible, false);
