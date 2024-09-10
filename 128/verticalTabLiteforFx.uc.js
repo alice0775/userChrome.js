@@ -6,6 +6,7 @@
 // @compatibility  Firefox 127
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/09/09 00:00 add missing arguments
 // @version        2024/05/21 use[pinned] instead [pinned="true"]
 // @version        2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
 // @version        2024/03/19 WIP Bug 1884792 - Remove chrome-only :-moz-lwtheme pseudo-class
@@ -617,6 +618,7 @@ function verticalTabLiteforFx() {
       skipPermitUnload,
       closeWindowWithLastTab,
       prewarmed,
+      skipSessionStore,
     } = {}) {
     animate = false;
     gBrowser.removeTab_vtb_org(aTab,
@@ -626,6 +628,7 @@ function verticalTabLiteforFx() {
       skipPermitUnload,
       closeWindowWithLastTab,
       prewarmed,
+      skipSessionStore,
     });
   }
 

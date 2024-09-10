@@ -6,6 +6,7 @@
 // @compatibility  Firefox 130
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/09/09 00:00 add missing arguments
 // @version        2024/08/17 wip Bug 1899582 - Update styling for vertical tabs
 // @version        2024/08/07 make verticalMode return false 
 // @version        2024/07/30 wip undoing Bug 1899336 - Style pinned tabs and add new tab button with divider to vertical tabs
@@ -650,6 +651,7 @@ function verticalTabLiteforFx() {
       skipPermitUnload,
       closeWindowWithLastTab,
       prewarmed,
+      skipSessionStore,
     } = {}) {
     animate = false;
     gBrowser.removeTab_vtb_org(aTab,
@@ -659,6 +661,7 @@ function verticalTabLiteforFx() {
       skipPermitUnload,
       closeWindowWithLastTab,
       prewarmed,
+      skipSessionStore,
     });
   }
 

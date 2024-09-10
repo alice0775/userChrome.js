@@ -6,6 +6,7 @@
 // @compatibility  Firefox 132
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/09/09 00:00 add missing arguments
 // @version        2024/09/02 Bug 1916098 - Remove appcontent box.
 // @version        2024/08/23 wip Bug 1913322 - Remove overflow / underflow event usage from arrowscrollbox / tabs.js.
 // @version        2024/08/17 wip Bug 1899582 - Update styling for vertical tabs
@@ -110,6 +111,8 @@ window.addEventListener("MozAfterPaint", function () {
 }, { once: true });
 
 function verticalTabLiteforFx() {
+  let closebuttons="activetab"; // "activetab" or ""
+
   let verticalTabbar_maxWidth = 500;  /* タブバーの横幅 px */
   /* not yet */
   //let verticalTabPinned_width = 27; /* ピン留めタブの横幅 px */
@@ -222,11 +225,13 @@ function verticalTabLiteforFx() {
   }
 
 
-#tabbrowser-arrowscrollbox[orient="vertical"][overflowing="true"]:not([scrolledtoend="true"]) {
-    mask-image: none !important;
+#tabbrowser-tabs[orient="vertical"]:has(> #tabbrowser-arrowscrollbox[overflowing]) {
+  border-bottom: 1px solid transparent !important;
 }
-#tabbrowser-tabs[orient="vertical"]:has(> #tabbrowser-arrowscrollbox[overflowing="true"]) {
-  border-bottom: none !important;
+#tabbrowser-arrowscrollbox[orient="vertical"] {
+  &[overflowing]:not([scrolledtoend]) {
+    mask-image: none !important;
+  }
 }
 #tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected]:not([tabProtect])  .tab-close-button {
     display: unset !important;
@@ -646,7 +651,12 @@ function verticalTabLiteforFx() {
       return;
   }
   gBrowser.tabContainer._updateCloseButtons = function _updateCloseButtons() {
-      return;
+    if (closebuttons == "") {
+      gBrowser.tabContainer.removeAttribute("closebuttons");
+    } else {
+      gBrowser.tabContainer.setAttribute("closebuttons", "activetab");
+    }
+    return;
   }
 
   gBrowser.removeTab_vtb_org = gBrowser.removeTab;
@@ -658,6 +668,7 @@ function verticalTabLiteforFx() {
       skipPermitUnload,
       closeWindowWithLastTab,
       prewarmed,
+      skipSessionStore,
     } = {}) {
     animate = false;
     gBrowser.removeTab_vtb_org(aTab,
@@ -667,6 +678,7 @@ function verticalTabLiteforFx() {
       skipPermitUnload,
       closeWindowWithLastTab,
       prewarmed,
+      skipSessionStore,
     });
   }
 
@@ -1089,6 +1101,12 @@ function verticalTabLiteforFx() {
     if ( tab.screenY + tab.getBoundingClientRect().height + 1 >
            tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
       tab.scrollIntoView(false);
+      setTimeout(() => {
+        gBrowser.tabContainer.arrowScrollbox
+                .shadowRoot.querySelector("scrollbox").scrollTop=
+        gBrowser.tabContainer.arrowScrollbox
+                .shadowRoot.querySelector("scrollbox").scrollTop + 3;
+      }, 600); // xxx
     } else if ( tab.screenY < tabContainer.screenY && allowScrollUp) {
       tab.scrollIntoView(true);
     }
