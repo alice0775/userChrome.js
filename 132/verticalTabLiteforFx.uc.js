@@ -6,6 +6,10 @@
 // @compatibility  Firefox 132
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/09/21 14:00 Bug 1906888
+// @version        2024/09/18 12:00 Bug 1918638
+// @version        2024/09/14 12:00 always expaded tabs, revert Bug 1918608
+// @version        2024/09/14 00:00 Bug 1911889
 // @version        2024/09/11 00:00 revert Bug 1913279
 // @version        2024/09/09 00:00 add missing arguments
 // @version        2024/09/02 Bug 1916098 - Remove appcontent box.
@@ -160,6 +164,14 @@ function verticalTabLiteforFx() {
     border: 0 solid !important;
     min-width: 1px !important;
     width: 1px !important;
+    margin-inline-start: 0 !important;
+    margin-inline-end: 0 !important;
+  }
+
+  :root[sizemode=normal] #vtb_splitter[state="collapsed"] {
+    border: 1 solid !important;
+    min-width: 4px !important;
+    width: 4px !important;
     margin-inline-start: 0 !important;
     margin-inline-end: 0 !important;
   }
@@ -357,7 +369,7 @@ function verticalTabLiteforFx() {
 
   :root:not([uidensity="compact"]) .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
   :root:not([uidensity="compact"]) .tabbrowser-tab:hover > .tab-stack > .tab-content > .tab-close-button {
-      margin-inline-end: calc(var(--inline-tab-padding) / -2);
+      margin-inline-end: calc(var(---tab-inline-padding) / -2);
       width: 19px !important;
       height: 23px !important;
       padding: 7px 5px !important; /*[上下][左右]*/
@@ -365,7 +377,7 @@ function verticalTabLiteforFx() {
   }
   :root[uidensity="compact"] .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
   :root[uidensity="compact"] .tabbrowser-tab:hover > .tab-stack > .tab-content > .tab-close-button {
-      margin-inline-end: calc(var(--inline-tab-padding) / -2);
+      margin-inline-end: calc(var(--tab-inline-padding) / -2);
       width: 19px !important;
       height: 19px !important;
       padding: 5px 5px !important;
@@ -425,7 +437,7 @@ function verticalTabLiteforFx() {
     --tab-border-radius: 0 !important;
     --tab-shadow-max-size: 0 !important;
     --proton-tab-block-margin: 0 !important;
-    --inline-tab-padding: 0 !important;
+    --tab-inline-padding: 0 !important;
     --tabpanel-background-color: unset !important;
   }
 
@@ -457,7 +469,7 @@ function verticalTabLiteforFx() {
  .tab-icon-overlay:not([crashed])[muted]:hover,
  .tab-icon-overlay:not([crashed])[activemedia-blocked]:hover {
     background-color: white !important;
-    stroke: white !important;
+    fill: black !important;
     color: black !important;
   }
 
@@ -502,10 +514,14 @@ function verticalTabLiteforFx() {
       border-radius: 10px!important;
   }
 
-  .tab-icon-overlay[muted] {
-        background: linear-gradient(45deg, transparent, transparent 45%, red 45%, red 55%, transparent 55%, transparent) !important;
+  #TabsToolbar:not([brighttext]) .tab-icon-overlay[muted],
+  #TabsToolbar[brighttext] .tab-icon-overlay[muted]:hover {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiAxMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiBmaWxsPSJjb250ZXh0LWZpbGwiIGZpbGwtb3BhY2l0eT0iY29udGV4dC1maWxsLW9wYWNpdHkiPg0KICA8cGF0aCBmaWxsPSJjb250ZXh0LWZpbGwiIGQ9Ik02LjcgMi42djYuOGMwIC43LS45IDEtMS4zLjVsLTEuNy0ySDIuMmMtLjQgMC0uNy0uMy0uNy0uOFY0LjljMC0uNC4zLS44LjctLjhoMS41bDEuNy0yYy41LS41IDEuMy0uMiAxLjMuNXoiLz4NCjxwYXRoIHN0cm9rZT0icmVkIiBzdHJva2Utd2lkdGg9IjIiIGZpbGw9Im5vbmUiIGQ9Ik0gMCAwIEwgMTIgMTIiIC8+PC9zdmc+") !important;
   }
-
+  #TabsToolbar[brighttext] .tab-icon-overlay[muted]:not(:hover) {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAxMiAxMiIgd2lkdGg9IjEyIiBoZWlnaHQ9IjEyIiBmaWxsPSJjb250ZXh0LWZpbGwiIGZpbGwtb3BhY2l0eT0iY29udGV4dC1maWxsLW9wYWNpdHkiPg0KICA8cGF0aCBzdHJva2U9IndoaXRlIiBmaWxsPSJ3aGl0ZSIgZD0iTTYuNyAyLjZ2Ni44YzAgLjctLjkgMS0xLjMuNWwtMS43LTJIMi4yYy0uNCAwLS43LS4zLS43LS44VjQuOWMwLS40LjMtLjguNy0uOGgxLjVsMS43LTJjLjUtLjUgMS4zLS4yIDEuMy41eiIvPg0KPHBhdGggc3Ryb2tlPSJyZWQiIHN0cm9rZS13aWR0aD0iMiIgZmlsbD0ibm9uZSIgZD0iTSAwIDAgTCAxMiAxMiIgLz48L3N2Zz4=") !important;
+  }
+  
   .tab-icon-image:not([src],[busy]) {
     display: unset !important;
     fill: #aaaaaa !important;
@@ -566,10 +582,12 @@ function verticalTabLiteforFx() {
   tabsToolbar.querySelector(".toolbar-items").removeAttribute("align");
   tabsToolbar.querySelector("#TabsToolbar-customization-target").setAttribute("orient", "vertical");
 
+  gBrowser.tabContainer.setAttribute("expanded", "true");
+
 
   // Bug 1899336 - Position pinned tabs and new tab button for vertical tabs mode
   gBrowser.verticalPinnedTabsContainer.style.setProperty("display", "none", "important");
-  gBrowser.verticalPinnedTabsContainer.nextSibling.style.setProperty("display", "none", "important");
+  //gBrowser.verticalPinnedTabsContainer.nextSibling.style.setProperty("display", "none", "important");
 
   // disabled verticalMode
 	function accessorDescriptor(field, fun) {
