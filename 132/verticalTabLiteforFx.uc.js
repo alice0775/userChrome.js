@@ -6,6 +6,7 @@
 // @compatibility  Firefox 132
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/09/25 13:00 Bug 1919439
 // @version        2024/09/21 14:00 Bug 1906888
 // @version        2024/09/18 12:00 Bug 1918638
 // @version        2024/09/14 12:00 always expaded tabs, revert Bug 1918608
@@ -464,10 +465,16 @@ function verticalTabLiteforFx() {
   .tabbrowser-tab:not(:hover) .tab-icon-overlay:not([pinned], [sharing], [crashed]):is([soundplaying], [muted], [activemedia-blocked]) {
    opacity: 1 !important;
  }
-
- .tab-icon-overlay:not([crashed])[soundplaying]:hover,
- .tab-icon-overlay:not([crashed])[muted]:hover,
- .tab-icon-overlay:not([crashed])[activemedia-blocked]:hover {
+ 
+ #TabsToolbar:not([brighttext]) .tab-icon-overlay:not([crashed])[soundplaying]:hover,
+ #TabsToolbar:not([brighttext]) .tab-icon-overlay:not([crashed])[muted]:hover,
+ #TabsToolbar:not([brighttext]) .tab-icon-overlay:not([crashed])[activemedia-blocked]:hover {
+   filter: invert();
+   background-color: color-mix(in srgb, currentColor 15%, currentColor 85%) !important;
+ }
+ #TabsToolbar[brighttext] .tab-icon-overlay:not([crashed])[soundplaying]:hover,
+ #TabsToolbar[brighttext] .tab-icon-overlay:not([crashed])[muted]:hover,
+ #TabsToolbar[brighttext] .tab-icon-overlay:not([crashed])[activemedia-blocked]:hover {
     background-color: white !important;
     fill: black !important;
     color: black !important;
@@ -509,6 +516,7 @@ function verticalTabLiteforFx() {
       inset-inline-end: -6px !important;
       z-index: 1 !important;
       padding: 2px !important;
+      border: 0.5px solid transparent !important;
   }
   .tab-icon-overlay:is([soundplaying], [muted], [activemedia-blocked]) {
       border-radius: 10px!important;
