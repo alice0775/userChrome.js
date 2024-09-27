@@ -6,7 +6,8 @@
 // @compatibility  Firefox 132
 // @author         Alice0775
 // @note           not support pinned tab yet
-// @version        2024/09/25 13:00 Bug 1919439
+// @version        2024/09/28 08:00 Tweak css Bug 1910358
+// @version        2024/09/25 13:00 Tweak sound/mute icons (Bug 1919439)
 // @version        2024/09/21 14:00 Bug 1906888
 // @version        2024/09/18 12:00 Bug 1918638
 // @version        2024/09/14 12:00 always expaded tabs, revert Bug 1918608
@@ -129,6 +130,10 @@ function verticalTabLiteforFx() {
   let verticalTab_height = 22;
 
   var css =`@-moz-document url-prefix("chrome://browser/content/browser.xhtml") {
+  :root {
+    --tab-inner-inline-margin: 0 !important;
+    --tab-inline-padding: 0 !important;
+  }
   :root:not([uidensity="compact"]) {
     --tab-min-height: 24px !important;
   }
