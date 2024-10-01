@@ -8,6 +8,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  128
+// @version        2024/10/01 00:00 hide close button in allTabsMenu
 // @version        2024/09/09 00:00 add missing arguments, important
 // @version        2023/10/10 00:00 Stop using xml-stylesheet processing instructions
 // @version        2021/09/14 00:00 remove unused method
@@ -173,6 +174,18 @@ var tabProtect = {
        );
       eval("gBrowser.swapBrowsersAndCloseOther = function " + func.replace(/^function/, ''));
     }
+
+    document.addEventListener("popupshown",
+      (event) => {
+        Services.console.logStringMessage(event.originalTarget.id);
+        if (!document.getElementById("allTabsMenu-allTabsView")) return;
+        let rows = document.getElementById("allTabsMenu-allTabsView").querySelectorAll(".all-tabs-item");
+        for (let row of rows) {
+          if (row.tab.hasAttribute("tabProtect")) {
+            row.querySelector(".all-tabs-close-button")?.style.setProperty("display", "none", "");
+          }
+        }
+      });
   },
 
   restoreAll: function(delay = 0) {
