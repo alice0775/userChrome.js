@@ -6,6 +6,7 @@
 // @compatibility  Firefox 132
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/10/07 08:00 Tweak z-index of splitter
 // @version        2024/09/28 08:00 Tweak css Bug 1910358
 // @version        2024/09/25 13:00 Tweak sound/mute icons (Bug 1919439)
 // @version        2024/09/21 14:00 Bug 1906888
@@ -163,7 +164,7 @@ function verticalTabLiteforFx() {
     background-image: none !important;
     background-color: transparent;
     position: relative;
-    z-index:99999999;
+    /*z-index:99999999;*/
   }
 
   #vtb_splitter[state="collapsed"] {

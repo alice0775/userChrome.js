@@ -6,6 +6,7 @@
 // @compatibility  Firefox 127
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/10/07 08:00 Tweak z-index of splitter
 // @version        2024/09/09 00:00 add missing arguments
 // @version        2024/05/21 use[pinned] instead [pinned="true"]
 // @version        2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
@@ -140,7 +141,7 @@ function verticalTabLiteforFx() {
     background-image: none !important;
     background-color: transparent;
     position: relative;
-    z-index:99999999;
+    /*z-index:99999999;*/
   }
 
   #vtb_splitter[state="collapsed"] {

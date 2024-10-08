@@ -6,6 +6,7 @@
 // @compatibility  Firefox 131
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/10/07 08:00 Tweak z-index of splitter
 // @version        2024/09/09 00:00 add missing arguments
 // @version        2024/08/23 wip Bug 1913322 - Remove overflow / underflow event usage from arrowscrollbox / tabs.js.
 // @version        2024/08/17 wip Bug 1899582 - Update styling for vertical tabs
@@ -149,7 +150,7 @@ function verticalTabLiteforFx() {
     background-image: none !important;
     background-color: transparent;
     position: relative;
-    z-index:99999999;
+    /*z-index:99999999;*/
   }
 
   #vtb_splitter[state="collapsed"] {
