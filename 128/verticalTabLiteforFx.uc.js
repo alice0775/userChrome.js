@@ -6,6 +6,7 @@
 // @compatibility  Firefox 127
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/10/20 08:00 Tweak css for close button
 // @version        2024/10/07 08:00 Tweak z-index of splitter
 // @version        2024/09/09 00:00 add missing arguments
 // @version        2024/05/21 use[pinned] instead [pinned="true"]
@@ -320,6 +321,12 @@ function verticalTabLiteforFx() {
 /*      mask-image: linear-gradient(to left, transparent, black 0.05em) !important;*/
   }
 
+
+  .tabbrowser-tab:not([tabProtect]) > .tab-stack > .tab-content > .tab-close-button {
+    display: flex !important;
+  }
+
+
   :root:not([uidensity="compact"]) .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
   :root:not([uidensity="compact"]) .tabbrowser-tab:hover > .tab-stack > .tab-content > .tab-close-button {
       margin-inline-end: calc(var(--inline-tab-padding) / -2);
@@ -621,16 +628,8 @@ function verticalTabLiteforFx() {
       prewarmed,
       skipSessionStore,
     } = {}) {
-    animate = false;
-    gBrowser.removeTab_vtb_org(aTab,
-    {
-      animate,
-      triggeringEvent,
-      skipPermitUnload,
-      closeWindowWithLastTab,
-      prewarmed,
-      skipSessionStore,
-    });
+    arguments[1].animate = false;
+    this.removeTab_vtb_org.apply(this, arguments);
   }
 
   //gBrowser.tabContainer.getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
