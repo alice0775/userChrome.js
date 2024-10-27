@@ -6,6 +6,7 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @compatibility  128
+// @version        2024/10/23 00:00 fix forceNonPrivate
 // @version        2024/07/17 00:00 Stop ignore about: error pages
 // @version        2023/10/10 00:00 Stop using xml-stylesheet processing instructions
 // @version        2023/05/11 00:00 fix #76
@@ -61,7 +62,8 @@ patch: {
           targetBrowser = params.targetBrowser;
           targetTab = w.gBrowser.getTabForBrowser(targetBrowser);
         } else {
-          w = URILoadingHelper.getTargetWindow(window);
+          let forceNonPrivate = params.forceNonPrivate;
+          w = URILoadingHelper.getTargetWindow(window, { forceNonPrivate });
           targetBrowser = w.gBrowser.selectedBrowser;
           targetTab = w.gBrowser.selectedTab;
         }
