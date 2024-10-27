@@ -6,6 +6,7 @@
 // @compatibility  Firefox 133 Not compatible with sidebar.revamp, sidebar.verticalTabs and browser.tabs.groups.enabled
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/10/27 22:00 Bug 1926582 - Rename things related to moving multiselected tabs together
 // @version        2024/10/24 18:00 Bug 1923052 - Show private browsing indicator icon
 // @version        2024/10/20 08:00 Tweak css for close button
 // @version        2024/10/08 20:00 Tweak close button paddings bug 1912403
@@ -814,7 +815,7 @@ function verticalTabLiteforFx() {
         return;
       }
       movingTabs = draggedTab._dragData.movingTabs;
-      draggedTab.container._finishGroupSelectedTabs(draggedTab);
+      draggedTab.container._finishMoveTogetherSelectedTabs(draggedTab);
     }
     this._tabDropIndicator.hidden = true;
     event.stopPropagation();
@@ -988,7 +989,7 @@ function verticalTabLiteforFx() {
         return;
       }
 
-      this._finishGroupSelectedTabs(draggedTab);
+      this._finishMoveTogetherSelectedTabs(draggedTab);
       this._finishAnimateTabMove();
 
       if (
