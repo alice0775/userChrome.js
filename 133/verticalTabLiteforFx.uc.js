@@ -6,6 +6,8 @@
 // @compatibility  Firefox 133 Not compatible with sidebar.revamp, sidebar.verticalTabs and browser.tabs.groups.enabled
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/10/24 18:00 Bug 1923052 - Show private browsing indicator icon
+// @version        2024/10/20 08:00 Tweak css for close button
 // @version        2024/10/08 20:00 Tweak close button paddings bug 1912403
 // @version        2024/10/07 08:00 Tweak z-index of splitter
 // @version        2024/09/28 08:00 Tweak css Bug 1910358
@@ -246,9 +248,7 @@ function verticalTabLiteforFx() {
     mask-image: none !important;
   }
 }
-#tabbrowser-tabs[orient="vertical"] .tabbrowser-tab[selected]:not([tabProtect])  .tab-close-button {
-    display: unset !important;
-}
+
   /* hide */
   #tabs-newtab-button,
   .titlebar-spacer[type="pre-tabs"],
@@ -365,6 +365,10 @@ function verticalTabLiteforFx() {
       direction: ltr;
       mask-image: none !important;
 /*      mask-image: linear-gradient(to left, transparent, black 0.05em) !important;*/
+  }
+
+  .tabbrowser-tab:not([tabProtect]) > .tab-stack > .tab-content > .tab-close-button {
+    display: flex !important;
   }
 
   :root:not([uidensity="compact"]) .tabbrowser-tab > .tab-stack > .tab-content > .tab-close-button,
@@ -567,6 +571,10 @@ function verticalTabLiteforFx() {
     margin-top: 5px !important;
     margin-left: 4px !important;
   }
+
+  :root([privatebrowsingmode]) .private-browsing-indicator-with-label {
+    display: flex !important;
+  }
   `;
   var sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
   var uri = makeURI('data:text/css;charset=UTF=8,' + encodeURIComponent(css));
@@ -640,7 +648,8 @@ function verticalTabLiteforFx() {
   let spacer = tabsToolbar.querySelector('.titlebar-spacer[type="post-tabs"]');
   //let accessibility = tabsToolbar.querySelector('.accessibility-indicator');
   //let private = tabsToolbar.querySelector('.private-browsing-indicator');
-  let private = tabsToolbar.querySelector('#private-browsing-indicator-with-label');
+  let private = tabsToolbar.querySelector('#private-browsing-indicator-with-label') ||
+                tabsToolbar.querySelector('.private-browsing-indicator-with-label');
   let control = tabsToolbar.querySelector('.titlebar-buttonbox-container');
   
   ref = document.getElementById("PanelUI-button");
