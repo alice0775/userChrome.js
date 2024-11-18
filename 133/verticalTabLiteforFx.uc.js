@@ -6,6 +6,8 @@
 // @compatibility  Firefox 133 Not compatible with sidebar.revamp, sidebar.verticalTabs and browser.tabs.groups.enabled
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/11/18 08:00 Tweak css for attention dot
+// @version        2024/11/06 12:00 revert the change of Bug 1929345
 // @version        2024/10/27 22:00 Bug 1926582 - Rename things related to moving multiselected tabs together
 // @version        2024/10/24 18:00 Bug 1923052 - Show private browsing indicator icon
 // @version        2024/10/20 08:00 Tweak css for close button
@@ -139,6 +141,9 @@ function verticalTabLiteforFx() {
     --tab-inner-inline-margin: 0 !important;
     --tab-inline-padding: 0 !important;
     --tab-close-button-padding: 0 !important;
+    /*revert the change of Bug 1929345*/
+    --tab-icon-overlay-fill: light-dark(black, white) !important;
+    --tab-icon-overlay-stroke: light-dark(white, black) !important;
   }
   :root:not([uidensity="compact"]) {
     --tab-min-height: ${verticalTab_height + 2}px !important;
@@ -453,6 +458,10 @@ function verticalTabLiteforFx() {
     font-weight: unset !important; /*xxx Bug 1704347*/
   }
 
+  .tabbrowser-tab[image] > .tab-stack > .tab-content[attention]:not([selected]) {
+      background-position-x: left 20.5px !important;
+  }
+
   .tabbrowser-tab:not([usercontextid]) .tab-background[selected]:not([multiselected]) {
     outline: 1px solid currentColor !important;
   }
@@ -547,6 +556,7 @@ function verticalTabLiteforFx() {
 
   .tab-icon-overlay[pictureinpicture="true"]:not([soundplaying]):not([muted]) {
     display: block !important;
+    filter: brightness(2.0) !important;
   }
 
   .tab-icon-overlay[pictureinpicture="true"]:not([soundplaying]):not([muted]) {
