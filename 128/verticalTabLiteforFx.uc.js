@@ -6,6 +6,7 @@
 // @compatibility  Firefox 127
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/11/18 08:00 Tweak css for attention dot
 // @version        2024/10/20 08:00 Tweak css for close button
 // @version        2024/10/07 08:00 Tweak z-index of splitter
 // @version        2024/09/09 00:00 add missing arguments
@@ -406,6 +407,14 @@ function verticalTabLiteforFx() {
   }
   .tab-label:is([selected], [attention]) {
     font-weight: unset !important; /*xxx Bug 1704347*/
+  }
+
+  .tabbrowser-tab:is([image], [pinned]) > .tab-stack > .tab-content[attention]:not([selected]),
+  .tabbrowser-tab > .tab-stack > .tab-content[pinned][titlechanged]:not([selected]) {
+    background-position-y: bottom 4px;
+  }
+  .tabbrowser-tab[image] > .tab-stack > .tab-content[attention]:not([selected]) {
+      background-position-x: left 19.5px !important;
   }
 
   #TabsToolbar .tabbrowser-tab:not([dragover]) .tab-background {
