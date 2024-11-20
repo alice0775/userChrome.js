@@ -6,6 +6,7 @@
 // @compatibility  Firefox 133 Not compatible with sidebar.revamp, sidebar.verticalTabs and browser.tabs.groups.enabled
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/11/20 18:00 set Margin For HoverPreview
 // @version        2024/11/18 08:00 Tweak css for attention dot
 // @version        2024/11/06 12:00 revert the change of Bug 1929345
 // @version        2024/10/27 22:00 Bug 1926582 - Rename things related to moving multiselected tabs together
@@ -135,6 +136,8 @@ function verticalTabLiteforFx() {
   let verticalTabbar_minWidth = Services.prefs.getIntPref("browser.tabs.tabMinWidth", 0);
   let verticalTabbar_width = Services.prefs.getIntPref("ucjs.tabWidth", verticalTabbar_maxWidth);
   let verticalTab_height = 22;
+
+  setMarginForHoverPreview();
 
   var css =`@-moz-document url-prefix("chrome://browser/content/browser.xhtml") {
   :root {
@@ -629,6 +632,11 @@ function verticalTabLiteforFx() {
 	}
   Object.defineProperty(gBrowser.tabContainer, "verticalMode", accessorDescriptor("get", ()=>{return false}));
 
+  function setMarginForHoverPreview() {
+    let panelStyle = document.getElementById("tab-preview-panel").style;
+    panelStyle.setProperty("margin-left", verticalTabbar_width+"px", "important");
+    panelStyle.setProperty("margin-top", -verticalTab_height+"px", "important");
+  }
 
   // scrollbar
   gBrowser.tabContainer.setAttribute("orient", "vertical");
@@ -1179,6 +1187,7 @@ function verticalTabLiteforFx() {
             Services.prefs.setIntPref("ucjs.tabWidth", width);
           }
         }
+        setMarginForHoverPreview();
       }
     }
   });
