@@ -6,6 +6,7 @@
 // @compatibility  Firefox 133 Not compatible with sidebar.revamp, sidebar.verticalTabs and browser.tabs.groups.enabled
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/11/27 12:00 Tweak window control button
 // @version        2024/11/20 18:00 set Margin For HoverPreview
 // @version        2024/11/18 08:00 Tweak css for attention dot
 // @version        2024/11/06 12:00 revert the change of Bug 1929345
@@ -305,30 +306,24 @@ function verticalTabLiteforFx() {
     display: none;
   }
 
-  /* height of menu bar */
-  :root:not([tabsintitlebar]) #toolbar-menubar {
-    height: 30px;
-  }
-  :root:not([tabsintitlebar]) #main-menubar {
-    padding-top: 4px;
-  }
-  :root[tabsintitlebar] #toolbar-menubar[autohide="true"] {
-    height:32px !important; //workaround css
-  }
-  :root[tabsintitlebar][sizemode="maximized"] #toolbar-menubar[autohide="true"] {
-    height:32px !important; //workaround css
-  }
 
-  /*  */
-  :root:not([inFullscreen])[tabsintitlebar][Menubarinactive] #titlebar {
-     margin-top:-32px;
+  :root[tabsintitlebar][sizemode="maximized"] #toolbar-menubar[autohide="true"][inactive="true"]+#nav-bar{
+    padding-top: 0; /*workaround css*/
+    border-top: none !important;
   }
 
 
-  :root:not([tabsintitlebar])[Menubarinactive="true"] #titlebar {
-    height: 0 !important; 
+  :root[tabsintitlebar]:is([sizemode="maximized"],[sizemode="normal"]) #navigator-toolbox > #nav-bar > .titlebar-buttonbox-container:last-child {
+    display: flex !important;
+  }
+  :root[inFullscreen="true"] #navigator-toolbox > #nav-bar > .titlebar-buttonbox-container:last-child {
+    display: flex !important;
+  }
+  :root[tabsintitlebar]:is([sizemode="maximized"],[sizemode="normal"]) #navigator-toolbox > #nav-bar > #nav-bar-overflow-button+.titlebar-spacer[type="post-tabs"] {
+    display: none !important;
   }
 
+ 
   /* window control and  drag space */
   :root:not([inFullscreen])[tabsintitlebar]:not([Menubarinactive]) #nav-bar .titlebar-buttonbox{
      display: none !important;
@@ -585,10 +580,12 @@ function verticalTabLiteforFx() {
     margin-top: 5px !important;
     margin-left: 4px !important;
   }
-
-  :root([privatebrowsingmode]) .private-browsing-indicator-with-label {
-    display: flex !important;
+  .private-browsing-indicator-with-label2 {
+    :root[privatebrowsingmode="temporary"] & {
+      display: flex !important;
+    }
   }
+
   `;
   var sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
   var uri = makeURI('data:text/css;charset=UTF=8,' + encodeURIComponent(css));
@@ -674,8 +671,8 @@ function verticalTabLiteforFx() {
   ref = document.getElementById("PanelUI-button");
   ref.parentNode.insertBefore(spacer, ref);
   //ref.parentNode.insertBefore(accessibility, ref);
-  ref.parentNode.insertBefore(private, ref);
-  ref.parentNode.insertBefore(control, ref);
+  ref.parentNode.insertBefore(private, ref).classList.add("private-browsing-indicator-with-label2");
+  ref.parentNode.appendChild(control);
 /*  var func = FullScreen._updateToolbars.toString();
   func = func.replace(
   'document.getElementById("TabsToolbar").appendChild(fullscreenctls);',
