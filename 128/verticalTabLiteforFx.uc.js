@@ -637,8 +637,21 @@ function verticalTabLiteforFx() {
       prewarmed,
       skipSessionStore,
     } = {}) {
-    arguments[1].animate = false;
-    this.removeTab_vtb_org.apply(this, arguments);
+    try {
+      arguments[1].animate = false;
+      this.removeTab_vtb_org.apply(this, arguments);
+    } catch(e) {
+      this.removeTab_vtb_org(
+        aTab,
+        {
+          animate:false,
+          triggeringEvent:triggeringEvent,
+          skipPermitUnload:skipPermitUnload,
+          closeWindowWithLastTab:closeWindowWithLastTab,
+          prewarmed:prewarmed,
+          skipSessionStore:skipSessionStore,
+        });
+    }
   }
 
   //gBrowser.tabContainer.getDropEffectForTabDrag = function(event){return "";}; // default "dragover" handler does nothing
