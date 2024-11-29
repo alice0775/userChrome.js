@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 128
+// @version       2024/11/29 Tolerance reduced.
 // @version       2024/11/29 listen mouseup on document instead gbrowser
 // @version       2024/11/29 workaround: mouseup event would not fire on select element
 // @version       2024/10/07 scrolling page uses keyevent instead of goDoCommand
@@ -714,7 +715,7 @@ var ucjsMouseGestures = {
     var distanceX = Math.abs(x - this._lastX);
     var distanceY = Math.abs(y - this._lastY);
     // minimal movement where the gesture is recognized
-    const tolerance = 30;
+    const tolerance = 10;
     if (distanceX < tolerance && distanceY < tolerance) {
       this.statusinfo = this._laststatusinfo;
       return;
