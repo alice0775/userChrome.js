@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 128
+// @version       2024/11/29 listen mouseup on document instead gbrowser
 // @version       2024/11/29 workaround: mouseup event would not fire on select element
 // @version       2024/10/07 scrolling page uses keyevent instead of goDoCommand
 // @version       2024/05/10 Bug 1880914 - Move Browser* helper functions used from global menubar and similar commands to a single object in a separate file, loaded as-needed
@@ -474,7 +475,7 @@ var ucjsMouseGestures = {
     this._version = Services.appinfo.version.split(".")[0];
     this._isMac = navigator.platform.indexOf("Mac") == 0;
     gBrowser.tabpanels.addEventListener("mousedown", this, false);
-    gBrowser.tabpanels.addEventListener("mouseup", this, false);
+    document.addEventListener("mouseup", this, false);
     gBrowser.tabpanels.addEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
       window.addEventListener('wheel', this, true);
@@ -491,7 +492,7 @@ var ucjsMouseGestures = {
   uninit: function() {
     gBrowser.tabpanels.removeEventListener("mousedown", this, false);
     gBrowser.tabpanels.removeEventListener("mousemove", this, false);
-    gBrowser.tabpanels.removeEventListener("mouseup", this, false);
+    document.removeEventListener("mouseup", this, false);
     gBrowser.tabpanels.removeEventListener("mouseleave", this, false);
     gBrowser.tabpanels.removeEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
@@ -585,16 +586,6 @@ var ucjsMouseGestures = {
     var y = event.screenY;
     switch (event.type) {
       case "mousedown": 
-        if (this._isMouseDownL) {
-          var distanceX = Math.abs(x - this._lastX);
-          var distanceY = Math.abs(y - this._lastY);
-          const tolerance = 30;
-          if (distanceX > tolerance || distanceY > tolerance) {// xxx workaround
-            if (!this.enableRockerGestures && event.button == 2) {
-              this._isMouseDownL = false;
-            }
-          }
-        }
         if (event.button == 2) {
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
           this._isMouseDownR = true;
@@ -928,12 +919,6 @@ let ucjsMouseGestures_framescript = {
         let secMan = Cc["@mozilla.org/scriptsecuritymanager;1"].getService(Ci.nsIScriptSecurityManager);
         switch(event.type) {
           case "mousedown":
-            //this.console.logStringMessage(event.originalTarget.nodeName);
-            //workaround: mouseup event would not fire on select element
-            if (event.originalTarget.nodeName === "SELECT") {
-              sendSyncMessage("ucjsMouseGestures_linkURL_dragstart",{});
-              return;
-            }
             if (event.button == 2) {
               addEventListener("mousemove", this, false);
             }
