@@ -5,10 +5,9 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 133
+// @compatibility 128
 // @version       2024/11/29 workaround: mouseup event would not fire on select element
 // @version       2024/10/07 scrolling page uses keyevent instead of goDoCommand
-// @version       2024/08/25 Bug 1734181 - Re-enable back button intervention in Nightly
 // @version       2024/05/10 Bug 1880914 - Move Browser* helper functions used from global menubar and similar commands to a single object in a separate file, loaded as-needed
 // @version       2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
 // @version       2024/03/26 00:00 fix cancel RockerGestures after click select tag
@@ -1677,9 +1676,7 @@ let ucjsMouseGestures_helper = {
           entry.hasUserInteraction === false &&
           // Always allow going to the first and last navigation points.
           j != end - 1 &&
-          j != start &&
-          // Always display the current entry
-          j != index
+          j != start
         ) {
           continue;
         }
@@ -1694,8 +1691,7 @@ let ucjsMouseGestures_helper = {
         item.setAttribute("label", entry.title || uri);
         item.setAttribute("index", j);
 
-        // Cache this so that BrowserCommands.gotoHistoryIndex doesn't need the
-        // original index
+        // Cache this so that gotoHistoryIndex doesn't need the original index
         item.setAttribute("historyindex", j - index);
 
         if (j != index) {
