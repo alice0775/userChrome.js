@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 128
+// @version       2024/12/02 revert the cange of 2024/10/07
 // @version       2024/11/29 Tolerance reduced.
 // @version       2024/11/29 listen mouseup on document instead gbrowser
 // @version       2024/11/29 workaround: mouseup event would not fire on select element
@@ -226,18 +227,10 @@ var ucjsMouseGestures = {
         ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
         ['LDRU', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
 
-        ['RU', '上端へスクロール', function(){
-            ucjsMouseGestures_helper.sendKey(/*shift*/null, /*ctrl*/null, /*alt*/null, /*meta*/null, [{key:"Home", keycode:KeyboardEvent.DOM_VK_HOME}]);
-          } ],
-        ['RD', '下端へスクロール', function(){
-            ucjsMouseGestures_helper.sendKey(null, null, null, null, [{key:"End", keycode:KeyboardEvent.DOM_VK_END}]);
-          } ],
-        ['U', '上へスクロール', function(){
-            ucjsMouseGestures_helper.sendKey(null, null, null, null, [{key:"PageUp", keycode:KeyboardEvent.DOM_VK_PAGE_UP}]);
-          } ],
-        ['D', '下へスクロール', function(){
-            ucjsMouseGestures_helper.sendKey(null, null, null, null, [{key:"PageDown", keycode:KeyboardEvent.DOM_VK_PAGE_DOWN}]);
-          } ],
+        ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
+        ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
+        ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
+        ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
 
         ['W-', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
         ['W+', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
