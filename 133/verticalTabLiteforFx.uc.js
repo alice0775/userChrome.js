@@ -6,6 +6,7 @@
 // @compatibility  Firefox 133 Not compatible with sidebar.revamp, sidebar.verticalTabs and browser.tabs.groups.enabled
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/12/22 00:00 remeve css hack due to crash in customozetoolbar on debug build 
 // @version        2024/11/27 12:00 Tweak window control button
 // @version        2024/11/20 18:00 set Margin For HoverPreview
 // @version        2024/11/18 08:00 Tweak css for attention dot
@@ -244,11 +245,13 @@ function verticalTabLiteforFx() {
   .tabbrowser-tab {
     direction: ltr; /*scroll bar position*/
   }
+  /* xxx remeve the following css hack due to crash in customozetoolbar on debug build */
   /* be able to drag scrollbar thumb */
+  /*
   scrollbox[part] > scrollbar {
     -moz-window-dragging: no-drag;
   }
-
+  */
 
 #tabbrowser-tabs[orient="vertical"]:has(> #tabbrowser-arrowscrollbox[overflowing]) {
   border-bottom: 1px solid transparent !important;

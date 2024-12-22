@@ -6,6 +6,7 @@
 // @compatibility  Firefox 127
 // @author         Alice0775
 // @note           not support pinned tab yet
+// @version        2024/12/22 00:00 remeve css hack due to crash in customozetoolbar on debug build 
 // @version        2024/11/18 08:00 Tweak css for attention dot
 // @version        2024/10/20 08:00 Tweak css for close button
 // @version        2024/10/07 08:00 Tweak z-index of splitter
@@ -131,7 +132,7 @@ function verticalTabLiteforFx() {
   :root[BookmarksToolbarOverlapsBrowser] #vtb_splitter {
     /* Make room for the bookmarks toolbar so that it won't actually overlap the
        new tab page and sidebar contents. */
-    padding-top: var(--bookmarks-toolbar-height);
+    padding-top: var(--bookmarks-toolbar-height) !important;
   }
 
   
@@ -201,10 +202,13 @@ function verticalTabLiteforFx() {
   .tabbrowser-tab {
     direction: ltr; /*scroll bar position*/
   }
+  /* xxx remeve the following css hack due to crash in customozetoolbar on debug build */
   /* be able to drag scrollbar thumb */
+  /*
   scrollbox[part] > scrollbar {
     -moz-window-dragging: no-drag;
   }
+  */
 
   /* hide */
   #tabs-newtab-button,
