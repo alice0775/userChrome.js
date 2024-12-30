@@ -5,6 +5,7 @@
 // @description    Add upper URIs to the context menu in Location bar.
 // @include        main
 // @author         p-arai
+// @version        2024/12/30 fix Bug
 // @version        2024/08/13 fix undefined erroor
 // @version        2023/04/18 00:20 use openTrustedLinkIn instead of openWebLinkIn
 
@@ -50,11 +51,12 @@
     var uri = gBrowser.currentURI;
     var uri_array = await getUpURIs();
     if (uri_array.length > 0) {
-      menupopup.goUp = function(menuitem) {
+      menupopup.goUp = function(uri) {
         //loadURI(menuitem.getAttribute("value"));
-        openLinkIn(menuitem.getAttribute("value"),
+        openLinkIn(uri,
                    "current",
                    {allowThirdPartyFixup: false,
+                    triggeringPrincipal:Services.scriptSecurityManager.createNullPrincipal({})
                    });
       };
       menupopup.goUpClick = function(event) {
@@ -85,8 +87,8 @@
           menuitem.setAttribute("label", uri_array[i].replace(uri.prePath, ""));
         }
         menuitem.setAttribute("value", uri_array[i]);
-        //menuitem.setAttribute("oncommand", "this.parentNode.goUp(this);", false);
-        menuitem.setAttribute("onclick",   "this.parentNode.goUpClick(event);", false);
+        menuitem.setAttribute("oncommand", "this.parentNode.goUp(this.value);");
+        menuitem.setAttribute("onclick",   "this.parentNode.goUpClick(event);");
         menupopup.appendChild(menuitem);
       }
     }

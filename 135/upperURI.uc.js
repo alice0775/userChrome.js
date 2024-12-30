@@ -6,6 +6,7 @@
 // @include        main
 // @compatibility  Firefox 135
 // @author         p-arai
+// @version        2024/12/30 fix Bug
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/08/13 fix undefined erroor
 // @version        2023/04/18 00:20 use openTrustedLinkIn instead of openWebLinkIn
@@ -57,6 +58,7 @@
         openLinkIn(menuitem.getAttribute("value"),
                    "current",
                    {allowThirdPartyFixup: false,
+                    triggeringPrincipal:Services.scriptSecurityManager.createNullPrincipal({})
                    });
       };
       menupopup.goUpClick = function(event) {
@@ -87,8 +89,9 @@
           menuitem.setAttribute("label", uri_array[i].replace(uri.prePath, ""));
         }
         menuitem.setAttribute("value", uri_array[i]);
+        menuitem.addEventListener("command", (event) => event.currentTarget.parentNode.goUp(event.currentTarget));
         //menuitem.setAttribute("oncommand", "this.parentNode.goUp(this);", false);
-        menuitem.addEventListener("click", (event) => this.parentNode.goUpClick(event));
+        menuitem.addEventListener("click", (event) => event.currentTarget.parentNode.goUpClick(event));
         //menuitem.setAttribute("onclick",   "this.parentNode.goUpClick(event);", false);
         menupopup.appendChild(menuitem);
       }
