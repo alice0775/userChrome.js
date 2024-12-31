@@ -45,9 +45,6 @@ var bookmarksmenu_scrollbar = {
           }
         }, 250, this, i);
       }
-    } else {
-      elm.addEventListener('popupshowing', this, false);
-      elm.addEventListener('DOMMenuItemActive', this, false);
     }
   },
 
