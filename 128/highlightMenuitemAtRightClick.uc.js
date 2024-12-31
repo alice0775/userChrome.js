@@ -3,7 +3,9 @@
 // @description  Highlight menuitem at right click, Bug 909122 - Right click on a menu entry doesn't change the visible focus
 // @charset      utf-8
 // @include      main
-// @version		   2024/10/01 Firefox 128
+// @async          true
+// @compatibility  Firefox 128
+// @version		   2025/01/01 fix bug
 // @version		   2023/04/21 Firefox 112
 // @version		   2022/03/06
 // ==/UserScript==
@@ -35,8 +37,10 @@ window.addEventListener("popupshowing", (event) => {
       event.target.id == "toolbar-context-menu" ||
       event.target.id == "appMenu-popup") {
     //console.log(event.target);
-    event.target.triggerNode?.setAttribute("_moz-menuactive2", true);
+    if (!event.target.triggerNode)
+      return;
     //console.log(event.target.triggerNode);
+    event.target.triggerNode.setAttribute("_moz-menuactive2", true);
   }
 });
 
@@ -44,6 +48,8 @@ window.addEventListener("popuphiding", (event) => {
   if (event.target.id == "placesContext" ||
       event.target.id == "toolbar-context-menu" ||
       event.target.id == "appMenu-popup") {
-    event.target.triggerNode?.removeAttribute("_moz-menuactive2", true);
+    if (!event.target.triggerNode)
+      return;
+    event.target.triggerNode.removeAttribute("_moz-menuactive2", true);
   }
 });
