@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.77mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.78mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// @version       2025/01/04 add error handler
 // @version       2025/01/03 use ChromeUtils.compileScript if async
 // @version       2024/12/25 load script async if meta has @async true. nolonger use @charset
 // @version       2023/09/07 remove to use nsIScriptableUnicodeConverter and AUTOREMOVEBOM
@@ -520,33 +521,33 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
             }
         }else{ //Not for UCJS_loader
           if (this.INFO) this.debug("loadSubScript: " + script.filename);
-          try {
-            /*
-            if (script.charset)
-              Services.scriptloader.loadSubScript(
-                         script.url + "?" + this.getLastModifiedTime(script.file),
-                         doc.defaultView, script.charset);
-            else
-              Services.scriptloader.loadSubScript(
-                         script.url + "?" + this.getLastModifiedTime(script.file),
-                         doc.defaultView);
-            */
-            if (!script.async) {
+          /*
+          if (script.charset)
+            Services.scriptloader.loadSubScript(
+                       script.url + "?" + this.getLastModifiedTime(script.file),
+                       doc.defaultView, script.charset);
+          else
+            Services.scriptloader.loadSubScript(
+                       script.url + "?" + this.getLastModifiedTime(script.file),
+                       doc.defaultView);
+          */
+          if (!script.async) {
+            try {
               Services.scriptloader.loadSubScriptWithOptions(
                           script.url + "?" + this.getLastModifiedTime(script.file), {
-                            target: doc.defaultView,
-                            ignoreCache: false});            
-            } else {
-              let target = doc.defaultView;
-              ChromeUtils.compileScript(
-                script.url + "?" + this.getLastModifiedTime(script.file),
-                {hasReturnValue: false}
-              ).then((r) => {
-                r.executeInGlobal(/*global*/ target);
-              });
+                          target: doc.defaultView,
+                          ignoreCache: false});            
+            }catch(ex) {
+              this.error(script.filename, ex);
             }
-          }catch(ex) {
-            this.error(script.filename, ex);
+          } else {
+            let target = doc.defaultView;
+            ChromeUtils.compileScript(
+              script.url + "?" + this.getLastModifiedTime(script.file),
+              {hasReturnValue: false}
+            ).then((r) => {
+              r.executeInGlobal(/*global*/ target, {reportExceptions: true}).catch((ex) => {});
+            }).catch((ex) => {});
           }
         }
       }
