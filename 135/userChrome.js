@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.78mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.79mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,7 +14,6 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
-// @version       2025/01/04 add error handler
 // @version       2025/01/03 use ChromeUtils.compileScript if async
 // @version       2024/12/25 load script async if meta has @async true. nolonger use @charset
 // @version       2023/09/07 remove to use nsIScriptableUnicodeConverter and AUTOREMOVEBOM
@@ -504,11 +503,11 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
 
       for(var m=0,len=this.scripts.length; m<len; m++){
         script = this.scripts[m];
-      if (this.ALWAYSEXECUTE.indexOf(script.filename) < 0
-        && (!!this.dirDisable['*']
-          || !!this.dirDisable[script.dir]
-          || !!this.scriptDisable[script.filename]) ) continue;
-      if( !script.regex.test(dochref)) continue;
+        if (this.ALWAYSEXECUTE.indexOf(script.filename) < 0
+          && (!!this.dirDisable['*']
+            || !!this.dirDisable[script.dir]
+            || !!this.scriptDisable[script.filename]) ) continue;
+        if( !script.regex.test(dochref)) continue;
         if( script.ucjs ){ //for UCJS_loader
             if (this.INFO) this.debug("loadUCJSSubScript: " + script.filename);
             aScript = doc.createElementNS("http://www.w3.org/1999/xhtml", "script");
@@ -521,33 +520,41 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
             }
         }else{ //Not for UCJS_loader
           if (this.INFO) this.debug("loadSubScript: " + script.filename);
+          let target = doc.defaultView;
           /*
-          if (script.charset)
-            Services.scriptloader.loadSubScript(
-                       script.url + "?" + this.getLastModifiedTime(script.file),
-                       doc.defaultView, script.charset);
-          else
-            Services.scriptloader.loadSubScript(
-                       script.url + "?" + this.getLastModifiedTime(script.file),
-                       doc.defaultView);
+          try {
+            if (script.charset)
+              Services.scriptloader.loadSubScript(
+                         script.url + "?" + this.getLastModifiedTime(script.file),
+                         target, script.charset);
+            else
+              Services.scriptloader.loadSubScript(
+                         script.url + "?" + this.getLastModifiedTime(script.file),
+                         target);
+          }catch(ex) {
+            this.error(script.filename, ex);
+          }
+          continue;
           */
           if (!script.async) {
             try {
-              Services.scriptloader.loadSubScriptWithOptions(
-                          script.url + "?" + this.getLastModifiedTime(script.file), {
-                          target: doc.defaultView,
-                          ignoreCache: false});            
+              if (script.charset)
+                Services.scriptloader.loadSubScript(
+                           script.url + "?" + this.getLastModifiedTime(script.file),
+                           target, script.charset);
+              else
+                Services.scriptloader.loadSubScript(
+                           script.url + "?" + this.getLastModifiedTime(script.file),
+                           target);
             }catch(ex) {
               this.error(script.filename, ex);
             }
           } else {
-            let target = doc.defaultView;
             ChromeUtils.compileScript(
-              script.url + "?" + this.getLastModifiedTime(script.file),
-              {hasReturnValue: false}
+              script.url + "?" + this.getLastModifiedTime(script.file)
             ).then((r) => {
-              r.executeInGlobal(/*global*/ target, {reportExceptions: true}).catch((ex) => {});
-            }).catch((ex) => {});
+              r.executeInGlobal(/*global*/ target, {reportExceptions: true});
+            }).catch((ex) => {this.error(script.filename, ex);});
           }
         }
       }
