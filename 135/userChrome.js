@@ -14,6 +14,8 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
 // Modified by Alice0775
 //
+// @version       2025/01/05 fix error handler
+// @version       2025/01/04 add error handler
 // @version       2025/01/03 use ChromeUtils.compileScript if async
 // @version       2024/12/25 load script async if meta has @async true. nolonger use @charset
 // @version       2023/09/07 remove to use nsIScriptableUnicodeConverter and AUTOREMOVEBOM
