@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 135
 // @author         Alice0775
+// @version        2025/01/05 fix bug
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/08/23 Bug 1690613 - Allow access to url/title/favIconUrl without "tabs" permission in session API
 // @version        2023/06/16 08:00 Bug 1819675 - Expand recently closed tabs to include all Windows
@@ -80,10 +81,11 @@ var UndoListInTabmenu = {
     menu.setAttribute("disabled", "true");
     popup.insertBefore(menu, refItem);
 
-    this.historyUndoWindowPopup3 = menu = menu.appendChild(document.createXULElement("menupopup"));
-    menu.setAttribute("id", "historyUndoWindowPopup3");
-    menu.addEventListener("popupshowing", () => UndoListInTabmenu.populateUndoWindowSubmenu(menu));
+    menupopup = document.createXULElement("menupopup");
+    menu.appendChild(menupopup);
+    menupopup.setAttribute("id", "historyUndoWindowPopup3");
     //menu.setAttribute("onpopupshowing", "UndoListInTabmenu.populateUndoWindowSubmenu(this);");
+    menupopup.addEventListener("popupshowing", (event) => UndoListInTabmenu.populateUndoWindowSubmenu(event.currentTarget));
 
     //UndoClose Tab List  最近閉じたタブ
     const LABELTEXT = "Recently Closed Tab  List";    //create menu
@@ -101,7 +103,7 @@ var UndoListInTabmenu = {
 
     //add event listener
     popup.addEventListener('popupshowing',function(event) {
-      UndoListInTabmenu.toggleRecentlyClosedWindows();
+      UndoListInTabmenu.toggleRecentlyClosedWindows(document.getElementById("historyUndoWindowMenu3"));
       // no restorable tabs, so make sure menu is disabled, and return
       if (UndoListInTabmenu._ss.getClosedTabCount(window) == 0) {
         menu.setAttribute("disabled", true);
@@ -163,14 +165,13 @@ var UndoListInTabmenu = {
     }, false);
   },
 
-  toggleRecentlyClosedWindows: function PHM_toggleRecentlyClosedWindows() {
+  toggleRecentlyClosedWindows: function PHM_toggleRecentlyClosedWindows(menu) {
     // enable/disable the Recently Closed Windows sub menu
-    let undoPopup = this.historyUndoWindowPopup3;
     // no restorable windows, so disable menu
     if (this._ss.getClosedWindowCount() == 0)
-      this.historyUndoWindowPopup3.parentNode.setAttribute("disabled", true);
+      menu.setAttribute("disabled", true);
     else
-      this.historyUndoWindowPopup3.parentNode.removeAttribute("disabled");
+      menu.removeAttribute("disabled");
   },
 
   /**
@@ -189,7 +190,6 @@ var UndoListInTabmenu = {
     );
     undoPopup.appendChild(windowsFragment);
     undoPopup.firstChild.setAttribute("accesskey", "R");
-    undoPopup.insertBefore(document.createXULElement("menuseparator"), undoPopup.childNodes[1]);
 
     // "Append Clear undo close window list"
     undoPopup.appendChild(document.createXULElement("menuseparator"));
