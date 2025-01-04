@@ -2,7 +2,9 @@
 // @name           ReplaceAndGoForms.uc.js
 // @description    ReplaceAndGoForms
 // @include        main
+// @async          true
 // @compatibility  Firefox 135
+// @version        2025/01/04 modify framescript
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2023/11/26 18:00 do not check onKeywordField
 // @version        2023/07/17 00:00 use ES module imports
@@ -42,35 +44,33 @@ var ReplaceAndGoForms = {
     var pasteItem = doc.getElementById("context-paste");
     menu.insertBefore(item, pasteItem.nextSibling);
 
-    let framescript = {
-      init: function() {
-        ChromeUtils.defineESModuleGetters(this, {
-            ContentDOMReference: "resource://gre/modules/ContentDOMReference.sys.mjs",
-        });
-        addMessageListener("ReplaceAndGoForms.doPasteAndSubmit", this);
-      },
-      receiveMessage: function(message) {
-        switch(message.name) {
-          case "ReplaceAndGoForms.doPasteAndSubmit":
-           this.doPasteAndSubmit(message.data.targetIdentifier, message.data.str)
-           break;
-        }
-      },
-      doPasteAndSubmit: function(targetIdentifier, str) {
-        let target =  this.ContentDOMReference.resolve(targetIdentifier);
+    function framescript() {
+      const lazy = {};
+      ChromeUtils.defineESModuleGetters(lazy, {
+        ContentDOMReference: "resource://gre/modules/ContentDOMReference.sys.mjs",
+      });
+
+      addMessageListener("ReplaceAndGoForms.doPasteAndSubmit", doPasteAndSubmit);
+
+      function doPasteAndSubmit(message) {
+        //Services.console.logStringMessage("ReplaceAndGoForms.doPasteAndSubmit");
+        let target =  lazy.ContentDOMReference.resolve(message.data.targetIdentifier);
         if(target) {
           /*
+          let str = message.data.str;
           target.select();
           target.value = str;
           */
           content.document.execCommand("paste")
           target.form.submit();
         }
-      },
-    };
+      }
+    }
+
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource() + ".init()")
+        + encodeURIComponent(framescript.toSource())
+        + encodeURIComponent("framescript();")
       , true, true);
   },
 
@@ -78,7 +78,7 @@ var ReplaceAndGoForms = {
     if (typeof gContextMenu == "object" && gContextMenu != null) {
       let json = {
         targetIdentifier: gContextMenu.targetIdentifier,
-        str: readFromClipboard()
+        //str: readFromClipboard()
       }
       gBrowser.selectedBrowser.messageManager.
         sendAsyncMessage("ReplaceAndGoForms.doPasteAndSubmit", json);

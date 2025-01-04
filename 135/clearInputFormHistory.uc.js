@@ -2,7 +2,9 @@
 // @name           clearInputFormHistory.uc.js
 // @description    clearInputFormHistory
 // @include        main
+// @async          true
 // @compatibility  Firefox 135
+// @version        2025/01/04 modify framescript
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2023/07/17 00:00 use ES module imports
 // @version        2022/08/19 00:00 remove "Services" from frame scripts
@@ -12,7 +14,8 @@
 var clearInputFormHistory = {
 
   init: function () {
-    ChromeUtils.defineESModuleGetters(this, {
+    this.lazy = {};
+    ChromeUtils.defineESModuleGetters(this.lazy, {
       FormHistory: "resource://gre/modules/FormHistory.sys.mjs",
     });
     let menu = document.getElementById("contentAreaContextMenu");
@@ -29,31 +32,29 @@ var clearInputFormHistory = {
     menu.addEventListener("popupshowing", this, false);
     messageManager.addMessageListener("clearInputFormHistory.doCommand", this);
 
-    let framescript = {
-      init: function() {
-        ChromeUtils.defineESModuleGetters(this, {
-          ContentDOMReference: "resource://gre/modules/ContentDOMReference.sys.mjs",
-        });
-        addMessageListener("clearInputFormHistory.getFieldName", this);
-      },
+    function framescript() {
+      const lazy = {};
+      ChromeUtils.defineESModuleGetters(lazy, {
+        ContentDOMReference: "resource://gre/modules/ContentDOMReference.sys.mjs",
+      });
+      addMessageListener("clearInputFormHistory.getFieldName", receiveMessage);
 
-      receiveMessage: function(message) {
+      function receiveMessage(message) {
        //this.Services.console.logStringMessage("==message.name:" + message.name);
         switch(message.name) {
           case "clearInputFormHistory.getFieldName":
-            let targetIdentifier = message.data.targetIdentifier;
-            let target =  this.ContentDOMReference.resolve(targetIdentifier);
+            let target =  lazy.ContentDOMReference.resolve(message.data.targetIdentifier);
             let fieldName = target?.name || target?.id;
             let json = {name: fieldName};
             sendSyncMessage("clearInputFormHistory.doCommand", json );
             break;
         }
       }
-    };
-
+    }
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource() + ".init()")
+        + encodeURIComponent(framescript.toSource())
+        + encodeURIComponent("framescript();")
       , true, true);
   },
 
@@ -74,21 +75,7 @@ var clearInputFormHistory = {
         let name = message.data.name;
         //Services.console.logStringMessage("==name:" + name);
         if(name) {
-          await new Promise((resolve, reject) => {
-            this.FormHistory.update(
-              { op: "remove", fieldname: name  },
-              {
-                handleError(error) { reject(error); },
-                handleCompletion(reason) {
-                  if (!reason) {
-                    resolve();
-                  } else {
-                    reject();
-                  }
-                },
-              }
-            );
-          });
+            await this.lazy.FormHistory.update({ op: "remove", fieldname: name  });
         }
         break;
     }
