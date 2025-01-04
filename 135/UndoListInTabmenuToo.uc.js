@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 135
 // @author         Alice0775
+// @version        2025/01/05 remove redundant menuitems
 // @version        2025/01/05 fix bug
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/08/23 Bug 1690613 - Allow access to url/title/favIconUrl without "tabs" permission in session API
@@ -130,13 +131,6 @@ var UndoListInTabmenu = {
       "menu-history-reopen-all-tabs"
     );
 		undoPopup.appendChild(tabsFragment);
-		undoPopup.firstChild.setAttribute("accesskey", "R");
-		var m = undoPopup.insertBefore(document.createXULElement("menuitem"), undoPopup.childNodes[0]);
-		m.setAttribute("label", "Reopen Last Closed Tab(s)");
-		m.setAttribute("command", "History:UndoCloseTab");
-		m.setAttribute("accesskey", "o");
-		m.setAttribute("acceltext", "Ctrl+Shift+T");
-    undoPopup.insertBefore(document.createXULElement("menuseparator"), undoPopup.childNodes[2]);
 
     // populate tab historis for tooltip
     var undoItems = UndoListInTabmenu._ss.getClosedTabDataForWindow(window);
@@ -154,7 +148,7 @@ var UndoListInTabmenu = {
     // "Append Clear undo close tb list"
     undoPopup.appendChild(document.createXULElement("menuseparator"));
 
-    m = undoPopup.appendChild(document.createXULElement("menuitem"));
+    let m = undoPopup.appendChild(document.createXULElement("menuitem"));
     m.setAttribute("label", "Clear undo close tab list");
     m.setAttribute("accesskey", "C");
     m.addEventListener("command", function() {
