@@ -8,6 +8,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  135
+// @version        2025/01/08 fix hide close button in allTabsMenu arrow panel
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/10/01 00:00 hide close button in allTabsMenu
 // @version        2024/09/09 00:00 add missing arguments, important
@@ -170,12 +171,21 @@ var tabProtect = {
 
     document.addEventListener("popupshowing",
       (event) => {
-        //Services.console.logStringMessage(event.originalTarget.id);
-        if (!document.getElementById("allTabsMenu-allTabsView")) return;
-        let rows = document.getElementById("allTabsMenu-allTabsView").querySelectorAll(".all-tabs-item");
-        for (let row of rows) {
-          if (row.tab.hasAttribute("tabProtect")) {
-            row.querySelector(".all-tabs-close-button")?.style.setProperty("display", "none", "");
+        let target = event.originalTarget;
+        if (target.id == "customizationui-widget-panel") {
+          if (target.getAttribute("viewId") !== "allTabsMenu-allTabsView") return;
+          let rows = target.querySelectorAll(".all-tabs-item");
+          for (let row of rows) {
+            if (row.tab?.hasAttribute("tabProtect")) {
+              row.querySelector(".all-tabs-close-button")?.style.setProperty("display", "none", "");
+            }
+          }
+        } else if (target.id == "allTabsMenu-allTabsView") {
+          let rows = target.querySelectorAll(".all-tabs-item");
+          for (let row of rows) {
+            if (row?.tab.hasAttribute("tabProtect")) {
+              row.querySelector(".all-tabs-close-button")?.style.setProperty("display", "none", "");
+            }
           }
         }
       });
