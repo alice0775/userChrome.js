@@ -3,8 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Right Mouse Button Drag To Select Tabs
 // @include        main
+// @async          true
 // @author         Alice0775
 // @compatibility  128+
+// @version        2025/01/10 00:00 fix scroll tab strip
 // @version        2024/08/14 16:00 Bug 1625622 - Use id and element selectors in arrowscrollbox shadow DOM
 // @version        2020/09/24 18:00 fix selectedtab
 // @version        2019/06/24 23:00 fux 69+ wait for gBrowser initialized
@@ -108,15 +110,15 @@ var rightMouseButtonDragSelectTabs = {
       } else {
         // vertical
         let tolerance = 10; // in pixel
-        let tabContainer = gBrowser.tabContainer;
-        if ( event.screenY - tolerance >
-               tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
+        let arrowScrollbox = gBrowser.tabContainer.arrowScrollbox;
+        if ( (event.screenY + tolerance) >
+               (arrowScrollbox.screenY + arrowScrollbox.getBoundingClientRect().height) ) {
           this.lastHoveredTab = null;
-          gBrowser.tabContainer.arrowScrollbox._startScroll(1);
+          arrowScrollbox._startScroll(1);
           return
-        } else if ( event.screenY + tolerance < tabContainer.screenY) {
+        } else if ( (event.screenY - tolerance) < arrowScrollbox.screenY) {
           this.lastHoveredTab = null;
-          gBrowser.tabContainer.arrowScrollbox._startScroll(-1);
+          arrowScrollbox._startScroll(-1);
           return
         }
       }
