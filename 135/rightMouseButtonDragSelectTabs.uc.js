@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  135+
+// @version        2025/01/10 01:30 fix error
 // @version        2025/01/10 01:00 fix scroll tab strip
 // @version        2025/01/10 00:00 fix scroll tab strip
 // @version        2024/08/14 16:00 Bug 1625622 - Use id and element selectors in arrowscrollbox shadow DOM
@@ -169,7 +170,7 @@ var rightMouseButtonDragSelectTabs = {
     gBrowser.tabContainer.arrowScrollbox._stopScroll();
 
     // Suppressing contextmenu if mouse is not on tab
-    if (event.button == 2 && !event.originalTarget?.closest('tab')) {
+    if (event.button == 2 && XULElement.isInstance(event.originalTarget) && !event.originalTarget?.closest('tab')) {
       event.preventDefault();
     }
     let tabs = gBrowser.visibleTabs;
