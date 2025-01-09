@@ -5,7 +5,9 @@
 // @include        main
 // @async          true
 // @author         Alice0775
-// @compatibility  128+
+// @compatibility  135+
+// @version        2025/01/10 01:00 fix scroll tab strip
+// @version        2025/01/10 00:00 fix scroll tab strip
 // @version        2024/08/14 16:00 Bug 1625622 - Use id and element selectors in arrowscrollbox shadow DOM
 // @version        2020/09/24 18:00 fix selectedtab
 // @version        2019/06/24 23:00 fux 69+ wait for gBrowser initialized
@@ -110,15 +112,31 @@ var rightMouseButtonDragSelectTabs = {
         // vertical
         let tolerance = 10; // in pixel
         let tabContainer = gBrowser.tabContainer;
-        if ( event.screenY - tolerance >
-               tabContainer.screenY + tabContainer.getBoundingClientRect().height ) {
-          this.lastHoveredTab = null;
-          gBrowser.tabContainer.arrowScrollbox._startScroll(1);
-          return
-        } else if ( event.screenY + tolerance < tabContainer.screenY) {
-          this.lastHoveredTab = null;
-          gBrowser.tabContainer.arrowScrollbox._startScroll(-1);
-          return
+        let arrowScrollbox = tabContainer.arrowScrollbox;
+        if (typeof verticalTabLiteforFx == "function") {
+          // xxx hack > 135
+          let scrollbox = arrowScrollbox.shadowRoot.querySelector("scrollbox");
+          if ( (event.screenY - tolerance) >
+                 (tabContainer.screenY + tabContainer.getBoundingClientRect().height) ) {
+            this.lastHoveredTab = null;
+            scrollbox.scrollTop = scrollbox.scrollTop + 80;
+            return
+          } else if ( (event.screenY + tolerance) < tabContainer.screenY) {
+            this.lastHoveredTab = null;
+            scrollbox.scrollTop = scrollbox.scrollTop - 80;
+            return
+          }
+        } else {
+          if ( (event.screenY - tolerance) >
+                 (tabContainer.screenY + tabContainer.getBoundingClientRect().height) ) {
+            this.lastHoveredTab = null;
+            arrowScrollbox._startScroll(1);
+            return
+          } else if ( (event.screenY + tolerance) < tabContainer.screenY) {
+            this.lastHoveredTab = null;
+            arrowScrollbox._startScroll(-1);
+            return
+          }
         }
       }
       this.lastHoveredTab = null;
@@ -151,7 +169,7 @@ var rightMouseButtonDragSelectTabs = {
     gBrowser.tabContainer.arrowScrollbox._stopScroll();
 
     // Suppressing contextmenu if mouse is not on tab
-    if (event.button == 2 && !event.originalTarget.closest('tab')) {
+    if (event.button == 2 && !event.originalTarget?.closest('tab')) {
       event.preventDefault();
     }
     let tabs = gBrowser.visibleTabs;
