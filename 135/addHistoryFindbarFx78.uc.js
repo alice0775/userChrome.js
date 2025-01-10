@@ -4,7 +4,9 @@
 // @description    add History to Findbar
 // @include        main
 // @compatibility  Firefox 135
+// @async          true
 // @author         Alice0775
+// @version        2025/01/10 fix bug
 // @version        2025/01/10 remove @async
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/10/10 add delete button 
@@ -77,7 +79,7 @@ const addHistoryFindbar78 = {
 
     gBrowser.tabContainer.addEventListener('TabFindInitialized', this, false);
     gBrowser.tabContainer.addEventListener('TabClose', this, false);
-    
+    this.initFindBar();
     window.addEventListener("find", this, false);
     window.addEventListener("findagain", this, false);
   },
@@ -85,12 +87,14 @@ const addHistoryFindbar78 = {
   initFindBar: function() {
     if (/pending/.test(gBrowser.getFindBar.toString()) &&
         typeof gFindBar == "undefined") {
+/*
       setTimeout(() => {
         gBrowser.getFindBar().then(findbar => {
           this.addDropMarker(findbar);
           this.addClearButton(findbar)
         });
       }, 1000); /// xxx workarroundfor Bug 1411707
+*/
       return;
     } else {
       gFindBar = gBrowser.getFindBar();
