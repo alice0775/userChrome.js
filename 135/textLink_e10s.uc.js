@@ -7,12 +7,13 @@
 // @include        chrome://messenger/content/messenger.xul
 // @include        chrome://messenger/content/messageWindow.xul
 // @async          true
-// @compatibility  Firefox 133
+// @compatibility  Firefox 135
 // @author         Alice0775
 // @note           Left DblClick         : open link on new tab
 // @note           shift + Left DblClick : open current on new tab but focus oppsite
 // @note           ctrl + Left DblClick  : open current tab
 // @note           alt + Left DblClick   : save as link
+// @version        2025/01/04 modify framescript
 // @version        2024/12/15 00:00 fix Bug 1898380 - Replace the "unsaved changes" dialog in the PDF viewer with a clearer design
 // @version        2023/07/17 00:00 use ES module imports
 // @version        2022/09/07 00:00 check numberof irems
@@ -138,6 +139,8 @@ function ucjs_textlink(event) {
 
 //ドキュメントとコンテントタイプ
   var doc = event.originalTarget.ownerDocument;
+  if (!doc) return;
+
   if(doc.contentType != 'text/plain'
      && doc.contentType != 'text/html'
      && doc.contentType != 'application/xml'
@@ -523,7 +526,7 @@ function ucjs_textlink(event) {
 function ucjs_textlink_main() {
   window.messageManager.loadFrameScript(
      'data:application/javascript,'
-      + encodeURIComponent(ucjs_textlink.toSource())
+      + encodeURIComponent(ucjs_textlink.toString())
       + encodeURIComponent('addEventListener("dblclick", ucjs_textlink, false);')
       + encodeURIComponent('addEventListener("keypress", ucjs_textlink, false);')
     , true);
@@ -557,7 +560,6 @@ function ucjs_textlink_main() {
                  triggeringPrincipal:Services.scriptSecurityManager.createNullPrincipal({}),// json.triggeringPrincipal,
                  isContentWindowPrivate: PrivateBrowsingUtils.isWindowPrivate(window)
                 };
-    // Services.console.logStringMessage(JSON.stringify(param));
     if (json.ctrlKey) {
       openLinkIn(url, "current", param);
     }else if (json.shiftKey) {

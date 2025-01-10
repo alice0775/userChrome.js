@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    global_FindTerm + find-label
 // @include        main
-// @async          true
 // @compatibility  Firefox 87
 // @author         Alice0775
+// @version        2025/01/10 remove @async
 // @version       2021/04/11 12:00 workaround: use finder.getInitialSelection
 // @version       2021/02/09 20:00 fix an error when FindBar close
 // @version       2021/02/09 15:01 fix use finder.getInitialSelection

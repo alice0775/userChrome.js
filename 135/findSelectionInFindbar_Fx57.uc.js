@@ -4,9 +4,9 @@
 // @description    FindBarの選択テキスト上でマウスホイールによる選択テキスでの検索を可能にする。選択なき場合は日本語のトークンを自動判定する
 // @charset        utf-8
 // @include        main
-// @async          true
 // @compatibility  Firefox 122
 // @author         Alice0775
+// @version        2025/01/10 remove @async
 // @version        2023/12/14 07:00 add icu4x.segmenter
 // ==/UserScript==
 // @version        2022/03/19 07:00 use weheel event instead of DOMMouseScroll event

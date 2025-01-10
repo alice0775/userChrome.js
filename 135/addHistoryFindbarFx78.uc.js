@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 135
 // @author         Alice0775
+// @version        2025/01/10 remove @async
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/10/10 add delete button 
 // @version        2023/10/10 00:00 Stop using xml-stylesheet processing instructions

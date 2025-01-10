@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    ページ内検索の「次を検索」と「前を検索」をボタン上のマウスホイールの回転で
 // @include        main
-// @async          true
 // @compatibility  Firefox 100+
 // @author         Alice0775
+// @version        2025/01/10 remove @async
 // @version        2022/03/19 07:00 use weheel event instead of DOMMouseScroll event
 // ==/UserScript==
 // @version        2019/06/24 23:00 wait for gBrowser initialized

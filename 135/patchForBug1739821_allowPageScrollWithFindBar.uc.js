@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Workaround for Bug 1739821 - Page would not scroll with keyboard after using prev, next, or any other buttons in the FindBar.
 // @include        main
-// @async          true
 // @compatibility  Firefox 91
 // @author         Alice0775
+// @version        2025/01/10 remove @async
 // @version        2021/11/12 00:00 stop surplus navigation
 // @version        2021/11/11 00:00 working w/ addHistoryFindbarFx78.uc.js
 // @version        2021/11/07 00:00

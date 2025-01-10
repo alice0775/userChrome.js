@@ -4,6 +4,7 @@
 // @include        main
 // @async          true
 // @compatibility  Firefox 135
+// @version        2025/01/04 modify framescript2
 // @version        2025/01/04 modify framescript
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2023/11/26 18:00 do not check onKeywordField
@@ -69,7 +70,7 @@ var ReplaceAndGoForms = {
 
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource())
+        + encodeURIComponent(framescript.toString())
         + encodeURIComponent("framescript();")
       , true, true);
   },

@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Workaround Bug 1720244 - Toggling the whole words checkbox causes find bar to reappear in all tabs
 // @include        main
-// @async          true
 // @compatibility  Firefox 78+
 // @author         Alice0775
+// @version        2025/01/10 remove @async
 // @version        2021/07/13 00:00
 // ==/UserScript==
 var patchForBug1720244 = {

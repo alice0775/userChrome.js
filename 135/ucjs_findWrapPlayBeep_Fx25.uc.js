@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Findbarページ内検索において検索が折り返す時にビープ音を鳴らす (見つからない場合は何もしない)
 // @include        main
-// @async          true
 // @compatibility  Firefox 115+
 // @author         Alice0775
+// @version        2025/01/10 remove @async
 // @version        2023/01/11 18:30 pecify sound file
 // @version        2019/11/19 11:00 fix 72 Bug 1554761 Small refactor, made possible because the findbar is now a custom element, implemented as a JS module
 // @version        2019/06/24 23:00 fix 69 wait for gBrowser initialized

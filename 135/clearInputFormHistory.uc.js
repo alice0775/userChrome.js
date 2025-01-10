@@ -4,6 +4,7 @@
 // @include        main
 // @async          true
 // @compatibility  Firefox 135
+// @version        2025/01/04 modify framescript2
 // @version        2025/01/04 modify framescript
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2023/07/17 00:00 use ES module imports
@@ -37,9 +38,9 @@ var clearInputFormHistory = {
       ChromeUtils.defineESModuleGetters(lazy, {
         ContentDOMReference: "resource://gre/modules/ContentDOMReference.sys.mjs",
       });
-      addMessageListener("clearInputFormHistory.getFieldName", receiveMessage);
+      addMessageListener("clearInputFormHistory.getFieldName", clearInputFormHistory_receiveMessage);
 
-      function receiveMessage(message) {
+      function clearInputFormHistory_receiveMessage(message) {
        //this.Services.console.logStringMessage("==message.name:" + message.name);
         switch(message.name) {
           case "clearInputFormHistory.getFieldName":
@@ -53,7 +54,7 @@ var clearInputFormHistory = {
     }
     window.messageManager.loadFrameScript(
        'data:application/javascript,'
-        + encodeURIComponent(framescript.toSource())
+        + encodeURIComponent(framescript.toString())
         + encodeURIComponent("framescript();")
       , true, true);
   },
