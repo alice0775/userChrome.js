@@ -4,8 +4,9 @@
 // @description    workaround Bug 1811793
 // @include        main
 // @async          true
-// @compatibility  Firefox 104+
+// @compatibility  Firefox 135
 // @author         Alice0775
+// @version        2025/01/27 00:00 Fix an error
 // @version        2023/03/16 00:00 Fixed unexpected selection of input text while typing. ( this may have side-effects) if serachWP_modoki if installed
 // @version        2023/01/12 19:30 early return if already applied
 // @version        2023/01/07 19:30 change init
@@ -13,19 +14,17 @@
 // ==/UserScript==
 
 var patchForBug1811793 = {
-  init: async function() {
-    patchForBug1811793.patch();
-
-    gBrowser.tabContainer.addEventListener("TabSelect",  async function(event){
-      await patchForBug1811793.patch();
+  init: function() {
+    gBrowser.tabContainer.addEventListener("TabSelect",  function(event){
+      patchForBug1811793.patch();
     });
   },
 
   patch: async function() {
-    if (!gFindBarInitialized) {
-      let findBar = await gFindBarPromise;
+    if (!gFindBar) {
+      await gBrowser.getFindBar();
     }
-    if ("patchForBug1811793" in gFindBar) 
+    if (typeof gFindBar.patchForBug1811793 == "boolean") 
       return;
     gFindBar.patchForBug1811793 = true;
     /*

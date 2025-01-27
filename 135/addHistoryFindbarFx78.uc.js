@@ -6,6 +6,7 @@
 // @compatibility  Firefox 135
 // @async          true
 // @author         Alice0775
+// @version        2025/01/27 fix bug
 // @version        2025/01/10 fix bug
 // @version        2025/01/10 remove @async
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
@@ -212,7 +213,7 @@ const addHistoryFindbar78 = {
 	  addHistoryFindbar78.onpopupshowing(aEvent, parentNode);
   },
 
-  shouldPreventHide: function(aEvent) {
+  shouldPreventHide: function(event) {
 		const menuitem = event.target;
 		if (event.button == 1) 
 		{

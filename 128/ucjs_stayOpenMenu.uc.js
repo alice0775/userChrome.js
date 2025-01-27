@@ -1,13 +1,12 @@
 // ==UserScript==
-// @name           ucjs_stayOpenViewZoomMenu.uc.js
+// @name           ucjs_stayOpenMenu.uc.js
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Keep the menu open when cliking middle mouse buttun on View>Zoom>Zoom In etc.
 // @include        main
 // @async          true
-// @compatibility  Firefox 135
+// @compatibility  Firefox 128
 // @author         Alice0775
 // @version        2025/01/27 fix Bug
-// @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/10/10 add delete button 
 // ==/UserScript==
 const ucjs_stayOpenMenu = {
@@ -17,9 +16,7 @@ const ucjs_stayOpenMenu = {
     "menu_zoomReset",
     "toggle_zoom"].forEach((id) => {
       document.getElementById(id)
-        .addEventListener("mouseup", (event) => ucjs_stayOpenMenu.shouldPreventHide(event));
-      /*document.getElementById(id)
-        .setAttribute("onmouseup", "ucjs_stayOpenMenu.shouldPreventHide(event);");*/
+        .setAttribute("onmouseup", "ucjs_stayOpenMenu.shouldPreventHide(event);");
     });
     document.getElementById("viewFullZoomMenu").addEventListener("popupshowing", this);
     document.getElementById("viewFullZoomMenu").addEventListener("popuphidden", this);
@@ -41,15 +38,15 @@ const ucjs_stayOpenMenu = {
      }
   },
 
-  shouldPreventHide: function(aEvent) {
-		const menuitem = aEvent.target;
-		if (aEvent.button == 1) 
+  shouldPreventHide: function(event) {
+		const menuitem = event.target;
+		if (event.button == 1) 
 		{
 			menuitem.setAttribute('closemenu', 'none');
 			menuitem.parentNode.addEventListener('popuphidden', () => {
 				menuitem.removeAttribute('closemenu');
 			}, { once: true });
-			if (aEvent.ctrlKey)
+			if (event.ctrlKey)
 		  	menuitem.parentNode.hidePopup();
 		}
   },
