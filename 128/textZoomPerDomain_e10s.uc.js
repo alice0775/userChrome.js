@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 128
 // @author         Alice0775
+// @version       2025/01/28 fix bug
 // @version       2024/11/28 Keep open menu when middleclick
 // @version       2022/08/26 Bug 1695435 - Remove @@hasInstance for IDL interfaces in chrome context
 // @version        2022/04/01 remove nsIIOService
@@ -53,7 +54,7 @@ var textZoomPerDomain = {
       if (aVal < this.MIN || aVal > this.MAX)
         throw Components.Exception("", Cr.NS_ERROR_INVALID_ARG);
 
-      if (this.useFullZoom || aBrowser.isSyntheticDocument) {
+      if (this.useFullZoomForBrowser(aBrowser)) {
 
         let textZoom = textZoomPerDomain.getTextZoom(aBrowser.currentURI);
         if (textZoom == null)
@@ -462,7 +463,7 @@ var textZoomPerDomain_menu = {
       menuitem.setAttribute('checked',true);
   },
 
-  shouldPreventHide: function(aEvent) {
+  shouldPreventHide: function(event) {
 		const menuitem = event.target;
 		if (event.button == 1) 
 		{

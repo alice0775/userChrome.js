@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 135
 // @author         Alice0775
+// @version        2025/01/27 fix Bug
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/11/28 Keep open menu when middleclick
 // @version        2022/08/26 Bug 1695435 - Remove @@hasInstance for IDL interfaces in chrome context
@@ -469,7 +470,7 @@ var textZoomPerDomain_menu = {
       menuitem.setAttribute('checked',true);
   },
 
-  shouldPreventHide: function(aEvent) {
+  shouldPreventHide: function(event) {
 		const menuitem = event.target;
 		if (event.button == 1) 
 		{
