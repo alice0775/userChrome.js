@@ -3,9 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    undo close tab when middleclick on tabbar
 // @include        main
-// @async          true
 // @compatibility  Firefox 136
 // @author         Alice0775
+// @version        2025/01/29 remove async
 // @version        2025/01/17 10:00
 // @version        2024/08/23 00:00
 // @version        2020/09/27 00:00
