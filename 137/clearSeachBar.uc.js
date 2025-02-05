@@ -4,8 +4,9 @@
 // @description    Right click on magnify glass to clear SeachBar
 // @include        main
 // @async          true
-// @compatibility  Firefox 78.0
+// @compatibility  Firefox 137
 // @author         Alice0775
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2021/10/16 20:00 update go button after change value of searchbar
 // @version        2011/03/11 10:00 ellips and update in fullscreen and fix Bug641090 by alice0775
 // ==/UserScript==
@@ -64,7 +65,7 @@ var clearSeachBar = {
       if (this.searchbar.value != "") {
         target.setAttribute('contextmenu', '');
         this.searchbar.value = "";
-        BrowserSearch.searchBar.updateGoButtonVisibility();
+        this.searchbar.updateGoButtonVisibility();
         setTimeout(() => {target.removeAttribute('contextmenu');}, 0);
       }
     }

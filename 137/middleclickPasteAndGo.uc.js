@@ -5,7 +5,8 @@
 // @include        main
 // @async          true
 // @author         Alice0775
-// @compatibility  128
+// @compatibility  Firefox 137
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/12/31 13:00 
 // @version        2024/01/05 00:00 
 // @version        2020/12/21 00:00 Apply to textbox of Addres Bar/Search Bar as well as menuitems
@@ -31,7 +32,7 @@ var middleclickPasteAndGo = {
     document.querySelector("#searchbar .textbox-contextmenu").addEventListener("popupshown", () => {middleclickPasteAndGo.popupshown(event)}, {once: true}, );
 
 gURLBar.textbox.addEventListener("click", (event) => {middleclickPasteAndGo.pasteAndGo2(event)}, true);
-BrowserSearch.searchBar.addEventListener("click", (event) => {middleclickPasteAndGo.pasteAndSearch2(event)}, true);
+document.getElementById("searchbar").addEventListener("click", (event) => {middleclickPasteAndGo.pasteAndSearch2(event)}, true);
   },
 
   pasteAndGo: function(event) {
@@ -56,9 +57,9 @@ BrowserSearch.searchBar.addEventListener("click", (event) => {middleclickPasteAn
 
     event.target.closest("menupopup")?.hidePopup();
 
-    BrowserSearch.searchBar.select();
+    document.getElementById("searchbar").select();
     goDoCommand("cmd_paste");
-    BrowserSearch.searchBar.handleSearchCommandWhere(event, null, "tab", {inBackground: false,});
+    document.getElementById("searchbar").handleSearchCommandWhere(event, null, "tab", {inBackground: false,});
   },
 
   pasteAndGo2: function(event) {
@@ -81,14 +82,14 @@ BrowserSearch.searchBar.addEventListener("click", (event) => {middleclickPasteAn
   },
 
   pasteAndSearch2: function(event) {
-    if (event.target != BrowserSearch.searchBar._textbox)
+    if (event.target != document.getElementById("searchbar")._textbox)
       return;
     if (event.button != 1)
       return;
 
-    BrowserSearch.searchBar.select();
+    document.getElementById("searchbar").select();
     goDoCommand("cmd_paste");
-    BrowserSearch.searchBar.handleSearchCommandWhere(event, null, "tab", {inBackground: false,});
+    document.getElementById("searchbar").handleSearchCommandWhere(event, null, "tab", {inBackground: false,});
   },
   
 }

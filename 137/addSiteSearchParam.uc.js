@@ -4,8 +4,9 @@
 // @description    add Site Search Param site:url
 // @include        main
 // @async          true
-// @compatibility  Firefox 128
+// @compatibility  Firefox 137
 // @author         Alice0775
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/12/31 23:00
 // @version        2021/08/28 06:00
 // @version        2021/08/21 12:00

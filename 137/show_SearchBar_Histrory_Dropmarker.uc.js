@@ -3,7 +3,8 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
-// @compatibility  Firefox 120
+// @compatibility  Firefox 137
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2023/11/22 18:00 remove appearance for dropmarker icon
 // @version        2023/02/26 21:00 wip dropmarker icon
 // @version        2022/10/18 10:00 fix Bug 1790616
@@ -26,7 +27,7 @@ var showSearchBarHistroryDropmarker = {
   init2: function(topic) {
     Services.console.logStringMessage("showSearchBarHistroryDropmarker "+topic);
     const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
-    let bar = BrowserSearch.searchBar;
+    let bar = document.getElementById("searchbar");
     if (!bar)
       return;
     let ref = bar.querySelector(".search-go-container");

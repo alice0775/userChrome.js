@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Alice0775
-// @compatibility 135
+// @compatibility  Firefox 137
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version       2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version       2024/05/10 Bug 1880914 - Move Browser* helper functions used from global menubar and similar commands to a single object in a separate file, loaded as-needed
 // @version       2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
@@ -147,8 +148,8 @@ ucjsMouseGestures_menues = {
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
         ['DR', '選択テキストを検索バーにコピー',
           function(){ 
-            if (BrowserSearch.searchBar)
-              BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+            if (document.getElementById("searchbar"))
+              document.getElementById("searchbar").value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
           } ],
 
         ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],

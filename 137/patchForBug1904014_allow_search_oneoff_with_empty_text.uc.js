@@ -3,7 +3,8 @@
 // @description    undoing Bug 1904014 - Remove function to do an empty search using the search bar one-off buttons.
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
-// @compatibility  129
+// @compatibility  Firefox 137
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/07/14 fix add search engene button
 // @version        2024/07/8
 // ==/UserScript==
@@ -56,7 +57,7 @@
         return;
       }
       if (!this.searchbar.value) {
-        BrowserSearch.searchBar.handleSearchCommand(event, Services.search.defaultEngine);
+        this.searchbar.handleSearchCommand(event, Services.search.defaultEngine);
       }
     });
 
@@ -70,7 +71,7 @@
         return;
       }
       if (!this.searchbar.value) {
-        BrowserSearch.searchBar.handleSearchCommand(event, Services.search.defaultEngine);
+        this.searchbar.handleSearchCommand(event, Services.search.defaultEngine);
       }
     });
 

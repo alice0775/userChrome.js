@@ -4,6 +4,8 @@
 // @include			chrome://browser/content/browser.xhtml
 // @async          true
 // @charset			UTF-8
+// @compatibility  Firefox 137
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version     2021/08/25
 // ==/UserScript==
 (function(){
@@ -30,10 +32,10 @@
 		if(e.target.closest('#searchbar')){
 			e.stopPropagation();
 			e.preventDefault();
-			BrowserSearch.searchBar.value = text;
+			document.getElementById("searchbar").value = text;
 			SEARCH_ON_DROP
-			? BrowserSearch.searchBar.querySelector(".search-go-button").click()
-      : BrowserSearch.searchBar.updateGoButtonVisibility();
+			? document.getElementById("searchbar").querySelector(".search-go-button").click()
+      : document.getElementById("searchbar").updateGoButtonVisibility();
 		}else{
 			e.stopPropagation();
 			e.preventDefault();

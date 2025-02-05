@@ -3,8 +3,9 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    replace the magnifying glass with the search engine's icon
 // @include        main
-// @compatibility  Firefox 125
+// @compatibility  Firefox 137
 // @author         Alice0775
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/03/01 00:00 Bug 1882577 - Make nsISearchEngine.getIconURL an async function
 // @version        2023/12/24 00:00 Bug 1870644 use engine.getIconURL() instead engine.iconURI.spec
 // @version        2023/02/08 10:00 remove -moz-image-region

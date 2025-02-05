@@ -4,8 +4,9 @@
 // @description    replace selection with clipboard text and go/search
 // @include        main
 // @async          true
-// @compatibility  Firefox 128
+// @compatibility  Firefox 137
 // @author         Alice0775
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/12/31 23:00
 // @version        2021/09/04 0700
 // @version        2021/08/21 12:00
@@ -82,7 +83,7 @@ var replaceAndGoSearch = {
     replaceAndSearch.addEventListener("command", (event) => {
 
       goDoCommand("cmd_paste");
-      BrowserSearch.searchBar.handleSearchCommand(event);
+      document.getElementById("searchbar").handleSearchCommand(event);
 
     });
 

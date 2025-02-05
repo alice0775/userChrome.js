@@ -4,6 +4,8 @@
 // @charset      UTF-8
 // @include      main
 // @async          true
+// @compatibility  Firefox 137
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version      2022/10*18 10:00 fix Bug 1790616
 // @version      2019/06/24 23:00 fix 69 wait for gBrowser initialized
 // @version      2018-07-21 fix at startup
@@ -26,7 +28,7 @@ const no_Limit_Result_SearchBar_History = {
   },
 
   patch: function() {
-    const bar = BrowserSearch.searchBar;
+    const bar = document.getElementById("searchbar");
     if (!bar) 
       return;
     const box = bar._textbox;

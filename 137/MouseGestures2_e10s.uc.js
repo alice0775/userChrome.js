@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility 135
+// @compatibility  Firefox 137
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version       2024/12/15 00:00 fix Bug 1898380 - Replace the "unsaved changes" dialog in the PDF viewer with a clearer design
 // @version       2024/12/21 Bug 1814969 - ContextualIdentityService has browser/ dependencies
 // @version       2024/12/02 revert the cange of 2024/10/07
@@ -262,27 +263,27 @@ var ucjsMouseGestures = {
         ['DRD', '選択テキストで検索(検索エンジンポップアップ)', function(){ ucjsMouseGestures_helper.webSearchPopup(ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT); } ],
         ['DR', '選択テキストを検索バーにコピー',
           function(){ 
-            if (BrowserSearch.searchBar) {
-              BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
-              BrowserSearch.searchBar.updateGoButtonVisibility();
+            if (document.getElementById("searchbar")) {
+              document.getElementById("searchbar").value = ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT;
+              document.getElementById("searchbar").updateGoButtonVisibility();
             }
           } ],
         ['', '選択テキストを検索バーに追加',
           function(){ 
-            if (BrowserSearch.searchBar.value){
-              BrowserSearch.searchBar.value = BrowserSearch.searchBar.value + " " +
+            if (document.getElementById("searchbar").value){
+              document.getElementById("searchbar").value = document.getElementById("searchbar").value + " " +
                      (ucjsMouseGestures._selectedTXT || ucjsMouseGestures._linkTXT);
-              BrowserSearch.searchBar.updateGoButtonVisibility();
+              document.getElementById("searchbar").updateGoButtonVisibility();
             }else{
-              BrowserSearch.searchBar.value = ucjsMouseGestures._selectedTXT ||
+              document.getElementById("searchbar").value = ucjsMouseGestures._selectedTXT ||
                                               ucjsMouseGestures._linkTXT;
-              BrowserSearch.searchBar.updateGoButtonVisibility();
+              document.getElementById("searchbar").updateGoButtonVisibility();
             }
           } ],
         ['', '検索バー（Web検索ボックス）をクリア',
           function(){
             document.getElementById("searchbar").value = "";
-            BrowserSearch.searchBar.updateGoButtonVisibility();
+            document.getElementById("searchbar").updateGoButtonVisibility();
           } ],
         ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
 

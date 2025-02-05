@@ -4,8 +4,9 @@
 // @description    search historyとかsuggestの語句選ぶと即検索にいくのを止める
 // @include        main
 // @async          true
-// @compatibility  Firefox 66
+// @compatibility  Firefox 137
 // @author         2ch
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2019/03/20 00:00 fix66
 // @version        2018/10/23 12:00
 // @modified       by Alice0775
@@ -52,7 +53,7 @@ var search_history_toka_suggest_nogokuwoerabutosokukennsakuniikunowotomeru = {
       popup.onPopupClick = function(aEvent) {
         if (aEvent.button == 0 && !aEvent.shiftKey && !aEvent.ctrlKey &&
             !aEvent.altKey && !aEvent.metaKey) {
-          var searchBar = BrowserSearch.searchBar;
+          var searchBar = document.getElementById("searchbar");
           searchBar.value = this.input.controller.getValueAt(this.selectedIndex);
           if(typeof searchBar.updateGoButtonVisibility == "function")
             searchBar.updateGoButtonVisibility();
