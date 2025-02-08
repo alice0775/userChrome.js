@@ -6,6 +6,7 @@
 // @compatibility  Firefox 120
 // @author         Alice0775
 // @note           ucjsDownloadsStatusModoki.uc.js.css をuserChrome.cssに読み込ませる必要あり
+// @version        2025/02/08 19:00 fix ref node
 // @version        2023/10/10 00:00 Stop using xml-stylesheet processing instructions
 // @version        2023/07/17 00:00 use ES module imports
 // @version        2023/06/20 remove Bug 1780695 - Remove Services.jsm
@@ -41,7 +42,8 @@
 // @version        2013/12/16 19:30 add autocheck false
 // @version        2013/12/16 18:31 fix pref name
 // @version        2013/12/16 18:30
-// @note
+// @note           about:config userChrome.downloadsStatusModoki.showWhenStarting (true/false)
+// @note                        userChrome.downloadsStatusModoki.closeWhenDone (true/false)
 // ==/UserScript== 
 var ucjsDownloadsStatusModoki = {
   _summary: null,
@@ -95,8 +97,8 @@ var ucjsDownloadsStatusModoki = {
     var toolbar = document.createXULElement("vbox");
     toolbar.setAttribute("id", "downloadsStatusModokiBar");
     toolbar.collapsed = true;
-    var ref = document.getElementById("fullscreen-and-pointerlock-wrapper");
-    ref.parentNode.insertBefore(toolbar, ref.nextSibling)
+    var ref = document.getElementById("a11y-announcement");
+    ref.parentNode.insertBefore(toolbar, ref)
 //    var bottombox = document.getElementById("browser-bottombox");
 //    bottombox.insertBefore(toolbar, bottombox.firstChild);
     var browser = toolbar.appendChild(document.createXULElement("browser"));
