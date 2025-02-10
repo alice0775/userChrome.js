@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility  Firefox 137
+// @version        2025/02/10 18:00 fix bug
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version       2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version       2024/05/10 Bug 1880914 - Move Browser* helper functions used from global menubar and similar commands to a single object in a separate file, loaded as-needed
@@ -224,14 +225,14 @@ ucjsMouseGestures_menues = {
     menupopup.appendChild(menuitem);
     menuitem.setAttribute("id", "ucjsMouseGestures_menuepopup");
     menuitem.setAttribute("label", "Reload commands");
-    menuitem.setAttribute("command", () => ucjsMouseGestures_menues.reloadCommands());
+    menuitem.addEventListener("command", () => ucjsMouseGestures_menues.reloadCommands());
     //menuitem.setAttribute("oncommand", "ucjsMouseGestures_menues.reloadCommands();");
 
     menuitem = document.createXULElement("menuitem");
     menupopup.appendChild(menuitem);
     menuitem.setAttribute("id", "ucjsMouseGestures_menues_launchEditor");
     menuitem.setAttribute("label", "Edit commands");
-    menuitem.setAttribute("command", () => ucjsMouseGestures_menues.launchEditor());
+    menuitem.addEventListener("command", () => ucjsMouseGestures_menues.launchEditor());
     //menuitem.setAttribute("oncommand", "ucjsMouseGestures_menues.launchEditor();");
   },
 
