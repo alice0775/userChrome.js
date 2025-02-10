@@ -6,7 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 135
-// @version        2025/02/11 01:00 revert
+// @version        2025/02/11 01:00 backed out the previous commit 
 // @version        2025/02/11 00:00 focus element when mousedown
 // @version       2024/12/15 00:00 fix Bug 1898380 - Replace the "unsaved changes" dialog in the PDF viewer with a clearer design
 // @version       2024/12/21 Bug 1814969 - ContextualIdentityService has browser/ dependencies

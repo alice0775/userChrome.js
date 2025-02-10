@@ -6,7 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 128
-// @version        2025/02/11 01:00 revert
+// @version        2025/02/11 01:00 backed out the previous commit 
 // @version        2025/02/11 00:00 focus element when mousedown
 // @version       2024/12/02 revert the cange of 2024/10/07
 // @version       2024/11/29 Tolerance reduced.
