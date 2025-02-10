@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 128
+// @version        2025/02/11 00:00 focus element when mousedown
 // @version       2024/12/02 revert the cange of 2024/10/07
 // @version       2024/11/29 Tolerance reduced.
 // @version       2024/11/29 listen mouseup on document instead gbrowser
@@ -914,6 +915,10 @@ let ucjsMouseGestures_framescript = {
         switch(event.type) {
           case "mousedown":
             if (event.button == 2) {
+              let tabIndex = event.target.tabIndex;
+              event.target.tabIndex = -1;
+              event.target.focus();
+              event.target.tabIndex = tabIndex;
               addEventListener("mousemove", this, false);
             }
             addEventListener("dragstart", this, true);
