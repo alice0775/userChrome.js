@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 137
+// @version        2025/02/11 01:00 revert
+// @version        2025/02/11 00:00 focus element when mousedown
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version       2024/12/15 00:00 fix Bug 1898380 - Replace the "unsaved changes" dialog in the PDF viewer with a clearer design
 // @version       2024/12/21 Bug 1814969 - ContextualIdentityService has browser/ dependencies
@@ -1325,6 +1327,43 @@ ucjsMouseGestures_framescript.init();
 
 let ucjsMouseGestures_helper = {
 
+  lazy: {},
+
+  init: function() {
+    XPCOMUtils.defineLazyServiceGetter(
+      this.lazy,
+      "QueryStringStripper",
+      "@mozilla.org/url-query-string-stripper;1",
+      "nsIURLQueryStringStripper"
+    );
+  },
+
+  stripURI: function(url) {
+    if (!url) {
+      return null;
+    }
+    let strippedURI = null;
+    let uri = null;
+
+    // Error check occurs during isClipboardURIValid
+    uri = Services.io.newURI(url);
+    try {
+      strippedURI = this.lazy.QueryStringStripper.stripForCopyOrShare(uri);
+    } catch (e) {
+      console.warn(`stripURI: ${e.message}`);
+      return uri;
+    }
+
+    if (strippedURI) {
+      try {
+        return  globalThis.gURLBar.makeURIReadable(strippedURI);
+      } catch (e) {
+        console.warn(`stripURI: ${e.message}`);
+      }
+    }
+    return uri;
+  },
+
   executeInContent: function(func) {
     try {
       let script = 'data:application/javascript;charset=utf-8,' +
@@ -2328,3 +2367,4 @@ Services.console.logStringMessage("aContentType " + aContentType);
   },
 
 }
+ucjsMouseGestures_helper.init();
