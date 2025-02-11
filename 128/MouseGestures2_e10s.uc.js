@@ -6,8 +6,10 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility 128
+// @version        2025/02/11 10:00 Temporarily set tabindex for the target of document.commandDispatcher.
 // @version        2025/02/11 01:00 backed out the previous commit 
 // @version        2025/02/11 00:00 focus element when mousedown
+// @version       2024/12/21 Bug 1814969 - ContextualIdentityService has browser/ dependencies
 // @version       2024/12/02 revert the cange of 2024/10/07
 // @version       2024/11/29 Tolerance reduced.
 // @version       2024/11/29 listen mouseup on document instead gbrowser
@@ -231,12 +233,16 @@ var ucjsMouseGestures = {
 
         ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
         ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
+/*
+        ['RU', '上端へスクロール', function(){ goDoCommand("cmd_moveTop"); } ],
+        ['RD', '下端へスクロール', function(){ goDoCommand("cmd_moveBottom"); } ],
+*/
         ['U', '上へスクロール', function(){ goDoCommand("cmd_scrollPageUp"); } ],
         ['D', '下へスクロール', function(){ goDoCommand("cmd_scrollPageDown"); } ],
 
         ['W-', 'ズームイン', function(){ ucjsMouseGestures_helper.zoomIn(); } ],
         ['W+', 'ズームアウト', function(){ ucjsMouseGestures_helper.zoomOut(); } ],
-        ['L<R', 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
+        [''/*'L<R'*/, 'ズームリセット', function(){ ucjsMouseGestures_helper.zoomReset(); } ],
 
         ['DL', 'ページ内検索バー',
           function(){
@@ -578,6 +584,8 @@ var ucjsMouseGestures = {
   },
 
   handleEvent: function(event) {
+    if(!event.isTrusted) return;
+
     var x = event.screenX;
     var y = event.screenY;
     switch (event.type) {
@@ -909,6 +917,8 @@ let ucjsMouseGestures_framescript = {
       },
 
       handleEvent: function(event) {
+       if(!event.isTrusted) return;
+
         //this.console.logStringMessage("====" + event.type);
         let imgSRC, imgTYPE, imgDISP, linkURL, linkTXT, mediaSRC, selectedTXT, json;
         let _isWheelCanceled;
@@ -916,6 +926,11 @@ let ucjsMouseGestures_framescript = {
         switch(event.type) {
           case "mousedown":
             if (event.button == 2) {
+              let tabIndex = event.target.hasAttribute("tabindex");
+              if (!tabIndex) {
+                event.target.setAttribute("tabindex", -1);
+                event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 10, event.target);
+              }
               addEventListener("mousemove", this, false);
             }
             addEventListener("dragstart", this, true);
@@ -1312,6 +1327,42 @@ ucjsMouseGestures_framescript.init();
 
 
 let ucjsMouseGestures_helper = {
+  lazy: {},
+
+  init: function() {
+    XPCOMUtils.defineLazyServiceGetter(
+      this.lazy,
+      "QueryStringStripper",
+      "@mozilla.org/url-query-string-stripper;1",
+      "nsIURLQueryStringStripper"
+    );
+  },
+
+  stripURI: function(url) {
+    if (!url) {
+      return null;
+    }
+    let strippedURI = null;
+    let uri = null;
+
+    // Error check occurs during isClipboardURIValid
+    uri = Services.io.newURI(url);
+    try {
+      strippedURI = this.lazy.QueryStringStripper.stripForCopyOrShare(uri);
+    } catch (e) {
+      console.warn(`stripURI: ${e.message}`);
+      return uri;
+    }
+
+    if (strippedURI) {
+      try {
+        return  globalThis.gURLBar.makeURIReadable(strippedURI);
+      } catch (e) {
+        console.warn(`stripURI: ${e.message}`);
+      }
+    }
+    return uri;
+  },
 
   executeInContent: function(func) {
     try {
@@ -2249,27 +2300,22 @@ Services.console.logStringMessage("aContentType " + aContentType);
     } = {}
   ) {
 
-    let bundle = Services.strings.createBundle(
-      "chrome://browser/locale/browser.properties"
-    );
     let docfrag = document.createDocumentFragment();
 
     // If we are excluding a userContextId, we want to add a 'no-container' item.
     if (excludeUserContextId || showDefaultTab) {
       let menuitem = document.createXULElement("menuitem");
+      if (useAccessKeys) {
+        document.l10n.setAttributes(menuitem, "user-context-none");
+      } else {
+        const label =
+          ContextualIdentityService.formatContextLabel("user-context-none");
+        menuitem.setAttribute("label", label);
+      }
       menuitem.setAttribute("data-usercontextid", "0");
-      menuitem.setAttribute(
-        "label",
-        bundle.GetStringFromName("userContextNone.label")
-      );
-      menuitem.setAttribute(
-        "accesskey",
-        bundle.GetStringFromName("userContextNone.accesskey")
-      );
-
-      // We don't set an oncommand/command attribute because if we have
-      // to exclude a userContextId we are generating the contextMenu and
-      // isContextMenu will be true.
+      if (!isContextMenu) {
+        menuitem.setAttribute("command", "Browser:NewUserContextTab");
+      }
 
       docfrag.appendChild(menuitem);
 
@@ -2308,3 +2354,4 @@ Services.console.logStringMessage("aContentType " + aContentType);
   },
 
 }
+ucjsMouseGestures_helper.init();
