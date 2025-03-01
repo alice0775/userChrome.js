@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 137
+// @version        2025/02/24 15:00 tweak timeout of tabindex and target
 // @version        2025/02/11 10:00 Temporarily set tabindex for the target of document.commandDispatcher.
 // @version        2025/02/11 01:00 backed out the previous commit 
 // @version        2025/02/11 00:00 focus element when mousedown
@@ -932,9 +933,9 @@ let ucjsMouseGestures_framescript = {
           case "mousedown":
             if (event.button == 2) {
               let tabIndex = event.target.hasAttribute("tabindex");
-              if (!tabIndex) {
+              if (!tabIndex && event.target.localName != "span") {
                 event.target.setAttribute("tabindex", -1);
-                event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 10, event.target);
+                event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, event.target);
               }
               addEventListener("mousemove", this, false);
             }
