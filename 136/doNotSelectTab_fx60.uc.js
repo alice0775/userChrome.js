@@ -5,6 +5,7 @@
 // @include       main
 // @async          true
 // @compatibility Firefox 136
+// @version        2025/03/07 fix bug of select tab
 // @version        2025/03/05 fix under sidebar.verticalTabs=true
 // @version        2020/09/20 workarround for Bug 1590573
 // @version        2019/11/14 workarround for busy icon
@@ -109,7 +110,7 @@ let do_not_select_tab_when_mousedown = {
             !(soundPlayingIcon == originalTarget || overlayIcon == originalTarget)) {
           console.log("mouseup selected "+tab.label)
           gBrowser.selectedTab = tab;
-          if (tab.hasAttribute("pending") && this._mousedownTimer) {
+          if (tab.selected && this._mousedownTimer) {
             gBrowser.updateCurrentBrowser();
             console.log("updateCurrentBrowser "+tab.label)
           }
