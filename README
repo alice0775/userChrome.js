@@ -9,28 +9,53 @@ https://github.com/alice0775/userChrome.js を開いて[Go to file]をクリッ�
 ファイルはUTF-8のBOMなしで保存
 
 
-userchrome.jsのインストール方法:
-Firefox117+
-* Services.jsmが削除されたため、従来の方法ではuserChrome.jsは動作しません。
-  Firefox117以降は、117/install_folder/にあるconfig.jsと差し替える
-
-
-Firefox92+
-
+userchrome.jsのインストール方法 方法 その1:
 1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを保存する
-92/install_folder/config.js
+117/install_folder/config.js
 
 2. アプリケーションインストールフォルダ\defaults\pref 直下に以下のファイルを保存する
-92/install_folder\defaults\pref\config-prefs.js
+117/install_folder\defaults\pref\config-prefs.js
 
 
 3. プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルを保存する
-92/userChrome.css
-92/userChrome.js
+135/userChrome.js または 106/userChrome.js
+必要に応じて 92/userChrome.css
 
 4. 必要なスクリプトファイルを保存する
 
 5. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+
+
+
+userchrome.jsのインストール方法 方法 その2(https://github.com/xiaoxiaoflood/firefox-scripts):
+
+1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを解凍保存する
+  https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/fx-folder.zip
+
+2, プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルをダウンロードし解凍保存する
+
+  a)スクリプトにしか興味がない
+    https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils_scripts_only.zip
+
+  b)拡張機能にしか興味がない(ここを見る人には関係ない)
+    https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils_extensions_only.zip
+    
+  c)スクリプトと拡張機能の両方に興味がある
+    https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils.zip
+    
+
+3. 必要に応じスクリプトの日本語ファイル名に対応するため 2.で保存した chrome/utils/userChrome.jsm 内の
+
+   .getURLSpecFromDir(this.chromedir) + filename,
+   を
+   .getURLSpecFromActualFile(aFile),
+   に置き換える
+
+4. 必要なスクリプトファイルを保存する
+
+5. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+DeepL.com（無料版）で翻訳しました。
+
 
 
 免責事項
