@@ -19,7 +19,7 @@ userchrome.jsのインストール方法 方法 その1:
 
 3. プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルを保存する
 135/userChrome.js または 106/userChrome.js
-必要に応じて 92/userChrome.css
+必要に応じて 72/userChrome.css
 
 4. 必要なスクリプトファイルを保存する
 
@@ -44,18 +44,84 @@ userchrome.jsのインストール方法 方法 その2(https://github.com/xiaox
     https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils.zip
     
 
-3. 必要に応じスクリプトの日本語ファイル名に対応するため 2.で保存した chrome/utils/userChrome.jsm 内の
+3. 必要に応じ、スクリプトの日本語ファイル名に対応するため 2.で保存した chrome/utils/userChrome.jsm 内の
 
    .getURLSpecFromDir(this.chromedir) + filename,
    を
    .getURLSpecFromActualFile(aFile),
    に置き換える
 
-4. 必要なスクリプトファイルを保存する
+4. スクリプトファイルを保存する
 
 5. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
 
 
+
+userchrome.jsのインストール方法 方法 その3(https://bitbucket.org/BSTweaker/userchromejs/src/master/loader/):
+
+1. config.jsが動くようにしておく (例えば その1の1. 2. その2の1. 2.を実行)
+
+2. https://bitbucket.org/BSTweaker/userchromejs/src/master/loader/ 
+   上記に従いconfig.jsコードを修正
+
+3. chromeフォルダに以下のファイルを保存
+   https://bitbucket.org/BSTweaker/userchromejs/src/master/loader/UserChromeJSLoader.mjs
+
+4. 必要に応じ、スクリプトの読み込み順番(大小文字を区別しない)に並び変えるため
+    const ucjsLoaderConfig = {
+    を
+    const ucjsLoaderConfig = {
+        loadScriptsInOrderIgnoreCase : true,
+    に置き換え後、
+
+    get sortedScripts() {
+        return this.scripts.sort((a, b) => {
+            return a.path > b.path ? 1 : -1;
+        });
+    }
+    を
+    get sortedScripts() {
+      if (ucjsLoaderConfig.loadScriptsInOrderIgnoreCase) {
+        return this.scripts.sort((a, b) => {
+            return a.path.toLowerCase() > b.path.toLowerCase() ? 1 : -1;
+        });
+      } else {
+        return this.scripts.sort((a, b) => {
+            return a.path > b.path ? 1 : -1;
+        });
+      }
+    }
+    に置き換える
+
+5. 必要に応じ、スクリプトの有効無効を中クリックで行えるようにしかつメニューを閉じない
+    toolsMenu.addEventListener("popupshowing", event => {
+    の前に
+    win.document.getElementById("UCJSLoader-menu").addEventListener("mouseup", event => {
+  		const menuitem = event.target;
+  		if (event.button == 1) 
+  		{
+  			menuitem.setAttribute('closemenu', 'none');
+  			menuitem.parentNode.addEventListener('popuphidden', () => {
+  				menuitem.removeAttribute('closemenu');
+  			}, { once: true });
+  			if (event.ctrlKey)
+  		  	menuitem.parentNode.hidePopup();
+  		}
+    });
+    を追加し
+
+    if (event.type === "command" && event.button === 0) script.disabled = !script.disabled;
+    を
+    if (event.type === "command" && event.button <= 1) script.disabled = !script.disabled;
+    に置き換える
+
+
+6. 必要なスクリプトファイルを保存する
+
+7. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+
+
+* 「必要に応じ」はやらなくてもいいよ
 
 DeepL.com（無料版）で翻訳しました。
 
