@@ -37,10 +37,10 @@ userchrome.jsのインストール方法 方法 その2(https://github.com/xiaox
   a)スクリプトにしか興味がない
     https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils_scripts_only.zip
 
-  b)拡張機能にしか興味がない(ここを見る人には関係ない)
+  b)レガシー拡張機能にしか興味がない(ここを見る人には関係ない)
     https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils_extensions_only.zip
     
-  c)スクリプトと拡張機能の両方に興味がある
+  c)スクリプトとレガシー拡張機能の両方に興味がある
     https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils.zip
     
 
@@ -54,8 +54,10 @@ userchrome.jsのインストール方法 方法 その2(https://github.com/xiaox
 4. 必要なスクリプトファイルを保存する
 
 5. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
-DeepL.com（無料版）で翻訳しました。
 
+
+
+DeepL.com（無料版）で翻訳しました。
 
 
 免責事項
