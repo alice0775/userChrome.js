@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/03/11 fix makeURI
 // @version       2025/01/23 remove inline style
 // @version       2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version       2024/05/27 css theme
@@ -167,10 +168,12 @@ var acBookMarkTreeFolder = {
       return document.documentElement.getAttribute(name);
     };
 */
-    var sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
-    var uri = Services.io.newURI('data:text/css;charset=UTF=8,' + encodeURIComponent(style));
-    if(!sss.sheetRegistered(uri, sss.AGENT_SHEET))
-      sss.loadAndRegisterSheet(uri, sss.AGENT_SHEET);
+    let sss = Cc['@mozilla.org/content/style-sheet-service;1'].getService(Ci.nsIStyleSheetService);
+    try {
+      let uri = Services.io.newURI('data:text/css;charset=UTF=8,' + encodeURIComponent(style));
+      if(!sss.sheetRegistered(uri, sss.AGENT_SHEET))
+        sss.loadAndRegisterSheet(uri, sss.AGENT_SHEET);
+    } catch (ex) {}
 
     return;
   },
