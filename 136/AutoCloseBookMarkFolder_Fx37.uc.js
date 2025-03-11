@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/03/11 fix style
 // @version       2025/03/11 fix makeURI
 // @version       2025/01/23 remove inline style
 // @version       2024/12/22 fix Bug 1936336 - Disallow inline event handlers
@@ -137,26 +138,12 @@ var acBookMarkTreeFolder = {
     this._BTree.parentNode.insertBefore(toolbox, this._BTree);
 
     let style = `
-        #acBookMarkTreeFolder-toolbox {
-          appearance: none;
+        #acBookMarkTreeFolder-toolbox toolbar{
+          color-scheme: inherit !important;
         }
-        toolbar{
-          background-color: transparent !important;
+        #acBookMarkTreeFolder-toolbox toolbarbutton{
+          color: inherit !important;
         }
-        :root[lwtheme] toolbar:-moz-window-inactive {
-          color: var(--lwt-sidebar-text-color) !important;
-          background-color: var(--lwt-sidebar-background-color) !important;
-        }
-        :root[lwtheme] toolbar,
-        :root[lwtheme] toolbar toolbarbutton {
-          color: var(--lwt-sidebar-text-color) !important;
-          background-color: var(--lwt-sidebar-background-color) !important;
-        }
-        :root[lwt-sidebar="dark"] toolbar,
-        :root[lwt-sidebar="dark"] toolbar toolbarbutton {
-          color-scheme: dark !important;
-        } 
-
         `;
 /*
     var sspi = document.createProcessingInstruction(

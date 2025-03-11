@@ -3,11 +3,12 @@
 // @namespace     http://www.sephiroth-j.de/mozilla/
 // @description   Autoclose History Folders
 // @include       chrome://browser/content/places/historySidebar.xhtml
-// @include       chrome://browser/content/places/historySidebar.xhtml?revamped
 // @compatibility Firefox 136
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/03/11 fix style
+// @version       2025/02/09 fix bug
 // @version       2025/01/23 remove inline style
 // @version       2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version       2024/05/27 css theme
@@ -157,26 +158,12 @@ var acHistoryFolder = {
     openAllButton.style.setProperty("color", color, "");
 
     let style = `
-        #acHistoryFolder-toolbox {
-          appearance: none;
+        #acHistoryFolder-toolbox toolbar{
+          color-scheme: inherit !important;
         }
-        toolbar{
-          background-color: transparent !important;
+        #acHistoryFolder-toolbox toolbar toolbarbutton{
+          color: inherit !important;
         }
-        :root[lwtheme] toolbar:-moz-window-inactive {
-          color: var(--lwt-sidebar-text-color) !important;
-          background-color: var(--lwt-sidebar-background-color) !important;
-        }
-        :root[lwtheme] toolbar,
-        :root[lwtheme] toolbar toolbarbutton {
-          color: var(--lwt-sidebar-text-color) !important;
-          background-color: var(--lwt-sidebar-background-color) !important;
-        }
-        :root[lwt-sidebar="dark"] toolbar,
-        :root[lwt-sidebar="dark"] toolbar toolbarbutton {
-          color-scheme: dark !important;
-        } 
-
         `;
 /*
     var sspi = document.createProcessingInstruction(
