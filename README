@@ -54,10 +54,19 @@ userchrome.jsのインストール方法 方法 その2(https://github.com/xiaox
 4. スクリプトファイルを保存する
 
 5.https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
+
+   editorArgs.push(script.file.path);
+   を
+   editorArgs.push(Services.io.newURI(script.url)
+           .QueryInterface(Ci.nsIFileURL).file.path);
+   に、さらに
+
    process.run(
    を
    process.runw(
    に置き換える
+
+   ※ Nightlyでは、security.browser_xhtml_csp.enabled を falseにする。(もしくは、セキュリティを気にする場合はすべての'onほにゃらら'をイベントリスナーに変更する必要がある)
 
 6. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
 
@@ -125,6 +134,20 @@ userchrome.jsのインストール方法 方法 その3(https://bitbucket.org/BS
 6. 必要なスクリプトファイルを保存する
 
 7. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+
+
+
+userchrome.jsのインストール方法 方法 その4(https://github.com/onemen/TabMixPlus/tree/main?tab=readme-ov-file):
+
+1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを解凍保存する
+  https://github.com/onemen/TabMixPlus/releases/download/dev-build/fx-folder.zip
+
+2, プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルをダウンロードし解凍保存する
+  https://github.com/onemen/TabMixPlus/releases/download/dev-build/utils.zip
+
+3. 必要なスクリプトファイルを保存する
+
+4. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
 
 
 * 「必要に応じ」はやらなくてもいいよ
