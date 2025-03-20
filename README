@@ -149,7 +149,38 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
 2, プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルをダウンロードし解凍保存する
   https://github.com/onemen/TabMixPlus/releases/download/dev-build/utils.zip
 
-3.必要に応じ, 日本語スクリプト名に対応するため
+
+3. Firefoxの初期化中にスクリプトが実行されないようにするため,展開保存した utils\userChrome.js 内の
+      Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
+                                          script.onlyonce ? { window: win } : win);
+     を
+
+      function setTimeout(callback, ms) {
+        let _timer = Cc['@mozilla.org/timer;1']
+                       .createInstance(Ci.nsITimer);
+        _timer.initWithCallback({notify: callback}, ms, Ci.nsITimer.TYPE_ONE_SHOT);
+        return _timer;
+      }
+      function clearTimeout(timer) {
+        timer.cancel();
+      }
+      let timer = setTimeout(() => {
+            Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
+                                                script.onlyonce ? { window: win } : win);
+      }, 0);
+
+     に置き換える。さらに
+
+
+     aSubject.addEventListener('DOMContentLoaded', this, {once: true});
+
+     を
+
+     aSubject.addEventListener('load', this, {once: true});
+
+     に置き換える。
+
+4.必要に応じ, 日本語スクリプト名に対応するため utils\userChrome.js を
       url: Services.io.getProtocolHandler('file').QueryInterface(Ci.nsIFileProtocolHandler).getURLSpecFromDir(this.chromedir) + filename,
    を
 
@@ -159,9 +190,9 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
           .getURLSpecFromActualFile(aFile),
     に置き換える。
 
-4. 必要なスクリプトファイルを保存する
+5. 必要なスクリプトファイルを保存する
 
-5. https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
+6. https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
 
    editorArgs.push(script.file.path);
    を
@@ -176,7 +207,7 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
    
  ※ Nightlyでは、security.browser_xhtml_csp.enabled を falseにする。(もしくは、セキュリティを気にする場合はすべての'onほにゃらら'をイベントリスナーに変更する必要がある)
 
-6. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+7. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
 
 
 * 「必要に応じ」はやらなくてもいいよ
