@@ -46,16 +46,46 @@ userchrome.jsのインストール方法 方法 その2(https://github.com/xiaox
     https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils.zip
     
 
-3. 必要に応じ、スクリプトの日本語ファイル名に対応するため 2.で保存した chrome/utils/userChrome.jsm 内の
+3. Firefoxの初期化中にスクリプトが実行されないようにするため,展開保存した utils\userChrome.jsm 内の
+      Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
+                                          script.onlyonce ? { window: win } : win);
+     を
+
+      function setTimeout(callback, ms) {
+        let _timer = Cc['@mozilla.org/timer;1']
+                       .createInstance(Ci.nsITimer);
+        _timer.initWithCallback({notify: callback}, ms, Ci.nsITimer.TYPE_ONE_SHOT);
+        return _timer;
+      }
+      function clearTimeout(timer) {
+        timer.cancel();
+      }
+      let timer = setTimeout(() => {
+            Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
+                                                script.onlyonce ? { window: win } : win);
+      }, 0);
+
+     に置き換える。さらに
+
+
+     aSubject.addEventListener('DOMContentLoaded', this, {once: true});
+
+     を
+
+     aSubject.addEventListener('load', this, {once: true});
+
+     に置き換える。
+
+4. 必要に応じ、スクリプトの日本語ファイル名に対応するため 2.で保存した chrome/utils/userChrome.jsm 内の
 
    .getURLSpecFromDir(this.chromedir) + filename,
    を
    .getURLSpecFromActualFile(aFile),
    に置き換える
 
-4. スクリプトファイルを保存する
+5. スクリプトファイルを保存する
 
-5.https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
+6.https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
 
    editorArgs.push(script.file.path);
    を
