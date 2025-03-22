@@ -322,30 +322,43 @@ var ucjsMouseGestures = {
           } ],
 
         ['LU', 'Built-in Translate page to Japanese and restore original',
-          async function(){
-            const actor = TranslationsParent.getTranslationsActor(
-              gBrowser.selectedBrowser
-            );
-            if (!actor.languageState.hasVisibleChange) {
-              const detectedLang = await actor.getDetectedLanguages();
-              if (!detectedLang) {
-                throw new Error("Expected to have a document language tag.");
-              }
-              if (!detectedLang.isDocLangTagSupported) {
-                throw new Error("language is not supported.");
-              }
-              const [sourceLanguage, sourceVariant] = (detectedLang.docLangTag).split(",");
-              const [targetLanguage, targetVariant] = "ja".split(",");
-              actor.translate(
-                { sourceLanguage, targetLanguage, sourceVariant, targetVariant },
-                false // reportAsAutoTranslate
-              );
+          async function(event){
+            if (ucjsMouseGestures._selectedTXT.length !== 0) {
+              translationsLangPairPromise =
+                window.SelectTranslationsPanel.getLangPairPromise(ucjsMouseGestures._selectedTXT);
+              window.SelectTranslationsPanel.open(
+                event,
+                ucjsMouseGestures._lastX,
+                ucjsMouseGestures._lastY,
+                ucjsMouseGestures._selectedTXT,
+                !(ucjsMouseGestures._selectedTXT.length === 0),
+                translationsLangPairPromise
+              ).catch(console.error);
             } else {
-              const { docLangTag } = await actor.getDetectedLanguages();
-              if (!docLangTag) {
-                throw new Error("Expected to have a document language tag.");
+              const actor = TranslationsParent.getTranslationsActor(
+                gBrowser.selectedBrowser
+              );
+              if (!actor.languageState.hasVisibleChange) {
+                const detectedLang = await actor.getDetectedLanguages();
+                if (!detectedLang) {
+                  throw new Error("Expected to have a document language tag.");
+                }
+                if (!detectedLang.isDocLangTagSupported) {
+                  throw new Error("language is not supported.");
+                }
+                const [sourceLanguage, sourceVariant] = (detectedLang.docLangTag).split(",");
+                const [targetLanguage, targetVariant] = "ja".split(",");
+                actor.translate(
+                  { sourceLanguage, targetLanguage, sourceVariant, targetVariant },
+                  false // reportAsAutoTranslate
+                );
+              } else {
+                const { docLangTag } = await actor.getDetectedLanguages();
+                if (!docLangTag) {
+                  throw new Error("Expected to have a document language tag.");
+                }
+                actor.restorePage(docLangTag);
               }
-              actor.restorePage(docLangTag);
             }
           } ],
 
@@ -836,7 +849,7 @@ var ucjsMouseGestures = {
         let cmd = command[0].substring(1);
         if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
           try {
-            command[2]();
+            command[2](event);
           } catch(ex) {
             Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
           }
@@ -849,7 +862,7 @@ var ucjsMouseGestures = {
     for (let command of this.commands) {
       if (this._directionChain !== "" && command[0] == this._directionChain) {
         try {
-          command[2]();
+          command[2](event);
         } catch(ex) {
           Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
         }
