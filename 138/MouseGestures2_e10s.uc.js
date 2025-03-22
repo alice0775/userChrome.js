@@ -324,7 +324,7 @@ var ucjsMouseGestures = {
         ['LU', 'Built-in Translate page to Japanese and restore original',
           async function(event){
             if (ucjsMouseGestures._selectedTXT.length !== 0) {
-              translationsLangPairPromise =
+              const translationsLangPairPromise =
                 window.SelectTranslationsPanel.getLangPairPromise(ucjsMouseGestures._selectedTXT);
               window.SelectTranslationsPanel.open(
                 event,
