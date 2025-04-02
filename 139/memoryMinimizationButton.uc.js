@@ -7,8 +7,9 @@
 // @async          true
 // @include        about:processes?memoryMinimizationButton
 // @include        about:processes?memoryMinimizationButton2
-// @compatibility  Firefox 135
+// @compatibility  Firefox 139
 // @author         Alice0775
+// @version        2025/04/02 fix working within sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2023/01/21 00:00 check link
 // @version        2022/11/04 00:00 ucjsMemoryUsage
@@ -17,7 +18,7 @@
 // @version        2018/10/09 00:00 fix CSS
 // @version        2018/09/07 23:00 fix initial visual status
 // ==/UserScript==
-var memoryMinimizationButton = {
+window.memoryMinimizationButton = {
   get memoryMinimizationButton(){
     return document.getElementById("memoryMinimizationButton");
   },

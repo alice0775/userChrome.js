@@ -4,8 +4,9 @@
 // @description    serachWPもどき  まだまだtodo未実装だらけ
 // @charset        utf-8
 // @include        main
-// @compatibility  Firefox 122
+// @compatibility  Firefox 139
 // @author         Alice0775
+// @version        2025/04/02 fix working within sandbox
 // @version        2024/03/29 07:00 Auto highlight settings are now saved.
 // ==/UserScript==
 // @version        2023/12/14 07:00 add icu4x.segmenter
@@ -38,7 +39,7 @@
 // todo(未実装)
 //   トークン毎の色分け強調表示
 //   トークンの分割表示
-var serachWP_modoki = {
+window.serachWP_modoki = {
   // config
   AUTOHIGHLIGHT: false, //Services.prefs.getBoolPref("userChrome.searchWP_modoki.highlightAll", false), // 強調表示 デフォルト off
   TOKENSJAPANESE: true, // 日本語のトークンを自動判定 on

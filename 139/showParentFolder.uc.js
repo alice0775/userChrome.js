@@ -3,8 +3,9 @@
 // @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description   Show Parent Folder
 // @include       chrome://browser/content/places/places.xhtml
-// @compatibility Firefox 136
+// @compatibility Firefox 139
 // @author        alice0775
+// @version       2025/04/02 fix working within sandbox
 // @version       2025/01/24 Workaround for `blocking Function()` and remove inline style
 // @version       2023/06/18 null check node.parent
 // @version       2023/03/10 Bug 1820534 - Move front-end to modern flexbox.
@@ -31,10 +32,8 @@ var showparentfolder = {
     window.addEventListener('unload', showparentfolder.uninit,false);
     this.db = this.openDB();
 
-    let xpref = Components.classes['@mozilla.org/preferences-service;1']
-                .getService(Components.interfaces.nsIPrefService);
-    let ordinal = xpref.getStringPref('ucjs.showParentFolder.ordinal', "15");
-    let width = xpref.getStringPref('ucjs.showParentFolder.width', "100");
+    let ordinal = Services.prefs.getStringPref('ucjs.showParentFolder.ordinal', "15");
+    let width = Services.prefs.getStringPref('ucjs.showParentFolder.width', "100");
 
     let treecols = document.getElementById("placeContentColumns");
     let treecolpicker = treecols.querySelector("treecolpicker");
@@ -125,10 +124,8 @@ var showparentfolder = {
             var txt = (folderTitle + "____________").substr(0, 12);
             if (this.getLocalizedTitle2(txt))
               folderTitle = this.getLocalizedTitle2(txt)
-            var xpref = Components.classes['@mozilla.org/preferences-service;1']
-                .getService(Components.interfaces.nsIPrefService);
-            var reverse = xpref.getBoolPref('ucjs.showParentFolder.reverseFolderHierarchy', true);
-            var showFolderHierarchy = xpref.getBoolPref('ucjs.showParentFolder.showFolderHierarchy', false);
+            var reverse = Services.prefs.getBoolPref('ucjs.showParentFolder.reverseFolderHierarchy', true);
+            var showFolderHierarchy = Services.prefs.getBoolPref('ucjs.showParentFolder.showFolderHierarchy', false);
             if (showFolderHierarchy){
 
               while (FolderId = showparentfolder.getFolderIdForItem(parentFolderId)){
@@ -177,10 +174,8 @@ var showparentfolder = {
                 var txt = (folderTitle + "____________").substr(0, 12);
                 if (this.getLocalizedTitle2(txt))
                   folderTitle = this.getLocalizedTitle2(txt)
-                var xpref = Components.classes['@mozilla.org/preferences-service;1']
-                    .getService(Components.interfaces.nsIPrefService);
-                var reverse = xpref.getBoolPref('ucjs.showParentFolder.reverseFolderHierarchy', true);
-                var showFolderHierarchy = xpref.getBoolPref('ucjs.showParentFolder.showFolderHierarchy', false);
+                var reverse = Services.prefs.getBoolPref('ucjs.showParentFolder.reverseFolderHierarchy', true);
+                var showFolderHierarchy = Services.prefs.getBoolPref('ucjs.showParentFolder.showFolderHierarchy', false);
                 if (showFolderHierarchy){
 
                   while (FolderId = showparentfolder.getFolderIdForItem(parentFolderId)){
@@ -455,10 +450,8 @@ var showparentfolder = {
     let treecol = document.getElementById("placesContentParentFolder");
     let ordinal = treecol.getAttribute("ordinal");
     let width = treecol.getAttribute("width");
-    let xpref = Components.classes['@mozilla.org/preferences-service;1']
-                .getService(Components.interfaces.nsIPrefService);
-    xpref.setStringPref('ucjs.showParentFolder.ordinal', ordinal);
-    xpref.setStringPref('ucjs.showParentFolder.width', width.toString());
+    Services.prefs.setStringPref('ucjs.showParentFolder.ordinal', ordinal);
+    Services.prefs.setStringPref('ucjs.showParentFolder.width', width.toString());
     userChrome_js.debug("width="+width);
   }
 }

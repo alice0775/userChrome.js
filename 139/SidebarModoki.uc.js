@@ -5,7 +5,8 @@
 // @include        main
 // @async          true
 // @author         Alice0775
-// @compatibility  135
+// @compatibility  139
+// @version        2025/04/02 fix working within sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
 // @note           Tree Style Tab がある場合にブックマークと履歴等を別途"サイドバーもどき"で表示
@@ -59,7 +60,7 @@
 // ==/UserScript==
 
 
-var SidebarModoki = {
+window.SidebarModoki = {
   // -- config --
   SM_RIGHT: false,  // SidebarModoki position
   SM_WIDTH : 230,

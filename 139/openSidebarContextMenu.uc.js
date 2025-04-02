@@ -7,7 +7,8 @@
 // @include        chrome://browser/content/places/places.xhtml
 // @include        chrome://browser/content/places/bookmarksSidebar.xhtml
 // @author         Alice0775
-// @compatibility  135
+// @compatibility  139
+// @version        2025/04/02 fix working within sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/09/02 Bug 1916098 - Remove appcontent box.
 // @version        2024/05/05 Bug 1892965 - Rename Sidebar launcher and SidebarUI
@@ -22,7 +23,7 @@
 // ==/UserScript==
 
 
-var openSidebarContextMenu = {
+window.openSidebarContextMenu = {
   init: function () {
     this.db = this.openDB();
     var placesContext = document.getElementById("placesContext");

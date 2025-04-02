@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.79mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.80mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -8,12 +8,13 @@
 // supports regexes in the include/exclude lines
 // scripts without metadata will run only on the main browser window, for backwards compatibility
 //
-// 1.Including function of UCJS_loader.
-// 2.Compatible with Fx2 and Fx3.0b5pre
+// 1.Including function of UCJS_loader. <--- not work in Firefox135+
+// 2.Compatible with Firefox139
 // 3.Cached script data (path, leafname, regex)
-// 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) //
+// 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) <--- not work in recent Firefox
 // Modified by Alice0775
 //
+// @version       2025/04/02 fix loadscript uc.js into sandbox
 // @version       2025/01/05 fix error handler
 // @version       2025/01/04 add error handler
 // @version       2025/01/03 use ChromeUtils.compileScript if async
@@ -503,6 +504,24 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         return "1.6";
       })();
 
+      let target = win = doc.defaultView;
+      
+        target = new Cu.Sandbox(win, {
+            sandboxPrototype: win,
+            sameZoneAs: win,
+        });
+        /* toSource() is not available in sandbox */
+        Cu.evalInSandbox(`
+            Function.prototype.toSource = window.Function.prototype.toSource;
+            Object.prototype.toSource = window.Object.prototype.toSource;
+            Array.prototype.toSource = window.Array.prototype.toSource;
+        `, target);
+        win.addEventListener("unload", () => {
+            setTimeout(() => {
+                Cu.nukeSandbox(target);
+            }, 0);
+        }, {once: true});
+
       for(var m=0,len=this.scripts.length; m<len; m++){
         script = this.scripts[m];
         if (this.ALWAYSEXECUTE.indexOf(script.filename) < 0
@@ -522,7 +541,6 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
             }
         }else{ //Not for UCJS_loader
           if (this.INFO) this.debug("loadSubScript: " + script.filename);
-          let target = doc.defaultView;
           /*
           try {
             if (script.charset)
@@ -538,6 +556,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           }
           continue;
           */
+          
           if (!script.async) {
             try {
               if (script.charset)

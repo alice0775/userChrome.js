@@ -4,8 +4,9 @@
 // @description    テキストエリア等,Findbar, Serachbarコンテキストメニューにクリアを追加
 // @include        *
 // @async          true
-// @compatibility  Firefox 135
+// @compatibility  Firefox 139
 // @author         Alice0775
+// @version        2025/04/02 fix working within sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2022/03/25 08:30 remove ns IScriptableUnicodeConverter
 // @version        2021/06/03 01:00 simplified
@@ -18,7 +19,7 @@
 // @version        2018/10/24 21:30 Firefox60 e10s
 // @Note
 // ==/UserScript==
-var ucjs_clearfield = {
+window.ucjs_clearfield = {
   init: function() {
     window.addEventListener("unload", this, false);
     window.addEventListener("popupshowing", this, false);

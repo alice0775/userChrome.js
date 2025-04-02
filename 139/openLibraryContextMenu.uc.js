@@ -6,8 +6,9 @@
 // @include        chrome://browser/content/places/places.xhtml
 // @include        chrome://browser/content/places/bookmarksSidebar.xhtml
 // @async          true
-// @compatibility  Firefox 135
+// @compatibility  Firefox 139
 // @author         Alice0775
+// @version        2025/04/02 fix working within sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/07/17 Bug 1904909 - PlacesUtils::GatherDataText and GatherDataHtml should not recurse into queries
 // @version        2023/01/10 Bug 1382992 - Remove the synchronous getFolderIdForItem()
@@ -20,7 +21,7 @@
 // ==/UserScript==
 
 
-var openLibraryContextMenu = {
+window.openLibraryContextMenu = {
   node: null,
   organizer:null,
 

@@ -5,8 +5,9 @@
 // @charset        utf-8
 // @include        main
 // @async          true
-// @compatibility  Firefox 135
+// @compatibility  Firefox 139
 // @author         Alice0775
+// @version        2025/04/02 fix working within sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/11/17 stop using framescript
 // @version        2023/09/07 remove to use nsIScriptableUnicodeConverter
@@ -14,7 +15,7 @@
 // @version        2019/09/05 12:00 
 // @version        2018/09/07 17:00 
 // ==/UserScript==
-var ddwin_button = {
+window.ddwin_button = {
   //-- config --
     PATH: "c:\\Program Files\\DDwin\\ddwin.exe",
     GROUP: "",
