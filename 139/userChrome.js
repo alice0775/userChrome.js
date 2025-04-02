@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.80mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.81mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) <--- not work in recent Firefox
 // Modified by Alice0775
 //
+// @version       2025/04/02 read meta @sandbox
 // @version       2025/04/02 fix loadscript uc.js into sandbox
 // @version       2025/01/05 fix error handler
 // @version       2025/01/04 add error handler
@@ -265,7 +266,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
 
       //メタデータ収集
       function getScriptData(aContent,aFile){
-        var charset, description, async;
+        var charset, description, async, sandbox;
         var header = (aContent.match(/^\/\/ ==UserScript==[ \t]*\n(?:.*\n)*?\/\/ ==\/UserScript==[ \t]*\n/m) || [""])[0];
         var match, rex = { include: [], exclude: []};
         while ((match = findNextRe.exec(header)))
@@ -282,10 +283,20 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           charset = match.length > 0 ? match[1].replace(/^\s+/,"") : "";
 
         match = header.match(/\/\/ @async\b(.+)\s*/i);
-        async = "";
+        async = false;
         //try
-        if(match)
+        if(match) {
           async = match.length > 0 ? match[1].replace(/^\s+/,"") : "";
+          async = (sandbox == "true");
+        }
+        
+        match = header.match(/\/\/ @sandbox\b(.+)\s*/i);
+        sandbox = true; // default sandboxed
+        //try
+        if(match) {
+          sandbox = match.length > 0 ? match[1].replace(/^\s+/,"") : "";
+          sandbox = !(sandbox == "false");
+        }
 
         match = header.match(/\/\/ @description\b(.+)\s*/i);
         description = "";
@@ -305,6 +316,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
           charset: charset,
           description: description,
           async: async,
+          sandbox: sandbox,
           //code: aContent.replace(header, ""),
           regex: new RegExp("^" + exclude + "(" + (rex.include.join("|") || ".*") + ")$", "i")
         }
@@ -562,11 +574,11 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
               if (script.charset)
                 Services.scriptloader.loadSubScript(
                            script.url + "?" + this.getLastModifiedTime(script.file),
-                           target, script.charset);
+                           script.sandbox ? target : doc.defaultView, script.charset);
               else
                 Services.scriptloader.loadSubScript(
                            script.url + "?" + this.getLastModifiedTime(script.file),
-                           target);
+                           script.sandbox ? target : doc.defaultView);
             }catch(ex) {
               this.error(script.filename, ex);
             }
@@ -574,7 +586,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
             ChromeUtils.compileScript(
               script.url + "?" + this.getLastModifiedTime(script.file)
             ).then((r) => {
-              r.executeInGlobal(/*global*/ target, {reportExceptions: true});
+              r.executeInGlobal(/*global*/ script.sandbox ? target : doc.defaultView, {reportExceptions: true});
             }).catch((ex) => {this.error(script.filename, ex);});
           }
         }
