@@ -4,10 +4,12 @@
 // @description    tabProtect
 // @include        main
 // @exclude        about:*
+// @sandbox        true
 // @author         Alice0775
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
-// @compatibility  135
+// @compatibility  139
+// @version        2025/02/02  add @sandbox
 // @version        2025/01/08 fix hide close button in allTabsMenu arrow panel
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/10/01 00:00 hide close button in allTabsMenu

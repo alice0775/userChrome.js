@@ -4,8 +4,10 @@
 // @description    複数タブクローズ時のワーニング強制表示
 // @include        main
 // @async          true
+// @sandbox        true
 // @author         Alice0775
-// @compatibility  91
+// @compatibility  139
+// @version        2025/02/02  add @sandbox
 // @version        2021/11/04 23:00 for 91
 // ==/UserScript==
   function forceWarnAboutClosingTabs() {

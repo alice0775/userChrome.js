@@ -5,7 +5,10 @@
 // @include        *
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
+// @sandbox        true
 // @compatibility  135
+// @compatibility  139
+// @version        2025/02/02  add @sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version        2024/10/23 00:00 fix forceNonPrivate
 // @version        2024/07/17 00:00 Stop ignore about: error pages

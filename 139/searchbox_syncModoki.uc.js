@@ -4,6 +4,9 @@
 // @charset      utf-8
 // @include      main
 // @async          true
+// @sandbox        true
+// @compatibility  139
+// @version        2025/02/02  add @sandbox
 // @version      2023/07/17 00:00 use ES module imports
 // @version      2022/11/22 Bug 877389 - [meta] Replace calls to Cu.reportError, etc. from browser code, replace with console.error, etc.
 // @version      2022/11/06 17:00 107 Bug 1793414

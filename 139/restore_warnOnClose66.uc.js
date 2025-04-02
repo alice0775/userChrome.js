@@ -4,8 +4,10 @@
 // @description    restore_warnOnClose66
 // @include        main
 // @async          true
+// @sandbox        true
 // @author         Alice0775
-// @compatibility  68
+// @compatibility  139
+// @version        2025/02/02  add @sandbox
 // @version        2019/11/02 06:00 revert Bug 1135303
 
 // ==/UserScript==
