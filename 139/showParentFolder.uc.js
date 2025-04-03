@@ -6,6 +6,7 @@
 // @compatibility Firefox 139
 // @sandbox       true
 // @author        alice0775
+// @version       2025/04/04 remove inline style
 // @version       2025/04/04 revert the change of 01/24workaround
 // @version       2025/04/02 fix working within sandbox
 // @version       2025/01/24 Workaround for `blocking Function()` and remove inline style
@@ -42,7 +43,7 @@ var showparentfolder = {
     let splitter = document.createXULElement("splitter");
     splitter.setAttribute("class", "tree-splitter");
     splitter.setAttribute("resizeafter", "farthest");
-    splitter.setAttribute("style", "/*-moz-box-ordinal-group: 14;*/ order: " + (ordinal - 1) + ";"); /*Bug 1820534*/
+    splitter.style.setProperty("order", (ordinal - 1), "");
     splitter.setAttribute("ordinal", (ordinal - 1));
     let treecol = document.createXULElement("treecol");
     treecol.setAttribute("ordinal", ordinal);
