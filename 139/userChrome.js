@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.81mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.82mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) <--- not work in recent Firefox
 // Modified by Alice0775
 //
+// @version       2025/04/07 default disabled sandbox
 // @version       2025/04/02 read meta @sandbox
 // @version       2025/04/02 fix loadscript uc.js into sandbox
 // @version       2025/01/05 fix error handler
@@ -291,7 +292,7 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         }
         
         match = header.match(/\/\/ @sandbox\b(.+)\s*/i);
-        sandbox = true; // default sandboxed
+        sandbox = false; // default disable sandbox
         //try
         if(match) {
           sandbox = match.length > 0 ? match[1].replace(/^\s+/,"") : "";
