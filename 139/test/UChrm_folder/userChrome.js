@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.83a1 no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.83a2 no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -210,15 +210,18 @@ var Start = new Date().getTime();
 
       var findNextRe = /^\/\/ @(include|exclude)[ \t]+(\S+)/gm;
       this.directory = {name:[], UCJS:[], enable:[]};
+      var chromeDirPath = ds.get("UChrm", Ci.nsIFile).path;
+      if (navigator.platform.indexOf("Win") == 0)
+        chromeDirPath = chromeDirPath + "\\";
+      else
+        chromeDirPath = chromeDirPath + "/";
       for(var i=0, len=this.arrSubdir.length; i<len; i++){
         var s = [], o = [];
         try{
           var dir = this.arrSubdir[i]=="" ? "root" : this.arrSubdir[i];
           this.directory.name.push(dir);
           this.directory.UCJS.push(checkUCJS(dir));
-
           var workDir = ds.get("UChrm", Ci.nsIFile);
-          var chromeDirPath = workDir.path;
           workDir.append(this.arrSubdir[i]);
 
           var files = workDir.directoryEntries.QueryInterface(Ci.nsISimpleEnumerator);
@@ -230,7 +233,7 @@ var Start = new Date().getTime();
               var script = getScriptData(readFile(file, true) ,file);
               script.dir = dir;
               
-              script.chromedir = file.path.replace(chromeDirPath + "\\", "chrome://userchromejs/content/").replace(/\\/g,"/");
+              script.chromedir = file.path.replace(chromeDirPath, "chrome://userchromejs/content/").replace(/\\/g,"/");
 Services.console.logStringMessage(script.chromedir);
               if(/\.uc\.js$/i.test(script.filename)){
                 script.ucjs = checkUCJS(script.file.path);
