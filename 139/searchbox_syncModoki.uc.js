@@ -6,6 +6,7 @@
 // @async          true
 // @sandbox        true
 // @compatibility  139
+// @version      2025/05/10 revert 2025/05/09 chenge
 // @version      2025/05/09 stop using ecl.js
 // @version      2025/02/02 add @sandbox
 // @version      2023/07/17 00:00 use ES module imports
@@ -65,8 +66,7 @@ let searchboxsync = {
     });
 
     this.rules = this.loadRules(this.rules);
-// xxx
-//    this.lib();
+    this.lib();
     
     // Listeners
     window.addEventListener("unload", this, false);
@@ -223,8 +223,6 @@ let searchboxsync = {
       terms = terms.replace(/%252B/g, " "); // Replace all %252B signs with a space
       if (!terms)
         return ""
-// xxx
-return terms;
       
       encodetype = this.GetEscapeCodeType(terms);
       switch (encodetype) {
