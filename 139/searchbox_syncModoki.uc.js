@@ -6,7 +6,8 @@
 // @async          true
 // @sandbox        true
 // @compatibility  139
-// @version        2025/02/02  add @sandbox
+// @version      2025/05/09 stop using ecl.js
+// @version      2025/02/02 add @sandbox
 // @version      2023/07/17 00:00 use ES module imports
 // @version      2022/11/22 Bug 877389 - [meta] Replace calls to Cu.reportError, etc. from browser code, replace with console.error, etc.
 // @version      2022/11/06 17:00 107 Bug 1793414
@@ -64,7 +65,8 @@ let searchboxsync = {
     });
 
     this.rules = this.loadRules(this.rules);
-    this.lib();
+// xxx
+//    this.lib();
     
     // Listeners
     window.addEventListener("unload", this, false);
@@ -131,7 +133,8 @@ let searchboxsync = {
     for (var i = 0; i < this.rules.length; i++) {
       if (!this.rules[i])
         continue;
-      terms = this.extractTerms(this.rules[i], browser.currentURI.spec);
+      terms = this.losslessDecodeURI(browser.currentURI);
+      terms = this.extractTerms(this.rules[i], terms);
 
       if (terms != "")
         break;
@@ -155,6 +158,50 @@ let searchboxsync = {
       }
   },
 
+  losslessDecodeURI: function(aURI) {
+    let scheme = aURI.scheme;
+    let value = aURI.displaySpec;
+
+    // Try to decode as UTF-8 if there's no encoding sequence that we would break.
+    if (!/%25(?:3B|2F|3F|3A|40|26|3D|2B|24|2C|23)/i.test(value)) {
+      let decodeASCIIOnly = !["https", "http", "file", "ftp"].includes(scheme);
+      if (decodeASCIIOnly) {
+        // This only decodes ascii characters (hex) 20-7e, except 25 (%).
+        // This avoids both cases stipulated below (%-related issues, and \r, \n
+        // and \t, which would be %0d, %0a and %09, respectively) as well as any
+        // non-US-ascii characters.
+        value = value.replace(
+          /%(2[0-4]|2[6-9a-f]|[3-6][0-9a-f]|7[0-9a-e])/g,
+          decodeURI
+        );
+      } else {
+        try {
+          value = decodeURI(value)
+            // decodeURI decodes %25 to %, which creates unintended encoding
+            // sequences. Re-encode it, unless it's part of a sequence that
+            // survived decodeURI, i.e. one for:
+            // ';', '/', '?', ':', '@', '&', '=', '+', '$', ',', '#'
+            // (RFC 3987 section 3.2)
+            .replace(
+              /%(?!3B|2F|3F|3A|40|26|3D|2B|24|2C|23)/gi,
+              encodeURIComponent
+            );
+        } catch (e) {}
+      }
+    }
+    value = value.replace(
+      // eslint-disable-next-line no-control-regex
+      /[[\p{Separator}--\u{0020}]\p{Control}\u{2800}\u{FFFC}]|\u{0020}(?=[\p{Other}\p{Separator}])|\s$/gv,
+      encodeURIComponent
+    );
+    value = value.replace(
+      // eslint-disable-next-line no-misleading-character-class
+      /[[\p{Format}--[\u{200C}\u{200D}]]\u{034F}\u{115F}\u{1160}\u{17B4}\u{17B5}\u{180B}-\u{180D}\u{3164}\u{FE00}-\u{FE0F}\u{FFA0}\u{FFF0}-\u{FFFB}\p{Unassigned}\p{Private_Use}\u{E0000}-\u{E0FFF}\u{1F50F}-\u{1F513}\u{1F6E1}]/gv,
+      encodeURIComponent
+    );
+    return value;
+  },
+
   extractTerms: function(aUrlRegex, aUrl) {
     if (!aUrlRegex) {
       return "";
@@ -176,6 +223,8 @@ let searchboxsync = {
       terms = terms.replace(/%252B/g, " "); // Replace all %252B signs with a space
       if (!terms)
         return ""
+// xxx
+return terms;
       
       encodetype = this.GetEscapeCodeType(terms);
       switch (encodetype) {
