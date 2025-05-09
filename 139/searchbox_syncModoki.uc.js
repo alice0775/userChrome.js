@@ -6,6 +6,7 @@
 // @async          true
 // @sandbox        true
 // @compatibility  139
+// @version      2025/05/10 remove %252B hack
 // @version      2025/05/10 revert 2025/05/09 chenge
 // @version      2025/05/09 stop using ecl.js
 // @version      2025/02/02 add @sandbox
@@ -220,7 +221,8 @@ let searchboxsync = {
       // Extract the search terms from the URL
       terms = RegExp.lastParen;
       terms = terms.replace(/\+/g, " "); // Replace all + signs with a space
-      terms = terms.replace(/%252B/g, " "); // Replace all %252B signs with a space
+//***
+//      terms = terms.replace(/%252B/g, " "); // Replace all %252B signs with a space
       if (!terms)
         return ""
       
