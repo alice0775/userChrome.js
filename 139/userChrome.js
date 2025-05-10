@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.82mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.83mod no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) <--- not work in recent Firefox
 // Modified by Alice0775
 //
+// @version       2025/05/11 fix extended property flag(enumerable)
 // @version       2025/04/07 default disabled sandbox
 // @version       2025/04/02 read meta @sandbox
 // @version       2025/04/02 fix loadscript uc.js into sandbox
@@ -228,6 +229,7 @@ var Start = new Date().getTime();
               script.dir = dir;
               if(/\.uc\.js$/i.test(script.filename)){
                 script.ucjs = checkUCJS(script.file.path);
+                script.LastModifiedTime = this.getLastModifiedTime(script.file);
                 s.push(script);
               }else{
                 script.xul = '<?xul-overlay href=\"'+ script.url +'\"?>\n';
@@ -526,8 +528,11 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         /* toSource() is not available in sandbox */
         Cu.evalInSandbox(`
             Function.prototype.toSource = window.Function.prototype.toSource;
+            Object.defineProperty(Function.prototype, "toSource", {enumerable : false})
             Object.prototype.toSource = window.Object.prototype.toSource;
+            Object.defineProperty(Object.prototype, "toSource", {enumerable : false})
             Array.prototype.toSource = window.Array.prototype.toSource;
+            Object.defineProperty(Array.prototype, "toSource", {enumerable : false})
         `, target);
         win.addEventListener("unload", () => {
             setTimeout(() => {
@@ -574,18 +579,18 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
             try {
               if (script.charset)
                 Services.scriptloader.loadSubScript(
-                           script.url + "?" + this.getLastModifiedTime(script.file),
+                           script.url + "?" + script.LastModifiedTime,
                            script.sandbox ? target : doc.defaultView, script.charset);
               else
                 Services.scriptloader.loadSubScript(
-                           script.url + "?" + this.getLastModifiedTime(script.file),
+                           script.url + "?" + script.LastModifiedTime,
                            script.sandbox ? target : doc.defaultView);
             }catch(ex) {
               this.error(script.filename, ex);
             }
           } else {
             ChromeUtils.compileScript(
-              script.url + "?" + this.getLastModifiedTime(script.file)
+              script.url + "?" + script.LastModifiedTime
             ).then((r) => {
               r.executeInGlobal(/*global*/ script.sandbox ? target : doc.defaultView, {reportExceptions: true});
             }).catch((ex) => {this.error(script.filename, ex);});

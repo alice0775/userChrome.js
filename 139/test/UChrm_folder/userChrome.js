@@ -14,6 +14,7 @@
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) <--- not work in recent Firefox
 // Modified by Alice0775
 //
+// @version       2025/05/11 fix extended property flag(enumerable)
 // @version       2025/04/16 loadSubScript chrome:// instead of file://
 // @version       2025/04/07 default disabled sandbox
 // @version       2025/04/02 read meta @sandbox
@@ -535,8 +536,11 @@ this.debug('Parsing getScripts: '+((new Date()).getTime()-Start) +'msec');
         /* toSource() is not available in sandbox */
         Cu.evalInSandbox(`
             Function.prototype.toSource = window.Function.prototype.toSource;
+            Object.defineProperty(Function.prototype, "toSource", {enumerable : false})
             Object.prototype.toSource = window.Object.prototype.toSource;
+            Object.defineProperty(Object.prototype, "toSource", {enumerable : false})
             Array.prototype.toSource = window.Array.prototype.toSource;
+            Object.defineProperty(Array.prototype, "toSource", {enumerable : false})
         `, target);
         win.addEventListener("unload", () => {
             setTimeout(() => {
