@@ -6,6 +6,7 @@
 // @async          true
 // @sandbox        true
 // @compatibility  139
+// @version      2025/05/10 fix FormHistory does not work in sandbox
 // @version      2025/05/10 remove %252B hack
 // @version      2025/05/10 revert 2025/05/09 chenge
 // @version      2025/05/09 stop using ecl.js
@@ -149,13 +150,16 @@ let searchboxsync = {
 
     // save to form history
       if (!PrivateBrowsingUtils.isWindowPrivate(window)) {
-        this.lazy.FormHistory.update(
-          { op : "bump",
-            fieldname : this.searchbar._textbox.getAttribute("autocompletesearchparam"),
-            value : terms },
-          { handleError : function(aError) {
-              console.error("Saving search to form history failed: " + aError.message);
-          }});
+        //xxx FormHistory dose not work in sandbox
+        let Object1 = Object;
+        delete Object1.prototype.toSource;
+        let data = new Object1;
+        data.op = "bump";
+        data.fieldname = this.searchbar.textbox.getAttribute("autocompletesearchparam"),
+        data.value = terms;
+        //xxx
+        
+        this.lazy.FormHistory.update(data);
       }
   },
 
