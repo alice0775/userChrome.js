@@ -8,6 +8,7 @@
 // @sandbox        true
 // @compatibility  135
 // @compatibility  139
+// @version        2025/05/13 test version. fix uri.hash check
 // @version        2025/05/12 test version. force open link in newtab if tab is locked (e.g., google search results page)
 // @version        2025/02/02 add @sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
@@ -171,17 +172,24 @@ patch: {
 
 
       gBrowser.isHashLink = function (aUrl, aDocumentUrl){
+        function removeHashFromURI(uri) {
+          const hashIndex = uri.indexOf('#');
+          if (hashIndex !== -1) {
+            return uri.substring(0, hashIndex);
+          } else {
+            return uri;
+          }
+        }
+
         if(!tabLock.getPref('userChrome.tabLock.ignoreHashLink','bool', tabLock.ignoreHashLink))
           return false;
-        let aURI = new URL(aUrl);
-        let aDocumentURI = new URL(aDocumentUrl);
-        if (aURI.hash || aDocumentURI.hash) {
-          if(aURI.href.replace(aURI.hash, "") == aDocumentURI.href.replace(aDocumentURI.hash, "")) {
-            return true;
-          }
+
+        if(removeHashFromURI(aUrl) == removeHashFromURI(aDocumentUrl)) {
+          return true;
         }
         return false;
       }
+
 
       this.tabContextMenu();
 
