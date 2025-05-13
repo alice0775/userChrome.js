@@ -51,12 +51,13 @@ try {
 
 try {
     pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
-    lockPref("network.dns.disablePrefetch", false);
-    lockPref("network.dns.disablePrefetchFromHTTPS", false);
-    lockPref("network.predictor.enable-prefetch", true);
-    lockPref("network.predictor.enabled", true);
-    lockPref("network.prefetch-next", true);
-    lockPref("network.http.speculative-parallel-limit", 20);
+    //revert uBlock Origin settings
+    //lockPref("network.dns.disablePrefetch", false);
+    //lockPref("network.dns.disablePrefetchFromHTTPS", false);
+    //lockPref("network.predictor.enable-prefetch", true);
+    //lockPref("network.predictor.enabled", true);
+    //lockPref("network.prefetch-next", true);
+    //lockPref("network.http.speculative-parallel-limit", 20);
 
      //lockPref("security.browser_xhtml_csp.enabled", false);
 } catch(e) {}
