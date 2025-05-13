@@ -18,12 +18,15 @@ userchrome.jsのインストール方法 方法 その1:
 
 
 3. プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルを保存する
-135/userChrome.js または 106/userChrome.js
+139/userChrome.js, 135/userChrome.js または 106/userChrome.js
 必要に応じて 72/userChrome.css
+
 
 4. 必要なスクリプトファイルを保存する
 
 5. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+
+
 
 
 
@@ -105,6 +108,8 @@ userchrome.jsのインストール方法 方法 その2(https://github.com/xiaox
 
 
 
+
+
 userchrome.jsのインストール方法 方法 その3(https://bitbucket.org/BSTweaker/userchromejs/src/master/loader/):
 
 1. config.jsが動くようにしておく (例えば その1の1. 2. その2の1. 2.を実行)
@@ -168,6 +173,8 @@ userchrome.jsのインストール方法 方法 その3(https://bitbucket.org/BS
 
 
 7. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+
+
 
 
 
@@ -238,6 +245,9 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
  ※ Nightlyでは、security.browser_xhtml_csp.enabled を falseにする。(もしくは、セキュリティを気にする場合はすべての'onほにゃらら'をイベントリスナーに変更する必要がある)
 
 7. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+
+
+
 
 
 * 「必要に応じ」はやらなくてもいいよ
