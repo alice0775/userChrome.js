@@ -6,6 +6,7 @@
 // @async         true
 // @compatibility Firefox 138
 // @author        alice0775
+// @version       2025/05/14 add long click to open menu
 // @version       2025/05/14 fix due to Bug 1921536
 // @version       2025/05/01 fix command
 // @version       2025/04/08
@@ -32,24 +33,89 @@
                 return toolbaritem;
             }
         });
-    } catch(ex) {
-    } finally {
-      let toolbaritem = document.getElementById('toggle-sidebar2');
-      if (toolbaritem)
-        toolbaritem.addEventListener("command", (event) => {
-          let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
-            Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
+    } catch(ex) {}
 
-          event.target.ownerGlobal.SidebarController.toggle(commandID);
-          toolbaritem.checked = SidebarController.isOpen;
-        });
-    }
+    let toolbaritem = document.getElementById('toggle-sidebar2');
+    if (!toolbaritem) return;
+    
+    toolbaritem.addEventListener("command", (event) => {
+      let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
+        Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
 
+      event.target.ownerGlobal.SidebarController.toggle(commandID);
+      toolbaritem.checked = SidebarController.isOpen;
+    });
 
     let menupopup = document.createXULElement("menupopup");
     menupopup.setAttribute("id", "sidebarMenu2");
     document.getElementById("mainPopupSet").appendChild(menupopup);
     menupopup.addEventListener("popupshowing", (event) => {sidebarMenu2_onpopup(event)});
+
+    const WAIT = 500;
+    const CLICK_STATE_NONE = 0;
+    const CLICK_STATE_DOWN = 1;
+    const CLICK_STATE_HOLD = 2;
+    const CLICK_STATE_SKIP = 4;
+
+    let _timer = null;
+    let _state = 0;
+    let _target = null;
+    let _eventTarget = null;
+
+    toolbaritem.addEventListener('mousedown', onmousedown, true);
+
+    function onmousedown(event) {
+      if (_timer) {
+        clearTimeout(_timer);
+        _timer = null;
+      }
+      _state = CLICK_STATE_DOWN;
+
+      if (event.button != 0) 
+        return;
+
+      _timer = setTimeout((menupopup, x,y) => {
+        if (_state == CLICK_STATE_DOWN) {
+            _state = CLICK_STATE_HOLD;
+        menupopup.openPopupAtScreen(x, y , true);
+
+        }
+      }, WAIT, menupopup, event.screenX, event.screenY);
+
+      toolbaritem.addEventListener('mouseup', onmouseup, true);
+      toolbaritem.addEventListener('click', onclick, true);
+    }
+
+    function onmouseup(event) {
+      toolbaritem.removeEventListener('mouseup', onmouseup, true);
+      if (_timer) {
+        clearTimeout(_timer);
+        _timer = null;
+      }
+      _state = CLICK_STATE_NONE;
+      _target = null;
+    }
+
+    function onclick(event) {
+      toolbaritem.removeEventListener('click', onclick, true);
+      if (_timer) {
+        clearTimeout(_timer);
+        _timer = null;
+      }
+
+      if (_state == CLICK_STATE_HOLD &&
+          event && event.button == 0 &&
+          _target) {
+      event.preventDefault();
+      event.stopPropagation();
+        _state = CLICK_STATE_NONE;
+
+      }
+
+      _target = null;
+    }
+
+
 
     function sidebarMenu2_onpopup(event) {
       let menupopup = event.target;
