@@ -6,6 +6,8 @@
 // @async         true
 // @compatibility Firefox 138
 // @author        alice0775
+// @version       2025/05/14 fix due to Bug 1921536
+// @version       2025/05/01 fix command
 // @version       2025/04/08
 // ==/UserScript==
 (function() {
@@ -27,22 +29,21 @@
                 for (var p in props) {
                     toolbaritem.setAttribute(p, props[p]);
                 }
-                setTimeout(()=>{
-                  toolbaritem.checked = SidebarController.isOpen;
-                  if (SidebarController.currentID != "")
-                    toolbaritem.last = SidebarController.currentID;
-                },1000);
-                toolbaritem.addEventListener("click", (event) => {
-                    if (event.button == 0) {
-                        event.target.ownerGlobal.SidebarController.toggle(toolbaritem.last);
-                        toolbaritem.checked = SidebarController.isOpen;
-                    }
-
-                });
                 return toolbaritem;
             }
         });
-    } catch(ex) {}
+    } catch(ex) {
+    } finally {
+      let toolbaritem = document.getElementById('toggle-sidebar2');
+      if (toolbaritem)
+        toolbaritem.addEventListener("command", (event) => {
+          let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
+            Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
+
+          event.target.ownerGlobal.SidebarController.toggle(commandID);
+          toolbaritem.checked = SidebarController.isOpen;
+        });
+    }
 
 
     let menupopup = document.createXULElement("menupopup");
@@ -92,8 +93,6 @@
         if (mutation.type === "attributes") {
           let toolbaritem = document.getElementById("toggle-sidebar2");
           toolbaritem.checked = SidebarController.isOpen;
-          if (SidebarController.currentID != "")
-            toolbaritem.last = SidebarController.currentID;
         }
       }
     };
@@ -104,6 +103,9 @@
     // Start observing the target node for configured mutations
     observer.observe(targetNode, config);
 
-    window.addEventListener("unload", () => {observer.disconnect();}, {once:true});
+    window.addEventListener("unload", () => {
+      observer.disconnect();
+      Services.prefs.setStringPref("userChrome.sidebar2", SidebarController.lastOpenedId);
+    }, {once:true});
 
 })();
