@@ -6,6 +6,7 @@
 // @async         true
 // @compatibility Firefox 138
 // @author        alice0775
+// @version       2025/05/16 fix undefined if AutohideSidebar2.uc.js is not enabled
 // @version       2025/05/16 Working with AutohideSidebar2.uc.js(Rewrite const.AutohideSidebar = { to window.AutohideSidebar = { )
 // @version       2025/05/14 add long click to open menu
 // @version       2025/05/14 fix due to Bug 1921536
@@ -42,15 +43,17 @@
     toolbaritem.addEventListener("command", (event) => {
       let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
         Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
-      if (SidebarController.isOpen && AutohideSidebar) {
-        if (AutohideSidebar.hidden) {
-          AutohideSidebar.show();
+      if (event.target.ownerGlobal.SidebarController.isOpen && typeof AutohideSidebar != "undefined") {
+        if (event.target.ownerGlobal.AutohideSidebar.hidden) {
+          event.target.ownerGlobal.AutohideSidebar.show();
         } else {
-          AutohideSidebar.hide();
+          event.target.ownerGlobal.AutohideSidebar.hide();
         }
+      }  else if (event.target.ownerGlobal.SidebarController.isOpen && typeof ucjs_expand_sidebar != "undefined") {
+        event.target.ownerGlobal.ucjs_expand_sidebar.toggleSidebar(commandID);
       }  else {
           event.target.ownerGlobal.SidebarController.toggle(commandID);
-          toolbaritem.checked = SidebarController.isOpen;
+          toolbaritem.checked = event.target.ownerGlobal.SidebarController.isOpen;
       }
     });
     let menupopup = document.createXULElement("menupopup");
