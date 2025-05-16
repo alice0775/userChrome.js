@@ -6,6 +6,7 @@
 // @async         true
 // @compatibility Firefox 138
 // @author        alice0775
+// @version       2025/05/16 Working with AutohideSidebar2.uc.js(Rewrite const.AutohideSidebar = { to window.AutohideSidebar = { )
 // @version       2025/05/14 add long click to open menu
 // @version       2025/05/14 fix due to Bug 1921536
 // @version       2025/05/01 fix command
@@ -41,11 +42,17 @@
     toolbaritem.addEventListener("command", (event) => {
       let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
         Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
-
-      event.target.ownerGlobal.SidebarController.toggle(commandID);
-      toolbaritem.checked = SidebarController.isOpen;
+      if (SidebarController.isOpen && AutohideSidebar) {
+        if (AutohideSidebar.hidden) {
+          AutohideSidebar.show();
+        } else {
+          AutohideSidebar.hide();
+        }
+      }  else {
+          event.target.ownerGlobal.SidebarController.toggle(commandID);
+          toolbaritem.checked = SidebarController.isOpen;
+      }
     });
-
     let menupopup = document.createXULElement("menupopup");
     menupopup.setAttribute("id", "sidebarMenu2");
     document.getElementById("mainPopupSet").appendChild(menupopup);
