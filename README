@@ -302,11 +302,11 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
        if (xPref.get(_uc.PREF_ENABLED)) {
          Object.values(_uc.scripts).forEach(script => {
 -          _uc.loadScript(script, window);
-+          _uc.loadScript(script, script.sandbox ? sandbox : window);
++          _uc.loadScript(script, script.sandbox=="true" ? sandbox : window);
          });
        } else if (!UC.rebuild) {
 -        _uc.loadScript(_uc.scripts[_uc.ALWAYSEXECUTE], window);
-+        _uc.loadScript(_uc.scripts[_uc.ALWAYSEXECUTE], script.sandbox ? sandbox : window);
++        _uc.loadScript(_uc.scripts[_uc.ALWAYSEXECUTE], script.sandbox=="true" ? sandbox : window);
        }
      }
    },
