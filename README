@@ -8,7 +8,7 @@ https://github.com/alice0775/userChrome.js を開いて[Go to file]をクリッ�
 スクリプト名をクリック、[RAW]ボタンをクリック、名前を付けて保存
 ファイルはUTF-8のBOMなしで保存
 
-
+==================
 userchrome.jsのインストール方法 方法 その1:
 1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを保存する
 117/install_folder/config.js
@@ -29,90 +29,18 @@ userchrome.jsのインストール方法 方法 その1:
 
 
 
-
+==================
 userchrome.jsのインストール方法 方法 その2(https://github.com/xiaoxiaoflood/firefox-scripts):
 136以上はhttps://github.com/xiaoxiaoflood/firefox-scripts/issues/343も参照
 
-
-1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを解凍保存する
-  https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/fx-folder.zip
-
-2, プロファイルフォルダ(例えば, %APPDATA%\Mozilla\Firefox\Profiles\hogehoge.default)直下に chrome フォルダを作り以下のファイルをダウンロードし解凍保存する
-
-  a)スクリプトにしか興味がない
-    https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils_scripts_only.zip
-
-  b)レガシー拡張機能にしか興味がない(ここを見る人には関係ない)
-    https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils_extensions_only.zip
-    
-  c)スクリプトとレガシー拡張機能の両方に興味がある
-    https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/utils.zip
-    
-
-3. Firefoxの初期化中にスクリプトが実行されないようにするため,展開保存した utils\userChrome.jsm 内の
-      Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
-                                          script.onlyonce ? { window: win } : win);
-     を
-
-      function setTimeout(callback, ms) {
-        let _timer = Cc['@mozilla.org/timer;1']
-                       .createInstance(Ci.nsITimer);
-        _timer.initWithCallback({notify: callback}, ms, Ci.nsITimer.TYPE_ONE_SHOT);
-        return _timer;
-      }
-      function clearTimeout(timer) {
-        timer.cancel();
-      }
-      let timer = setTimeout(() => {
-            Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
-                                                script.onlyonce ? { window: win } : win);
-      }, 0);
-
-     に置き換える。さらに
-
-
-     aSubject.addEventListener('DOMContentLoaded', this, {once: true});
-
-     を
-
-     aSubject.addEventListener('load', this, {once: true});
-
-     に置き換える。
-
-4. 必要に応じ、スクリプトの日本語ファイル名に対応するため 2.で保存した chrome/utils/userChrome.jsm 内の
-
-   .getURLSpecFromDir(this.chromedir) + filename,
-   を
-   .getURLSpecFromActualFile(aFile),
-   に置き換える
-
-5. スクリプトファイルを保存する
-
-6.https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
-
-   editorArgs.push(script.file.path);
-   を
-   editorArgs.push(Services.io.newURI(script.url)
-           .QueryInterface(Ci.nsIFileURL).file.path);
-   に、さらに
-
-   process.run(
-   を
-   process.runw(
-   に置き換える
-   
- ※ Nightlyでは、security.browser_xhtml_csp.enabled を falseにする。(もしくは、セキュリティを気にする場合はすべての'onほにゃらら'をイベントリスナーに変更する必要がある)
-
-
-6. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+最近は更新されてないので削除
 
 
 
-
-
+==================
 userchrome.jsのインストール方法 方法 その3(https://bitbucket.org/BSTweaker/userchromejs/src/master/loader/):
 
-1. config.jsが動くようにしておく (例えば その1の1. 2. その2の1. 2.を実行)
+1. config.jsが動くようにしておく (例えば その1の1. 2. )
 
 2. https://bitbucket.org/BSTweaker/userchromejs/src/master/loader/ 
    上記に従いconfig.jsコードを修正
@@ -120,64 +48,140 @@ userchrome.jsのインストール方法 方法 その3(https://bitbucket.org/BS
 3. chromeフォルダに以下のファイルを保存
    https://bitbucket.org/BSTweaker/userchromejs/src/master/loader/UserChromeJSLoader.mjs
 
-4. 必要に応じ、スクリプトの読み込み順番(大小文字を区別しない)に並び変えるため
-    const ucjsLoaderConfig = {
-    を
-    const ucjsLoaderConfig = {
-        loadScriptsInOrderIgnoreCase : true,
-    に置き換え後、
+4. 必要に応じ、スクリプトの読み込み順番(大小文字を区別しない)に並び変えるため, およびスクリプトの有効無効を中クリックで行えるようにしかつメニューを閉じないように
 
-    get sortedScripts() {
-        return this.scripts.sort((a, b) => {
-            return a.path > b.path ? 1 : -1;
-        });
-    }
-    を
-    get sortedScripts() {
-      if (ucjsLoaderConfig.loadScriptsInOrderIgnoreCase) {
-        return this.scripts.sort((a, b) => {
-            return a.path.toLowerCase() > b.path.toLowerCase() ? 1 : -1;
-        });
-      } else {
-        return this.scripts.sort((a, b) => {
-            return a.path > b.path ? 1 : -1;
-        });
-      }
-    }
-    に置き換える
+--- org/UserChromeJSLoader.mjs	2025-05-20 13:28:55.155740200 +0900
++++ UserChromeJSLoader.mjs	2025-05-20 13:29:15.960386900 +0900
+@@ -1,17 +1,18 @@
+ const ucjsLoaderConfig = {
+     /* chrome以下にある.uc.jsが置いてあるフォルダを列挙する "."はchromeフォルダ直下を指す */
+     subScriptFolders   : [".", "SubScript"],
+     /* trueにするとスクリプトをファイル名の辞書順で読み込む */
+     loadScriptsInOrder : true,
++    loadScriptsInOrderIgnoreCase : true,
+     /* chrome直下に保存される設定ファイル名 */
+     configFileName     : "UserChromeJSLoader.config.json",
+     /* スクリプトの編集 (メニュー右クリック) に使うエディタのパス */
+     editorPath         : "",
+ };
+ 
+ const mainChromeWindowURL = "chrome://browser/content/browser.xhtml";
+ const chromeDir = PathUtils.join(PathUtils.profileDir, "chrome");
+ const baseResourceURI = Components.stack.filename.slice(0, Components.stack.filename.lastIndexOf("/"));
+ const lazy = {};
+ ChromeUtils.defineESModuleGetters(lazy, {
+     setTimeout: "resource://gre/modules/Timer.sys.mjs",
+@@ -186,19 +187,25 @@
+         this.scriptDirs = dirs;
+         this.scripts = [];
+         this.disabledScripts = null;
+         this.groupedScripts = new Map();
+         this.config = new Config(PathUtils.join(chromeDir, ucjsLoaderConfig.configFileName));
+         this.isReady = this.load();
+     }
+     get sortedScripts() {
++      if (ucjsLoaderConfig.loadScriptsInOrderIgnoreCase) {
++        return this.scripts.sort((a, b) => {
++            return a.path.toLowerCase() > b.path.toLowerCase() ? 1 : -1;
++        });
++      } else {
+         return this.scripts.sort((a, b) => {
+             return a.path > b.path ? 1 : -1;
+         });
++      }
+     }
+     load() {
+         return new Promise(resolve => {
+             let newScripts = [];
+             let existingScripts = [];
+             let promises = [];
+             let start = Date.now();
+             for (let dir of this.scriptDirs) {
+@@ -307,16 +314,28 @@
+         });
+         toolsMenu.querySelector("#UCJSLoader-sandboxed")?.addEventListener("command", event => {
+             let enabled = !!scriptLibrary.config.get("force_sandbox");
+             scriptLibrary.config.set("force_sandbox", !enabled);
+         });
+         toolsMenu.querySelector("#UCJSLoader-open-folder")?.addEventListener("command", event => {
+             Services.dirsvc.get("UChrm", Ci.nsIFile).launch();
+         });
++        win.document.getElementById("UCJSLoader-menu").addEventListener("mouseup", event => {
++      		const menuitem = event.target;
++      		if (event.button == 1) 
++      		{
++      			menuitem.setAttribute('closemenu', 'none');
++      			menuitem.parentNode.addEventListener('popuphidden', () => {
++      				menuitem.removeAttribute('closemenu');
++      			}, { once: true });
++      			if (event.ctrlKey)
++      		  	menuitem.parentNode.hidePopup();
++      		}
++		    });
+         toolsMenu.addEventListener("popupshowing", event => {
+             if (event.target !== toolsMenu) return;
+             let parentMenu = win.document.getElementById("UCJSLoader-menu");
+             let target = parentMenu.querySelector("#UCJSLoader-submenu-0");
+             while (target) {
+                 let tmp = target.nextElementSibling;
+                 target.remove();
+                 target = tmp;
+@@ -332,17 +351,17 @@
+                 let submenu = parentMenu.querySelector(`#UCJSLoader-submenu-${n++} menupopup`);
+                 for (let script of value) {
+                     let item = win.document.createXULElement("menuitem");
+                     item.setAttribute("label", script.filename);
+                     item.setAttribute("type", "checkbox");
+                     item.setAttribute("checked", !script.disabled);
+                     let callback = event => {
+                         /* only command event is fired for right-click on macOS */
+-                        if (event.type === "command" && event.button === 0) script.disabled = !script.disabled;
++                        if (event.type === "command" && event.button <= 1) script.disabled = !script.disabled;
+                         else if (event.button === 2) script.edit();
+                     };
+                     item.addEventListener("command", callback, {once: true});
+                     item.addEventListener("click", callback, {once: true});
+                     submenu.appendChild(item);
+                 }
+             }
+             toolsMenu.querySelector("#UCJSLoader-enabled")?.setAttribute("checked", !scriptLibrary.config.get("disabled"));
+@@ -353,19 +372,22 @@
+     }
+     getSandboxFor(win) {
+         let sb = new Cu.Sandbox(win, {
+             sandboxPrototype: win,
+             sameZoneAs: win,
+         });
+         /* toSource() is not available in sandbox */
+         Cu.evalInSandbox(`
+-            Object.defineProperty(Function.prototype, "toSource", {value: window.Function.prototype.toSource});
+-            Object.defineProperty(Object.prototype, "toSource", {value: window.Object.prototype.toSource});
+-            Object.defineProperty(Array.prototype, "toSource", {value: window.Array.prototype.toSource});
++            Function.prototype.toSource = window.Function.prototype.toSource;
++            Object.defineProperty(Function.prototype, "toSource", {enumerable : false})
++            Object.prototype.toSource = window.Object.prototype.toSource;
++            Object.defineProperty(Object.prototype, "toSource", {enumerable : false})
++            Array.prototype.toSource = window.Array.prototype.toSource;
++            Object.defineProperty(Array.prototype, "toSource", {enumerable : false})
+         `, sb);
+         win.addEventListener("unload", () => {
+             lazy.setTimeout(() => {
+                 Cu.nukeSandbox(sb);
+             }, 0);
+         }, {once: true});
+         return sb;
+     }
 
-5. 必要に応じ、スクリプトの有効無効を中クリックで行えるようにしかつメニューを閉じない
-    toolsMenu.addEventListener("popupshowing", event => {
-    の前に
-    win.document.getElementById("UCJSLoader-menu").addEventListener("mouseup", event => {
-  		const menuitem = event.target;
-  		if (event.button == 1) 
-  		{
-  			menuitem.setAttribute('closemenu', 'none');
-  			menuitem.parentNode.addEventListener('popuphidden', () => {
-  				menuitem.removeAttribute('closemenu');
-  			}, { once: true });
-  			if (event.ctrlKey)
-  		  	menuitem.parentNode.hidePopup();
-  		}
-    });
-    を追加し
 
-    if (event.type === "command" && event.button === 0) script.disabled = !script.disabled;
-    を
-    if (event.type === "command" && event.button <= 1) script.disabled = !script.disabled;
-    に置き換える
+5. 必要なスクリプトファイルを保存する
 
 
-6. 必要なスクリプトファイルを保存する
-
-
-7. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+6. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
 
 
 
 
-
+==================
 userchrome.jsのインストール方法 方法 その4(https://github.com/onemen/TabMixPlus/tree/main?tab=readme-ov-file):
 
 1. アプリケーションインストールフォルダ(例えば, %ProgramFiles%\Mozilla Firefox)直下に以下のファイルを解凍保存する
@@ -187,49 +191,134 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
   https://github.com/onemen/TabMixPlus/releases/download/dev-build/utils.zip
 
 
-3. Firefoxの初期化中にスクリプトが実行されないようにするため,展開保存した utils\userChrome.js 内の
-      Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
-                                          script.onlyonce ? { window: win } : win);
-     を
+3. Firefoxのsandbox対応と初期化中にスクリプトが実行されないように及び日本語ファイル名対応にするため,展開保存した utils\userChrome.js を修正
 
-      function setTimeout(callback, ms) {
-        let _timer = Cc['@mozilla.org/timer;1']
-                       .createInstance(Ci.nsITimer);
-        _timer.initWithCallback({notify: callback}, ms, Ci.nsITimer.TYPE_ONE_SHOT);
-        return _timer;
-      }
-      function clearTimeout(timer) {
-        timer.cancel();
-      }
-      let timer = setTimeout(() => {
-            Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
-                                                script.onlyonce ? { window: win } : win);
-      }, 0);
+--- org/userChrome.js	2025-05-20 12:59:04.273775700 +0900
++++ userChrome.js	2025-05-20 13:09:24.750334600 +0900
+@@ -53,18 +53,23 @@
+ 
+     let def = ['', ''];
+     let author = (header.match(/\/\/ @author\s+(.+)\s*$/im) || def)[1];
+     let filename = aFile.leafName || '';
+ 
+     return this.scripts[filename] = {
+       filename: filename,
+       file: aFile,
+-      url: Services.io.getProtocolHandler('file').QueryInterface(Ci.nsIFileProtocolHandler).getURLSpecFromDir(this.chromedir) + filename,
++      url:
++        Services.io
++          .getProtocolHandler('file')
++          .QueryInterface(Ci.nsIFileProtocolHandler)
++          .getURLSpecFromActualFile(aFile) /*.getURLSpecFromDir(this.chromedir) + filename*/ ,
+       name: (header.match(/\/\/ @name\s+(.+)\s*$/im) || def)[1],
++      sandbox: (header.match(/\/\/ @sandbox\s+(.+)\s*$/im) || def)[1],
+       description: (header.match(/\/\/ @description\s+(.+)\s*$/im) || def)[1],
+       version: (header.match(/\/\/ @version\s+(.+)\s*$/im) || def)[1],
+       author: (header.match(/\/\/ @author\s+(.+)\s*$/im) || def)[1],
+       regex: new RegExp('^' + exclude + '(' + (rex.include.join('|') || '.*') + ')$', 'i'),
+       id: (header.match(/\/\/ @id\s+(.+)\s*$/im) || ['', filename.split('.uc.js')[0] + '@' + (author || 'userChromeJS')])[1],
+       homepageURL: (header.match(/\/\/ @homepageURL\s+(.+)\s*$/im) || def)[1],
+       downloadURL: (header.match(/\/\/ @downloadURL\s+(.+)\s*$/im) || def)[1],
+       updateURL: (header.match(/\/\/ @updateURL\s+(.+)\s*$/im) || def)[1],
+@@ -106,18 +111,29 @@
+     if (script.onlyonce && script.isRunning) {
+       if (script.startup) {
+         eval(script.startup);
+       }
+       return;
+     }
+ 
+     try {
++function setTimeout(callback, ms) {
++  let _timer = Cc['@mozilla.org/timer;1']
++                 .createInstance(Ci.nsITimer);
++  _timer.initWithCallback({notify: callback}, ms, Ci.nsITimer.TYPE_ONE_SHOT);
++  return _timer;
++}
++function clearTimeout(timer) {
++  timer.cancel();
++}
++let timer = setTimeout(() => {
+       Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
+                                           script.onlyonce ? { window: win } : win);
++}, 0);
+       script.isRunning = true;
+       if (script.startup) {
+         eval(script.startup);
+       }
+       if (!script.shutdown) {
+         this.everLoaded.push(script.id);
+       }
+     } catch (ex) {
+@@ -163,17 +179,17 @@
+ }
+ 
+ if (xPref.get(_uc.PREF_SCRIPTSDISABLED) === undefined) {
+   xPref.set(_uc.PREF_SCRIPTSDISABLED, '', true);
+ }
+ 
+ let UserChrome_js = {
+   observe: function (aSubject) {
+-    aSubject.addEventListener('DOMContentLoaded', this, {once: true});
++    aSubject.addEventListener('load', this, {once: true});
+   },
+ 
+   handleEvent: function (aEvent) {
+     let document = aEvent.originalTarget;
+     let window = document.defaultView;
+     this.load(window);
+   },
+ 
+@@ -188,22 +204,43 @@
+       }.bind(this));
+     } else if (/^(chrome:(?!\/\/global\/content\/commonDialog\.x?html)|about:(?!blank))/i.test(location.href)) {
+       window.UC = UC;
+       window._uc = _uc;
+       window.xPref = xPref;
+       if (window._gBrowser) // bug 1443849
+         window.gBrowser = window._gBrowser;
+ 
++      let sandbox = window;
++      
++        sandbox = new Cu.Sandbox(window, {
++            sandboxPrototype: window,
++            sameZoneAs: window,
++        });
++        /* toSource() is not available in sandbox */
++        Cu.evalInSandbox(`
++            Function.prototype.toSource = window.Function.prototype.toSource;
++            Object.defineProperty(Function.prototype, "toSource", {enumerable : false})
++            Object.prototype.toSource = window.Object.prototype.toSource;
++            Object.defineProperty(Object.prototype, "toSource", {enumerable : false})
++            Array.prototype.toSource = window.Array.prototype.toSource;
++            Object.defineProperty(Array.prototype, "toSource", {enumerable : false})
++        `, sandbox);
++        window.addEventListener("unload", () => {
++            setTimeout(() => {
++                Cu.nukeSandbox(sandbox);
++            }, 0);
++        }, {once: true});
++
+       if (xPref.get(_uc.PREF_ENABLED)) {
+         Object.values(_uc.scripts).forEach(script => {
+-          _uc.loadScript(script, window);
++          _uc.loadScript(script, script.sandbox ? sandbox : window);
+         });
+       } else if (!UC.rebuild) {
+-        _uc.loadScript(_uc.scripts[_uc.ALWAYSEXECUTE], window);
++        _uc.loadScript(_uc.scripts[_uc.ALWAYSEXECUTE], script.sandbox ? sandbox : window);
+       }
+     }
+   },
+ 
+   messageListener: function (msg) {
+     const browser = msg.target;
+     const { addonId } = browser._contentPrincipal;
+ 
 
-     に置き換える。さらに
+4. 必要なスクリプトファイルを保存する
 
-
-     aSubject.addEventListener('DOMContentLoaded', this, {once: true});
-
-     を
-
-     aSubject.addEventListener('load', this, {once: true});
-
-     に置き換える。
-
-4.必要に応じ, 日本語スクリプト名に対応するため utils\userChrome.js を
-      url: Services.io.getProtocolHandler('file').QueryInterface(Ci.nsIFileProtocolHandler).getURLSpecFromDir(this.chromedir) + filename,
-   を
-
-   url:Services.io
-          .getProtocolHandler('file')
-          .QueryInterface(Ci.nsIFileProtocolHandler)
-          .getURLSpecFromActualFile(aFile),
-    に置き換える。
-
-5. 必要なスクリプトファイルを保存する
-
-6. https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
+5. https://raw.githubusercontent.com/xiaoxiaoflood/firefox-scripts/master/chrome/rebuild_userChrome.uc.js を使う場合は、必要に応じ、日本語スクリプト名に対応するため,
 
    editorArgs.push(script.file.path);
    を
@@ -244,7 +333,7 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
    
  ※ Nightlyでは、security.browser_xhtml_csp.enabled を falseにする。(もしくは、セキュリティを気にする場合はすべての'onほにゃらら'をイベントリスナーに変更する必要がある)
 
-7. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
+6. 念のため 一回 %ProgramFiles%\Mozilla Firefox\firefox.exe -purgecaches オプション付きで起動する
 
 
 
