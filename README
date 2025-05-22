@@ -304,7 +304,7 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
 +        `, sandbox);
 +        window.addEventListener("unload", () => {
 +            setTimeout(() => {
-+                Cu.nukeSandbox(sb);
++                Cu.nukeSandbox(sandbox);
 +            }, 0);
 +        }, {once: true});
 +
