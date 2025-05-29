@@ -3,15 +3,17 @@
 // @description    undoing Bug 1904014 - Remove function to do an empty search using the search bar one-off buttons.
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
-// @sandbox        true
-// @compatibility  Firefox 139
-// @version        2025/02/02  add @sandbox
+// @sandbox          true
+// @compatibility  139
+// @version        2025/02/02 add @sandbox
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/07/14 fix add search engene button
 // @version        2024/07/8
 // ==/UserScript==
 (function() {
   let func = SearchOneOffs.prototype._on_click.toString();
+  if (func.includes("if (false) {"))
+    return;
 
   func = func.replace(
   'if (!this.textbox.value) {',
@@ -24,9 +26,12 @@
 })();
 (function() {
   let func = SearchOneOffs.prototype._on_command.toString();
+  if (!func.includes("this.popup.openSearchForm(event, this.selectedButton.engine, true);"))
+    return;
+
   func = func.replace(
-  'if (!this.textbox.value) {',
-  'if (false) {'
+  'this.popup.openSearchForm(event, this.selectedButton.engine, true);',
+  'this.handleSearchCommand(event, this.selectedButton.engine, true);'
   );
   func = func.replace(
   'lazy.SearchUIUtils',
@@ -50,10 +55,12 @@
         // Ignore right clicks.
         return;
       }
+
       let button = event.originalTarget.closest("[class~='searchbar-engine-one-off-add-engine]");
       if (button) {
         return;
       }
+
       button = event.originalTarget.closest(".search-panel-header");
       if (!button) {
         return;
