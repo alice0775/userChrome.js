@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility  Firefox 138
+// @version       2025/06/08 use onCreaded instead of onBuild
 // @version       2025/05/01 fix command
 // @version       2025/04/14 fix register eventListener
 // @version       2025/04/07 fix working within sandbox
@@ -24,28 +25,20 @@ window.ucjsMemoryUsage = {
     try {
       CustomizableUI.createWidget({
           id: 'memoryUsageButton',
-          type: 'custom',
-          onBuild: function(aDocument) {
-              let toolbaritem = aDocument.createXULElement('toolbarbutton');
-              let props = {
-                  id: 'memoryUsageButton',
-                  class: 'toolbarbutton-1 chromeclass-toolbar-additional',
-                  label: 'MemoryUsage',
-                  tooltiptext: 'MinimizeMemoryUsage',
-                  //onclick: 'ucjsMemoryUsage.MRM.minimizeMemoryUsage(()=>{});ucjsMemoryUsage.requestMemory()'
-              };
-              for (let p in props)
-                  toolbaritem.setAttribute(p, props[p]);
-              return toolbaritem;
-          }
+          type: 'button',
+          defaultArea: CustomizableUI.AREA_NAVBAR,
+          class: 'toolbarbutton-1 chromeclass-toolbar-additional',
+          label: 'MemoryUsage',
+          tooltiptext: 'MinimizeMemoryUsage',
+          removable: "true",
+          onClick(event) {
+              event.target.ownerGlobal.ucjsMemoryUsage.MRM.minimizeMemoryUsage(()=>{});
+              event.target.ownerGlobal.ucjsMemoryUsage.requestMemory()
+          },
+         	onCreated(toolbaritem) {
+        	}
       });
     } catch(e) {
-    } finally {
-      if (document.getElementById("memoryUsageButton"))
-        document.getElementById('memoryUsageButton').addEventListener("click", () => {
-            ucjsMemoryUsage.MRM.minimizeMemoryUsage(()=>{});
-            ucjsMemoryUsage.requestMemory()
-        });
     }
     style = `#memoryUsageButton .toolbarbutton-text {
               display: inline-block !important;

@@ -9,6 +9,7 @@
 // @include        about:processes?memoryMinimizationButton2
 // @compatibility  Firefox 138
 // @author         Alice0775
+// @version        2025/06/08 use onCreaded instead of onBuild
 // @version        2025/05/01 fix command
 // @version        2025/04/14 fix register eventListener
 // @version        2025/04/07 remove unnecessary css
@@ -70,36 +71,26 @@ window.memoryMinimizationButton = {
       sss.loadAndRegisterSheet(cssUri, sss.AUTHOR_SHEET);
     
     try {
-      CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
+      CustomizableUI.createWidget({
         id: 'memoryMinimizationButton',
-        type:  'custom',
+        type:  CustomizableUI.TYPE_TOOLBAR,
         defaultArea: CustomizableUI.AREA_NAVBAR,
-        onBuild: function(aDocument) {
-          var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-          var props = {
-            id: "memoryMinimizationButton",
-            class: "toolbarbutton-1 chromeclass-toolbar-additional",
-            tooltiptext: "Memory minimization(shift+click; kill other tabs)",
-            //oncommand: "memoryMinimizationButton.doMinimize(event);",
-            //onclick: "if (event.button == 1) memoryMinimizationButton.doMinimize(event);",
-            type: CustomizableUI.TYPE_TOOLBAR,
-            label: "Memory minimization",
-            removable: "true"
-          };
-          for (var p in props) {
-            toolbaritem.setAttribute(p, props[p]);
-          }
-          return toolbaritem;
+        class: "toolbarbutton-1 chromeclass-toolbar-additional",
+        tooltiptext: "Memory minimization(shift+click; kill other tabs)",
+        label: "Memory minimization",
+        removable: "true",
+
+        onCommand(event) {
+          event.target.ownerGlobal.memoryMinimizationButton.doMinimize(event);
         },
+        onClick(event) {
+          if (event.button == 1)
+            event.target.ownerGlobal.memoryMinimizationButton.doMinimize(event);
+        },
+       	onCreated(toolbaritem) {
+      	}
       });
-    } catch(ee) {
-    } finally {
-      let toolbaritem = document.getElementById('memoryMinimizationButton');
-      if (toolbaritem) {
-        toolbaritem.addEventListener("command", (event) => event.target.ownerGlobal.memoryMinimizationButton.doMinimize(event));
-        toolbaritem.addEventListener("click", (event) => {if (event.button == 1) event.target.ownerGlobal.memoryMinimizationButton.doMinimize(event)});
-      }
-    }
+    } catch(ee) {}
   },
 
   doMinimize: function(event) {

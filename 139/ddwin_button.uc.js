@@ -5,8 +5,10 @@
 // @charset        utf-8
 // @include        main
 // @async          true
-// @compatibility  Firefox 139
+// @compatibility  Firefox 138
 // @author         Alice0775
+// @version        2025/06/08 use onCreaded instead of onBuild
+// @version        2025/05/01 fix command
 // @version        2025/04/14 fix register eventListener
 // @version        2025/04/02 fix working within sandbox
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
@@ -26,29 +28,21 @@ window.ddwin_button = {
     try {
       CustomizableUI.createWidget({ //must run createWidget before windowListener.register because the register function needs the button added first
         id: 'ddwin_button',
-        type: 'custom',
+        type: 'button',
         defaultArea: CustomizableUI.AREA_NAVBAR,
-        onBuild: function(aDocument) {
-          var toolbaritem = aDocument.createElementNS('http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul', 'toolbarbutton');
-          var props = {
-            id: "ddwin_button",
-            class: "toolbarbutton-1 chromeclass-toolbar-additional",
-            tooltiptext: "Launch ddwin",
-            //oncommand: "ddwin_button.launchWithSelectedText();",
-            label: "Launch ddwin",
-            removable: "true",
-            style: "list-style-image: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABBklEQVQ4jY2TPW6DQBBGH0rkciW3ERJ3GF+BkhxjuQZpcocVvgYnSOFmtZzBRWR3LkjPpMBOAC+IkabYn/fmk1YLq2UVRNfvLIIoeIVewW2VzMFxr0rG4BR2zqrIahJ7P5yC3ot6L9r3jARxiWJdFLTWzeCoxA7T7xIR/9fPYFRSDRviJ0m2tdMX+PkA4Po++IoG2sOGFwtAQzIsRKEESpAAhwDHcgWsEYE83z8EEQnMkgwTRS7k+Z4sy0jTdCxYkgTg+gQaY+i6bi6YS2qEEAWbpiEEYoKxJFBVb4gIxhjO529Opy9CgLY9JgCvcUGbQK3Qstt9crv9T3yAG0u0KAoVsYsf6RersuxSjXvhngAAAABJRU5ErkJggg==');",
-          };
-          for (var p in props) {
-            toolbaritem.setAttribute(p, props[p]);
-          }
-          toolbaritem.addEventListener("command", (event) => event.target.ownerGlobal.ddwin_button.launchWithSelectedText());
-          return toolbaritem;
+        class: "toolbarbutton-1 chromeclass-toolbar-additional",
+        tooltiptext: "Launch ddwin",
+        label: "Launch ddwin",
+        removable: "true",
+
+        onCommand(event) {
+          event.target.ownerGlobal.ddwin_button.launchWithSelectedText()
         },
+        onCreated(toolbaritem) {
+          toolbaritem.style.setProperty("list-style-image", "url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAABBklEQVQ4jY2TPW6DQBBGH0rkciW3ERJ3GF+BkhxjuQZpcocVvgYnSOFmtZzBRWR3LkjPpMBOAC+IkabYn/fmk1YLq2UVRNfvLIIoeIVewW2VzMFxr0rG4BR2zqrIahJ7P5yC3ot6L9r3jARxiWJdFLTWzeCoxA7T7xIR/9fPYFRSDRviJ0m2tdMX+PkA4Po++IoG2sOGFwtAQzIsRKEESpAAhwDHcgWsEYE83z8EEQnMkgwTRS7k+Z4sy0jTdCxYkgTg+gQaY+i6bi6YS2qEEAWbpiEEYoKxJFBVb4gIxhjO529Opy9CgLY9JgCvcUGbQK3Qstt9crv9T3yAG0u0KAoVsYsf6RersuxSjXvhngAAAABJRU5ErkJggg==')", "");
+        }
       });
     } catch(ee) {
-      if (document.getElementById("ddwin_button"))
-        document.getElementById("ddwin_button").addEventListener("command", (event) => event.target.ownerGlobal.ddwin_button.launchWithSelectedText());
     }
  },
 

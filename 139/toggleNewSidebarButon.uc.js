@@ -7,6 +7,8 @@
 // @compatibility Firefox 139
 // @compatibility Firefox 138
 // @author        alice0775
+// @version       2025/06/08 use onCreaded instead of onBuild
+// @version       2025/05/28 Remember the last panel opened.
 // @version       2025/05/26 Remember the last panel opened.
 // @version       2025/05/16 fix undefined if AutohideSidebar2.uc.js is not enabled
 // @version       2025/05/16 Working with AutohideSidebar2.uc.js(Rewrite const.AutohideSidebar = { to window.AutohideSidebar = { )
@@ -19,45 +21,37 @@
     try {
         CustomizableUI.createWidget({
             id: 'toggle-sidebar2',
-            type: 'custom',
+            type: 'button',
             defaultArea: CustomizableUI.AREA_NAVBAR,
-            onBuild: function(aDocument) {
-                let toolbaritem = aDocument.createXULElement('toolbarbutton');
-                let props = {
-                    id: 'toggle-sidebar2',
-                    class: 'toolbarbutton-1 chromeclass-toolbar-additional',
-                    label: 'Toggle sidebar',
-                    tooltiptext: 'Toggle sidebar',
-                    context: "sidebarMenu2",
-                    style: 'list-style-image: url("chrome://browser/skin/sidebars.svg");color:inherit;fill:var(--toolbarbutton-icon-fill);',
-                };
-                for (var p in props) {
-                    toolbaritem.setAttribute(p, props[p]);
+            class: 'toolbarbutton-1 chromeclass-toolbar-additional',
+            label: 'Toggle sidebar',
+            tooltiptext: 'Toggle sidebar',
+            context: "sidebarMenu2",
+            removal: true,
+            onCommand(event) {
+              let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
+                Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
+              if (event.target.ownerGlobal.SidebarController.isOpen && typeof AutohideSidebar != "undefined") {
+                if (event.target.ownerGlobal.AutohideSidebar.hidden) {
+                  event.target.ownerGlobal.AutohideSidebar.show();
+                } else {
+                  event.target.ownerGlobal.AutohideSidebar.hide();
                 }
-                return toolbaritem;
-            }
+              }  else if (event.target.ownerGlobal.SidebarController.isOpen && typeof ucjs_expand_sidebar != "undefined") {
+                event.target.ownerGlobal.ucjs_expand_sidebar.toggleSidebar(commandID);
+              }  else {
+                  event.target.ownerGlobal.SidebarController.toggle(commandID);
+                  event.target.checked = event.target.ownerGlobal.SidebarController.isOpen;
+              }
+            },
+            onCreated(toolbaritem) {
+              toolbaritem.style.setProperty('list-style-image', 'url("chrome://browser/skin/sidebars.svg")',"");
+              toolbaritem.style.setProperty('color', 'inherit',"");
+              toolbaritem.style.setProperty('fill', 'var(--toolbarbutton-icon-fill)',"");
+            },
         });
     } catch(ex) {}
 
-    let toolbaritem = document.getElementById('toggle-sidebar2');
-    if (!toolbaritem) return;
-    
-    toolbaritem.addEventListener("command", (event) => {
-      let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
-        Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
-      if (event.target.ownerGlobal.SidebarController.isOpen && typeof AutohideSidebar != "undefined") {
-        if (event.target.ownerGlobal.AutohideSidebar.hidden) {
-          event.target.ownerGlobal.AutohideSidebar.show();
-        } else {
-          event.target.ownerGlobal.AutohideSidebar.hide();
-        }
-      }  else if (event.target.ownerGlobal.SidebarController.isOpen && typeof ucjs_expand_sidebar != "undefined") {
-        event.target.ownerGlobal.ucjs_expand_sidebar.toggleSidebar(commandID);
-      }  else {
-          event.target.ownerGlobal.SidebarController.toggle(commandID);
-          toolbaritem.checked = event.target.ownerGlobal.SidebarController.isOpen;
-      }
-    });
     let menupopup = document.createXULElement("menupopup");
     menupopup.setAttribute("id", "sidebarMenu2");
     document.getElementById("mainPopupSet").appendChild(menupopup);
@@ -74,7 +68,10 @@
     let _target = null;
     let _eventTarget = null;
 
-    toolbaritem.addEventListener('mousedown', onmousedown, true);
+    setTimeout(function() {
+      let toolbaritem = document.getElementById("toggle-sidebar2");
+      toolbaritem.onmousedown = (event) => {onmousedown(event)};
+    },1000);
 
     function onmousedown(event) {
       if (_timer) {
@@ -94,12 +91,12 @@
         }
       }, WAIT, menupopup, event.screenX, event.screenY);
 
-      toolbaritem.addEventListener('mouseup', onmouseup, true);
-      toolbaritem.addEventListener('click', onclick, true);
+      event.target.addEventListener('mouseup', onmouseup, true);
+      event.target.addEventListener('click', onclick, true);
     }
 
     function onmouseup(event) {
-      toolbaritem.removeEventListener('mouseup', onmouseup, true);
+      event.target.removeEventListener('mouseup', onmouseup, true);
       if (_timer) {
         clearTimeout(_timer);
         _timer = null;
@@ -109,7 +106,7 @@
     }
 
     function onclick(event) {
-      toolbaritem.removeEventListener('click', onclick, true);
+      event.target.removeEventListener('click', onclick, true);
       if (_timer) {
         clearTimeout(_timer);
         _timer = null;
@@ -142,7 +139,7 @@
         ) {
           // registerExtension() already creates menu items for extensions.
           const menuitem = SidebarController.createMenuItem(commandID, sidebar);
-          menuitem.setAttribute("checked", (SidebarController.currentID == commandID));
+          menuitem.setAttribute("checked", (SidebarController.lastOpenedId == commandID));
           menupopup.appendChild(menuitem);
         }
       }
@@ -153,7 +150,7 @@
             // registerExtension() already creates menu items for extensions.
             const menuitem = SidebarController.createMenuItem(commandID, sidebar);
             menuitem.setAttribute("label", sidebar.title);
-            menuitem.setAttribute("checked", (SidebarController.currentID == commandID));
+            menuitem.setAttribute("checked", (SidebarController.lastOpenedId == commandID));
             menupopup.appendChild(menuitem);
         }
       }
@@ -185,7 +182,8 @@
 
     window.addEventListener("unload", () => {
       observer.disconnect();
-      Services.prefs.setStringPref("userChrome.sidebar2", SidebarController.lastOpenedId);
+      if (SidebarController.lastOpenedId)
+        Services.prefs.setStringPref("userChrome.sidebar2", SidebarController.lastOpenedId);
     }, {once:true});
 
 })();
