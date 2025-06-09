@@ -7,6 +7,7 @@
 // @compatibility Firefox 139
 // @compatibility Firefox 138
 // @author        alice0775
+// @version       2025/06/09 Fixed a bug in the overflow menu
 // @version       2025/06/08 use onCreaded instead of onBuild
 // @version       2025/05/28 Remember the last panel opened.
 // @version       2025/05/26 Remember the last panel opened.
@@ -27,7 +28,6 @@
             label: 'Toggle sidebar',
             tooltiptext: 'Toggle sidebar',
             context: "sidebarMenu2",
-            removal: true,
             onCommand(event) {
               let commandID = event.target.ownerGlobal.SidebarController.lastOpenedId ||
                 Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
@@ -56,6 +56,8 @@
     menupopup.setAttribute("id", "sidebarMenu2");
     document.getElementById("mainPopupSet").appendChild(menupopup);
     menupopup.addEventListener("popupshowing", (event) => {sidebarMenu2_onpopup(event)});
+    window.addEventListener('customizationstarting', customizationstarting, false);
+    window.addEventListener('aftercustomization', aftercustomization, false);
 
     const WAIT = 500;
     const CLICK_STATE_NONE = 0;
@@ -68,11 +70,19 @@
     let _target = null;
     let _eventTarget = null;
 
-    setTimeout(function() {
-      let toolbaritem = document.getElementById("toggle-sidebar2");
-      toolbaritem.onmousedown = (event) => {onmousedown(event)};
-    },1000);
+    aftercustomization();
 
+    function customizationstarting() {
+        let toolbaritem = document.getElementById("toggle-sidebar2");
+        toolbaritem?.removeEventListener('mousedown', onmousedown, true);
+    }
+    function aftercustomization() {
+      setTimeout(function() {
+        let toolbaritem = document.getElementById("toggle-sidebar2");
+        toolbaritem?.addEventListener('mousedown', onmousedown, true);
+      },800);
+    }
+    
     function onmousedown(event) {
       if (_timer) {
         clearTimeout(_timer);
@@ -87,22 +97,22 @@
         if (_state == CLICK_STATE_DOWN) {
             _state = CLICK_STATE_HOLD;
         menupopup.openPopupAtScreen(x, y , true);
-
+        _target = event.target;
         }
       }, WAIT, menupopup, event.screenX, event.screenY);
-
       event.target.addEventListener('mouseup', onmouseup, true);
       event.target.addEventListener('click', onclick, true);
     }
 
     function onmouseup(event) {
-      event.target.removeEventListener('mouseup', onmouseup, true);
       if (_timer) {
         clearTimeout(_timer);
         _timer = null;
       }
-      _state = CLICK_STATE_NONE;
-      _target = null;
+      setTimeout(function() {
+        _state = CLICK_STATE_NONE;
+        _target = null;
+      }, 0);
     }
 
     function onclick(event) {
@@ -111,12 +121,11 @@
         clearTimeout(_timer);
         _timer = null;
       }
-
       if (_state == CLICK_STATE_HOLD &&
           event && event.button == 0 &&
           _target) {
-      event.preventDefault();
-      event.stopPropagation();
+        event.preventDefault();
+        event.stopPropagation();
         _state = CLICK_STATE_NONE;
 
       }
@@ -181,6 +190,7 @@
     observer.observe(targetNode, config);
 
     window.addEventListener("unload", () => {
+      window.removeEventListener('aftercustomization', aftercustomization, false);
       observer.disconnect();
       if (SidebarController.lastOpenedId)
         Services.prefs.setStringPref("userChrome.sidebar2", SidebarController.lastOpenedId);
