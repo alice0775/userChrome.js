@@ -7,6 +7,7 @@
 // @compatibility Firefox 139
 // @compatibility Firefox 138
 // @author        alice0775
+// @version       2025/06/09 Revert removeEventListener
 // @version       2025/06/09 Fixed a bug in the overflow menu
 // @version       2025/06/08 use onCreaded instead of onBuild
 // @version       2025/05/28 Remember the last panel opened.
@@ -105,6 +106,7 @@
     }
 
     function onmouseup(event) {
+      event.target.removeEventListener('mouseup', onmouseup, true);
       if (_timer) {
         clearTimeout(_timer);
         _timer = null;
