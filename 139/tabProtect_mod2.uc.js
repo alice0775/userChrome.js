@@ -9,6 +9,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  139
+// @version        2025/06/10 Fixed so that tabProtect object can be referenced from grobal.
 // @version        2025/02/02  add @sandbox
 // @version        2025/01/08 fix hide close button in allTabsMenu arrow panel
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
@@ -32,7 +33,7 @@
 // @version        2018/05/04 23:00 for 60
 // ==/UserScript==
 
-var tabProtect = {
+window.tabProtect = {
   debug: function(aMsg){
           Cc["@mozilla.org/consoleservice;1"]
             .getService(Ci.nsIConsoleService)
