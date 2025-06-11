@@ -9,6 +9,7 @@
 // @include        about:processes?memoryMinimizationButton2
 // @compatibility  Firefox 138
 // @author         Alice0775
+// @version        2025/06/11 fix 
 // @version        2025/06/11 fix about:process structure change
 // @version        2025/06/09 remove removable attribute
 // @version        2025/06/08 use onCreaded instead of onBuild
@@ -208,12 +209,10 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
     for(let closeButton of closeButtons) {
       let row = closeButton.closest(".process");
       let canKill = true;
-/*
-      if (row.querySelector("favicon")?.getAttribute("style")?.includes("link.svg")) {
+      if (row.querySelector(".favicon")?.getAttribute("style")?.includes("link.svg")) {
         canKill = false;
         break;
       }
-*/
       for (let childRow = row.nextSibling;
            childRow && !childRow.classList.contains("process");
            childRow = childRow.nextSibling ) {
@@ -239,7 +238,7 @@ if (location.href == "chrome://browser/content/browser.xhtml") {
   setTimeout(() => {
     let closeButtons = document.querySelectorAll("tr.process > td > .close-icon");
     for(let closeButton of closeButtons) {
-      let row = closeButton.closest("tr");
+      let row = closeButton.closest(".process");
       let canKill = true;
       if (row.querySelector(".favicon")?.getAttribute("style")?.includes("link.svg")) {
         canKill = false;
