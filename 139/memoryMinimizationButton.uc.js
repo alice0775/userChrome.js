@@ -78,7 +78,7 @@ window.memoryMinimizationButton = {
         type:  CustomizableUI.TYPE_TOOLBAR,
         defaultArea: CustomizableUI.AREA_NAVBAR,
         class: "toolbarbutton-1 chromeclass-toolbar-additional",
-        tooltiptext: "Memory minimization",
+        tooltiptext: "Memory minimization (click:mild, shift+click:more aggressive)",
         label: "Memory minimization",
 
         onCommand(event) {
