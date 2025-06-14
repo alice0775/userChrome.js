@@ -6,6 +6,7 @@
 // @async         true
 // @compatibility Firefox 139+
 // @author        alice0775
+// @version       2025/06/14 21:00 fix drag tab with ctrlKey
 // @version       2025/05/30 00:00
 // ==/UserScript==
 // 
@@ -38,7 +39,7 @@ window.patchForBugB1915167 = {
 
       //do nothing if tab is dragged
       let draggedTab = event.dataTransfer.mozGetDataAt(TAB_DROP_TYPE, 0);
-      if (draggedTab && document == draggedTab.ownerDocument) {
+      if (!event.ctrlKey && draggedTab && document == draggedTab.ownerDocument) {
         return;
       }
 
