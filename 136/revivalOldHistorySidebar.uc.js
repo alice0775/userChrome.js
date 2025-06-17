@@ -3,13 +3,16 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Restoration of the old history sidebar
 // @include        main
-// @include        chrome://browser/content/places/historySidebar.xhtml?revamped
+// @include        chrome://browser/content/places/historySidebar.xhtml
 // @compatibility  Firefox 136
 // @author         Alice0775
+// @version        2025/02/09 fix bug
 // @version        2025/01/27 Fix startup and color
 // @version        2024/12/22
 // ==/UserScript==
-if (location.href == "chrome://browser/content/places/historySidebar.xhtml?revamped") {
+
+if (location.href == "chrome://browser/content/places/historySidebar.xhtml" &&
+    Services.prefs.getBoolPref("sidebar.revamp", false)) {
   let mwin = window.browsingContext.embedderWindowGlobal.browsingContext.window;
   let color = mwin.getComputedStyle(mwin.document.body).getPropertyValue("--sidebar-text-color");
 
@@ -41,12 +44,12 @@ if (location.href == "chrome://browser/content/places/historySidebar.xhtml?revam
   document.getElementById("sidebar-search-container").style.setProperty("color", color, "");
   document.getElementById("historyTree").style.setProperty("color", color, "important");
 
-} else {
+} else if (Services.prefs.getBoolPref("sidebar.revamp", false)) {
 
   function revivalOldHistorySidebar() {
     SidebarController._sidebars.set("viewHistorySidebar", {
       elementId: "sidebar-switcher-history",
-      url: "chrome://browser/content/places/historySidebar.xhtml?revamped",
+      url: "chrome://browser/content/places/historySidebar.xhtml",
       menuId: "menu_historySidebar",
       triggerButtonId: "appMenuViewHistorySidebar",
       keyId: "key_gotoHistory",
@@ -59,7 +62,7 @@ if (location.href == "chrome://browser/content/places/historySidebar.xhtml?revam
     });
     let sidebar = document.getElementById("sidebar");
     if (sidebar.getAttribute("src") == "chrome://browser/content/sidebar/sidebar-history.html") {
-      sidebar.setAttribute("src", "chrome://browser/content/places/historySidebar.xhtml?revamped");
+      sidebar.setAttribute("src", "chrome://browser/content/places/historySidebar.xhtml");
     }
   }
 

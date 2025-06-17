@@ -4,6 +4,7 @@
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
 // @compatibility  141
+// @version        2025/06/17 use openSearchForm instead of search with empty string
 // @version        2025/06/16 Bug 1968479 - Only allow eval (with system principal / in the parent) when an explicit pref is set
 // @version        2025/02/02 add @sandbox
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
@@ -35,12 +36,12 @@
   }
 
   let func = SearchOneOffs.prototype._on_click.toString();
-  if (func.includes("if (false) {"))
+  if (func.includes("(true)"))
     return;
 
   func = func.replace(
-  'if (!this.textbox.value) {',
-  'if (false) {'
+  '(event.shiftKey)',
+  '(true)'
   );
   /*
   SearchOneOffs.prototype._on_click = new Function(
