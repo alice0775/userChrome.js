@@ -13,6 +13,7 @@
 
 if (location.href == "chrome://browser/content/places/historySidebar.xhtml" &&
     Services.prefs.getBoolPref("sidebar.revamp", false)) {
+
   let mwin = window.browsingContext.embedderWindowGlobal.browsingContext.window;
   let color = mwin.getComputedStyle(mwin.document.body).getPropertyValue("--sidebar-text-color");
 
