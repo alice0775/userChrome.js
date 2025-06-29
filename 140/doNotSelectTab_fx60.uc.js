@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name          doNotSelectTab_fx60.uc.js
 // @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description   do not select tab when dragging it, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
+// @description   do not select tab when dragging it, after D&D, the unloaded state is not maintained. 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include       main
 // @async          true
-// @compatibility Firefox 136
-// @version        2025/03/07 fix advanceSelectedTab
+// @compatibility Firefox 140
+// @version        2025/03/07 fix advanceSelectedTab does not work. (However, after D&D, the unloaded state is not maintained anymore.)
 // @version        2025/03/07 fix bug of select tab
 // @version        2025/03/05 fix under sidebar.verticalTabs=true
 // @version        2020/09/20 workarround for Bug 1590573
@@ -32,7 +32,6 @@ let do_not_select_tab_when_mousedown = {
       else
         aTab.setAttribute("discarded", "");
     }
-
   },
 
   uninit() {
@@ -42,12 +41,12 @@ let do_not_select_tab_when_mousedown = {
 
   _mousedownTab : null,
   _mousedownTimer: null,
-  _selectedTab : null,
-  _pending : null,
-  _discarded : null,
+  _selectedTab: null,
+  _pending: null,
+  _discarded: null,
   
   handleEvent(event) {
-    let tab;
+    let tab, selectedTab;
     switch(event.type) {
       case "unload":
         this.uninit();
@@ -57,57 +56,55 @@ let do_not_select_tab_when_mousedown = {
           break;
         tab = event.originalTarget;
         if (tab.classList.contains("tab-icon-sound")) {
+          //console.log("tab-icon-sound")
           break;
         }
         if (tab.classList.contains("tab-close-button")) {
+          //console.log("tab-close-button")
           break;
         }
         // xxx 複数タブ選択時は規定の動作とする
         if (gBrowser.multiSelectedTabsCount > 0)
           break;
-        
-        tab = event.target.closest('tab');
 
+        tab = event.target.closest('tab');
         if (!tab)
           break;
-        
+        //console.log("tab")
         if (tab.selected)
-          return;
-
-        if (tab.hasAttribute("busy"))
           break;
-
         if (event.button == 0 && !tab.selected && (event.ctrlKey || event.shiftKey))
           break;
-        // xxx should investigate side effects due to event.stopPropagation when mousedown
-        //event.stopPropagation
-        //event.preventDefault;
-        this._selectedTab = gBrowser.selectedTab;
-        gBrowser.selectedTab = this._selectedTab;
-        setTimeout(() => {gBrowser.selectedTab = this._selectedTab;}, 0)
+        tab.addEventListener("dragstart", this, true);
+        tab.addEventListener("mouseup", this, true);
         this._mousedownTab = tab;
         this._pending = tab.hasAttribute("pending");
         this._discarded = tab.hasAttribute("discarded");
-        tab.addEventListener("dragstart", this, true);
-        tab.addEventListener("mouseup", this, true);
-
+        this._selectedTab = gBrowser.selectedTab;
+        // xxx should investigate side effects due to event.stopPropagation when mousedown
+        event.stopPropagation();
         //console.log("mousedown event.stopPropagation()")
         break;
       case "dragstart":
         if (!this._mousedownTab)
           break;
-        // xxxx 
-        setTimeout((_mousedownTab, _selectedTab, _pending,_discarded)=>{
-          gBrowser.selectedTab  = _selectedTab;
-          if (_pending) {
-            /*gBrowser.getBrowserForTab(_mousedownTab).webNavigation.stop(Ci.nsIWebNavigation.STOP_ALL);
-            gBrowser.explicitUnloadTabs2(_mousedownTab, _discarded);*/
-          }
-        }, 0, this._mousedownTab, this._selectedTab, this._pending, this._discarded)
+        if (this._mousedownTimer)
+          clearTimeout(this._mousedownTimer);
+        
+        this._mousedownTimer = setTimeout(() => {
+          gBrowser.selectedTab = this._selectedTab;
+          setTimeout(() => {
+            if (this._pending) {
+              //gBrowser.explicitUnloadTabs2(this._mousedownTab, this._discarded);
+            }
+          }, 250);
+        }, 0);
+        
+        // xxx more aggressive
+        gBrowser.selectedTab = this._selectedTab;
 
         this._mousedownTab.removeEventListener("dragstart", this, true);
         this._mousedownTab.removeEventListener("mouseup", this, true);
-
         break;
       case "mouseup":
         if (event.button != 0)
@@ -119,13 +116,17 @@ let do_not_select_tab_when_mousedown = {
         tab = event.target.closest('tab');
         if (!tab)
           break;
+        if (this._mousedownTimer)
+          clearTimeout(this._mousedownTimer);
         let originalTarget = event.originalTarget;
         let soundPlayingIcon = tab.soundPlayingIcon;
         let overlayIcon = tab.overlayIcon;
-
+        //console.log(this._mousedownTab == tab)
+        //console.log(!(soundPlayingIcon == originalTarget || overlayIcon == originalTarget))
         if (this._mousedownTab == tab &&
             !(soundPlayingIcon == originalTarget || overlayIcon == originalTarget)) {
           gBrowser.selectedTab = tab;
+          //console.log("mouseup selected")
         }
         break;
     }
