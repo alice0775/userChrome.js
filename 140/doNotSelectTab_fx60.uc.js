@@ -1,11 +1,11 @@
 // ==UserScript==
 // @name          doNotSelectTab_fx60.uc.js
 // @namespace     http://space.geocities.yahoo.co.jp/gl/alice0775
-// @description   do not select tab when dragging it, after D&D, the unloaded state is not maintained. 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
+// @description   do not select tab when dragging it, 非アクティブをドラッグ開始した際,そのタブが前面になるのを阻止する。
 // @include       main
 // @async          true
 // @compatibility Firefox 140
-// @version        2025/03/07 fix advanceSelectedTab does not work. (However, after D&D, the unloaded state is not maintained anymore.)
+// @version        2025/06/30 fix advanceSelectedTab does not work
 // @version        2025/03/07 fix bug of select tab
 // @version        2025/03/05 fix under sidebar.verticalTabs=true
 // @version        2020/09/20 workarround for Bug 1590573
@@ -39,6 +39,17 @@ let do_not_select_tab_when_mousedown = {
     window.removeEventListener("unload", this. false);
  },
 
+  onselect: function(event) {
+    if (event.target == gBrowser.tabpanels) {
+      console.log("cancel select");
+      //event.stopPropagation(); 
+      let that = do_not_select_tab_when_mousedown;
+      console.log(that._mousedownTab);
+      gBrowser.selectedTab = that._selectedTab;
+      gBrowser.explicitUnloadTabs2(that._mousedownTab, that._discarded);
+    }
+  },
+
   _mousedownTab : null,
   _mousedownTimer: null,
   _selectedTab: null,
@@ -53,71 +64,59 @@ let do_not_select_tab_when_mousedown = {
         break;
       case "mousedown":
         if (event.button != 0)
-          break;
+          return;
         tab = event.originalTarget;
         if (tab.classList.contains("tab-icon-sound")) {
           //console.log("tab-icon-sound")
-          break;
+          return;
         }
         if (tab.classList.contains("tab-close-button")) {
           //console.log("tab-close-button")
-          break;
+          return;
         }
-        // xxx 複数タブ選択時は規定の動作とする
-        if (gBrowser.multiSelectedTabsCount > 0)
-          break;
-
         tab = event.target.closest('tab');
         if (!tab)
-          break;
+          return;
         //console.log("tab")
         if (tab.selected)
-          break;
+          return;
         if (event.button == 0 && !tab.selected && (event.ctrlKey || event.shiftKey))
           break;
-        tab.addEventListener("dragstart", this, true);
-        tab.addEventListener("mouseup", this, true);
+        this._selectedTab = gBrowser.selectedTab;
         this._mousedownTab = tab;
         this._pending = tab.hasAttribute("pending");
         this._discarded = tab.hasAttribute("discarded");
-        this._selectedTab = gBrowser.selectedTab;
         // xxx should investigate side effects due to event.stopPropagation when mousedown
-        event.stopPropagation();
+        event.stopPropagation(); 
+        tab.addEventListener("dragstart", this, true);
+        tab.addEventListener("mouseup", this, true);
+
         //console.log("mousedown event.stopPropagation()")
         break;
       case "dragstart":
         if (!this._mousedownTab)
           break;
-        if (this._mousedownTimer)
-          clearTimeout(this._mousedownTimer);
-        
+        gBrowser.tabpanels.addEventListener("select", this.onselect, {once: true, capture: true});        
         this._mousedownTimer = setTimeout(() => {
-          gBrowser.selectedTab = this._selectedTab;
-          setTimeout(() => {
-            if (this._pending) {
-              //gBrowser.explicitUnloadTabs2(this._mousedownTab, this._discarded);
-            }
-          }, 250);
+          gBrowser.tabpanels.removeEventListener("select", this.onselect, {once: true, capture: true});
         }, 0);
-        
-        // xxx more aggressive
-        gBrowser.selectedTab = this._selectedTab;
 
         this._mousedownTab.removeEventListener("dragstart", this, true);
         this._mousedownTab.removeEventListener("mouseup", this, true);
+        //console.log("dragstart")
+
         break;
       case "mouseup":
         if (event.button != 0)
-          break;
+          return;
         if (!this._mousedownTab)
           break;
         this._mousedownTab.removeEventListener("dragstart", this, true);
         this._mousedownTab.removeEventListener("mouseup", this, true);
+        gBrowser.tabpanels.removeEventListener("select", this.onselect, {once: true, capture: true});
         tab = event.target.closest('tab');
         if (!tab)
-          break;
-        if (this._mousedownTimer)
-          clearTimeout(this._mousedownTimer);
+          return;
         let originalTarget = event.originalTarget;
         let soundPlayingIcon = tab.soundPlayingIcon;
         let overlayIcon = tab.overlayIcon;
@@ -125,8 +124,13 @@ let do_not_select_tab_when_mousedown = {
         //console.log(!(soundPlayingIcon == originalTarget || overlayIcon == originalTarget))
         if (this._mousedownTab == tab &&
             !(soundPlayingIcon == originalTarget || overlayIcon == originalTarget)) {
+          console.log("mouseup selected "+tab.label)
           gBrowser.selectedTab = tab;
-          //console.log("mouseup selected")
+          if (tab.selected && this._mousedownTimer) {
+            gBrowser.updateCurrentBrowser();
+            console.log("updateCurrentBrowser "+tab.label)
+          }
+          this._mousedownTimer = null;
         }
         break;
     }
