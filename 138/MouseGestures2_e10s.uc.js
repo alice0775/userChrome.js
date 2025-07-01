@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 138
+// @version        2025/07/01 23:50 fix CSS切り替え
 // @version        2025/03/22 00:00 add gestures built-in translator
 // @version        2025/03/22 Bug 1950904
 // @version        2025/02/24 15:00 tweak timeout of tabindex and target
@@ -291,7 +292,11 @@ var ucjsMouseGestures = {
             document.getElementById("searchbar").value = "";
             document.getElementById("searchbar").updateGoButtonVisibility();
           } ],
-        ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
+        ['', 'CSS切り替え', function(){
+          var styleDisabled = gBrowser.selectedBrowser.browsingContext?.authorStyleDisabledDefault;
+          if (styleDisabled) gPageStyleMenu.switchStyleSheet(null);
+          else gPageStyleMenu.disableStyle();
+        } ],
 
         ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
         ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
@@ -347,7 +352,10 @@ var ucjsMouseGestures = {
                   throw new Error("language is not supported.");
                 }
                 const [sourceLanguage, sourceVariant] = (detectedLang.docLangTag).split(",");
-                const [targetLanguage, targetVariant] = "ja".split(",");
+                let [targetLanguage, targetVariant] = "ja".split(",");
+                if (sourceLanguage == "ja") {
+                  [targetLanguage, targetVariant] = "en".split(",");
+                }
                 actor.translate(
                   { sourceLanguage, targetLanguage, sourceVariant, targetVariant },
                   false // reportAsAutoTranslate

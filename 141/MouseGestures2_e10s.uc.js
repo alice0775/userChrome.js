@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 141
+// @version        2025/07/01 23:50 fix CSS切り替え
+// @version        2025/03/22 00:00 add gestures built-in translator
 // @version        2025/06/17 Bug 1959616
 // @version        2025/03/22 00:00 add gestures built-in translator
 // @version        2025/03/22 Bug 1950904
@@ -292,7 +294,12 @@ var ucjsMouseGestures = {
             document.getElementById("searchbar").value = "";
             document.getElementById("searchbar").updateGoButtonVisibility();
           } ],
-        ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
+        ['', 'CSS切り替え', 
+          function(){
+            var styleDisabled = gBrowser.selectedBrowser.browsingContext?.authorStyleDisabledDefault;
+            if (styleDisabled) gPageStyleMenu.switchStyleSheet(null);
+            else gPageStyleMenu.disableStyle();
+          } ],
 
         ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
         ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
