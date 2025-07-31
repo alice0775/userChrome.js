@@ -3,12 +3,13 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    Text Zoom Per Domain
 // @include        main
-// @compatibility  Firefox 128
+// @compatibility  Firefox 140
 // @author         Alice0775
 // @version        2025/07/31 fix Bug menuseparator does not show at first time
-// @version       2025/01/28 fix bug
-// @version       2024/11/28 Keep open menu when middleclick
-// @version       2022/08/26 Bug 1695435 - Remove @@hasInstance for IDL interfaces in chrome context
+// @version        2025/01/27 fix Bug
+// @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
+// @version        2024/11/28 Keep open menu when middleclick
+// @version        2022/08/26 Bug 1695435 - Remove @@hasInstance for IDL interfaces in chrome context
 // @version        2022/04/01 remove nsIIOService
 // @version        2022/03/10 02:00 Bug 1746667 - PathUtils: Make `get{ProfileDir,LocalProfileDir,TempDir}` sync on main thread
 // @version        2022/01/20 06:00 Bug 1747461 Remove FileUtils.getFile from browser/
@@ -393,21 +394,25 @@ var textZoomPerDomain_menu = {
 
     let template = 
         ["menu", {id: "textZoomPerDomain", label: "Text Zoom Level", accesskey:"Z"},
-          ["menupopup", {id :"textZoomPerDomainMenupopup",
-                         onpopupshowing: "textZoomPerDomain_menu.onpopupshowing();"},
+          ["menupopup", {id :"textZoomPerDomainMenupopup"/*,
+                         onpopupshowing: "textZoomPerDomain_menu.onpopupshowing();"*/},
             ["menuseparator",  {id: "textZoomPerDomainMenuseparator2", hidden:""}],
             ["menuitem", {type: "radio", name: "textZoomPerDomain",
                           id: "textZoomPerDomainnDefault", label: "Default",
-                          oncommand: "textZoomPerDomain_menu.setTextZoom(textZoomPerDomain.defaultTextZoom);",
+                          /*oncommand: "textZoomPerDomain_menu.setTextZoom(textZoomPerDomain.defaultTextZoom);",*/
                           accesskey:"u"}],
             ["menuitem", {id:"textZoomPerDomainChangeDefault", label:"Change Default",
-                          oncommand: "textZoomPerDomain_menu.changeDefaultSize();",
+                          /*oncommand: "textZoomPerDomain_menu.changeDefaultSize();",*/
                           accesskey: "t"}]
           ]
         ];
     let contentAreaContextMenu = document.getElementById("contentAreaContextMenu");
     contentAreaContextMenu.appendChild(this.jsonToDOM(template, document, {}));
     contentAreaContextMenu.addEventListener("popupshowing", (event) => {document.getElementById("textZoomPerDomain").hidden = !ZoomManager.useFullZoom;document.getElementById("textZoomPerDomainMenuseparator2").hidden=false}, true);
+    
+    document.getElementById("textZoomPerDomainMenupopup").addEventListener("popupshowing", (event) => {textZoomPerDomain_menu.onpopupshowing()});
+    document.getElementById("textZoomPerDomainnDefault").addEventListener("command", (event) => {textZoomPerDomain_menu.setTextZoom(textZoomPerDomain.defaultTextZoom)});
+    document.getElementById("textZoomPerDomainChangeDefault").addEventListener("command", (event) => {textZoomPerDomain_menu.changeDefaultSize()});
   },
 
   onpopupshowing: function() {
@@ -420,9 +425,11 @@ var textZoomPerDomain_menu = {
         menuitem.setAttribute("name", "textZoomPerDomain");
         menuitem.setAttribute("id", "textZoomPerDomain" + this.zoomFactor[i]);
         menuitem.setAttribute("label", this.zoomFactor[i].toString());
-        menuitem.setAttribute("oncommand", "textZoomPerDomain_menu.setTextZoom(" + this.zoomFactor[i] + ")");
+        menuitem.addEventListener("command", () => textZoomPerDomain_menu.setTextZoom(this.zoomFactor[i]));
+        //menuitem.setAttribute("oncommand", "textZoomPerDomain_menu.setTextZoom(" + this.zoomFactor[i] + ")");
         menuitem.setAttribute("accesskey", this.zoomAaccesskey[i]);
-        menuitem.setAttribute("onmouseup", "textZoomPerDomain_menu.shouldPreventHide(event);");
+        menuitem.addEventListener("mouseup", (event) => textZoomPerDomain_menu.shouldPreventHide(event));
+        //menuitem.setAttribute("onmouseup", "textZoomPerDomain_menu.shouldPreventHide(event);");
         ref.parentNode.insertBefore(menuitem, ref);
       }
     }
