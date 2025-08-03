@@ -6,6 +6,7 @@
 // @async         true
 // @compatibility Firefox 143
 // @author        alice0775
+// @version       2025/08/03 fix duplicare id
 // @version       2025/07/29 Bug 1979014 - Make some XUL attributes (hidden/collapsed/autofocus) regular bool attributes
 // @version       2025/06/17 Each window now remembers the last panel opened.
 // @version       2025/06/09 Revert removeEventListener
@@ -152,11 +153,12 @@
         ) {
           // registerExtension() already creates menu items for extensions.
           const menuitem = SidebarController.createMenuItem(commandID, sidebar);
+          menuitem.id += "_2"
+          menupopup.appendChild(menuitem);
           if (SidebarController.currentID == commandID)
             menuitem.setAttribute("checked", "true");
           else
             menuitem.removeAttribute("checked");
-          menupopup.appendChild(menuitem);
         }
       }
 
@@ -165,12 +167,13 @@
           commandID !== "viewCustomizeSidebar") {
             // registerExtension() already creates menu items for extensions.
             const menuitem = SidebarController.createMenuItem(commandID, sidebar);
+            menuitem.id += "_2"
+            menupopup.appendChild(menuitem);
             menuitem.setAttribute("label", sidebar.title);
           if (SidebarController.currentID == commandID)
             menuitem.setAttribute("checked", "true");
           else
             menuitem.removeAttribute("checked");
-            menupopup.appendChild(menuitem);
         }
       }
     }
