@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 140
 // @author         Alice0775
+// @version        2025/08/06 fix tooltip bug due to the change of 025/01/05
 // @version        2025/07/26 add List All Tabs menu
 // @version        2025/01/05 remove redundant menuitems
 // @version        2025/01/05 fix bug
@@ -151,7 +152,7 @@ var UndoListInTabmenu = {
           tooltiptext += "\n";
         tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
       }
-      undoPopup.childNodes[i + 2/*restore all, sep*/].setAttribute("tooltiptext", tooltiptext);
+      undoPopup.childNodes[i].setAttribute("tooltiptext", tooltiptext);
     }
 
     // "Append Clear undo close tb list"
