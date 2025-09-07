@@ -6,6 +6,7 @@
 // @async         true
 // @compatibility Firefox 140
 // @author        alice0775
+// @version       2025/09/06 autohideSidebar2
 // @version       2025/08/03 fix duplicare id
 // @version       2025/07/29 remove checked attribute if false
 // @version       2025/06/17 Each window now remembers the last panel opened.
@@ -35,7 +36,7 @@
               let commandID = SessionStore.getCustomWindowValue(event.target.ownerGlobal, "userChrome.sidebar2");
                 //Services.prefs.getStringPref("userChrome.sidebar2", event.target.ownerGlobal.SidebarController.DEFAULT_SIDEBAR_ID);
               commandID = event.target.ownerGlobal.SidebarController.lastOpenedId || commandID;
-              if (event.target.ownerGlobal.SidebarController.isOpen && typeof AutohideSidebar != "undefined") {
+              if (event.target.ownerGlobal.SidebarController.isOpen && typeof AutohideSidebar != "undefined" && event.target.ownerGlobal.AutohideSidebar.enabled) {
                 if (event.target.ownerGlobal.AutohideSidebar.hidden) {
                   event.target.ownerGlobal.AutohideSidebar.show();
                 } else {
