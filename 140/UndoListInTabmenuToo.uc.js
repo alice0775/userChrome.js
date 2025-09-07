@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 140
 // @author         Alice0775
+// @version        2025/09/05 mark '*' for current index in the tooltip
 // @version        2025/08/06 fix tooltip bug due to the change of 025/01/05
 // @version        2025/07/26 add List All Tabs menu
 // @version        2025/01/05 remove redundant menuitems
@@ -145,12 +146,16 @@ var UndoListInTabmenu = {
     // populate tab historis for tooltip
     var undoItems = UndoListInTabmenu._ss.getClosedTabDataForWindow(window);
     for (var i = 0; i < undoItems.length; i++) {
-      var entries = undoItems[i].state ? undoItems[i].state.entries : undoItems[i].entries;
+      var entries = undoItems[i].state.entries;
       var tooltiptext = "";
       for (var j = entries.length - 1; j > -1; j--){
         if (j != entries.length - 1)
           tooltiptext += "\n";
-        tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
+        if (undoItems[i].state.index - 1 !== j) {
+          tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
+        } else {
+          tooltiptext += "*" + ". " + entries[j].title;
+        }
       }
       undoPopup.childNodes[i].setAttribute("tooltiptext", tooltiptext);
     }
