@@ -6,6 +6,9 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 143
+// @version        2025/09/05 mark '*' for current index in the tooltip
+// @version        2025/08/18 _linkTXT excludes alt if img is visible
+// @version        2025/08/02 Bug 1979338 - Use srcset for images on menuitems
 // @version        2025/07/31 Bug 1979338 - Use srcset for images on menuitems
 // @version        2025/06/17 Bug 1959616
 // @version        2025/03/22 00:00 add gestures built-in translator
@@ -1256,7 +1259,7 @@ let ucjsMouseGestures_framescript = {
           if (node.nodeType == node.TEXT_NODE) {
             // Add this text to our collection.
             text += " " + node.data;
-          } else if (node instanceof content.HTMLImageElement) {
+          } else if (node instanceof content.HTMLImageElement && !node.checkVisibility()) {
             // If it has an "alt" attribute, add that.
             let altText = node.getAttribute( "alt" );
             if ( altText && altText != "" ) {
@@ -1637,7 +1640,11 @@ let ucjsMouseGestures_helper = {
         for (let j = entries.length - 1; j > -1; j--){
           if (j != entries.length - 1)
             tooltiptext += "\n";
-          tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
+          if (undoItems[i].state.index - 1 !== j) {
+            tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
+          } else {
+            tooltiptext += "*" + ". " + entries[j].title;
+          }
         }
         let m = document.createXULElement("menuitem");
         m.setAttribute("tooltiptext", tooltiptext);
@@ -1805,7 +1812,7 @@ let ucjsMouseGestures_helper = {
           // Use list-style-image rather than the image attribute in order to
           // allow CSS to override this.
           //item.style.listStyleImage = `url(page-icon:${uri})`;
-          item.setAttribute("image", "page-icon:" + uri  );
+          item.style.setProperty("--menuitem-icon", `url(page-icon:${uri})`);
         }
 
         if (j < index) {
