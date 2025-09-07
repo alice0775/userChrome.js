@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 141
+// @version        2025/09/05 mark '*' for current index in the tooltip
+// @version        2025/08/18 _linkTXT excludes alt if img is visible
 // @version        2025/07/01 23:50 fix CSS切り替え
 // @version        2025/03/22 00:00 add gestures built-in translator
 // @version        2025/06/17 Bug 1959616
@@ -1262,7 +1264,7 @@ let ucjsMouseGestures_framescript = {
           if (node.nodeType == node.TEXT_NODE) {
             // Add this text to our collection.
             text += " " + node.data;
-          } else if (node instanceof content.HTMLImageElement) {
+          } else if (node instanceof content.HTMLImageElement && !node.checkVisibility()) {
             // If it has an "alt" attribute, add that.
             let altText = node.getAttribute( "alt" );
             if ( altText && altText != "" ) {
@@ -1643,7 +1645,11 @@ let ucjsMouseGestures_helper = {
         for (let j = entries.length - 1; j > -1; j--){
           if (j != entries.length - 1)
             tooltiptext += "\n";
-          tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
+          if (undoItems[i].state.index - 1 !== j) {
+            tooltiptext += parseInt(j + 1, 10) + ". " + entries[j].title;
+          } else {
+            tooltiptext += "*" + ". " + entries[j].title;
+          }
         }
         let m = document.createXULElement("menuitem");
         m.setAttribute("tooltiptext", tooltiptext);
