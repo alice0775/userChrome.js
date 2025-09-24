@@ -9,6 +9,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  142
+// @version        2025/09/25 fix bug
 // @version        2025/09/24 remove redundant header if any
 // @version        2025/07/26 Bug 1968040
 // @version        2025/05/26 Bug 1967551 - Remove native tabbox rendering.
@@ -72,7 +73,7 @@ if (location.href == "chrome://browser/content/places/bookmarksSidebar.xhtml?SM"
           style.setProperty("display", "none", "important");
 }
 if (location.href == "chrome://browser/content/places/historySidebar.xhtml?SM") {
-  document.querySelector("#history-panel > #bhTooltip + hbox")?.
+  document.querySelector("#history-panel > #bhTooltip + hbox:not([id])")?.
           style.setProperty("display", "none", "important");
 }
 if (location.href == "chrome://browser/content/genai/chat.html?SM") {
