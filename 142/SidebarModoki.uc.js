@@ -3,9 +3,13 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    SidebarModoki
 // @include        main
+// @include        chrome://browser/content/places/bookmarksSidebar.xhtml?SM
+// @include        chrome://browser/content/places/historySidebar.xhtml?SM
+// @include        chrome://browser/content/genai/chat.html?SM
 // @async          true
 // @author         Alice0775
 // @compatibility  142
+// @version        2025/09/24 remove redundant header if any
 // @version        2025/07/26 Bug 1968040
 // @version        2025/05/26 Bug 1967551 - Remove native tabbox rendering.
 // @version        2025/04/14 fix register eventListener
@@ -63,14 +67,27 @@
 // @version        2017/11/15 09:00
 // ==/UserScript==
 
+if (location.href == "chrome://browser/content/places/bookmarksSidebar.xhtml?SM") {
+  document.getElementById("sidebar-panel-header")?.
+          style.setProperty("display", "none", "important");
+}
+if (location.href == "chrome://browser/content/places/historySidebar.xhtml?SM") {
+  document.querySelector("#history-panel > #bhTooltip + hbox")?.
+          style.setProperty("display", "none", "important");
+}
+if (location.href == "chrome://browser/content/genai/chat.html?SM") {
+  document.getElementById("header")?.
+          style.setProperty("display", "none", "important");
+}
 
+if (location.href == "chrome://browser/content/browser.xhtml")
 window.SidebarModoki = {
   // -- config --
   SM_RIGHT: false,  // SidebarModoki position
   SM_WIDTH : 230,
   SM_AUTOHIDE : false,  //F11 Fullscreen
-  TAB_SRC : ["chrome://browser/content/places/bookmarksSidebar.xhtml",
-             "chrome://browser/content/places/historySidebar.xhtml",
+  TAB_SRC : ["chrome://browser/content/places/bookmarksSidebar.xhtml?SM",
+             "chrome://browser/content/places/historySidebar.xhtml?SM",
              "chrome://browser/content/downloads/contentAreaDownloadsView.xhtml?SM",
              "chrome://browser/content/genai/chat.html?SM"],
   TAB_LABEL : ["Bookmarks", "History", "DL", "AI"],
@@ -614,4 +631,5 @@ window.SidebarModoki = {
 
 }
 
-SidebarModoki.init();
+if (location.href == "chrome://browser/content/browser.xhtml")
+  SidebarModoki.init();
