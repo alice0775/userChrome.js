@@ -3,12 +3,10 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    SidebarModoki
 // @include        main
-// @include        chrome://browser/content/places/bookmarksSidebar.xhtml?SM
-// @include        chrome://browser/content/places/historySidebar.xhtml?SM
-// @include        chrome://browser/content/genai/chat.html?SM
 // @async          true
 // @author         Alice0775
 // @compatibility  142
+// @version        2025/09/27 revert 09/24/, 9/25. And remove redundant header if any
 // @version        2025/09/25 fix bug
 // @version        2025/09/24 remove redundant header if any
 // @version        2025/07/26 Bug 1968040
@@ -68,29 +66,15 @@
 // @version        2017/11/15 09:00
 // ==/UserScript==
 
-if (location.href == "chrome://browser/content/places/bookmarksSidebar.xhtml?SM") {
-  document.getElementById("sidebar-panel-header")?.
-          style.setProperty("display", "none", "important");
-}
-if (location.href == "chrome://browser/content/places/historySidebar.xhtml?SM") {
-  document.querySelector("#history-panel > #bhTooltip + hbox:not([id])")?.
-          style.setProperty("display", "none", "important");
-}
-if (location.href == "chrome://browser/content/genai/chat.html?SM") {
-  document.getElementById("header")?.
-          style.setProperty("display", "none", "important");
-}
-
-if (location.href == "chrome://browser/content/browser.xhtml")
 window.SidebarModoki = {
   // -- config --
   SM_RIGHT: false,  // SidebarModoki position
   SM_WIDTH : 230,
   SM_AUTOHIDE : false,  //F11 Fullscreen
-  TAB_SRC : ["chrome://browser/content/places/bookmarksSidebar.xhtml?SM",
-             "chrome://browser/content/places/historySidebar.xhtml?SM",
+  TAB_SRC : ["chrome://browser/content/places/bookmarksSidebar.xhtml",
+             "chrome://browser/content/places/historySidebar.xhtml",
              "chrome://browser/content/downloads/contentAreaDownloadsView.xhtml?SM",
-             "chrome://browser/content/genai/chat.html?SM"],
+             "chrome://browser/content/genai/chat.html"],
   TAB_LABEL : ["Bookmarks", "History", "DL", "AI"],
   // -- config --
 
@@ -542,8 +526,35 @@ window.SidebarModoki = {
     let aIndex = document.getElementById("SM_tabpanels").selectedIndex;
     this.prefs.setIntPref(this.kSM_lastSelectedTabIndex, aIndex);
     width = this.getPref(this.kSM_lastSelectedTabWidth + aIndex, "int", this.SM_WIDTH);
-    if (document.getElementById("SM_tab" + aIndex +"-browser").src == "" ) {
-      document.getElementById("SM_tab" + aIndex +"-browser").src = this.TAB_SRC[aIndex];
+    let browser = document.getElementById("SM_tab" + aIndex +"-browser");
+    if (browser.src == "" ) {
+      browser.addEventListener("DOMContentLoaded", (e) => {
+        let doc = e.target;
+        if (doc.location == "chrome://browser/content/places/bookmarksSidebar.xhtml") {
+          doc.getElementById("sidebar-panel-header")?.
+                  style.setProperty("display", "none", "important");
+        }
+        if (doc.location == "chrome://browser/content/places/historySidebar.xhtml") {
+          let cnt = 100;
+          let timer = setInterval(() => {
+            cnt--;
+            if (cnt < 0) {
+              clearInterval(timer);
+            }
+            let elm = doc.querySelector("#bhTooltip + hbox:not([id])");
+            if (elm) {
+              doc.querySelector("#bhTooltip + hbox:not([id])")?.
+                    style.setProperty("display", "none", "important");
+              clearInterval(timer);
+            }
+          }, 10);
+        }
+        if (doc.location == "chrome://browser/content/genai/chat.html") {
+          doc.getElementById("header-close")?.
+                  style.setProperty("display", "none", "important");
+        }
+      }, {once: true});
+      browser.src = this.TAB_SRC[aIndex];
     }
     document.getElementById("SM_toolbox").style.setProperty("width", width + "px", "");
   },
@@ -632,5 +643,4 @@ window.SidebarModoki = {
 
 }
 
-if (location.href == "chrome://browser/content/browser.xhtml")
-  SidebarModoki.init();
+SidebarModoki.init();
