@@ -6,8 +6,8 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @sandbox        true
-// @compatibility  141
-// @version        2025/06/16 Bug 1968479 - Only allow eval (with system principal / in the parent) when an explicit pref is set
+// @compatibility  135
+// @compatibility  139
 // @version        2025/05/13 test version. fix uri.hash check
 // @version        2025/05/12 test version. force open link in newtab if tab is locked (e.g., google search results page)
 // @version        2025/02/02 add @sandbox
@@ -113,29 +113,6 @@ patch: {
 
     init: function(){
 
-      let sb = window.userChrome_js?.sb;
-      if (!sb) {
-        sb = Cu.Sandbox(window, {
-            sandboxPrototype: window,
-            sameZoneAs: window,
-        });
-
-        /* toSource() is not available in sandbox */
-        Cu.evalInSandbox(`
-            Function.prototype.toSource = window.Function.prototype.toSource;
-            Object.defineProperty(Function.prototype, "toSource", {enumerable : false})
-            Object.prototype.toSource = window.Object.prototype.toSource;
-            Object.defineProperty(Object.prototype, "toSource", {enumerable : false})
-            Array.prototype.toSource = window.Array.prototype.toSource;
-            Object.defineProperty(Array.prototype, "toSource", {enumerable : false})
-        `, sb);
-        window.addEventListener("unload", () => {
-            setTimeout(() => {
-                Cu.nukeSandbox(sb);
-            }, 0);
-        }, {once: true});
-      }
-
       // detach tab
       let func =  gBrowser.swapBrowsersAndCloseOther.toString();
       if (gBrowser && !/copytabLock/.test(func)) {
@@ -147,7 +124,7 @@ patch: {
           }
           $&`
          );
-        Cu.evalInSandbox("gBrowser.swapBrowsersAndCloseOther = function " + func.replace(/^function/, ''), sb);
+        eval("gBrowser.swapBrowsersAndCloseOther = function " + func.replace(/^function/, ''));
       }
 
       gBrowser.isLockTab = function (aTab){
