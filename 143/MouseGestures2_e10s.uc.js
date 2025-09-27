@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 143
+// @version        2025/09/28 fix linkTXT
 // @version        2025/09/05 mark '*' for current index in the tooltip
 // @version        2025/08/18 _linkTXT excludes alt if img is visible
 // @version        2025/08/02 Bug 1979338 - Use srcset for images on menuitems
@@ -1243,7 +1244,7 @@ let ucjsMouseGestures_framescript = {
           if (!text || !text.match(/\S/)) {
             text = aNode.getAttribute("alt");
             if (!text || !text.match(/\S/)) {
-              text = this._getLinkURL(aNode);
+              text = this._getLinkURL(aNode)?.href;
             }
           }
         }
@@ -1259,7 +1260,8 @@ let ucjsMouseGestures_framescript = {
           if (node.nodeType == node.TEXT_NODE) {
             // Add this text to our collection.
             text += " " + node.data;
-          } else if (node instanceof content.HTMLImageElement && !node.checkVisibility()) {
+          } else if (node instanceof content.HTMLImageElement && node.checkVisibility()
+                     && !(node.complete && node.naturalWidth !== 0)) {
             // If it has an "alt" attribute, add that.
             let altText = node.getAttribute( "alt" );
             if ( altText && altText != "" ) {
