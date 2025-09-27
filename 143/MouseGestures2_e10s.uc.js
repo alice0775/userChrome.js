@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 143
+// @version        2025/09/28 fix linkTXT take2
 // @version        2025/09/28 fix linkTXT
 // @version        2025/09/05 mark '*' for current index in the tooltip
 // @version        2025/08/18 _linkTXT excludes alt if img is visible
@@ -1041,7 +1042,7 @@ let ucjsMouseGestures_framescript = {
                 linkReferrerInfo.initWithElement(node);
               } catch (ex) {}
 
-              linkTXT = this._getLinkTEXT(this.link);
+              linkTXT = this._getLinkTEXT(event.target);
               mediaSRC = this._getMediaSRC(event.target);
               selectedTXT = this._getSelectedText(event.originalTarget);
               let doc = event.target.ownerDocument;
@@ -1244,7 +1245,7 @@ let ucjsMouseGestures_framescript = {
           if (!text || !text.match(/\S/)) {
             text = aNode.getAttribute("alt");
             if (!text || !text.match(/\S/)) {
-              text = this._getLinkURL(aNode)?.href;
+              text = this._getLinkURL(aNode)?.href || "";
             }
           }
         }
@@ -1252,11 +1253,19 @@ let ucjsMouseGestures_framescript = {
       },
       
       _gatherTextUnder: function(root) {
+        this.console.logStringMessage("root " + root);
         let text = "";
         let node = root.firstChild;
         let depth = 1;
         while (node && depth > 0) {
           // See if this node is text.
+          /*
+          this.console.logStringMessage("node " + node);
+          if (node instanceof content.HTMLImageElement){
+            this.console.logStringMessage("node.checkVisibility() " + node.checkVisibility());
+            this.console.logStringMessage("node.complete && node.naturalWidth !== 0 " + node.complete && node.naturalWidth !== 0);
+          }
+          */
           if (node.nodeType == node.TEXT_NODE) {
             // Add this text to our collection.
             text += " " + node.data;
