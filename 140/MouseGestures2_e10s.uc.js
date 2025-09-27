@@ -6,7 +6,6 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 140
-// @version        2025/09/27 _linkTXT excludes alt text when img is loaded successfully.
 // @version        2025/09/05 mark '*' for current index in the tooltip
 // @version        2025/08/18 _linkTXT excludes alt if img is visible
 // @version        2025/07/01 23:50 fix CSS切り替え
@@ -1166,7 +1165,7 @@ let ucjsMouseGestures_framescript = {
         while (aNode) {
           if ((aNode instanceof content.HTMLAnchorElement || aNode instanceof content.HTMLAreaElement) && aNode.href) {
             this.link = aNode;
-            return aNode.href;
+            return aNode;
           }
           try {
             aNode = aNode.parentNode;
@@ -1262,8 +1261,7 @@ let ucjsMouseGestures_framescript = {
           if (node.nodeType == node.TEXT_NODE) {
             // Add this text to our collection.
             text += " " + node.data;
-          } else if (node instanceof content.HTMLImageElement && node.checkVisibility()
-                     && !(node.complete && node.naturalWidth !== 0)) {
+          } else if (node instanceof content.HTMLImageElement && !node.checkVisibility()) {
             // If it has an "alt" attribute, add that.
             let altText = node.getAttribute( "alt" );
             if ( altText && altText != "" ) {
