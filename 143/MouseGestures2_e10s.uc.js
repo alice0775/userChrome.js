@@ -1243,7 +1243,7 @@ let ucjsMouseGestures_framescript = {
           text = aNode.getAttribute("title");
           if (!text || !text.match(/\S/)) {
             text = aNode.getAttribute("alt");
-            if (!text || )) {
+            if (!text ||  !text.match(/\S/)) {
               text = this._getLinkURL(aNode);
             }
           }
