@@ -6,7 +6,8 @@
 // @async          true
 // @charset       UTF-8
 // @author        Alice0775
-// @compatibility 138
+// @compatibility 140
+// @version       2025/10/01 use LocaleString
 // @version       2025/07/12 display resident-unique memory
 // @version       2025/07/12 display gpu memory
 // @version       2025/06/09 remove removal attribute
@@ -103,8 +104,8 @@ window.ucjsMemoryUsage = {
         }
       );
       //Services.console.logStringMessage("total " + txt);
-      let txt = Math.ceil(total/1024/1024);
-      let txtGpu = Math.ceil(gpu/1024/1024);
+      let txt = Math.ceil(total/1024/1024).toLocaleString();
+      let txtGpu = Math.ceil(gpu/1024/1024).toLocaleString();
       for (let win of Services.wm.getEnumerator("navigator:browser")) {
         if (win.closed || !win.gBrowser) {
           continue;
