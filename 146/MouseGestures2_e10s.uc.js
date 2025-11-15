@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 146
+// @version        2025/11/15 fix bug
 // @version        2025/11/08 Prevent mouseup firing before mousedown immediately after startup
 // @version        2025/11/08 Tweak Split Tab
 // @version        2025/10/04 add status text for closedTabsPopup and sessionHistoryPopup
@@ -667,11 +668,12 @@ var ucjsMouseGestures = {
     var y = event.screenY;
     switch (event.type) {
       case "mousedown": 
+        if (!this.mousedownHandler) {
+          document.addEventListener("mouseup", this, false);
+          this.mousedownHandler = true;
+        }
+
         if (event.button == 2) {
-          if (!this.mousedownHandler) {
-            document.addEventListener("mouseup", this, false);
-            this.mousedownHandler = true;
-          }
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
           this._isMouseDownR = true;
           this._suppressContext = false;
