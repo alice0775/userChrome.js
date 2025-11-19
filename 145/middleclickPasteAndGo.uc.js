@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 145
+// @version        2025/11/20 10:00 Fix Bug
 // @version        2025/11/15 10:00 Bug 1986130 etc
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/12/31 13:00 
@@ -66,8 +67,8 @@ document.getElementById("searchbar").addEventListener("click", (event) => {middl
   pasteAndGo2: function(event) {
     if (event.originalTarget.parentNode != gURLBar.inputField)
       return;
-    //if (event.button != 1)
-    //  return;
+    if (event.button != 1)
+      return;
     if (gURLBar.getAttribute("pageproxystate") != "valid") {
       gURLBar.view.close();
     }
