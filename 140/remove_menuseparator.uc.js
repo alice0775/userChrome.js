@@ -15,7 +15,7 @@ document.getElementById("contentAreaContextMenu")
     popup.style.setProperty("visibility", "hidden", "");
     window.setTimeout((popup) => {popup.style.removeProperty("visibility");}, 30, popup);
 
-    remove_menuseparator(popup);
+    //remove_menuseparator(popup);
     //window.setTimeout((popup) => {remove_menuseparator(popup);}, 0, popup);
     window.setTimeout((popup) => {remove_menuseparator(popup);}, 20, popup);
   }, true
