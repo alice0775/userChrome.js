@@ -1,5 +1,6 @@
 // skip 1st line
 /*
+ 2025/12/01 Remove unused parts.
  2025/11/30 Bug 543435
  2025/05/27 security.allow_eval_with_system_principal per Bug 1968479 
  2023/07/11 Removed Services.jsm, per Bug 1780695
@@ -31,9 +32,11 @@ try {
             //Bug 543435
             const parent = aSubject.parent;
             aSubject.addEventListener("DOMContentLoaded", () => {
+              //Library windowとかSidebrではDOMContentLoadedだと早すぎる
               parent.addEventListener("load", this, {once: true, capture: true})
             }, {once:true})
           } else {
+            //Library windowとかSidebrではDOMContentLoadedだと早すぎる
             aSubject.addEventListener('load', this, {once: true, capture: true});
           }
       },
@@ -51,11 +54,13 @@ try {
                         .getURLSpecFromActualFile(file) + "?" + file.lastModifiedTime;
           let win = document.defaultView;
 
+          /*
           let sandbox = new Cu.Sandbox(win, {
             sandboxPrototype: win,
             sameZoneAs: win,
           });
-
+          */
+          
           Cc["@mozilla.org/moz/jssubscript-loader;1"].getService(Ci.mozIJSSubScriptLoader)
                        .loadSubScript(fileURL, /*sandbox*/ win, 'UTF-8');
         }
@@ -72,7 +77,7 @@ try {
     
     //Don't enable this! Very dangerous if set to "true".
     lockPref("security.allow_eval_with_system_principal", false);
-    //This should not be enabled! Very dangerous if set to "true".
+    //Don't enable this! Very dangerous if set to "true".
     lockPref("security.allow_unsafe_dangerous_privileged_evil_eval", false);
 
 } catch(e) {}
