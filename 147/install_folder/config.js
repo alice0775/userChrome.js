@@ -78,6 +78,6 @@ try {
     //Don't enable this! Very dangerous if set to "true".
     lockPref("security.allow_eval_with_system_principal", false);
     //Don't enable this! Very dangerous if set to "true".
-    lockPref("security.allow_unsafe_dangerous_privileged_evil_eval", false);
+    //lockPref("security.allow_unsafe_dangerous_privileged_evil_eval", false);
 
 } catch(e) {}
