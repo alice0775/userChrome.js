@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility  Firefox 148
+// @version        2026/01/08 fix bug 
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/07/01 23:50 fix CSS切り替え
 // @version        2025/03/22 Bug 1950904
@@ -60,8 +61,8 @@ ucjsMouseGestures_menues = {
   // ucjsMouseGestures._selectedTXT : selected text
   // ucjsMouseGestures._version : browser major version
 
-  commands :
-
+    try {
+    ucjsMouseGestures.commands =
       [
 
 
@@ -396,7 +397,7 @@ ucjsMouseGestures_menues = {
           }],  
 
 
-      ],
+      ];
     // == /config ==
     } catch(ex) {
        Services.console.logMessage(ex);
