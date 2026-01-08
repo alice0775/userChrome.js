@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 140
+// @version        2026/01/09 fix wheel gesture 
+// @version        2025/10/04 add status text for closedTabsPopup and sessionHistoryPopup
 // @version        2025/09/28 fix linkTXT take2
 // @version        2025/09/28 fix linkTXT
 // @version        2025/09/05 mark '*' for current index in the tooltip
@@ -555,7 +557,7 @@ var ucjsMouseGestures = {
     document.addEventListener("mouseup", this, false);
     gBrowser.tabpanels.addEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
-      window.addEventListener('wheel', this, true);
+      window.addEventListener('wheel', this, {capture:true, passive: false});
 
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_start", this);
@@ -573,7 +575,7 @@ var ucjsMouseGestures = {
     gBrowser.tabpanels.removeEventListener("mouseleave", this, false);
     gBrowser.tabpanels.removeEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
-      window.removeEventListener('wheel', this, true);
+      window.removeEventListener('wheel', this, {capture:true, passive: false});
 
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_start", this);
@@ -1605,7 +1607,16 @@ let ucjsMouseGestures_helper = {
                removeChild(document.getElementById("ucjsMouseGestures_popup"));
     }
     let popup = document.createXULElement("menupopup");
+    popup.setAttribute("placespopup", "true");
     document.getElementById("mainPopupSet").appendChild(popup);
+    popup.addEventListener("DOMMenuItemActive", function (aEvent) {
+      if (aEvent.target.hasAttribute("targetURI")) {
+        XULBrowserWindow.setOverLink(aEvent.target.getAttribute("targetURI"));
+      }
+    });
+    popup.addEventListener("DOMMenuItemInactive", function () {
+      XULBrowserWindow.setOverLink("");
+    });
 
     let ss = SessionStore;
 
@@ -1654,6 +1665,7 @@ let ucjsMouseGestures_helper = {
         let m = document.createXULElement("menuitem");
         m.setAttribute("tooltiptext", tooltiptext);
         m.setAttribute("label", undoItems[i].title);
+        m.setAttribute("targetURI", entries[0].url);
         if (undoItems[i].image)
           m.setAttribute("image", undoItems[i].image);
         m.setAttribute("class", "menuitem-iconic bookmark-item");
@@ -1716,9 +1728,19 @@ let ucjsMouseGestures_helper = {
     let aParent = document.createXULElement("menupopup");
     document.getElementById("mainPopupSet").appendChild(aParent);
     aParent.setAttribute("id", "ucjsMouseGestures_popup");
+    aParent.setAttribute("placespopup", "true");
     aParent.addEventListener("command", (event) => {BrowserCommands.gotoHistoryIndex(event); event.stopPropagation()});
     //aParent.setAttribute("oncommand", "BrowserCommands.gotoHistoryIndex(event); event.stopPropagation();");
     /*aParent.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
+    aParent.addEventListener("DOMMenuItemActive", function (aEvent) {
+      if (aEvent.target.hasAttribute("targetURI")) {
+        XULBrowserWindow.setOverLink(aEvent.target.getAttribute("targetURI"));
+      }
+    });
+    aParent.addEventListener("DOMMenuItemInactive", function () {
+      XULBrowserWindow.setOverLink("");
+    });
+
     aParent.setAttribute("context", "");
     let children = aParent.children;
 
@@ -1806,6 +1828,7 @@ let ucjsMouseGestures_helper = {
             : document.createXULElement("menuitem");
 
         item.setAttribute("uri", uri);
+        item.setAttribute("targetURI", uri);
         item.setAttribute("label", entry.title || uri);
         item.setAttribute("index", j);
 

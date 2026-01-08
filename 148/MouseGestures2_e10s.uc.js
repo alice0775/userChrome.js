@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 148
+// @version        2026/01/09 fix wheel gesture 
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/11/15 fix bug
@@ -570,7 +571,7 @@ var ucjsMouseGestures = {
 //    document.addEventListener("mouseup", this, false);
     gBrowser.tabpanels.addEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
-      window.addEventListener('wheel', this, true);
+      window.addEventListener('wheel', this, {capture:true, passive: false});
 
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_start", this);
@@ -588,7 +589,7 @@ var ucjsMouseGestures = {
     gBrowser.tabpanels.removeEventListener("mouseleave", this, false);
     gBrowser.tabpanels.removeEventListener("contextmenu", this, true);
     if (this.enableWheelGestures)
-      window.removeEventListener('wheel', this, true);
+      window.removeEventListener('wheel', this, {capture:true, passive: false});
 
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_start", this);
