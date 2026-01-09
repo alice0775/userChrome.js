@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 148
+// @version        2026/01/09 For scroll performance, disable passive mode.
 // @version        2026/01/09 fix wheel gesture 
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/12/20 00:00 new search widget
@@ -570,8 +571,6 @@ var ucjsMouseGestures = {
     gBrowser.tabpanels.addEventListener("mousedown", this, false);
 //    document.addEventListener("mouseup", this, false);
     gBrowser.tabpanels.addEventListener("contextmenu", this, true);
-    if (this.enableWheelGestures)
-      window.addEventListener('wheel', this, {capture:true, passive: false});
 
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_start", this);
@@ -689,6 +688,8 @@ var ucjsMouseGestures = {
 
         if (event.button == 2) {
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
+          if (this.enableWheelGestures)
+            window.addEventListener('wheel', this, {capture:true, passive: false});
           this._isMouseDownR = true;
           this._suppressContext = false;
           this._startGesture(event);
@@ -742,6 +743,8 @@ var ucjsMouseGestures = {
       case "mouseup": 
         gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_mouseup");
         gBrowser.tabpanels.removeEventListener("mousemove", this, false);
+        if (this.enableWheelGestures)
+          window.addEventListener('wheel', this, {capture:true, passive: false});
         if ((this._isMouseDownR && event.button == 2) ||
             (this._isMouseDownR && this._isMac && event.button == 0 && event.ctrlKey)) {
           this._isMouseDownR = false;
