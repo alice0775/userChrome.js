@@ -193,25 +193,9 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
 
 3. Firefoxのsandbox対応と初期化中にスクリプトが実行されないように及び日本語ファイル名対応にするため,展開保存した utils\userChrome.js を修正
 
---- org/userChrome.js	2025-05-20 12:59:04.273775700 +0900
-+++ userChrome.js	2025-05-20 13:09:24.750334600 +0900
-@@ -1,14 +1,15 @@
- 'use strict';
- 
- ChromeUtils.defineESModuleGetters(this, {
-   xPref: 'chrome://userchromejs/content/xPref.sys.mjs',
-   Management: 'resource://gre/modules/Extension.sys.mjs',
-   AppConstants: 'resource://gre/modules/AppConstants.sys.mjs',
-+  setTimeout: "resource://gre/modules/Timer.sys.mjs",
- });
- 
- let UC = {
-   webExts: new Map(),
-   sidebar: new Map()
- };
- 
- let _uc = {
-@@ -53,18 +54,23 @@
+--- org/userChrome.js	2025-11-30 05:51:26.000000000 +0900
++++ userChrome.js	2026-01-10 03:10:02.232445000 +0900
+@@ -54,17 +54,21 @@
  
      let def = ['', ''];
      let author = (header.match(/\/\/ @author\s+(.+)\s*$/im) || def)[1];
@@ -227,7 +211,6 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
 +          .QueryInterface(Ci.nsIFileProtocolHandler)
 +          .getURLSpecFromActualFile(aFile) /*.getURLSpecFromDir(this.chromedir) + filename*/ ,
        name: (header.match(/\/\/ @name\s+(.+)\s*$/im) || def)[1],
-+      sandbox: (header.match(/\/\/ @sandbox\s+(.+)\s*$/im) || def)[1],
        description: (header.match(/\/\/ @description\s+(.+)\s*$/im) || def)[1],
        version: (header.match(/\/\/ @version\s+(.+)\s*$/im) || def)[1],
        author: (header.match(/\/\/ @author\s+(.+)\s*$/im) || def)[1],
@@ -235,96 +218,31 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
        id: (header.match(/\/\/ @id\s+(.+)\s*$/im) || ['', filename.split('.uc.js')[0] + '@' + (author || 'userChromeJS')])[1],
        homepageURL: (header.match(/\/\/ @homepageURL\s+(.+)\s*$/im) || def)[1],
        downloadURL: (header.match(/\/\/ @downloadURL\s+(.+)\s*$/im) || def)[1],
-       updateURL: (header.match(/\/\/ @updateURL\s+(.+)\s*$/im) || def)[1],
-@@ -106,18 +112,20 @@
-     if (script.onlyonce && script.isRunning) {
-       if (script.startup) {
-         eval(script.startup);
-       }
-       return;
-     }
- 
-     try {
--      Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
--                                          script.onlyonce ? { window: win } : win);
-+      let timer = setTimeout(() => {
-+            Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
-+                                                script.onlyonce ? { window: win } : win);
-+      }, 0);
-       script.isRunning = true;
-       if (script.startup) {
-         eval(script.startup);
-       }
-       if (!script.shutdown) {
-         this.everLoaded.push(script.id);
-       }
-     } catch (ex) {
-@@ -163,17 +171,17 @@
- }
- 
- if (xPref.get(_uc.PREF_SCRIPTSDISABLED) === undefined) {
+@@ -190,20 +194,20 @@
    xPref.set(_uc.PREF_SCRIPTSDISABLED, '', true);
  }
  
  let UserChrome_js = {
    observe: function (aSubject) {
--    aSubject.addEventListener('DOMContentLoaded', this, {once: true});
-+    aSubject.addEventListener('load', this, {once: true});
-   },
- 
-   handleEvent: function (aEvent) {
-     let document = aEvent.originalTarget;
-     let window = document.defaultView;
-     this.load(window);
-   },
- 
-@@ -188,22 +196,43 @@
-       }.bind(this));
-     } else if (/^(chrome:(?!\/\/global\/content\/commonDialog\.x?html)|about:(?!blank))/i.test(location.href)) {
-       window.UC = UC;
-       window._uc = _uc;
-       window.xPref = xPref;
-       if (window._gBrowser) // bug 1443849
-         window.gBrowser = window._gBrowser;
- 
-+      let sandbox = window;
-+      
-+        sandbox = new Cu.Sandbox(window, {
-+            sandboxPrototype: window,
-+            sameZoneAs: window,
-+        });
-+        /* toSource() is not available in sandbox */
-+        Cu.evalInSandbox(`
-+            Function.prototype.toSource = window.Function.prototype.toSource;
-+            Object.defineProperty(Function.prototype, "toSource", {enumerable : false})
-+            Object.prototype.toSource = window.Object.prototype.toSource;
-+            Object.defineProperty(Object.prototype, "toSource", {enumerable : false})
-+            Array.prototype.toSource = window.Array.prototype.toSource;
-+            Object.defineProperty(Array.prototype, "toSource", {enumerable : false})
-+        `, sandbox);
-+        window.addEventListener("unload", () => {
-+            setTimeout(() => {
-+                Cu.nukeSandbox(sandbox);
-+            }, 0);
-+        }, {once: true});
-+
-       if (xPref.get(_uc.PREF_ENABLED)) {
-         Object.values(_uc.scripts).forEach(script => {
--          _uc.loadScript(script, window);
-+          _uc.loadScript(script, script.sandbox=="true" ? sandbox : window);
-         });
-       } else if (!UC.rebuild) {
--        _uc.loadScript(_uc.scripts[_uc.ALWAYSEXECUTE], window);
-+        _uc.loadScript(_uc.scripts[_uc.ALWAYSEXECUTE], _uc.scripts[_uc.ALWAYSEXECUTE].sandbox=="true" ? sandbox : window);
-       }
+     if (aSubject.document.isUncommittedInitialDocument) {
+       const parent = aSubject.parent;
+       aSubject.addEventListener("DOMContentLoaded", () => {
+-        parent.addEventListener("DOMContentLoaded", this, {once: true, capture: true})
++        parent.addEventListener("load", this, {once: true, capture: true})
+       }, {once:true})
+     } else {
+-      aSubject.addEventListener('DOMContentLoaded', this, {once: true, capture: true});
++      aSubject.addEventListener('load', this, {once: true, capture: true});
      }
    },
  
-   messageListener: function (msg) {
-     const browser = msg.target;
-     const { addonId } = browser._contentPrincipal;
- 
- 
+   handleEvent: function (aEvent) {
+     let document = aEvent.target;
+     let window = document.defaultView;
+     this.load(window);
+   },
+
+
 
 4. 必要なスクリプトファイルを保存する
 
