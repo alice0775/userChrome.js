@@ -194,7 +194,7 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
 3. Firefoxのsandbox対応と初期化中にスクリプトが実行されないように及び日本語ファイル名対応にするため,展開保存した utils\userChrome.js を修正
 
 --- org/userChrome.js	2025-11-30 05:51:26.000000000 +0900
-+++ userChrome.js	2026-01-10 03:10:02.232445000 +0900
++++ userChrome.js	2026-01-10 10:32:55.837293300 +0900
 @@ -54,17 +54,21 @@
  
      let def = ['', ''];
@@ -241,6 +241,18 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
      let window = document.defaultView;
      this.load(window);
    },
+@@ -255,10 +259,10 @@
+   _uc.chromedir.append(_uc.scriptsDir);
+   _uc.getScripts();
+   let windows = Services.wm.getEnumerator(null);
+   while (windows.hasMoreElements()) {
+     let win = windows.getNext();
+     if (!('UC' in win))
+       UserChrome_js.load(win)
+   }
+-  Services.obs.addObserver(UserChrome_js, 'domwindowopened', false);
++  Services.obs.addObserver(UserChrome_js, 'chrome-document-global-created', false);
+ }
 
 
 
