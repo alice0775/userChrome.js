@@ -194,8 +194,24 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
 3. Firefoxのsandbox対応と初期化中にスクリプトが実行されないように及び日本語ファイル名対応にするため,展開保存した utils\userChrome.js を修正
 
 --- org/userChrome.js	2025-11-30 05:51:26.000000000 +0900
-+++ userChrome.js	2026-01-10 10:32:55.837293300 +0900
-@@ -54,17 +54,21 @@
++++ userChrome.js	2026-01-10 14:11:25.704357600 +0900
+@@ -1,14 +1,15 @@
+ 'use strict';
+ 
+ ChromeUtils.defineESModuleGetters(this, {
+   xPref: 'chrome://userchromejs/content/xPref.sys.mjs',
+   Management: 'resource://gre/modules/Extension.sys.mjs',
+   AppConstants: 'resource://gre/modules/AppConstants.sys.mjs',
++  setTimeout: "resource://gre/modules/Timer.sys.mjs",
+ });
+ 
+ let UC = {
+   webExts: new Map(),
+   sidebar: new Map(),
+   sandboxes: new WeakMap()
+ };
+ 
+@@ -54,17 +55,21 @@
  
      let def = ['', ''];
      let author = (header.match(/\/\/ @author\s+(.+)\s*$/im) || def)[1];
@@ -218,7 +234,30 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
        id: (header.match(/\/\/ @id\s+(.+)\s*$/im) || ['', filename.split('.uc.js')[0] + '@' + (author || 'userChromeJS')])[1],
        homepageURL: (header.match(/\/\/ @homepageURL\s+(.+)\s*$/im) || def)[1],
        downloadURL: (header.match(/\/\/ @downloadURL\s+(.+)\s*$/im) || def)[1],
-@@ -190,20 +194,20 @@
+@@ -107,18 +112,20 @@
+     if (script.onlyonce && script.isRunning) {
+       if (script.startup) {
+         Cu.evalInSandbox(`(function(script, win){${script.startup}})`, this.getSandbox(win))(script, win);
+       }
+       return;
+     }
+ 
+     try {
+-      Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
+-                                          script.onlyonce ? { window: win } : win);
++      let timer = setTimeout(() => {
++            Services.scriptloader.loadSubScript(script.url + '?' + script.file.lastModifiedTime,
++                                                script.onlyonce ? { window: win } : win);
++      }, 0);
+       script.isRunning = true;
+       if (script.startup) {
+         Cu.evalInSandbox(`(function(script, win){${script.startup}})`, this.getSandbox(win))(script, win);
+       }
+       if (!script.shutdown) {
+         this.everLoaded.push(script.id);
+       }
+     } catch (ex) {
+@@ -190,20 +197,20 @@
    xPref.set(_uc.PREF_SCRIPTSDISABLED, '', true);
  }
  
@@ -241,7 +280,7 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
      let window = document.defaultView;
      this.load(window);
    },
-@@ -255,10 +259,10 @@
+@@ -255,10 +262,10 @@
    _uc.chromedir.append(_uc.scriptsDir);
    _uc.getScripts();
    let windows = Services.wm.getEnumerator(null);
@@ -253,7 +292,6 @@ userchrome.jsのインストール方法 方法 その4(https://github.com/oneme
 -  Services.obs.addObserver(UserChrome_js, 'domwindowopened', false);
 +  Services.obs.addObserver(UserChrome_js, 'chrome-document-global-created', false);
  }
-
 
 
 4. 必要なスクリプトファイルを保存する
