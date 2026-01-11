@@ -7,6 +7,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 140
+// @version       2020601/12 hide gpu memory
 // @version       2025/10/01 use LocaleString
 // @version       2025/07/12 display resident-unique memory
 // @version       2025/07/12 display gpu memory
@@ -113,7 +114,7 @@ window.ucjsMemoryUsage = {
         let btn = win.document.getElementById("memoryUsageButton");
         if (btn) {
           //btn.setAttribute("label", txt + "MB");
-          btn.setAttribute("label", txt + "/" + txtGpu+ "MB");
+          btn.setAttribute("label", txt + /*"/" + txtGpu+*/ "MB");
         }
       }
     }
