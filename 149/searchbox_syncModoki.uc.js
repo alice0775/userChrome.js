@@ -5,7 +5,8 @@
 // @include      main
 // @async          true
 // @sandbox        false
-// @compatibility  148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version      2025/12/20 00:00 new search widget
 // @version      2025/05/11 revert last change. and remove @sandbox
 // @version      2025/05/10 fix FormHistory does not work in sandbox

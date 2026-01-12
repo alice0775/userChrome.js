@@ -5,7 +5,8 @@
 // @include       *
 // @async          true
 // @author        alice0775
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
 // @version       2022/11/22 Bug 877389 - [meta] Replace calls to Cu.reportError, etc. from browser code, replace with console.error, etc.

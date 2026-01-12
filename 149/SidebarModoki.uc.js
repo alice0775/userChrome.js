@@ -5,7 +5,8 @@
 // @include        main
 // @async          true
 // @author         Alice0775
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/09/27 revert 09/24/, 9/25. And remove redundant header if any
 // @version        2025/09/25 fix bug

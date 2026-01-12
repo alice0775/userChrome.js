@@ -5,7 +5,8 @@
 // @include       main
 // @charset       UTF-8
 // @author        Alice0775
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/08 fix bug 
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/07/01 23:50 fix CSS切り替え

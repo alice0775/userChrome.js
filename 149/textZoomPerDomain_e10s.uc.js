@@ -4,7 +4,8 @@
 // @description    Text Zoom Per Domain
 // @include        main
 // @author         Alice0775
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 
 // @version        2025/07/31 fix Bug menuseparator does not show at first time

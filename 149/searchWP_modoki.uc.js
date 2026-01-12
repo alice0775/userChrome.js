@@ -4,7 +4,8 @@
 // @description    serachWPもどき  まだまだtodo未実装だらけ
 // @charset        utf-8
 // @include        main
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/04/02 fix working within sandbox

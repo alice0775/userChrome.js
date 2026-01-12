@@ -3,7 +3,8 @@
 // @description    clearInputFormHistory
 // @include        main
 // @async          true
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/01/04 modify framescript2
 // @version        2025/01/04 modify framescript

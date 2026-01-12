@@ -7,7 +7,8 @@
 // @author         Alice0775
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/08/01 Bug 1961161, Bug 1938405
 // @version        2025/07/29 Bug 1979014 - Make some XUL attributes (hidden/collapsed/autofocus) regular bool attributes

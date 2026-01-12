@@ -3,7 +3,8 @@
 // @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
 // @description    replace the magnifying glass with the search engine's icon
 // @include        main
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js

@@ -4,7 +4,8 @@
 // @description    search historyとかsuggestの語句選ぶと即検索にいくのを止める
 // @include        main
 // @async          true
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         2ch
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js

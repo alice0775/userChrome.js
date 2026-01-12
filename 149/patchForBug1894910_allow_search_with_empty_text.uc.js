@@ -3,7 +3,8 @@
 // @description    undoing Bug 1894910 - Remove function to open search page from search bar with an empty search
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
-// @compatibility  148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/06/17 use openSearchForm instead of search with empty string
 // @version        2025/06/16 Bug 1968479 - Only allow eval (with system principal / in the parent) when an explicit pref is set

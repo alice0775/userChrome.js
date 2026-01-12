@@ -3,7 +3,8 @@
 // @description    Tab context menu combining tabProtect and tabLock
 // @include        main
 // @async          true
-// @compatibility  Firefox 148
+// @compatibility  Firefox 149
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/06/10 Workaround: retry initialization once after one second.
 // @version        2024/12/22 fix Bug 1936336 - Disallow inline event handlers
