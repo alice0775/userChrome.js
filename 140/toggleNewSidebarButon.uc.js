@@ -6,6 +6,7 @@
 // @async         true
 // @compatibility Firefox 140
 // @author        alice0775
+// @version       2026/01/16 fix error
 // @version       2025/09/06 autohideSidebar2
 // @version       2025/08/03 fix duplicare id
 // @version       2025/07/29 remove checked attribute if false
@@ -208,10 +209,6 @@
     window.addEventListener("unload", () => {
       window.removeEventListener('aftercustomization', aftercustomization, false);
       observer.disconnect();
-      if (SidebarController.lastOpenedId) {
-        SessionStore.setCustomWindowValue(window, "userChrome.sidebar2", SidebarController.lastOpenedId);
-        //Services.prefs.setStringPref("userChrome.sidebar2", SidebarController.lastOpenedId);
-      }
     }, {once:true});
 
 })();
