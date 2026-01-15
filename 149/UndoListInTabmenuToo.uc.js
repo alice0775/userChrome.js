@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  Firefox 149
+// @version        2026/01/16 00:00 fix bug
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/09/05 mark '*' for current index in the tooltip
@@ -84,7 +85,7 @@ var UndoListInTabmenu = {
     menu.setAttribute("id", "historyUndoWindowMenu3");
     menu.setAttribute("label", "Recently Closed Window List");
     menu.setAttribute("accesskey", "W");
-    menu.setAttribute("disabled", "");
+    menu.toggleAttribute("disabled", true);
     popup.insertBefore(menu, refItem);
 
     menupopup = document.createXULElement("menupopup");
@@ -100,7 +101,6 @@ var UndoListInTabmenu = {
     menu.setAttribute("accesskey", "L");
     if (id)
       menu.setAttribute("id", id);
-    //menu.setAttribute("disabled", "");
     var menupopup = document.createXULElement("menupopup");
     menupopup.addEventListener("popupshowing", () => UndoListInTabmenu.populateUndoSubmenu(menupopup));
     //menupopup.setAttribute("onpopupshowing", "UndoListInTabmenu.populateUndoSubmenu(this);");
@@ -119,15 +119,18 @@ var UndoListInTabmenu = {
     popup.addEventListener('popupshowing',function(event) {
       UndoListInTabmenu.toggleRecentlyClosedWindows(document.getElementById("historyUndoWindowMenu3"));
       // no restorable tabs, so make sure menu is disabled, and return
-      if (UndoListInTabmenu._ss.getClosedTabCount(window) == 0) {
-        menu.setAttribute("disabled", "");
-        //menu.setAttribute("hidden", true);
-        return;
-      }
-      menu.removeAttribute("disabled");
-      //menu.setAttribute("hidden", false);
-    },false);
+      UndoListInTabmenu.toggleRecentlyClosedTabs(document.getElementById("tabContextUndoList"));
+    });
   },
+
+
+  toggleRecentlyClosedTabs: function toggleRecentlyClosedTabs(menu) {
+    // enable/disable the Recently Closed Windows sub menu
+    // no restorable windows, so disable menu
+    menu.toggleAttribute("disabled", this._ss.getClosedTabCount(window) == 0);
+  },
+
+
 
   /**
    * Populate when the history menu is opened (Fx3.6)
@@ -179,10 +182,7 @@ var UndoListInTabmenu = {
   toggleRecentlyClosedWindows: function PHM_toggleRecentlyClosedWindows(menu) {
     // enable/disable the Recently Closed Windows sub menu
     // no restorable windows, so disable menu
-    if (this._ss.getClosedWindowCount() == 0)
-      menu.setAttribute("disabled", "");
-    else
-      menu.removeAttribute("disabled");
+    menu.toggleAttribute("disabled", this._ss.getClosedWindowCount() == 0);
   },
 
   /**
