@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 149
+// @version        2026/01/15 12:00 simplify
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/01/27 fix Bug
@@ -62,32 +63,16 @@ const ucjs_stayOpenMenu = {
     let defaultZoomLevel = await ZoomUI.getGlobalValue();
     let zoomLevel = ZoomManager.zoom;
     let reduceCmd = document.getElementById("menu_zoomReduce");
-    if (zoomLevel == ZoomManager.MIN) {
-      reduceCmd.toggleAttribute("disabled", "true");
-    } else {
-      reduceCmd.removeAttribute("disabled");
-    }
+    reduceCmd.toggleAttribute("disabled", zoomLevel == ZoomManager.MIN);
 
     let enlargeCmd = document.getElementById("menu_zoomEnlarge");
-    if (zoomLevel == ZoomManager.MAX) {
-      enlargeCmd.toggleAttribute("disabled", "true");
-    } else {
-      enlargeCmd.removeAttribute("disabled");
-    }
+    enlargeCmd.toggleAttribute("disabled", zoomLevel == ZoomManager.MAX);
 
     let resetCmd = document.getElementById("menu_zoomReset");
-    if (zoomLevel == defaultZoomLevel && !forceResetEnabled) {
-      resetCmd.toggleAttribute("disabled", "true");
-    } else {
-      resetCmd.removeAttribute("disabled");
-    }
+    resetCmd.toggleAttribute("disabled", zoomLevel == defaultZoomLevel && !forceResetEnabled);
     
     let fullZoomCmd = document.getElementById("toggle_zoom");
-    if (!ZoomManager.useFullZoom) {
-      fullZoomCmd.toggleAttribute("checked", "true");
-    } else {
-      fullZoomCmd.removeAttribute("checked");
-    }
+    fullZoomCmd.toggleAttribute("checked", !ZoomManager.useFullZoom);
   }
   
 }

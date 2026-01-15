@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 149
+// @version        2026/01/15 13:00 fix bug
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/12/20 00:00 new search widget
@@ -69,7 +70,7 @@ var replaceAndGoSearch = {
         "cmd_paste"
       );
       let enabled = controller.isCommandEnabled("cmd_paste");
-      replaceAndGo.toggleAttribute("disabled", enabled);
+      replaceAndGo.toggleAttribute("disabled", !enabled);
     });
   },
 
@@ -109,7 +110,7 @@ var replaceAndGoSearch = {
         "cmd_paste"
       );
       let enabled = controller.isCommandEnabled("cmd_paste");
-      replaceAndSearch.toggleAttribute("disabled", enabled);
+      replaceAndSearch.toggleAttribute("disabled", !enabled);
     });
   },
 

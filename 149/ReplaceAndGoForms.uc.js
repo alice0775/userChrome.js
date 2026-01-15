@@ -4,6 +4,7 @@
 // @include        main
 // @async          true
 // @compatibility  Firefox 149
+// @version        2026/01/15 13:00 fix bug
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/01/04 modify framescript2
@@ -28,7 +29,7 @@ var ReplaceAndGoForms = {
         item.hidden = false;
         let controller = doc.commandDispatcher.getControllerForCommand("cmd_paste");
         let enabled = controller.isCommandEnabled("cmd_paste");
-        item.toggleAttribute("disabled", enabled);
+        item.toggleAttribute("disabled", !enabled);
       } else
         item.hidden = true;
     }, false);
