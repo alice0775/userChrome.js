@@ -6,6 +6,7 @@
 // @async         true
 // @author        alice0775
 // @compatibility  Firefox 149
+// @version        2026/01/15 00:00 fix error
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 
@@ -208,13 +209,9 @@
     // Start observing the target node for configured mutations
     observer.observe(targetNode, config);
 
-    window.addEventListener("unload", () => {
-      window.removeEventListener('aftercustomization', aftercustomization, false);
+    window.addEventListener("unload", (e) => {
+      removeEventListener('aftercustomization', aftercustomization, false);
       observer.disconnect();
-      if (SidebarController.lastOpenedId) {
-        SessionStore.setCustomWindowValue(window, "userChrome.sidebar2", SidebarController.lastOpenedId);
-        //Services.prefs.setStringPref("userChrome.sidebar2", SidebarController.lastOpenedId);
-      }
     }, {once:true});
 
 })();
