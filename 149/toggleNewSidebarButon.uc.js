@@ -6,6 +6,7 @@
 // @async         true
 // @author        alice0775
 // @compatibility  Firefox 149
+// @version        2026/01/18 00:00 simplify toggleAttribute
 // @version        2026/01/15 00:00 fix error
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
@@ -160,10 +161,7 @@
           const menuitem = SidebarController.createMenuItem(commandID, sidebar);
           menuitem.id += "_2"
           menupopup.appendChild(menuitem);
-          if (SidebarController.currentID == commandID)
-            menuitem.toggleAttribute("checked", "true");
-          else
-            menuitem.removeAttribute("checked");
+          menuitem.toggleAttribute("checked", SidebarController.currentID == commandID);
         }
       }
 
@@ -175,10 +173,7 @@
             menuitem.id += "_2"
             menupopup.appendChild(menuitem);
             menuitem.setAttribute("label", sidebar.title);
-          if (SidebarController.currentID == commandID)
-            menuitem.toggleAttribute("checked", "true");
-          else
-            menuitem.removeAttribute("checked");
+            menuitem.toggleAttribute("checked", SidebarController.currentID == commandID);
         }
       }
     }
