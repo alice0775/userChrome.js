@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/01/20 0:00 revert some FormHistory change
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/12/20 00:00 new search widget
@@ -75,7 +76,26 @@ var showSearchBarHistroryDropmarker = {
     window.addEventListener("resize", this, false);
 
     if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
-      this.popup = document.getElementById("searchbar-new").view.resultMenu;
+      let view = document.getElementById("searchbar-new").view;
+      this.popup = document.getElementById("searchbar-new").querySelector(".urlbarView");
+      document.getElementById("searchbar-new").inputField.addEventListener("keydown", (e) => {
+        let keyCode = e.keyCode;
+        if ( view.isOpen &&
+             (keyCode == KeyboardEvent.DOM_VK_UP ||
+              keyCode == KeyboardEvent.DOM_VK_DOWN ||
+              keyCode == KeyboardEvent.DOM_VK_PAGE_UP ||
+              keyCode == KeyboardEvent.DOM_VK_PAGE_DOWN)) {
+          //let popup_rect = this.popup.getBoundingClientRect();
+          let selected = view.selectedElement
+          if (!selected) return;
+          //let selected_rect = selected.getBoundingClientRect();
+          //if (selected_rect.top < popup_rect.top) {
+            selected.scrollIntoView({behavior: "instant", block: "nearest"});
+          //} else if ( popup_rect.bottom < selected_rect.bottom) {
+            //selected.scrollIntoView(false);
+          //}
+        }
+      });
     } else {
       this.popup = document.getElementById("PopupSearchAutoComplete");
       this.popup.addEventListener("popupshown", this, false);
@@ -168,7 +188,7 @@ var showSearchBarHistroryDropmarker = {
 	   	let v = '';
   		if(bar.value)
   		  v = bar.value;
-  		bar.value = "?"; /*just form history, not suggestion*/
+  		bar.value = ""; /*just form history, not suggestion*/
       bar._on_mousedown(
         {
           type: "mousedown", 

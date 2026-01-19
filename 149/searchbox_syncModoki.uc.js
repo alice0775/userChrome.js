@@ -6,6 +6,8 @@
 // @async          true
 // @sandbox        false
 // @compatibility  Firefox 149
+// @version        2026/01/20 0:00 revert some FormHistory change
+// @version        2026/01/13 13:00 history maxlength=255
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version      2025/12/20 00:00 new search widget
 // @version      2025/05/11 revert last change. and remove @sandbox
@@ -161,33 +163,26 @@ let searchboxsync = {
     if (!PrivateBrowsingUtils.isWindowPrivate(window)) {
 
       //xxx FormHistory dose not work in sandbox
-Services.console.logStringMessage("change : " + terms);
-      if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
-        UrlbarUtils.addToFormHistory(
-          gURLBar,
-          terms,
-          (await Services.search.getDefault()).name
-        ).catch(console.error);
-        UrlbarUtils.addToFormHistory(
-          gURLBar,
-          terms
-        ).catch(console.error);
-      } else {
-        this.lazy.FormHistory.update({
-          op : "bump",
-          fieldname : "searchbar-history",
-          value : terms,
-          source: (await Services.search.getDefault()).name
-        });
-        this.lazy.FormHistory.update({
-          op : "bump",
-          fieldname : "searchbar-history",
-          value : terms,
-        });
-      }
+//Services.console.logStringMessage("change : " + terms);
+
+      terms = this.truncateString(terms, 255);
+      this.lazy.FormHistory.update({
+        op : "bump",
+        fieldname : "searchbar-history",
+        value : terms,
+        source: (await Services.search.getDefault()).name
+      });
     }
   },
 
+  truncateString: function truncateString(str, maxLength) {
+    if (str.length > maxLength) {
+      return str.slice(0, maxLength)/* + '...'*/;
+    } else {
+      return str;
+    }
+  },
+      
   losslessDecodeURI: function(aURI) {
     let scheme = aURI.scheme;
     let value = aURI.displaySpec;
