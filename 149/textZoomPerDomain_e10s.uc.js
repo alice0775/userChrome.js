@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  Firefox 149
+// @version        2026/01/18 00:00 remove unnesessary radio button attribute
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 
@@ -400,8 +401,7 @@ var textZoomPerDomain_menu = {
           ["menupopup", {id :"textZoomPerDomainMenupopup"/*,
                          onpopupshowing: "textZoomPerDomain_menu.onpopupshowing();"*/},
             ["menuseparator",  {id: "textZoomPerDomainMenuseparator2", hidden:""}],
-            ["menuitem", {type: "radio", name: "textZoomPerDomain",
-                          id: "textZoomPerDomainnDefault", label: "Default",
+            ["menuitem", {id: "textZoomPerDomainnDefault", label: "Default",
                           /*oncommand: "textZoomPerDomain_menu.setTextZoom(textZoomPerDomain.defaultTextZoom);",*/
                           accesskey:"u"}],
             ["menuitem", {id:"textZoomPerDomainChangeDefault", label:"Change Default",
