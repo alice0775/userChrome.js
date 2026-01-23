@@ -4,6 +4,7 @@
 // @description    replace the magnifying glass with the search engine's icon
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
 // @version        2025/12/20 00:00 new search widget
@@ -29,10 +30,14 @@
 // @version        2015/09/08 02:00 Bug 827546
 // ==/UserScript==
 var searchengineicon = {
+  lazy: {},
 
   init: async function() {
-    if (!Services.search.isInitialized) {
-      await Services.search.init();
+    ChromeUtils.defineESModuleGetters(this.lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
+    if (!this.lazy.SearchService.isInitialized) {
+      await this.lazy.SearchService.init();
     }
     this.toggleImage("init");
     window.addEventListener('aftercustomization', this, false);
@@ -65,12 +70,12 @@ var searchengineicon = {
       let searchMode = searchbar.searchMode;
       let engine, uri, label;
       if (!searchMode) {
-        engine = await Services.search.getDefault();
+        engine = await this.lazy.SearchService.getDefault();
         uri = await engine.getIconURL();
         label = engine.name;
       } else {
         label = searchMode.engineName;
-        engine = await Services.search.getEngineByName(label);
+        engine = await this.lazy.SearchService.getEngineByName(label);
         uri = await engine.getIconURL();
       }
       //var icon = PlacesUtils.getImageURLForResolution(window, uri);
@@ -84,7 +89,7 @@ var searchengineicon = {
       if (!searchbutton)
         return;
       Services.console.logStringMessage("toggleImage "+topic +" done");
-      let defaultEngine = await Services.search.getDefault();
+      let defaultEngine = await this.lazy.SearchService.getDefault();
       var uri = await defaultEngine.getIconURL();
       //var icon = PlacesUtils.getImageURLForResolution(window, uri);
       searchbutton.setAttribute("style", "list-style-image: url('"+ uri +"') !important;/* -moz-image-region: auto !important;*/ width: 16px !important; padding: 2px 0 !important;");
@@ -94,7 +99,7 @@ var searchengineicon = {
 
   observe(aSubject, aTopic, aPrefstring) {
     if (aTopic == "browser-search-engine-modified") {
-      aSubject.QueryInterface(Components.interfaces.nsISearchEngine);
+      //aSubject.QueryInterface(Components.interfaces.nsISearchEngine);
       switch (aPrefstring) {
       case "engine-current":
       case "engine-default":

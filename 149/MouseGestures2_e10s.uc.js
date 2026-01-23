@@ -6,7 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 149
-// @version        2026/01/13 00:00 compatibility 149 from 148
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/09 For scroll performance, disable passive mode.
 // @version        2026/01/09 fix wheel gesture 
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
@@ -1448,6 +1448,9 @@ let ucjsMouseGestures_helper = {
       "@mozilla.org/url-query-string-stripper;1",
       "nsIURLQueryStringStripper"
     );
+    ChromeUtils.defineESModuleGetters(this.lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
   },
 
   stripURI: function(url) {
@@ -1909,7 +1912,7 @@ let ucjsMouseGestures_helper = {
 
   // Web search selected text with search engins popup
   webSearchPopup: function(aText, screenX, screenY) {
-    Services.search.init().then(rv => { 
+    this.lazy.SearchService.init().then(rv => { 
       if (Components.isSuccessCode(rv)) {
         this._webSearchPopupBuild(aText, screenX, screenY);
       }
@@ -1924,7 +1927,7 @@ let ucjsMouseGestures_helper = {
       screenX = that._lastX;
     if (typeof screenY == "undefined")
       screenY = that._lastY;
-    let searchSvc = Services.search;
+    let searchSvc = this.lazy.SearchService;
 		let engines = await searchSvc.getVisibleEngines({});
 		if (engines.length < 1)
 			throw "No search engines installed.";
@@ -2000,7 +2003,7 @@ let ucjsMouseGestures_helper = {
 		});
   },
   _loadSearchWithDefaultEngine: async function(text, inBackground) {
-		let engine = await Services.search.getDefault();
+		let engine = await this.lazy.SearchService.getDefault();
 		if (!engine)
 			return;
 		let submission = engine.getSubmission(text, null);
