@@ -3,8 +3,8 @@
 // @description    undoing Bug 1894910 - Remove function to open search page from search bar with an empty search
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
-// @compatibility  Firefox 149
-// @version        2026/01/13 00:00 compatibility 149 from 148
+// @compatibility  149
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/06/17 use openSearchForm instead of search with empty string
 // @version        2025/06/16 Bug 1968479 - Only allow eval (with system principal / in the parent) when an explicit pref is set
@@ -12,28 +12,10 @@
 // @version        2024/06/4
 // ==/UserScript==
 (function() {
-  let sb = window.userChrome_js?.sb;
-  if (!sb) {
-    sb = Cu.Sandbox(window, {
-        sandboxPrototype: window,
-        sameZoneAs: window,
+    const lazy = {};
+    ChromeUtils.defineESModuleGetters(lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
     });
-
-    /* toSource() is not available in sandbox */
-    Cu.evalInSandbox(`
-        Function.prototype.toSource = window.Function.prototype.toSource;
-        Object.defineProperty(Function.prototype, "toSource", {enumerable : false})
-        Object.prototype.toSource = window.Object.prototype.toSource;
-        Object.defineProperty(Object.prototype, "toSource", {enumerable : false})
-        Array.prototype.toSource = window.Array.prototype.toSource;
-        Object.defineProperty(Array.prototype, "toSource", {enumerable : false})
-    `, sb);
-    window.addEventListener("unload", () => {
-        setTimeout(() => {
-            Cu.nukeSandbox(sb);
-        }, 0);
-    }, {once: true});
-  }
 
 if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
 
@@ -74,10 +56,10 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
     let searchMode = searchbar.searchMode;
     let engine, label;
     if (!searchMode) {
-      engine = await Services.search.getDefault();
+      engine = await lazy.SearchService.getDefault();
     } else {
       label = searchMode.engineName;
-      engine = await Services.search.getEngineByName(label);
+      engine = await lazy.SearchService.getEngineByName(label);
     }
     let where = patchForBug1894910_whereToOpen(event);
     let url = engine.searchForm;
@@ -126,23 +108,41 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
     }
 } else {
   let searchbar = document.getElementById('searchbar');
-  let func = searchbar.textbox.handleEnter.toString();
-
-  func = func.replace(
-  'event.shiftKey',
-  'true'
-  );
-/*
-  searchbar.textbox.handleEnter = (new Function(
-         'event',
-         func.replace(/[^{]*\{/, '').replace(/}\s*$/, '')
-  )).bind(searchbar);
-*/
-  func = func.replace(
-  'event =>',
-  '(event)'
-  );
-  Cu.evalInSandbox("searchbar.textbox.handleEnter = function " + func.replace(/^function/, '') + ".bind(searchbar)", sb);
+  searchbar.textbox.handleEnter  = function(event) {
+      // Toggle the open state of the add-engine menu button if it's
+      // selected.  We're using handleEnter for this instead of listening
+      // for the command event because a command event isn't fired.
+      if (
+        this.textbox.selectedButton &&
+        this.textbox.selectedButton.getAttribute("anonid") ==
+          "addengine-menu-button"
+      ) {
+        this.textbox.selectedButton.open = !this.textbox.selectedButton.open;
+        return true;
+      }
+      // Ignore blank search unless add search engine or
+      // settings button is selected, see bugs 1894910 and 1903608.
+      if (
+        !this.textbox.value &&
+        !(
+          this.textbox.selectedButton?.getAttribute("id") ==
+            "searchbar-anon-search-settings" ||
+          this.textbox.selectedButton?.classList.contains(
+            "searchbar-engine-one-off-add-engine"
+          )
+        )
+      ) {
+        if (true) {
+          let engine = this.textbox.selectedButton?.engine;
+          let { where, params } = this._whereToOpen(event);
+          this.openSearchFormWhere(event, engine, where, params);
+        }
+        return true;
+      }
+      // Otherwise, "call super": do what the autocomplete binding's
+      // handleEnter implementation does.
+      return this.textbox.mController.handleEnter(false, event || null);
+    }.bind(searchbar);
 }
 })();
 

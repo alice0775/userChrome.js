@@ -5,6 +5,7 @@
 // @include        main
 // @async          true
 // @compatibility  Firefox 149
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         2ch
 // @version        2025/12/20 00:00 new search widget
@@ -16,9 +17,14 @@
 
 var search_history_toka_suggest_nogokuwoerabutosokukennsakuniikunowotomeru = {
   init: async function() {
-    if (!Services.search.isInitialized) {
-      await Services.search.init();
+    const lazy = {};
+    ChromeUtils.defineESModuleGetters(lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
+    if (!lazy.SearchService.isInitialized) {
+      await lazy.SearchService.init();
     }
+    delete lazy;
     this.initpatch();
     window.addEventListener("aftercustomization", this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);

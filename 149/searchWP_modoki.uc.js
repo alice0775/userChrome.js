@@ -7,6 +7,7 @@
 // @compatibility  Firefox 149
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/04/02 fix working within sandbox
 // @version        2024/03/29 07:00 Auto highlight settings are now saved.
@@ -76,9 +77,14 @@ window.serachWP_modoki = {
   _prevHighLitedTerm: "",
 
   init: async function() {
-    if (!Services.search.isInitialized) {
-      await Services.search.init();
+    const lazy = {};
+    ChromeUtils.defineESModuleGetters(lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
+    if (!lazy.SearchService.isInitialized) {
+      await lazy.SearchService.init();
     }
+    delete lazy;
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     window.addEventListener("resize", this, false);

@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 149
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/15 13:00 fix bug
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
@@ -20,8 +21,12 @@ var replaceAndGoSearch = {
 
   init: async function() {
     this.urlBarMenu();
-    if (!Services.search.isInitialized) {
-      await Services.search.init();
+    const lazy = {};
+    ChromeUtils.defineESModuleGetters(lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
+    if (!lazy.SearchService.isInitialized) {
+      await lazy.SearchService.init();
     }
     this.urlBarMenu();
     this.searchBarMenu();

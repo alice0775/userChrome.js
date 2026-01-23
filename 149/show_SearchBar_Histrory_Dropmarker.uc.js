@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/20 0:00 revert some FormHistory change
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
@@ -66,9 +67,14 @@ var showSearchBarHistroryDropmarker = {
   },
 
   init: async function() {
-    if (!Services.search.isInitialized) {
-      await Services.search.init();
+    const lazy = {};
+    ChromeUtils.defineESModuleGetters(lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
+    if (!lazy.SearchService.isInitialized) {
+      await lazy.SearchService.init();
     }
+    delete lazy;
     window.addEventListener("unload", this, false);
     window.addEventListener('aftercustomization', this, false);
     window.addEventListener('MozDOMFullscreen:Exited', this, false);

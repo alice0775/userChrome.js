@@ -4,9 +4,10 @@
 // @description    add Site Search Param site:url
 // @include        main
 // @async          true
-// @compatibility  Firefox 149
-// @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
+// @compatibility  Firefox 149
+// @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
+// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
 // @version        2024/12/31 23:00
@@ -16,9 +17,14 @@
 var addSiteSearchParam = {
 
   init: async function() {
-    if (!Services.search.isInitialized) {
-      await Services.search.init();
+    const lazy = {};
+    ChromeUtils.defineESModuleGetters(lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
+    if (!lazy.SearchService.isInitialized) {
+      await lazy.SearchService.init();
     }
+    delete lazy;
     this.searchBarMenu();
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
