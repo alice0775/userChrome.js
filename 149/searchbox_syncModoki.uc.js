@@ -6,6 +6,7 @@
 // @async          true
 // @sandbox        false
 // @compatibility  Firefox 149
+// @version        2026/01/27 00:00 partial revart FormHistory
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton// @version        2026/01/20 0:00 revert some FormHistory change
 // @version        2026/01/13 13:00 history maxlength=255
 // @version        2026/01/13 00:00 compatibility 149 from 148
@@ -171,7 +172,6 @@ Services.console.logStringMessage("change : " + terms);
         op : "bump",
         fieldname : "searchbar-history",
         value : terms,
-        source: (await lazy.SearchService.getDefault()).name
       });
     }
   },
