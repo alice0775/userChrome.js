@@ -4,6 +4,7 @@
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
 // @compatibility  149
+// @version        2026/01/28 00:00 Bug 2003300 - Replace nsISearchService.CHANGE_REASON* with SearchService.CHANGE_REASON*
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/07  Bug 2008745 - Stop leaking globals into the global scope from imports in autocomplete-popup.js
 // @version        2025/06/17 use openSearchForm instead of search with empty string
@@ -16,7 +17,8 @@
 (function() {
   const lazy = {};
   ChromeUtils.defineESModuleGetters(lazy, {
-     SearchOneOffs: "moz-src:///browser/components/search/SearchOneOffs.sys.mjs",
+    SearchOneOffs: "moz-src:///browser/components/search/SearchOneOffs.sys.mjs",
+    SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
   });
 
   lazy.SearchOneOffs.prototype._on_click = function _on_click(event) {
@@ -44,13 +46,6 @@
     this.handleSearchCommand(event, engine);
   }
 
-})();
-(function() {
-  const lazy = {};
-  ChromeUtils.defineESModuleGetters(lazy, {
-    SearchOneOffs: "moz-src:///browser/components/search/SearchOneOffs.sys.mjs",
-    SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
-  });
 
   lazy.SearchOneOffs.prototype._on_command = async function _on_command(event) {
     let target = event.target;
@@ -129,22 +124,17 @@
       if (isPrivateButton) {
         lazy.SearchService.setDefaultPrivate(
           newDefaultEngine,
-          Ci.nsISearchService.CHANGE_REASON_USER_SEARCHBAR_CONTEXT
+          lazy.SearchService.CHANGE_REASON_USER_SEARCHBAR_CONTEXT
         );
       } else {
         lazy.SearchService.setDefault(
           newDefaultEngine,
-          Ci.nsISearchService.CHANGE_REASON_USER_SEARCHBAR_CONTEXT
+          lazy.SearchService.CHANGE_REASON_USER_SEARCHBAR_CONTEXT
         );
       }
     }
   }
-})();
-(function() {
-  const lazy = {};
-  ChromeUtils.defineESModuleGetters(lazy, {
-    SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
-  });
+
   let PSAC = document.getElementById("PopupSearchAutoComplete");
   //PSAC.addEventListener("popupShowing", event => { 
     PSAC.addEventListener("click", event => { 
@@ -152,7 +142,6 @@
         // Ignore right clicks.
         return;
       }
-
       let button = event.originalTarget.closest("[class~='searchbar-engine-one-off-add-engine]");
       if (button) {
         return;
