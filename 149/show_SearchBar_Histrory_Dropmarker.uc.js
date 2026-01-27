@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/01/27 00:00 revert value after history dropdown is shown
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/20 0:00 revert some FormHistory change
 // @version        2026/01/13 00:00 compatibility 149 from 148
@@ -202,7 +203,7 @@ var showSearchBarHistroryDropmarker = {
           currentTarget: bar, 
           composedTarget: bar._inputContainer
         });
-      bar.value = '';
+      bar.value = v;
 
       setTimeout(() => {
         Services.prefs.setIntPref("browser.urlbar.recentsearches.maxResults", this.oldmaxResults);
