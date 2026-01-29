@@ -5,6 +5,7 @@
 // @include       main
 // @async          true
 // @compatibility Firefox 140
+// @version        2026/01/30 fix bug.
 // @version        2026/01/30 fix non-selected tab.
 // @version        2025/09/19 fix an issue where slightly dragging a loaded, non-selected tab would cause it to be discarded.
 // @version        2025/06/30 fix advanceSelectedTab does not work
@@ -48,7 +49,8 @@ let do_not_select_tab_when_mousedown = {
       let that = do_not_select_tab_when_mousedown;
       console.log(that._mousedownTab);
       gBrowser.selectedTab = that._selectedTab;
-      gBrowser.explicitUnloadTabs2(that._mousedownTab, that._discarded);
+      if (that._mousedownTab._pending || that._mousedownTab._discarded)
+        gBrowser.explicitUnloadTabs2(that._mousedownTab, that._discarded);
     }
   },
 
