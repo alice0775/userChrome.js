@@ -5,6 +5,7 @@
 // @include       main
 // @async          true
 // @compatibility Firefox 140
+// @version        2026/01/30 fix non-selected tab.
 // @version        2025/09/19 fix an issue where slightly dragging a loaded, non-selected tab would cause it to be discarded.
 // @version        2025/06/30 fix advanceSelectedTab does not work
 // @version        2025/03/07 fix bug of select tab
@@ -79,7 +80,7 @@ let do_not_select_tab_when_mousedown = {
         if (!tab)
           return;
         //console.log("tab")
-        if (tab.selected || !(tab.hasAttribute("discarded") || tab.hasAttribute("pending")))
+        if (tab.selected /*|| !(tab.hasAttribute("discarded") || tab.hasAttribute("pending"))*/)
           return;
         if (event.button == 0 && !tab.selected && (event.ctrlKey || event.shiftKey))
           break;
