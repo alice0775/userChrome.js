@@ -1,0 +1,97 @@
+// ==UserScript==
+// @name           patchForHideTabPreview.uc.js
+// @namespace      http://space.geocities.yahoo.co.jp/gl/alice0775
+// @description    邪魔なタブグループプレビューパネル(Bug 2014211)とTabNote(Bug 2008657)をすぐに消す
+// @include        main
+// @author         Alice0775
+// @compatibility  Firefox 147
+// @version        2026/02/04 00:00 0
+// ==/UserScript==
+let patchForHideTabGroupPreview = {
+  init: function() {
+    this.panel = document.getElementById("tabgroup-preview-panel");
+    if (!this.panel)
+      return;
+    this.panel.addEventListener("popupshown", this);
+    this.panel.addEventListener("popuphidden", this);
+  },
+
+  timer: null,
+  handleEvent: function(event) {
+    switch(event.type) {
+      case "mouseover":
+        clearTimeout(this.timer);
+        window.removeEventListener("mousemove", this);
+        this.panel.removeEventListener("mouseover", this);
+        break
+      case "popupshown":
+        this.panel.addEventListener("mouseover", this);
+        this.timer = setTimeout(() => {
+          window.addEventListener("mousemove", this);
+        }, 500);
+        break
+      case "popuphidden":
+        clearTimeout(this.timer);
+        window.removeEventListener("mousemove", this);
+        this.panel.removeEventListener("mouseover", this);
+        break
+      case "mousemove":
+        this.panel.hidePopup();
+        break
+    }
+  }
+}
+let patchForHideTabPreview = {
+  init: function() {
+    this.panel = document.getElementById("tab-preview-panel");
+    if (!this.panel)
+      return;
+    this.panel.addEventListener("popupshown", this);
+    this.panel.addEventListener("popuphidden", this);
+  },
+
+  timer: null,
+  handleEvent: function(event) {
+    switch(event.type) {
+      case "mouseover":
+        clearTimeout(this.timer);
+        window.removeEventListener("mousemove", this);
+        this.panel.removeEventListener("mouseover", this);
+        break
+      case "popupshown":
+        this.panel.addEventListener("mouseover", this);
+        this.timer = setTimeout(() => {
+          window.addEventListener("mousemove", this);
+        }, 500);
+        break
+      case "popuphidden":
+        clearTimeout(this.timer);
+        window.removeEventListener("mousemove", this);
+        this.panel.addEventListener("mouseover", this);
+        break
+      case "mousemove":
+        this.panel.hidePopup();
+        break
+    }
+  }
+}
+
+
+
+  // We should only start the redirection if the browser window has finished
+  // starting up. Otherwise, we should wait until the startup is done.
+  if (gBrowserInit.delayedStartupFinished) {
+    patchForHideTabGroupPreview.init();
+    patchForHideTabPreview.init();
+  } else {
+    let delayedStartupFinished = (subject, topic) => {
+      if (topic == "browser-delayed-startup-finished" &&
+          subject == window) {
+        Services.obs.removeObserver(delayedStartupFinished, topic);
+        patchForHideTabGroupPreview.init();
+        patchForHideTabPreview.init();
+      }
+    };
+    Services.obs.addObserver(delayedStartupFinished,
+                             "browser-delayed-startup-finished");
+  }
