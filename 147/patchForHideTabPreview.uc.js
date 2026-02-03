@@ -5,6 +5,8 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  Firefox 147
+// @version        2026/02/04 00:00 In horizontal tab bar mode, hide sooner.
+
 // @version        2026/02/04 00:00 0
 // ==/UserScript==
 let patchForHideTabGroupPreview = {
@@ -28,7 +30,7 @@ let patchForHideTabGroupPreview = {
         this.panel.addEventListener("mouseover", this);
         this.timer = setTimeout(() => {
           window.addEventListener("mousemove", this);
-        }, 500);
+        }, Services.prefs.getBoolPref("sidebar.verticalTabs", false) ? 500 : 200);
         break
       case "popuphidden":
         clearTimeout(this.timer);
@@ -62,7 +64,7 @@ let patchForHideTabPreview = {
         this.panel.addEventListener("mouseover", this);
         this.timer = setTimeout(() => {
           window.addEventListener("mousemove", this);
-        }, 500);
+        }, Services.prefs.getBoolPref("sidebar.verticalTabs", false) ? 500 : 200);
         break
       case "popuphidden":
         clearTimeout(this.timer);
