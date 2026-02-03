@@ -5,8 +5,8 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  Firefox 147
+// @version        2026/02/04 00:00 force it to hide on mouseover.
 // @version        2026/02/04 00:00 In horizontal tab bar mode, hide sooner.
-
 // @version        2026/02/04 00:00 0
 // ==/UserScript==
 let patchForHideTabGroupPreview = {
@@ -14,30 +14,13 @@ let patchForHideTabGroupPreview = {
     this.panel = document.getElementById("tabgroup-preview-panel");
     if (!this.panel)
       return;
-    this.panel.addEventListener("popupshown", this);
-    this.panel.addEventListener("popuphidden", this);
+    this.panel.addEventListener("mouseover", this);
   },
 
   timer: null,
   handleEvent: function(event) {
     switch(event.type) {
       case "mouseover":
-        clearTimeout(this.timer);
-        window.removeEventListener("mousemove", this);
-        this.panel.removeEventListener("mouseover", this);
-        break
-      case "popupshown":
-        this.panel.addEventListener("mouseover", this);
-        this.timer = setTimeout(() => {
-          window.addEventListener("mousemove", this);
-        }, Services.prefs.getBoolPref("sidebar.verticalTabs", false) ? 500 : 200);
-        break
-      case "popuphidden":
-        clearTimeout(this.timer);
-        window.removeEventListener("mousemove", this);
-        this.panel.removeEventListener("mouseover", this);
-        break
-      case "mousemove":
         this.panel.hidePopup();
         break
     }
@@ -48,30 +31,13 @@ let patchForHideTabPreview = {
     this.panel = document.getElementById("tab-preview-panel");
     if (!this.panel)
       return;
-    this.panel.addEventListener("popupshown", this);
-    this.panel.addEventListener("popuphidden", this);
+    this.panel.addEventListener("mouseover", this);
   },
 
   timer: null,
   handleEvent: function(event) {
     switch(event.type) {
       case "mouseover":
-        clearTimeout(this.timer);
-        window.removeEventListener("mousemove", this);
-        this.panel.removeEventListener("mouseover", this);
-        break
-      case "popupshown":
-        this.panel.addEventListener("mouseover", this);
-        this.timer = setTimeout(() => {
-          window.addEventListener("mousemove", this);
-        }, Services.prefs.getBoolPref("sidebar.verticalTabs", false) ? 500 : 200);
-        break
-      case "popuphidden":
-        clearTimeout(this.timer);
-        window.removeEventListener("mousemove", this);
-        this.panel.addEventListener("mouseover", this);
-        break
-      case "mousemove":
         this.panel.hidePopup();
         break
     }
