@@ -5,16 +5,21 @@
 // @include       main
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
-// @compatibility  Firefox 140
+// @compatibility  Firefox 147
 // @version        2026/02/05 fix zoom pdf file.
 // @version        2026/01/09 For scroll performance, disable passive mode.
 // @version        2026/01/09 fix wheel gesture 
+// @version        2025/11/15 fix bug
+// @version        2025/11/08 Prevent mouseup firing before mousedown immediately after startup
+// @version        2025/11/08 Tweak Split Tab
 // @version        2025/10/04 add status text for closedTabsPopup and sessionHistoryPopup
 // @version        2025/09/28 fix linkTXT take2
 // @version        2025/09/28 fix linkTXT
 // @version        2025/09/05 mark '*' for current index in the tooltip
 // @version        2025/08/18 _linkTXT excludes alt if img is visible
-// @version        2025/07/01 23:50 fix CSS切り替え
+// @version        2025/08/02 Bug 1979338 - Use srcset for images on menuitems
+// @version        2025/07/31 Bug 1979338 - Use srcset for images on menuitems
+// @version        2025/06/17 Bug 1959616
 // @version        2025/03/22 00:00 add gestures built-in translator
 // @version        2025/03/22 Bug 1950904
 // @version        2025/02/24 15:00 tweak timeout of tabindex and target
@@ -213,10 +218,10 @@ var ucjsMouseGestures = {
                                                           ucjsMouseGestures._imgTYPE,
                                                           ucjsMouseGestures._imgDISP); } ],
 
-        ['UL', '前のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(-1, true); } ],
-        ['UR', '次のタブ', function(){ gBrowser.tabContainer.advanceSelectedTab(+1, true); } ],
-        ['ULR', '直前に選択していたタブ', function(){ ucjsNavigation_tabFocusManager?.advancedFocusTab(-1); } ],
-        ['URL', '直前に選択していたタブを一つ戻る', function(){ ucjsNavigation_tabFocusManager?.advancedFocusTab(1); } ],
+        ['UL', '前のタブ', function(){ setTimeout(() => {gBrowser.tabContainer.advanceSelectedTab(-1, true);}, 0); } ],
+        ['UR', '次のタブ', function(){ setTimeout(() => {gBrowser.tabContainer.advanceSelectedTab(+1, true);}, 0); } ],
+        ['ULR', '直前に選択していたタブ', function(){ setTimeout(() => {ucjsNavigation_tabFocusManager?.advancedFocusTab(-1);}, 0); } ],
+        ['URL', '直前に選択していたタブを一つ戻る', function(){ setTimeout(() => {ucjsNavigation_tabFocusManager?.advancedFocusTab(1);}, 0); } ],
 
         ['', '新しいタブを開く', function(){ document.getElementById("cmd_newNavigatorTab").doCommand(); } ],
         ['', '新しいコンテナータブを開く', function(){ ucjsMouseGestures_helper.openLinkInContainerTab("about:blank", false, false); } ],
@@ -300,11 +305,7 @@ var ucjsMouseGestures = {
             document.getElementById("searchbar").value = "";
             document.getElementById("searchbar").updateGoButtonVisibility();
           } ],
-        ['', 'CSS切り替え', function(){
-          var styleDisabled = gBrowser.selectedBrowser.browsingContext?.authorStyleDisabledDefault;
-          if (styleDisabled) gPageStyleMenu.switchStyleSheet(null);
-          else gPageStyleMenu.disableStyle();
-        } ],
+        ['', 'CSS切り替え', function(){ var styleDisabled = gPageStyleMenu._getStyleSheetInfo(gBrowser.selectedBrowser).authorStyleDisabled; if (styleDisabled) gPageStyleMenu.switchStyleSheet(""); else gPageStyleMenu.disableStyle(); } ],
 
         ['UDUD', 'ジェスチャーコマンドをポップアップ', function(){ ucjsMouseGestures_helper.commandsPopop(); } ],
         ['', '再起動', function(){ ucjsMouseGestures_helper.restart(); } ],
@@ -556,7 +557,7 @@ var ucjsMouseGestures = {
     this._version = Services.appinfo.version.split(".")[0];
     this._isMac = navigator.platform.indexOf("Mac") == 0;
     gBrowser.tabpanels.addEventListener("mousedown", this, false);
-    document.addEventListener("mouseup", this, false);
+//    document.addEventListener("mouseup", this, false);
     gBrowser.tabpanels.addEventListener("contextmenu", this, true);
 
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_isWheelCancel", this);
@@ -660,6 +661,7 @@ var ucjsMouseGestures = {
     return {};
   },
 
+  mousedownHandler: false,
   handleEvent: function(event) {
     if(!event.isTrusted) return;
 
@@ -667,6 +669,11 @@ var ucjsMouseGestures = {
     var y = event.screenY;
     switch (event.type) {
       case "mousedown": 
+        if (!this.mousedownHandler) {
+          document.addEventListener("mouseup", this, false);
+          this.mousedownHandler = true;
+        }
+
         if (event.button == 2) {
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
           if (this.enableWheelGestures)
@@ -725,7 +732,7 @@ var ucjsMouseGestures = {
         gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_mouseup");
         gBrowser.tabpanels.removeEventListener("mousemove", this, false);
         if (this.enableWheelGestures)
-          window.addEventListener('wheel', this, {capture:true, passive: false});
+          window.removeEventListener('wheel', this, {capture:true, passive: false});
         if ((this._isMouseDownR && event.button == 2) ||
             (this._isMouseDownR && this._isMac && event.button == 0 && event.ctrlKey)) {
           this._isMouseDownR = false;
@@ -1261,11 +1268,19 @@ let ucjsMouseGestures_framescript = {
       },
       
       _gatherTextUnder: function(root) {
+        this.console.logStringMessage("root " + root);
         let text = "";
         let node = root.firstChild;
         let depth = 1;
         while (node && depth > 0) {
           // See if this node is text.
+          /*
+          this.console.logStringMessage("node " + node);
+          if (node instanceof content.HTMLImageElement){
+            this.console.logStringMessage("node.checkVisibility() " + node.checkVisibility());
+            this.console.logStringMessage("node.complete && node.naturalWidth !== 0 " + node.complete && node.naturalWidth !== 0);
+          }
+          */
           if (node.nodeType == node.TEXT_NODE) {
             // Add this text to our collection.
             text += " " + node.data;
@@ -1548,7 +1563,6 @@ let ucjsMouseGestures_helper = {
     popup.addEventListener("command", (event) => ucjsMouseGestures_helper.doCommand(event));
     //popup.setAttribute("oncommand", "ucjsMouseGestures_helper.doCommand(event);");
     /*popup.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
-
 		for (let i =0; i < that.commands.length; i++) {
       let command = that.commands[i];
 			let menuitem = document.createXULElement("menuitem");
@@ -1650,11 +1664,11 @@ let ucjsMouseGestures_helper = {
           m.setAttribute("image", undoItems[i].image);
         m.setAttribute("class", "menuitem-iconic bookmark-item");
         m.setAttribute("value", i);
-        m.addEventListener("command", () => {undoCloseTab(i)});
+        m.addEventListener("command", () => {SessionWindowUI.undoCloseTab(window, i)});
         //m.setAttribute("oncommand", "undoCloseTab(" + i + ");");
         /*m.setAttribute("onclick", "ucjsMouseGestures_helper._undoCloseMiddleClick(event);");*/
         if (i == 0)
-          m.setAttribute("key", "key_undoCloseTab");
+          m.setAttribute("key", "key_restoreLastClosedTabOrWindowOrSession");
         undoPopup.appendChild(m);
       }
 
@@ -1819,7 +1833,8 @@ let ucjsMouseGestures_helper = {
         if (j != index) {
           // Use list-style-image rather than the image attribute in order to
           // allow CSS to override this.
-          item.style.listStyleImage = `url(page-icon:${uri})`;
+          //item.style.listStyleImage = `url(page-icon:${uri})`;
+          item.style.setProperty("--menuitem-icon", `url(page-icon:${uri})`);
         }
 
         if (j < index) {

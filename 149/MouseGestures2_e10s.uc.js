@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 149
+// @version        2026/02/05 fix zoom pdf file.
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton// @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/09 For scroll performance, disable passive mode.
 // @version        2026/01/09 fix wheel gesture 
@@ -1549,39 +1550,15 @@ let ucjsMouseGestures_helper = {
 
   //ズームイン
   zoomIn: function() {
-    if(/\.pdf$/.test(gBrowser.currentURI.spec)) {
-      ucjsMouseGestures_helper.dispatchKeyEvent(
-        "#zoomIn",
-        "keydown", true, true,/*viewArg, */
-        true, false, false, false,
-        107, 0);
-    } else {
-      document.getElementById("cmd_fullZoomEnlarge").doCommand();
-    }
+    document.getElementById("cmd_fullZoomEnlarge").doCommand();
   },
   //ズームアウト
   zoomOut: function() {
-    if(/\.pdf$/.test(gBrowser.currentURI.spec)) {
-      ucjsMouseGestures_helper.dispatchKeyEvent(
-        "#zoomOut",/*viewArg, */
-        "keydown", true, true,
-        true, false, false, false,
-        109, 0);
-    } else {
-      document.getElementById("cmd_fullZoomReduce").doCommand();
-    }
+    document.getElementById("cmd_fullZoomReduce").doCommand();
   },
   //ズームリセット
   zoomReset: function() {
-    if(/\.pdf$/.test(gBrowser.currentURI.spec)) {
-      ucjsMouseGestures_helper.dispatchKeyEvent(
-        "#scaleSelect",/*viewArg, */
-        "keydown", true, true,
-        true, false, false, false,
-        96, 96);
-    } else {
-       document.getElementById("cmd_fullZoomReset").doCommand();
-    }
+    document.getElementById("cmd_fullZoomReset").doCommand();
   },
 
 
