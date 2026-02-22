@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 147
+// @version        2026/02/23 fix properly remove eventListener.
 // @version        2026/02/22 Allow assignment of the same gesture to multiple functions, select after popup
 // @version        2026/02/16 Store search term to FormHistory.
 // @version        2026/02/05 fix zoom pdf file.
@@ -734,7 +735,7 @@ var ucjsMouseGestures = {
         gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_mouseup");
         gBrowser.tabpanels.removeEventListener("mousemove", this, false);
         if (this.enableWheelGestures)
-          window.addEventListener('wheel', this, {capture:true, passive: false});
+          window.removeEventListener('wheel', this, {capture:true, passive: false});
         if ((this._isMouseDownR && event.button == 2) ||
             (this._isMouseDownR && this._isMac && event.button == 0 && event.ctrlKey)) {
           this._isMouseDownR = false;
