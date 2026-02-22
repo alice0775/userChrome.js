@@ -6,6 +6,8 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 140
+// @version        2026/02/22 Allow assignment of the same gesture to multiple functions, select after popup
+// @version        2026/02/16 Store search term to FormHistory.
 // @version        2026/02/05 fix zoom pdf file.
 // @version        2026/01/09 For scroll performance, disable passive mode.
 // @version        2026/01/09 fix wheel gesture 
@@ -378,7 +380,7 @@ var ucjsMouseGestures = {
             }
           } ],
 
-        ['', 'TWP - Translate selected text「Ctrl+Alt+S」',
+        ['LDR', 'TWP - Translate selected text「Ctrl+Alt+S」',
           function(){
             ucjsMouseGestures_helper.sendKey(null, true, true, null, [{key:"S", keycode:KeyboardEvent.DOM_VK_S}]);
           } ],
@@ -824,13 +826,14 @@ var ucjsMouseGestures = {
           }
         }
       }
-      if (!commandName)
+      if (!commandName) {
         for (let command of this.commands) {
           if (!!command[0] && command[0] == this._directionChain){
-            commandName = command[1];
-            break;
+            if (!!commandName) commandName += ", ";
+            commandName += command[1];
           }
         }
+      }
       this.statusinfo = "Gesture: " + this._directionChain + " " + commandName;
     }
     // save current position
@@ -877,6 +880,18 @@ var ucjsMouseGestures = {
       }
     }
     // These are the mouse gesture mappings.
+    let commands = [];
+    for (let command of this.commands) {
+      if (!!command[0] && command[0] == this._directionChain){
+        commands.push(command);
+      }
+    }
+    if (commands.length >= 2) {
+      ucjsMouseGestures_helper.popupCommand(event, commands);
+      this._directionChain = "";
+      return;
+    }
+
     for (let command of this.commands) {
       if (this._directionChain !== "" && command[0] == this._directionChain) {
         try {
@@ -1419,6 +1434,9 @@ let ucjsMouseGestures_helper = {
       "@mozilla.org/url-query-string-stripper;1",
       "nsIURLQueryStringStripper"
     );
+	  ChromeUtils.defineESModuleGetters(this.lazy, {
+	    FormHistory: "resource://gre/modules/FormHistory.sys.mjs",
+	  });
   },
 
   stripURI: function(url) {
@@ -1545,7 +1563,7 @@ let ucjsMouseGestures_helper = {
     let popup = document.createXULElement("menupopup");
     document.getElementById("mainPopupSet").appendChild(popup);
     popup.setAttribute("id", "ucjsMouseGestures_popup");
-    popup.addEventListener("command", (event) => ucjsMouseGestures_helper.doCommand(event));
+    popup.addEventListener("command", (event) => ucjsMouseGestures_helper.doCommand(event, ucjsMouseGestures.commands));
     //popup.setAttribute("oncommand", "ucjsMouseGestures_helper.doCommand(event);");
     /*popup.setAttribute("onclick", "checkForMiddleClick(this, event);");*/
 
@@ -1567,9 +1585,39 @@ let ucjsMouseGestures_helper = {
 		}
 		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
   },
-  doCommand: function(aEvent) {
+
+  popupCommand: function popupCommand(event, commands) {
+    let that = ucjsMouseGestures;
+
+    if(document.getElementById("ucjsMouseGestures_popup")) {
+      document.getElementById("mainPopupSet").
+               removeChild(document.getElementById("ucjsMouseGestures_popup"));
+    }
+    let popup = document.createXULElement("menupopup");
+    document.getElementById("mainPopupSet").appendChild(popup);
+    popup.setAttribute("id", "ucjsMouseGestures_popup");
+    popup.addEventListener("command", (event) => ucjsMouseGestures_helper.doCommand(event, commands));
+		for (let i =0; i < commands.length; i++) {
+			let menuitem = document.createXULElement("menuitem");
+			menuitem.setAttribute("label", commands[i][1]);
+			menuitem.setAttribute("acceltext", commands[i][0]);
+			menuitem.setAttribute("index", i);
+			menuitem.index = i;
+			popup.appendChild(menuitem);
+		}
+
+		let ratio = 1;
+		let os = Cc["@mozilla.org/system-info;1"].getService(Ci.nsIPropertyBag2).getProperty("name");
+		if (os == "Darwin") {
+			ratio = popup.ownerDocument.defaultView.QueryInterface(Ci.nsIInterfaceRequestor).
+		            getInterface(Ci.nsIDOMWindowUtils).screenPixelsPerCSSPixel;
+		}
+		popup.openPopupAtScreen(event.screenX * ratio, event.screenY * ratio, false);
+  },
+
+  doCommand: function(aEvent, commands) {
     let index = aEvent.target.getAttribute("index");
-    ucjsMouseGestures.commands[index][2](aEvent);
+    commands[index][2](aEvent);
   },
 
 
@@ -1930,6 +1978,18 @@ let ucjsMouseGestures_helper = {
 		}
 		popup.openPopupAtScreen(screenX * ratio, screenY * ratio, false);
   },
+  SyncHistory: function (val, engineName) {
+    if (!val)
+      return;
+    if (PrivateBrowsingUtils.isWindowPrivate(window)) 
+      return;
+		this.lazy.FormHistory.update({
+		  op: "bump",
+		  fieldname: "searchbar-history",
+		  value: val,
+		  source: engineName
+		});
+  },
   _loadSearch: function(event) {
 		let engine = event.target.engine;
 		if (!engine)
@@ -1945,6 +2005,7 @@ let ucjsMouseGestures_helper = {
 			inBackground: (event.button == 1 || event.ctrlKey) ? true: false,
       triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
 		});
+		this.SyncHistory(this.text, engine.name);
   },
   _loadSearchWithDefaultEngine: async function(text, inBackground) {
 		let engine = await Services.search.getDefault();
@@ -1961,6 +2022,7 @@ let ucjsMouseGestures_helper = {
 			inBackground: inBackground,
       triggeringPrincipal: Services.scriptSecurityManager.createNullPrincipal({})
 		});
+		this.SyncHistory(text, engine.name);
   },
 
   // 再起動
