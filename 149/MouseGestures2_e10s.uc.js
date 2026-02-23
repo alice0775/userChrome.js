@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 149
+// @version        2026/02/23 Allow assignment of the same Any Gesture Sequence
 // @version        2026/02/23 fix properly remove eventListener.
 // @version        2026/02/22 Allow assignment of the same gesture to multiple functions, select after popup
 // @version        2026/02/16 Store search term to FormHistory.
@@ -205,7 +206,7 @@ var ucjsMouseGestures = {
         ['', 'コンテナータブを指定してリンクを開く', function(){ ucjsMouseGestures_helper.openLinkInContainerTab(); } ],
 
         ['', '選択範囲のテキストリンクをすべてタブに開く(リンクが無い場合は規定の検索エンジンで検索)', function(){ ucjsMouseGestures_helper.openURLsInSelection(); } ],
-        ['*RDL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
+        ['*RUL', '選択範囲のリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openSelectedLinksInTabs(); } ],
         ['*RUL', '通過したリンクをすべてタブに開く', function(){ ucjsMouseGestures_helper.openHoverLinksInTabs(); } ],
         ['', 'リンクを新しいタブに開く', function(){ ucjsMouseGestures_helper.openURLs([ucjsMouseGestures._linkURL]); } ],
 
@@ -252,6 +253,14 @@ var ucjsMouseGestures = {
         ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
         ['', 'すべてのタブを閉じる', function(){ var browser = gBrowser; var ctab = browser.addTrustedTab(BROWSER_NEW_TAB_URL, {skipAnimation: true,}); browser.removeAllTabsBut(ctab); } ],
         ['', 'ウインドウを閉じる', function(){ document.getElementById("cmd_closeWindow").doCommand(); } ],
+        ['', '現在のタブを解放', function(){ gBrowser.explicitUnloadTabs([gBrowser.selectedTab]); } ],
+        ['', '選択したタブをすべて解放', function(){
+          gBrowser.explicitUnloadTabs(gBrowser.selectedTabs);
+        } ],
+        ['', '他のタブをすべて解放', function(){
+          let tabs = Array.from(gBrowser.tabs).filter(tab => !tab.selected && !tab.discarded);
+          gBrowser.explicitUnloadTabs(tabs); 
+        } ],
 
         ['', '最小化', function(){ window.minimize(); } ],
         ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
@@ -843,17 +852,15 @@ var ucjsMouseGestures = {
         if (command[0].substring(0, 1) == "*") {
           let cmd = command[0].substring(1);
           if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
-            commandName = command[1];
-            break;
+            if (!!commandName) commandName += " / ";
+            commandName += command[1];
           }
         }
       }
-      if (!commandName) {
-        for (let command of this.commands) {
-          if (!!command[0] && command[0] == this._directionChain){
-            if (!!commandName) commandName += ", ";
-            commandName += command[1];
-          }
+      for (let command of this.commands) {
+        if (!!command[0] && command[0] == this._directionChain){
+          if (!!commandName) commandName += " / ";
+          commandName += command[1];
         }
       }
       this.statusinfo = "Gesture: " + this._directionChain + " " + commandName;
@@ -887,23 +894,18 @@ var ucjsMouseGestures = {
   _performAction: function(event) {
 //    Services.console.logStringMessage("====" + this._directionChain);
     // Any Gesture Sequence
+    let commands = [];
     for (let command of this.commands) {
       if (command[0].substring(0, 1) == "*") {
         let cmd = command[0].substring(1);
         if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
-          try {
-            command[2](event);
-          } catch(ex) {
-            Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
-          }
-          this._directionChain = "";
-          return;
+          commands.push(command);
         }
       }
     }
 
+
     // These are the mouse gesture mappings.
-    let commands = [];
     for (let command of this.commands) {
       if (!!command[0] && command[0] == this._directionChain){
         commands.push(command);
@@ -913,19 +915,16 @@ var ucjsMouseGestures = {
       ucjsMouseGestures_helper.popupCommand(event, commands);
       this._directionChain = "";
       return;
+    } else if (commands.length == 1) {
+      try {
+        commands[0][2](event);
+      } catch(ex) {
+        Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
+      }
+      this._directionChain = "";
+      return;
     }
 
-    for (let command of this.commands) {
-      if (this._directionChain !== "" && command[0] == this._directionChain) {
-        try {
-          command[2](event);
-        } catch(ex) {
-          Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
-        }
-        this._directionChain = "";
-        return;
-      }
-    }
     // Unknown Gesture
     // throw "Unknown Gesture: " + this._directionChain;
 
