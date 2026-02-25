@@ -4,6 +4,8 @@
 // @include        main
 // @compatibility  Firefox 135
 // @author         Alice0775
+// @version        2026/02/25 ignore <a> if a.href is null
+// @version        2025/06/24 add getPrevSelectedTab method
 // @version        2025/01/04 modify framescript
 // @version        2023/06/20 remove Bug 1780695 - Remove Services.jsm
 // @version        2023/02/11 Add `Newer`,`Older`
@@ -90,6 +92,8 @@ var ucjsNavigation = {
         arrTags = win.document.links;
         if( arrTags ){
           for(let i=0; i<arrTags.length; i++) {
+            if (!arrTags[i].href) continue;
+
             let result = win.document.evaluate(XPATH,arrTags[i],null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
             let link='';
             for(let j=0;j<result.snapshotLength;j++){
@@ -151,7 +155,8 @@ var ucjsNavigation = {
         let x = win.document.evaluate(nextLink, win.document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         if (x.snapshotLength){
           next = x.snapshotItem(x.snapshotLength-1);
-          return next.href;
+          if (next.href)
+            return next.href;
         }
 
         x = win.document.querySelector("a[class*='pagingNext']");
@@ -165,7 +170,8 @@ var ucjsNavigation = {
           if(!arrTags[i].hasAttribute('rel') || !arrTags[i].hasAttribute('href')) continue;
           if(!arrTags[i].getAttribute('rel').match(/next/i)) continue;
         //   this.Services.console.logStringMessage('link ' + arrTags[i].href);
-          return arrTags[i].href;
+          if (arrTags[i].href)
+            return arrTags[i].href;
         }
 
       // Eigene: Go to Next numbered Page
@@ -193,6 +199,8 @@ var ucjsNavigation = {
          arrTags = win.document.links;
         if( arrTags ){
           for(let i=0; i<arrTags.length; i++) {
+            if (!arrTags[i].href) continue;
+
             let result = win.document.evaluate(XPATH,arrTags[i],null,XPathResult.ORDERED_NODE_SNAPSHOT_TYPE,null);
             let link='';
             for(let j=0;j<result.snapshotLength;j++){
@@ -234,7 +242,8 @@ var ucjsNavigation = {
         let x = win.document.evaluate(nextLink, win.document, null, XPathResult.ORDERED_NODE_SNAPSHOT_TYPE, null);
         if (x.snapshotLength){
           next = x.snapshotItem(x.snapshotLength-1);
-          return next.href;
+          if (next.href)
+            return next.href;
         }
 
         x = win.document.querySelector("a[class*='pagingPrev']");
@@ -247,7 +256,8 @@ var ucjsNavigation = {
         for(let i=0; i<arrTags.length; i++) {
           if(!arrTags[i].hasAttribute('rel') || !arrTags[i].hasAttribute('href')) continue;
           if(!arrTags[i].getAttribute('rel').match(/prev/i)) continue;
-          return arrTags[i].href;
+          if (arrTags[i].href)
+            return arrTags[i].href;
         }
 
         // Eigene: Go to Previous numbered Page
@@ -507,6 +517,23 @@ var ucjsNavigation_tabFocusManager = {
     } else {
       this.focusNextSelectedTab(fallback);
     }
+  },
+
+  getPrevSelectedTab: function() {
+    let currentPanel = gBrowser.selectedTab.getAttribute("linkedpanel");
+    for (let i = this._tabHistory.length - 1; i > -1; i--) {
+      let panel = this._tabHistory[i];
+      if (panel == currentPanel) {
+        continue;
+      }
+      let tab = this.getTabFromPanel(panel);
+      if (!tab || tab.getAttribute('hidden'))
+        continue;
+      if (!tab.closing) {
+        return tab;
+      }
+    }
+    return null;
   },
 
   focusPrevSelectedTab: function(fallback = false) {
