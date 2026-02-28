@@ -1045,7 +1045,9 @@ let ucjsMouseGestures_framescript = {
           case "mousedown":
             if (event.button == 2) {
               let tabIndex = event.target.hasAttribute("tabindex");
-              if (!tabIndex && event.target.localName != "span") {
+              if (!tabIndex
+                  && !event.target.ownerDocument.defaultView.XULElement.isInstance(event.target)
+                  && event.target.localName != "span") {
                 event.target.setAttribute("tabindex", -1);
                 event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, event.target);
               }
