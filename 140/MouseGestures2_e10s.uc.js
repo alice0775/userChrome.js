@@ -6,8 +6,6 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 140
-// @version        2026/02/28 ignore xul element for setting tabindex
-// @version        2026/02/23 Allow assignment of the same Any Gesture Sequence
 // @version        2026/02/22 Allow assignment of the same gesture to multiple functions, select after popup
 // @version        2026/02/16 Store search term to FormHistory.
 // @version        2026/02/05 fix zoom pdf file.
@@ -243,7 +241,6 @@ var ucjsMouseGestures = {
         ['DRU', '閉じたタブを元に戻す', function(){ document.getElementById("History:UndoCloseTab").doCommand(); } ],
         /*['DRU', '閉じたタブを元に戻す(一個ずつ)', function(){undoCloseTab(0); } ],*/
         ['', '閉じたタブのリストをポップアップ', function(){ ucjsMouseGestures_helper.closedTabsPopup(); } ],
-        ['', 'タブのミュートをトグル', function(){ gBrowser.selectedTab.toggleMuteAudio(); } ],
         ['', 'すべてのタブを閉じる', function(){ var browser = gBrowser; var ctab = browser.addTrustedTab(BROWSER_NEW_TAB_URL, {skipAnimation: true,}); browser.removeAllTabsBut(ctab); } ],
         ['', 'ウインドウを閉じる', function(){ document.getElementById("cmd_closeWindow").doCommand(); } ],
 
@@ -333,19 +330,7 @@ var ucjsMouseGestures = {
               content.document.dispatchEvent(new content.Event("AutoPagerizeToggleRequest"));
             });
           } ],
-        ['', 'HighlightAll extension のトグル 方法',
-          function(){
-            let tip = Cc["@mozilla.org/text-input-processor;1"].createInstance(Ci.nsITextInputProcessor);
-            if (!tip.beginInputTransactionForTests(window)) {
-              return;
-            }
-            let keyEventF8 = new KeyboardEvent("", {key: "F8", keyCode: KeyboardEvent.DOM_VK_F8});
-            let keyEventCtrl = new KeyboardEvent("", {key: "Control", keyCode: KeyboardEvent.DOM_VK_CONTROL});
-            tip.keydown(keyEventCtrl);
-            tip.keydown(keyEventF8);
-            tip.keyup(keyEventF8);
-            tip.keyup(keyEventCtrl);
-          } ],
+
         ['RDR', 'TWP - Switch between the translated and the original page「Ctrl+Alt+T」',
           function(){
             ucjsMouseGestures_helper.sendKey(/*shift*/null, /*ctrl*/true, /*alt*/true, /*meta*/null, [{key:"T", keycode:KeyboardEvent.DOM_VK_T}]);
@@ -836,15 +821,17 @@ var ucjsMouseGestures = {
         if (command[0].substring(0, 1) == "*") {
           let cmd = command[0].substring(1);
           if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
-            if (!!commandName) commandName += " / ";
-            commandName += command[1];
+            commandName = command[1];
+            break;
           }
         }
       }
-      for (let command of this.commands) {
-        if (!!command[0] && command[0] == this._directionChain){
-          if (!!commandName) commandName += " / ";
-          commandName += command[1];
+      if (!commandName) {
+        for (let command of this.commands) {
+          if (!!command[0] && command[0] == this._directionChain){
+            if (!!commandName) commandName += ", ";
+            commandName += command[1];
+          }
         }
       }
       this.statusinfo = "Gesture: " + this._directionChain + " " + commandName;
@@ -853,7 +840,6 @@ var ucjsMouseGestures = {
     this._lastX = x;
     this._lastY = y;
   },
-
 
   _stopGesture: function(event) {
     window.messageManager.broadcastAsyncMessage("ucjsMouseGestures_mouseup");
@@ -879,18 +865,22 @@ var ucjsMouseGestures = {
   _performAction: function(event) {
 //    Services.console.logStringMessage("====" + this._directionChain);
     // Any Gesture Sequence
-    let commands = [];
     for (let command of this.commands) {
       if (command[0].substring(0, 1) == "*") {
         let cmd = command[0].substring(1);
         if (cmd == this._directionChain.substring(this._directionChain.length - cmd.length)) {
-          commands.push(command);
+          try {
+            command[2](event);
+          } catch(ex) {
+            Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
+          }
+          this._directionChain = "";
+          return;
         }
       }
     }
-
-
     // These are the mouse gesture mappings.
+    let commands = [];
     for (let command of this.commands) {
       if (!!command[0] && command[0] == this._directionChain){
         commands.push(command);
@@ -900,16 +890,19 @@ var ucjsMouseGestures = {
       ucjsMouseGestures_helper.popupCommand(event, commands);
       this._directionChain = "";
       return;
-    } else if (commands.length == 1) {
-      try {
-        commands[0][2](event);
-      } catch(ex) {
-        Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
-      }
-      this._directionChain = "";
-      return;
     }
 
+    for (let command of this.commands) {
+      if (this._directionChain !== "" && command[0] == this._directionChain) {
+        try {
+          command[2](event);
+        } catch(ex) {
+          Services.console.logStringMessage("Error in command (" + this._directionChain + ")" /*+ ex*/);
+        }
+        this._directionChain = "";
+        return;
+      }
+    }
     // Unknown Gesture
     // throw "Unknown Gesture: " + this._directionChain;
 
@@ -1030,9 +1023,7 @@ let ucjsMouseGestures_framescript = {
           case "mousedown":
             if (event.button == 2) {
               let tabIndex = event.target.hasAttribute("tabindex");
-              if (!tabIndex
-                  && !event.target.ownerDocument.defaultView.XULElement.isInstance(event.target)
-                  && event.target.localName != "span") {
+              if (!tabIndex && event.target.localName != "span") {
                 event.target.setAttribute("tabindex", -1);
                 event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, event.target);
               }

@@ -6,7 +6,6 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 149
-// @version        2026/02/28 ignore xul element for setting tabindex
 // @version        2026/02/23 Allow assignment of the same Any Gesture Sequence
 // @version        2026/02/23 fix properly remove eventListener.
 // @version        2026/02/22 Allow assignment of the same gesture to multiple functions, select after popup
@@ -1046,9 +1045,7 @@ let ucjsMouseGestures_framescript = {
           case "mousedown":
             if (event.button == 2) {
               let tabIndex = event.target.hasAttribute("tabindex");
-              if (!tabIndex
-                  && !event.target.ownerDocument.defaultView.XULElement.isInstance(event.target)
-                  && event.target.localName != "span") {
+              if (!tabIndex && event.target.localName != "span") {
                 event.target.setAttribute("tabindex", -1);
                 event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, event.target);
               }
