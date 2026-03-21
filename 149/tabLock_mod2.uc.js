@@ -7,6 +7,7 @@
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @sandbox        true
 // @compatibility  Firefox 149
+// @version        2026/03/22 working with add-on "Drag-Select Link Text"
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
 // @version        2025/06/16 Bug 1968479 - Only allow eval (with system principal / in the parent) when an explicit pref is set
@@ -458,11 +459,19 @@ patch: {
   'use strict';
 
   let frameScript = function() {
-    addEventListener("click", onClick, true);  /*先祖要素のclick eventListener 優先, trueの場合 無視されるので*/
-
+    addEventListener("click", onClick, true);  /*falseにするとほぼTabMixPlusと同等でjavaScriptリンクはtablockが効かない。trueの場合、拡張機能によるevent.preventDefault()が効かない場合がある*/
+    addEventListener("mousedown", onMousedown, true);
+    let x,y;
+    function onMousedown(event) {
+      x = event.clientX;
+      y = event.clientY;
+    }
     function onClick(event) {
       if (event.button !== 0) return;
       if (event.altKey || event.ctrlKey || event.shiftKey) return;
+      if (Math.abs(x - event.clientX) > 8) return;
+      let dl = ((x - event.clientX) ** 2 + (y - event.clientY) ** 2) ** 0.5;
+      if (dl > 20) return;
 
       let linkclick = sendSyncMessage("linkclick_isLockedTab", { })[0];
       if (!linkclick?.isLockedTab)

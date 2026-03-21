@@ -7,6 +7,7 @@
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @sandbox        true
 // @compatibility  Firefox 150
+// @version        2026/03/22 working with add-on "Drag-Select Link Text"
 // @version        2026/03/01 Bug 2017957 - Add freezeBuiltins option to Cu.Sandbox
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
@@ -461,10 +462,18 @@ patch: {
 
   let frameScript = function() {
     addEventListener("click", onClick, true);  /*falseにするとほぼTabMixPlusと同等でjavaScriptリンクはtablockが効かない。trueの場合、拡張機能によるevent.preventDefault()が効かない場合がある*/
-
+    addEventListener("mousedown", onMousedown, true); 
+    let x,y;
+    function onMousedown(event) {
+      x = event.clientX;
+      y = event.clientY;
+    }
     function onClick(event) {
       if (event.button !== 0) return;
       if (event.altKey || event.ctrlKey || event.shiftKey) return;
+      if (Math.abs(x - event.clientX) > 8) return;
+      let dl = ((x - event.clientX) ** 2 + (y - event.clientY) ** 2) ** 0.5;
+      if (dl > 20) return;
 
       let linkclick = sendSyncMessage("linkclick_isLockedTab", { })[0];
       if (!linkclick?.isLockedTab)

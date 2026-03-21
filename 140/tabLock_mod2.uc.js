@@ -6,8 +6,8 @@
 // @exclude        about:*
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @sandbox        true
-// @compatibility  135
-// @compatibility  139
+// @compatibility  140
+// @version        2026/03/22 working with add-on "Drag-Select Link Text"
 // @version        2025/05/13 test version. fix uri.hash check
 // @version        2025/05/12 test version. force open link in newtab if tab is locked (e.g., google search results page)
 // @version        2025/02/02 add @sandbox
@@ -433,11 +433,21 @@ patch: {
   'use strict';
 
   let frameScript = function() {
-    addEventListener("click", onClick, true);  /*先祖要素のclick eventListener 優先, trueの場合 無視されるので*/
-
+    addEventListener("click", onClick, true);  
+    /* falseにするとほぼTabMixPlusと同等でjavaScriptリンクはtablockが効かない*/
+    /* trueの場合、拡張機能によるevent.preventDefault()が効かない場合があるの*/
+    addEventListener("mousedown", onMousedown, true);  
+    let x,y;
+    function onMousedown(event) {
+      x = event.clientX;
+      y = event.clientY;
+    }
     function onClick(event) {
       if (event.button !== 0) return;
       if (event.altKey || event.ctrlKey || event.shiftKey) return;
+      if (Math.abs(x - event.clientX) > 8) return;
+      let dl = ((x - event.clientX) ** 2 + (y - event.clientY) ** 2) ** 0.5;
+      if (dl > 20) return;
 
       let linkclick = sendSyncMessage("linkclick_isLockedTab", { })[0];
       if (!linkclick?.isLockedTab)
