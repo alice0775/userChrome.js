@@ -6,6 +6,7 @@
 // @async          true
 // @sandbox        false
 // @compatibility  Firefox 149
+// @version        2026/03/26 00:00 remove checking of LOCATION_CHANGE_SAME_DOCUMENT
 // @version        2026/002/14 00:00 remove source FormHistory
 // @version        2026/01/27 00:00 fix  FormHistory
 // @version        2026/01/27 00:00 partial revart FormHistory
@@ -44,7 +45,7 @@ let searchboxsync = {
   "^https://www\.ecosia\.org/search.*[?&]q=([^&#]*)", /*ecosia*/
   "^https://www\.bing\.com/search.*[?&]q=([^&#]*)", /*bing*/
   "^https://duckduckgo\.com/.*[?&]q=([^&#]*)", /*duckduckgo*/
-  /*"^https?://([^.]+\.)?youtube\.(co\.jp|com)/.*[?&]search_query=([^&#]+)",*/ /*youtube*/
+  "^https?://([^.]+\.)?youtube\.(co\.jp|com)/.*[?&]search_query=([^&#]+)", /*youtube*/
   /*"^https?://.+\.wikipedia\.org/wiki/([^&?#]*)",*/ /*wikipedia*/
   /*"^https?://(www\.)?amazon\.(co\.jp|com)/.*field-keywords=([^&#]+)",*/ /*amazon*/
   /*"^https?://kakaku\.com/search_results/(.*query=)?([^/&#]+)",*/
@@ -123,10 +124,10 @@ let searchboxsync = {
       
     if (aBrowser != gBrowser.selectedBrowser)
       return;
-
+/*
     if (aFlags & Ci.nsIWebProgressListener.LOCATION_CHANGE_SAME_DOCUMENT)
       return;
-  
+*/  
     if (gBrowser.getTabForBrowser(aBrowser).hasAttribute("pending"))
       return;
 
