@@ -5,6 +5,7 @@
 // @charset        utf-8
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/03/26 00:00 fix shadow DOM
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
@@ -102,7 +103,7 @@ window.serachWP_modoki = {
     if (!this._textbox)
       return;
     this._textbox.removeEventListener("wheel", this, true);
-    this._textbox.removeEventListener("blur", this, false);
+    window.removeEventListener("blur", this, false);
   },
 
   patch: function() {
@@ -110,7 +111,7 @@ window.serachWP_modoki = {
       if (!this.searchbar)
         return;
       this._textbox.addEventListener("wheel", this, true);
-      this._textbox.addEventListener("blur", this, false);
+      window.addEventListener("blur", this, false);
     }).bind(this), 1000)
   },
   
@@ -134,7 +135,7 @@ window.serachWP_modoki = {
         this.patch();
         break;
       case "wheel":
-        var textbox = event.originalTarget.parentNode;
+        var textbox = this._textbox;
         if (document.commandDispatcher.focusedElement != textbox) {
           var a = textbox.selectionStart;
           var b = textbox.selectionEnd;
@@ -146,29 +147,31 @@ window.serachWP_modoki = {
         this.onDOMMouseScroll(event);
         break;
       case "click":
-        target = event.originalTarget;
-        while(target) {
-          if (target == this._textbox)
+        let path = event.composedPath();
+        for (let index = 0; index < path.length; index++) {
+          target = path[index];
+          
+          if (!target) break;
+
+          if (target == this._textbox) {
+            if (event.button == 1 && event.altKey) {
+              this.toggleHighlight(event);
+            }
+            if (event.button == 0 || event.button == 2) {
+              this.clearHighlight(event);
+            }
             break;
-          if (target.localName == "browser")
-            break;
-          target = target.parentNode;
-        }
-        if (!target)
-          return;
-        if (event.button == 0 && target.localName == "browser") {
-          this.clearHighlight(event);
-          return;
-        }
-        if (target == this._textbox) {
-          if (event.button == 1 && event.altKey)
-            this.toggleHighlight(event);
-          if (event.button == 0 || event.button == 2)
+          }
+
+          if (event.button == 0 && target.localName == "browser") {
             this.clearHighlight(event);
+            break;
+          }
         }
         break;
-      case "blur":
+      case "blur":Services.console.logStringMessage("blur" );
         this.clearHighlight(event);
+        this.aWord = "";
         break;
       case "unload":
         this.uninit();
@@ -180,8 +183,7 @@ window.serachWP_modoki = {
     if ( event.rangeParent.nodeType != 3 ) {
       return;
     }
-
-    var textbox = event.originalTarget.parentNode;
+    var textbox = this._textbox;
     var term;
     var offset = event.rangeOffset;
     var a = textbox.selectionStart;
@@ -223,25 +225,28 @@ window.serachWP_modoki = {
     if (!this._highlightAll) return;
     let finder = this.finder;
     finder.onHighlightAllChange(false);
+    this.aWord = "";
   },
 
-
+  aWord:"",
   _findFast: async function(aWord, aFindBackwards, aMatchCase) {
     let finder = this.finder;
     finder.caseSensitive = aMatchCase;
-
-    if (finder.searchString != aWord) {
+    if (!this.aWord || this.aWord != aWord) {
       // xxx workaround
-      finder.highlight(this.AUTOHIGHLIGHT, '', false);
-      finder.onHighlightAllChange(this.AUTOHIGHLIGHT);
+      if (this.AUTOHIGHLIGHT) {
+        finder.onHighlightAllChange(false);
+        finder.onHighlightAllChange(true);
+      }
       // //xxx
       result = finder.fastFind(aWord, false, false);
       // xxx
-      result = finder.findAgain(aWord, aFindBackwards, false, false);
+      //result = finder.findAgain(aWord, aFindBackwards, false, false);
     }
     else {
       result = finder.findAgain(aWord, aFindBackwards, false, false);
     }
+    this.aWord = aWord;
     return result;
   },
 
