@@ -4,6 +4,7 @@
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
 // @compatibility  149
+// @version        2026/03/28 00:00 check userTypedValue insted value
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2025/12/20 00:00 new search widget
 // @version        2025/06/17 use openSearchForm instead of search with empty string
@@ -44,11 +45,9 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
   async function patchForBug1894910_allow_search_with_empty_text(event) {
     if (KeyboardEvent.isInstance(event) && event.keyCode !== KeyEvent.DOM_VK_RETURN)
       return
-
     let searchbar = window.document.getElementById("searchbar-new");
-    if (searchbar.value != "")
+    if (searchbar.userTypedValue)
       return;
-
     if (!event.originalTarget.classList.contains("urlbar-input") &&
         !event.originalTarget.classList.contains("urlbar-go-button"))
       return;
@@ -145,23 +144,3 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
     }.bind(searchbar);
 }
 })();
-
-/*
-(function() {
-  const lazy = {};
-  ChromeUtils.defineESModuleGetters(lazy, {
-   UrlbarSearchUtils: "moz-src:///browser/components/urlbar/UrlbarSearchUtils.sys.mjs",
-  });
-
-  gURLBar.textbox.addEventListener("keydown", function(event) {
-    if (event.keyCode != KeyEvent.DOM_VK_RETURN || gURLBar.inputField.value != "")
-      return;
-      
-    let engine = lazy.UrlbarSearchUtils.getDefaultEngine(PrivateBrowsingUtils.isWindowPrivate(window));
-    let where = BrowserUtils.whereToOpenLink(event, false, false);
-    let searchForm = engine.searchForm;
-
-    openTrustedLinkIn(searchForm, where, {});
-  });
-})();
-*/
