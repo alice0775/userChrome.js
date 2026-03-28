@@ -4,6 +4,7 @@
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
 // @compatibility  149
+// @version        2026/03/28 18:00 revert "check userTypedValue insted value"
 // @version        2026/03/28 15:00 use openEngineHomePage and change eventlistenercapture mode
 // @version        2026/03/28 00:00 check userTypedValue insted value
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
@@ -47,7 +48,7 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
     if (KeyboardEvent.isInstance(event) && event.keyCode !== KeyEvent.DOM_VK_RETURN)
       return
     let searchbar = window.document.getElementById("searchbar-new");
-    if (searchbar.userTypedValue)
+    if (searchbar.value)
       return;
     if (!event.originalTarget.classList.contains("urlbar-input") &&
         !event.originalTarget.classList.contains("urlbar-go-button"))
