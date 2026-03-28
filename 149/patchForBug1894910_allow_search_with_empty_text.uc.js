@@ -4,6 +4,7 @@
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
 // @compatibility  149
+// @version        2026/03/28 15:00 use openEngineHomePage and change eventlistenercapture mode
 // @version        2026/03/28 00:00 check userTypedValue insted value
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2025/12/20 00:00 new search widget
@@ -38,7 +39,7 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
 
   let searchbar = window.document.getElementById("searchbar-new");
   searchbar.inputField.addEventListener("keydown", 
-       (event) => patchForBug1894910_allow_search_with_empty_text(event), false);
+       (event) => patchForBug1894910_allow_search_with_empty_text(event), true);
   searchbar.goButton.addEventListener("click", 
        (event) => patchForBug1894910_allow_search_with_empty_text(event), false);
        
@@ -52,7 +53,7 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
         !event.originalTarget.classList.contains("urlbar-go-button"))
       return;
    
-    let searchMode = searchbar.searchMode;
+    let searchMode = searchbar.searchMode;Services.console.logStringMessage(searchbar.searchMode.engineName);
     let engine, label;
     if (!searchMode) {
       engine = await lazy.SearchService.getDefault();
@@ -61,8 +62,7 @@ if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
       engine = await lazy.SearchService.getEngineByName(label);
     }
     let where = patchForBug1894910_whereToOpen(event);
-    let url = engine.searchForm;
-    window.openTrustedLinkIn(url, where);
+    searchbar.openEngineHomePage("", {searchEngine: engine, where: where});
   }
   function patchForBug1894910_whereToOpen(aEvent, aForceNewTab = false) {
       let where = "current";
