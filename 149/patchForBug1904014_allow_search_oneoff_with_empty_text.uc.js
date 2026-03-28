@@ -4,6 +4,7 @@
 // @include        chrome://browser/content/browser.xhtml
 // @async          true
 // @compatibility  149
+// @version        2026/03/28 00:00 Do nothing if browser.search.widget.new = true
 // @version        2026/01/28 00:00 Bug 2003300 - Replace nsISearchService.CHANGE_REASON* with SearchService.CHANGE_REASON*
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/07  Bug 2008745 - Stop leaking globals into the global scope from imports in autocomplete-popup.js
@@ -15,6 +16,9 @@
 // @version        2024/07/8
 // ==/UserScript==
 (function() {
+  if (Services.prefs.getBoolPref("browser.search.widget.new", false)) 
+    return;
+
   const lazy = {};
   ChromeUtils.defineESModuleGetters(lazy, {
     SearchOneOffs: "moz-src:///browser/components/search/SearchOneOffs.sys.mjs",
