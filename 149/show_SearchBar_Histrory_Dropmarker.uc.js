@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/03/30 00:00 Workaround for Bug 2027578
 // @version        2026/01/27 00:00 revert value after history dropdown is shown
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/20 0:00 revert some FormHistory change
@@ -36,6 +37,7 @@ var showSearchBarHistroryDropmarker = {
     const kNSXUL = "http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul";
     this.oldmaxRows = Services.prefs.getIntPref("browser.urlbar.maxRichResults", 10);
     this.oldmaxResults = Services.prefs.getIntPref("browser.urlbar.recentsearches.maxResults", 5);
+    this.oldurlbarRecentsearches = Services.prefs.getBoolPref("browser.urlbar.suggest.recentsearches", true);
 
     let bar, ref;
     if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
@@ -80,6 +82,9 @@ var showSearchBarHistroryDropmarker = {
     window.addEventListener('aftercustomization', this, false);
     window.addEventListener('MozDOMFullscreen:Exited', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
+    Services.prefs.addObserver('browser.urlbar.maxRichResults', this, false);
+    Services.prefs.addObserver('browser.urlbar.recentsearches.maxResults', this, false);
+    Services.prefs.addObserver('browser.urlbar.suggest.recentsearches', this, false);
     window.addEventListener("resize", this, false);
 
     if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
@@ -175,7 +180,10 @@ var showSearchBarHistroryDropmarker = {
     window.removeEventListener("unload", this, false);
     window.removeEventListener('aftercustomization', this, false);
     window.removeEventListener('MozDOMFullscreen:Exited', this, false);
-    Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
+    Services.prefs.removeObserver('browser.search.widget.inNavBar', this, false);
+    Services.prefs.removeObserver('browser.urlbar.maxRichResults', this, false);
+    Services.prefs.removeObserver('browser.urlbar.recentsearches.maxResults', this, false);
+    Services.prefs.removeObserver('browser.urlbar.suggest.recentsearches', this, false);
     window.removeEventListener("resize", this, false);
   },
 
@@ -189,8 +197,13 @@ var showSearchBarHistroryDropmarker = {
         return;
       }
 
-      Services.prefs.setIntPref("browser.urlbar.recentsearches.maxResults", 1000);
+      Services.prefs.removeObserver('browser.urlbar.maxRichResults', this, false);
+      Services.prefs.removeObserver('browser.urlbar.recentsearches.maxResults', this, false);
+      Services.prefs.removeObserver('browser.urlbar.suggest.recentsearches', this, false);
+
       Services.prefs.setIntPref("browser.urlbar.maxRichResults", 1000);
+      Services.prefs.setIntPref("browser.urlbar.recentsearches.maxResults", 1000);
+      Services.prefs.setBoolPref("browser.urlbar.suggest.recentsearches", true);
 
 	   	let v = '';
   		if(bar.value)
@@ -206,8 +219,12 @@ var showSearchBarHistroryDropmarker = {
       bar.value = v;
 
       setTimeout(() => {
-        Services.prefs.setIntPref("browser.urlbar.recentsearches.maxResults", this.oldmaxResults);
         Services.prefs.setIntPref("browser.urlbar.maxRichResults", this.oldmaxRows);
+        Services.prefs.setIntPref("browser.urlbar.recentsearches.maxResults", this.oldmaxResults);
+        Services.prefs.setBoolPref("browser.urlbar.suggest.recentsearches", this.oldurlbarRecentsearches);
+        Services.prefs.addObserver('browser.urlbar.maxRichResults', this, false);
+        Services.prefs.addObserver('browser.urlbar.recentsearches.maxResults', this, false);
+        Services.prefs.addObserver('browser.urlbar.suggest.recentsearches', this, false);
       }, 250);
     } else {
     	let bar = document.getElementById("searchbar");
@@ -235,7 +252,20 @@ var showSearchBarHistroryDropmarker = {
   observe(aSubject, aTopic, aPrefstring) {
       if (aTopic == 'nsPref:changed') {
         // 設定が変更された時の処理
-        setTimeout(function(){showSearchBarHistroryDropmarker.init2(aTopic);}, 0);
+        switch(aPrefstring) {
+          case "browser.urlbar.maxRichResults":
+            this.oldmaxRows = Services.prefs.getIntPref(aPrefstring, 10);
+            break;
+          case "browser.urlbar.recentsearches.maxResults": 
+            this.oldmaxResults = Services.prefs.getIntPref(aPrefstring, 5);
+            break;
+          case "browser.urlbar.suggest.recentsearches": 
+            this.oldurlbarRecentsearches = Services.prefs.getBoolPref(aPrefstring, true);
+            break;
+          case "browser.search.widget.new":
+            setTimeout(function(){showSearchBarHistroryDropmarker.init2(aTopic);}, 0);
+            break;
+        }
       }
   },
 
