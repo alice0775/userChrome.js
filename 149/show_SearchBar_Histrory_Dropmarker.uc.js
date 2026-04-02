@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/04/03 00:00 increase maxResults
 // @version        2026/03/30 00:00 Workaround for Bug 2027578
 // @version        2026/01/27 00:00 revert value after history dropdown is shown
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
@@ -201,8 +202,8 @@ var showSearchBarHistroryDropmarker = {
       Services.prefs.removeObserver('browser.urlbar.recentsearches.maxResults', this, false);
       Services.prefs.removeObserver('browser.urlbar.suggest.recentsearches', this, false);
 
-      Services.prefs.setIntPref("browser.urlbar.maxRichResults", 1000);
-      Services.prefs.setIntPref("browser.urlbar.recentsearches.maxResults", 1000);
+      Services.prefs.setIntPref("browser.urlbar.maxRichResults", 10000);
+      Services.prefs.setIntPref("browser.urlbar.recentsearches.maxResults", 10000);
       Services.prefs.setBoolPref("browser.urlbar.suggest.recentsearches", true);
 
 	   	let v = '';
