@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 150
+// @version        2026/04/15 00:00 remove SearchService.isInitialized check
 // @version        2026/04/04 00:00 revert Workaround for Bug 2027578
 // @version        2026/04/03 00:00 increase maxResults
 // @version        2026/03/30 00:00 Workaround for Bug 2027578
@@ -71,6 +72,7 @@ var showSearchBarHistroryDropmarker = {
   },
 
   init: async function() {
+/*
     const lazy = {};
     ChromeUtils.defineESModuleGetters(lazy, {
       SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
@@ -79,6 +81,7 @@ var showSearchBarHistroryDropmarker = {
       await lazy.SearchService.init();
     }
     delete lazy;
+*/
     window.addEventListener("unload", this, false);
     window.addEventListener('aftercustomization', this, false);
     window.addEventListener('MozDOMFullscreen:Exited', this, false);
