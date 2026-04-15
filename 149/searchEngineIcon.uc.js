@@ -4,6 +4,7 @@
 // @description    replace the magnifying glass with the search engine's icon
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/04/15 00:00 remove async function
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
@@ -32,13 +33,7 @@
 var searchengineicon = {
   lazy: {},
 
-  init: async function() {
-    ChromeUtils.defineESModuleGetters(this.lazy, {
-      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
-    });
-    if (!this.lazy.SearchService.isInitialized) {
-      await this.lazy.SearchService.init();
-    }
+  init: function() {
     this.toggleImage("init");
     window.addEventListener('aftercustomization', this, false);
     window.addEventListener('MozDOMFullscreen:Exited', this, false);
@@ -59,6 +54,12 @@ var searchengineicon = {
   
   toggleImage: async function(topic) {
     Services.console.logStringMessage("toggleImage "+topic);
+    ChromeUtils.defineESModuleGetters(this.lazy, {
+      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
+    });
+    if (!this.lazy.SearchService.isInitialized) {
+      await this.lazy.SearchService.init();
+    }
     if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
       var searchbar = window.document.getElementById("searchbar-new");
       if (!searchbar)
