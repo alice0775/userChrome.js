@@ -5,6 +5,7 @@
 // @charset        utf-8
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/04/15 00:00 remove async functiom
 // @version        2026/04/15 00:00 remove SearchService.isInitialized check
 // @version        2026/03/26 00:00 fix shadow DOM
 // @version        2026/01/13 00:00 compatibility 149 from 148
@@ -78,7 +79,7 @@ window.serachWP_modoki = {
   _highlightAll: false,
   _prevHighLitedTerm: "",
 
-  init: async function() {
+  init: function() {
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     window.addEventListener("resize", this, false);
