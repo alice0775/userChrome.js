@@ -5,6 +5,7 @@
 // @charset        utf-8
 // @include        main
 // @compatibility  Firefox 149
+// @version        2026/04/15 00:00 remove SearchService.isInitialized check
 // @version        2026/03/26 00:00 fix shadow DOM
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @author         Alice0775
@@ -78,14 +79,6 @@ window.serachWP_modoki = {
   _prevHighLitedTerm: "",
 
   init: async function() {
-    const lazy = {};
-    ChromeUtils.defineESModuleGetters(lazy, {
-      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
-    });
-    if (!lazy.SearchService.isInitialized) {
-      await lazy.SearchService.init();
-    }
-    delete lazy;
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
     window.addEventListener("resize", this, false);
