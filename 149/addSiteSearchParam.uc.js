@@ -6,6 +6,8 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 149
+// @version        2026/04/15 00:00 remove async functiom
+// @version        2026/04/15 00:00 remove SearchService.isInitialized check
 // @version        2026/01/23 00:00 Bug 2000685 - Replace the search service instance with a singleton
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2025/12/20 00:00 new search widget
@@ -16,15 +18,7 @@
 // ==/UserScript==
 var addSiteSearchParam = {
 
-  init: async function() {
-    const lazy = {};
-    ChromeUtils.defineESModuleGetters(lazy, {
-      SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
-    });
-    if (!lazy.SearchService.isInitialized) {
-      await lazy.SearchService.init();
-    }
-    delete lazy;
+  init: function() {
     this.searchBarMenu();
     window.addEventListener('aftercustomization', this, false);
     Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
