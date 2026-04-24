@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 150
+// @version        2026/04/24 00:00 remove unnecessary async  declarations
 // @version        2026/04/15 00:00 remove SearchService.isInitialized check
 // @version        2026/04/04 00:00 revert Workaround for Bug 2027578
 // @version        2026/04/03 00:00 increase maxResults
@@ -71,7 +72,7 @@ var showSearchBarHistroryDropmarker = {
     btn.addEventListener("mousedown", this, false);
   },
 
-  init: async function() {
+  init: function() {
 /*
     const lazy = {};
     ChromeUtils.defineESModuleGetters(lazy, {
