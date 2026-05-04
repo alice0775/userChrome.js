@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 152
+// @version        2026/05/05 00:00 Bug 2034495 - rename toolbar tokens
 // @version        2026/05/04 00:00 Bug 2033243 - Rename ownerGlobal to relevantGlobal (documentGlobal)
 // @version        2026/01/13 00:00 compatibility 149 from 148
 // @version        2026/01/07 Bug 2008041 - Make XUL disabled / checked attributes html-style boolean attributes.
@@ -216,14 +217,14 @@ window.SidebarModoki = {
       #SM_toolbox
       {
         width: {SM_WIDTH}px;
-        background-color: var(--toolbar-bgcolor);
+        background-color: var(--toolbar-background-color);
         color: -moz-dialogtext;
         text-shadow: none;
       }
       */
       #SM_toolbox {
         /*background-color: var(--lwt-accent-color);*/
-        background-color: var(--toolbar-bgcolor);
+        background-color: var(--toolbar-background-color);
 /*
         color: var(--lwt-text-color);
 */
@@ -242,9 +243,9 @@ window.SidebarModoki = {
         visibility:collapse;
       }
       #SM_splitter {
-        background-color: var(--toolbar-bgcolor) !important;
-        border-inline-start-color: var(--toolbar-bgcolor) !important;
-        border-inline-end-color: var(--toolbar-bgcolor) !important;
+        background-color: var(--toolbar-background-color) !important;
+        border-inline-start-color: var(--toolbar-background-color) !important;
+        border-inline-end-color: var(--toolbar-background-color) !important;
       }
 
       #SM_toolbox,
@@ -272,7 +273,7 @@ window.SidebarModoki = {
 
       :root[lwtheme-brighttext] #SM_tabbox,
       toolbar[brighttext] #SM_tabbox {
-        background-color: var(--toolbar-bgcolor);
+        background-color: var(--toolbar-background-color);
       }
       #SM_tabs {
         overflow-x: hidden;
