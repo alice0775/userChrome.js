@@ -6,6 +6,7 @@
 // @async         true
 // @author        alice0775
 // @compatibility  Firefox 151
+// @version        2026/05/04 19:00 tweak dark theme or similar themes when svg.context-properties.content.enabled=false, due to Bug 1831457
 // @version        2026/04/08 00:00 Bug 1910902 - Remove old sidebar icons no longer and replace with new.
 // @version        2026/01/18 00:00 simplify toggleAttribute
 // @version        2026/01/15 00:00 fix error
@@ -29,6 +30,9 @@
 // @version       2025/04/08
 // ==/UserScript==
 (function() {
+//xxx the following prefs should be applied if dark theme or similar themes, due to Bug 1831457
+    //Services.prefs.setBoolPref("svg.context-properties.content.enabled", true);
+//
     try {
         CustomizableUI.createWidget({
             id: 'toggle-sidebar2',
@@ -56,10 +60,13 @@
               }
             },
             onCreated(toolbaritem) {
-              const svgData = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="context-fill" fill-opacity="context-fill-opacity" fill-rule="evenodd"><path d="M16 12.25 16 4a2 2 0 0 0-2-2L2 2a2 2 0 0 0-2 2l0 8.25a2 2 0 0 0 2 2l12 0a2 2 0 0 0 2-2zm-14.75.15 0-8.55.6-.6 4.9 0 0 9.75-4.9 0-.6-.6zM8 13l6.15 0 .6-.6 0-8.55-.6-.6-6.15 0L8 13z"/><path d="M5.5 10.5A.5.5 0 0 0 5 10l-2 0a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/><path d="M5.5 8a.5.5 0 0 0-.5-.5l-2 0a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/><path d="M5.5 5.5A.5.5 0 0 0 5 5L3 5a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/></svg>`;
-              toolbaritem.style.setProperty('list-style-image', `url('${svgData}')`, "");
-              toolbaritem.style.setProperty('color', 'inherit',"");
-              toolbaritem.style.setProperty('fill', 'var(--toolbarbutton-icon-fill)',"");
+              const svgDataL = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="context-fill" fill-opacity="context-fill-opacity" fill-rule="evenodd"><path d="M16 12.25 16 4a2 2 0 0 0-2-2L2 2a2 2 0 0 0-2 2l0 8.25a2 2 0 0 0 2 2l12 0a2 2 0 0 0 2-2zm-14.75.15 0-8.55.6-.6 4.9 0 0 9.75-4.9 0-.6-.6zM8 13l6.15 0 .6-.6 0-8.55-.6-.6-6.15 0L8 13z"/><path d="M5.5 10.5A.5.5 0 0 0 5 10l-2 0a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/><path d="M5.5 8a.5.5 0 0 0-.5-.5l-2 0a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/><path d="M5.5 5.5A.5.5 0 0 0 5 5L3 5a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/></svg>`;
+              const svgDataD = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="rgb(251, 251, 254)" fill-opacity="context-fill-opacity" fill-rule="evenodd"><path d="M16 12.25 16 4a2 2 0 0 0-2-2L2 2a2 2 0 0 0-2 2l0 8.25a2 2 0 0 0 2 2l12 0a2 2 0 0 0 2-2zm-14.75.15 0-8.55.6-.6 4.9 0 0 9.75-4.9 0-.6-.6zM8 13l6.15 0 .6-.6 0-8.55-.6-.6-6.15 0L8 13z"/><path d="M5.5 10.5A.5.5 0 0 0 5 10l-2 0a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/><path d="M5.5 8a.5.5 0 0 0-.5-.5l-2 0a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/><path d="M5.5 5.5A.5.5 0 0 0 5 5L3 5a.5.5 0 0 0 0 1l2 0a.5.5 0 0 0 .5-.5z"/></svg>`;
+              if (!Services.prefs.getBoolPref("svg.context-properties.content.enabled", false)) {
+                toolbaritem.style.setProperty('list-style-image', `light-dark(url('${svgDataL}'), url('${svgDataD}')`, "");
+              } else {
+                toolbaritem.style.setProperty('list-style-image', `url('${svgDataL}')`, "");
+              }
             },
         });
     } catch(ex) {}
