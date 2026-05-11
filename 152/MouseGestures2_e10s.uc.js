@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 152
+// @version        2026/05/11 Remove the workaround for adding `tabindex` to scroll targets
 // @version        2026/05/06 To prevent the loss of selection caused by bug 2032191, skip the following two lines if a selection exists
 // @version        2026/03/02 fix bug
 // @version        2026/02/23 Allow assignment of the same Any Gesture Sequence
@@ -268,8 +269,27 @@ var ucjsMouseGestures = {
         ['', '最大化/元のサイズ', function(){ window.windowState == 1 ? window.restore() : window.maximize(); } ],
         ['LDRU', 'フルスクリーン', function(){ document.getElementById("View:FullScreen").doCommand(); } ],
 
-        ['RU', '上端へスクロール', function(){ goDoCommand("cmd_scrollTop"); } ],
-        ['RD', '下端へスクロール', function(){ goDoCommand("cmd_scrollBottom"); } ],
+        ['RU', '上端へスクロール', function(){ 
+          //Services.console.logStringMessage("上端へスクロール");
+          if (false && !ucjsMouseGestures.targetIdentifier) {
+            goDoCommand("cmd_scrollTop"); 
+          } else {
+            gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_scrollToTop",
+                {targetIdentifier: ucjsMouseGestures.targetIdentifier}
+            );
+          }
+        }],
+
+        ['RD', '下端へスクロール', function(){
+          //Services.console.logStringMessage("下端へスクロール");
+          if (false && !ucjsMouseGestures.targetIdentifier) {
+            goDoCommand("cmd_scrollBottom");
+          } else {
+            gBrowser.selectedBrowser.messageManager.sendAsyncMessage("ucjsMouseGestures_scrollToBottom",
+                {targetIdentifier: ucjsMouseGestures.targetIdentifier}
+            );
+          }
+        }],
 /*
         ['RU', '上端へスクロール', function(){ goDoCommand("cmd_moveTop"); } ],
         ['RD', '下端へスクロール', function(){ goDoCommand("cmd_moveBottom"); } ],
@@ -601,6 +621,7 @@ var ucjsMouseGestures = {
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURLs_stop", this);
      messageManager.addMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
+     messageManager.addMessageListener("ucjsMouseGestures_target", this);
 
      messageManager.addMessageListener("ucjsMouseGestures_executeInChrome", this);
      window.addEventListener("unload", this, false);
@@ -619,6 +640,7 @@ var ucjsMouseGestures = {
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_start", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURLs_stop", this);
      messageManager.removeMessageListener("ucjsMouseGestures_linkURL_dragstart", this);
+     messageManager.removeMessageListener("ucjsMouseGestures_target", this);
 
      messageManager.removeMessageListener("ucjsMouseGestures_executeInChrome", this);
      window.removeEventListener("unload", this, false);
@@ -693,6 +715,9 @@ var ucjsMouseGestures = {
         //} catch(ex) {
         //  Services.console.logStringMessage("Error in executeInChrome : " /*+ ex*/);
         //}
+        break;
+      case "ucjsMouseGestures_target":
+        this.targetIdentifier = message.data.targetIdentifier;
         break;
     }
     return {};
@@ -986,6 +1011,7 @@ let ucjsMouseGestures_framescript = {
       init: function(isMac, enableWheelGestures) {
         ChromeUtils.defineESModuleGetters(this, {
           E10SUtils: "resource://gre/modules/E10SUtils.sys.mjs",
+          ContentDOMReference: "resource://gre/modules/ContentDOMReference.sys.mjs",
         });
         this.Services = Services;
 
@@ -998,6 +1024,8 @@ let ucjsMouseGestures_framescript = {
         addMessageListener("ucjsMouseGestures_linkURLs_request", this);
         addMessageListener("ucjsMouseGestures_dispatchKeyEvent", this);
         addMessageListener("ucjsMouseGestures_dispatchEvent", this);
+        addMessageListener("ucjsMouseGestures_scrollToTop", this);
+        addMessageListener("ucjsMouseGestures_scrollToBottom", this);
         addEventListener("mousedown", this, true);
         if (this.enableWheelGestures)
           addEventListener('wheel', this, true);
@@ -1005,6 +1033,7 @@ let ucjsMouseGestures_framescript = {
 
       receiveMessage: function(message) {
 //        this.console.logStringMessage("====" + message.name);
+        let target;
         switch(message.name) {
           case "ucjsMouseGestures_mouseup":
             removeEventListener("mousemove", this, false);
@@ -1041,6 +1070,19 @@ let ucjsMouseGestures_framescript = {
             break;
           case "ucjsMouseGestures_dispatchEvent":
             this.dispatchEvent(message.data);
+            break;
+          case "ucjsMouseGestures_scrollToTop":
+            target = this.ContentDOMReference.resolve(
+                       message.data.targetIdentifier
+                     );
+            this.scrollUpThroughAncestors(target);
+            break;
+          case "ucjsMouseGestures_scrollToBottom":
+            target = this.ContentDOMReference.resolve(
+                       message.data.targetIdentifier
+                     );
+            this.scrollDownThroughAncestors(target);
+            break;
         }
         return {};
       },
@@ -1055,16 +1097,26 @@ let ucjsMouseGestures_framescript = {
         switch(event.type) {
           case "mousedown":
             if (event.button == 2) {
-              let tabIndex = event.target.hasAttribute("tabindex");
+              let elm = event.target;  
+              //this.Services.console.logStringMessage("mousedown " + elm.nodeName);
+              let targetIdentifier = this.ContentDOMReference.get(elm);
+              sendSyncMessage("ucjsMouseGestures_target",
+                {
+                  targetIdentifier: targetIdentifier,
+                }
+              );
+/*
+              let tabIndex = elm.hasAttribute("tabindex");
               if (!tabIndex
-                  && !event.target.ownerDocument.defaultView.XULElement?.isInstance(event.target)
-                  && event.target.localName != "span") {
-                if (!this._getSelectedText(event.target)) {
+                  && !elm.ownerDocument.defaultView.XULElement?.isInstance(event.target)
+                  && elm.localName != "span") {
+                if (!this._getSelectedText(elm)) {
 // xxxx To prevent the loss of selection caused by bug 2032191, skip the following two lines if a selection exists
-                  event.target.setAttribute("tabindex", -1);
-                  event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, event.target);
+                  elm.setAttribute("tabindex", -1);
+                  elm.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, elm);
                }
               }
+  */
               addEventListener("mousemove", this, false);
             }
             addEventListener("dragstart", this, true);
@@ -1314,7 +1366,7 @@ let ucjsMouseGestures_framescript = {
       },
       
       _gatherTextUnder: function(root) {
-        this.console.logStringMessage("root " + root);
+        //this.console.logStringMessage("root " + root);
         let text = "";
         let node = root.firstChild;
         let depth = 1;
@@ -1443,7 +1495,79 @@ let ucjsMouseGestures_framescript = {
             keyCode : keyCode, charCode : charCode
           })
         );
+      },
+      
+      getScrollableAncestors: function getScrollableAncestors(el) {
+        const ancestors = [];
+        let node = el;
+
+        while (node) {
+          // ShadowRoot
+          if (node instanceof content.ShadowRoot) {
+            node = node.host;
+            continue;
+          }
+          //this.Services.console.logStringMessage("node " + node.nodeName);
+
+          // Element
+          if (node instanceof content.Element) {
+            const style = node.ownerDocument.defaultView.getComputedStyle(node);
+            const overflowY = style.overflowY;
+            //this.Services.console.logStringMessage("overflowY " + overflowY);
+
+            const isScrollable =
+              (overflowY === 'auto' || overflowY === 'scroll') &&
+              node.scrollHeight > node.clientHeight;
+
+            if (isScrollable) {
+              //this.Services.console.logStringMessage("Scrollable " + node.nodeName);
+
+              ancestors.push(node);
+            }
+
+            node = node.parentNode;
+            continue;
+          }
+
+          if (node instanceof content.Document) break;
+
+          node = node.parentNode;
+        }
+
+        // fallback
+        ancestors.push(el.ownerDocument.scrollingElement);
+
+        return ancestors;
+      },
+      scrollUpThroughAncestors: function scrollUpThroughAncestors(el) {
+        //this.Services.console.logStringMessage("scrollUpThroughAncestors " + el.nodeName);
+        const ancestors = this.getScrollableAncestors(el);
+
+        for (const parent of ancestors) {
+          if (parent.scrollTop <= 0) continue;
+
+          parent.scrollTo({ top: 0/*, behavior: 'smooth'*/ });
+          return parent;
+        }
+
+        return null;
+      },
+      scrollDownThroughAncestors: function scrollDownThroughAncestors(el) {
+        //this.Services.console.logStringMessage("scrollUpThroughAncestors " + el.nodeName);
+        const ancestors = this.getScrollableAncestors(el);
+
+        for (const parent of ancestors) {
+          const maxScroll = parent.scrollHeight - parent.clientHeight;
+
+          if (parent.scrollTop >= maxScroll) continue;
+
+          parent.scrollTo({ top: maxScroll/*, behavior: 'smooth'*/ });
+          return parent;
+        }
+
+        return null;
       }
+
 
     }; // end framescript
     window.messageManager.loadFrameScript(
@@ -1482,6 +1606,7 @@ let ucjsMouseGestures_helper = {
       "nsIURLQueryStringStripper"
     );
     ChromeUtils.defineESModuleGetters(this.lazy, {
+      ContentDOMReference: "resource://gre/modules/ContentDOMReference.sys.mjs",
       SearchService: "moz-src:///toolkit/components/search/SearchService.sys.mjs",
       FormHistory: "resource://gre/modules/FormHistory.sys.mjs",
     });
