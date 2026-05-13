@@ -7,6 +7,7 @@
 // @charset       UTF-8
 // @author        Alice0775
 // @compatibility 152
+// @version       2026/05/13 21:00 crash due to Bug 2037809 has been lannded
 // @version       2026/05/04 00:00 Bug 2033243 - Rename ownerGlobal to relevantGlobal (documentGlobal)
 // @version       2020601/12 hide gpu memory
 // @version       2025/10/01 use LocaleString
@@ -60,7 +61,7 @@ window.ucjsMemoryUsage = {
 
     window.addEventListener("unload", this, false);
     window.setInterval(() => this.requestMemory(), this.INTERVAL * 1000);
-    this.requestMemory();
+    window.setTimeout(() => this.requestMemory(), 5 * 1000);
   },
 
   uninit: function() {
