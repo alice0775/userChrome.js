@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 152
+// @version        2026/05/16 Due to the fix for bug 2034851, 05/06 is no longer needed, so reverted it.
 // @version        2026/05/06 To prevent the loss of selection caused by bug 2032191, skip the following two lines if a selection exists
 // @version        2026/03/02 fix bug
 // @version        2026/02/23 Allow assignment of the same Any Gesture Sequence
@@ -1059,11 +1060,8 @@ let ucjsMouseGestures_framescript = {
               if (!tabIndex
                   && !event.target.ownerDocument.defaultView.XULElement?.isInstance(event.target)
                   && event.target.localName != "span") {
-                if (!this._getSelectedText(event.target)) {
-// xxxx To prevent the loss of selection caused by bug 2032191, skip the following two lines if a selection exists
-                  event.target.setAttribute("tabindex", -1);
-                  event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, event.target);
-               }
+                event.target.setAttribute("tabindex", -1);
+                event.target.ownerDocument.defaultView.setTimeout((elm) => {if (elm) elm.removeAttribute("tabindex");}, 800, event.target);
               }
               addEventListener("mousemove", this, false);
             }
