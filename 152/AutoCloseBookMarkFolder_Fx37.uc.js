@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/05/17 wip Compare based on document location rather than preference (new bookmarks sidebar)
 // @version       2025/05/17 wip restoreScrollPosition (new bookmarks sidebar)
 // @version       2025/05/17 wip closeAll/openAll (new bookmarks sidebar)
 // @version       2025/05/17 wip do nothing if click on Twisty mark (new bookmarks sidebar)
@@ -49,7 +50,7 @@
 *
 * ***** END LICENSE BLOCK ***** */
 
-if (!Services.prefs.getBoolPref("sidebar.updatedBookmarks.enabled", false)) {
+if (location.href.includes("chrome://browser/content/places/bookmarksSidebar.xhtml")) {
 
 // for old bookmarks sidebar
 var acBookMarkTreeFolder = {
@@ -307,6 +308,7 @@ acBookMarkTreeFolder.init();
       }
     }
 
+    // xxx 見えている範囲+αだけ?
     function openAll() {
       const folders = getElementsByTagNameInShadow(sidebarBookmarks.bookmarkList, 'details');
       for (let i = folders.length - 1; i >= 0; i--) {
