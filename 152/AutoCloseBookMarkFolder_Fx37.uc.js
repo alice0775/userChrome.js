@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/05/17 wip closeAll/openAll (new bookmarks sidebar)
 // @version       2025/05/17 wip do nothing if click on Twisty mark (new bookmarks sidebar)
 // @version       2025/05/17 wip new bookmarks sidebar
 // @version       2025/03/11 fix style
@@ -248,85 +249,118 @@ acBookMarkTreeFolder.init();
   // new bookmarks sidebar
   function acBookmarksSidebar() {          
 
-  	let lazy = {};
-  	ChromeUtils.defineESModuleGetters(lazy, {
-  	  PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
-  	})
-  	
+    let lazy = {};
+    ChromeUtils.defineESModuleGetters(lazy, {
+      PlacesUtils: "resource://gre/modules/PlacesUtils.sys.mjs",
+    })
+    
     const sidebarBookmarks = document.querySelector("sidebar-bookmarks");
 
-  	function autoclose(e) {
+    function getElementsByTagNameInShadow(rootNode, tagName) {
+      const result = [];
+      const targetTag = tagName.toLowerCase();
 
-      function getElementsByTagNameInShadow(rootNode, tagName) {
-        const result = [];
-        const targetTag = tagName.toLowerCase();
-
-        function traverse(node) {
-          if (node.nodeType === Node.ELEMENT_NODE) {
-            if (node.tagName.toLowerCase() === targetTag) {
-              result.push(node);
-            }
-            if (node.shadowRoot) {
-              traverse(node.shadowRoot);
-            }
+      function traverse(node) {
+        if (node.nodeType === Node.ELEMENT_NODE) {
+          if (node.tagName.toLowerCase() === targetTag) {
+            result.push(node);
           }
-
-          let child = node.firstChild;
-          while (child) {
-            traverse(child);
-            child = child.nextSibling;
+          if (node.shadowRoot) {
+            traverse(node.shadowRoot);
           }
         }
 
-        traverse(rootNode);
-        return result;
+        let child = node.firstChild;
+        while (child) {
+          traverse(child);
+          child = child.nextSibling;
+        }
       }
+
+      traverse(rootNode);
+      return result;
+    }
+
+    function addToolbar() {
+      const header = sidebarBookmarks.shadowRoot.querySelector("sidebar-panel-header");
+      toolbar = document.createXULElement("toolbar");
+      toolbar.setAttribute("id", "acBookMarkTreeFolder-toolbar");
+      const closeAllButton = document.createXULElement("toolbarbutton");
+      closeAllButton.setAttribute("label", "\u6298\u7573");//折畳
+      closeAllButton.addEventListener("command", () => closeAll());
+      const openAllButton = document.createXULElement("toolbarbutton");
+      openAllButton.setAttribute("label", "\u5c55\u958b");//展開
+      openAllButton.addEventListener("command", () => openAll());
+
+      toolbar.appendChild(closeAllButton);
+      toolbar.appendChild(openAllButton);
+      header.appendChild(toolbar);
+    }
+
+    addToolbar();
+
+    function closeAll() {
+      const folders = getElementsByTagNameInShadow(sidebarBookmarks.bookmarkList, 'details');
+      for (let i = folders.length - 1; i >= 0; i--) {
+        folders[i].removeAttribute("open");
+      }
+    }
+
+    function openAll() {
+      const folders = getElementsByTagNameInShadow(sidebarBookmarks.bookmarkList, 'details');
+      for (let i = folders.length - 1; i >= 0; i--) {
+        folders[i].setAttribute("open", "");
+      }
+    }
+
+    function autoclose(e) {
+
 
       const folders = getElementsByTagNameInShadow(sidebarBookmarks.bookmarkList, 'details');
       /*
-      for (let i = folders.length - 1; i > 0; i--) {
-      	    console.log(folders[i])
+      for (let i = folders.length - 1; i >= 0; i--) {
+            console.log(folders[i])
       }
       */
 
-  	  let row = e.originalTarget;
+      let row = e.originalTarget;
       
       let rect = row.getBoundingClientRect();
-  	  if (Math.abs(e.clientX - rect.left) < 16) {
+      if (Math.abs(e.clientX - rect.left) < 16) {
         // > マーク付近をクリックしたときは何もしない
         return;
       }
-  	  if (row.localName == "summary") {
-  	    //Services.console.logStringMessage(row.parentNode.guid)
-  	    if (row.parentNode.open) {
-  	      //do nothing
-  		  } else {
-  	      let folderGuid = row.parentNode.guid;
-  				lazy.PlacesUtils.bookmarks.fetch(folderGuid, null, { includePath: true })
-  		    .then(b => {
-  		      let containers = b.path.map(obj => {
-  		        return obj.guid;
-  		      });
-  					containers.push(folderGuid);
+      if (row.localName == "summary") {
+        //Services.console.logStringMessage(row.parentNode.guid)
+        if (row.parentNode.open) {
+          //do nothing
+        } else {
+          let folderGuid = row.parentNode.guid;
+          lazy.PlacesUtils.bookmarks.fetch(folderGuid, null, { includePath: true })
+          .then(b => {
+            let containers = b.path.map(obj => {
+              return obj.guid;
+            });
+            containers.push(folderGuid);
 
-  					for (let i = folders.length - 1; i > 0; i--) {
-  						let guid = folders[i].guid;
-  						if (!containers.includes(guid)) { 
+            for (let i = folders.length - 1; i >= 0; i--) {
+              let guid = folders[i].guid;
+              if (!containers.includes(guid)) { 
                 /*
-          	    console.log(folders[i])
-          	    Services.console.logStringMessage("collapse " + folders[i].guid)
-  							*/
-  			        folders[i].removeAttribute("open");
-  			      }
-  		      }
-  		      //Scroll intoview 
-  	        row.scrollIntoView({behavior: "instant", block: "start"});
-  				});
-  			}
-  	  }
-  	}
+                console.log(folders[i])
+                Services.console.logStringMessage("collapse " + folders[i].guid)
+                */
+                folders[i].removeAttribute("open");
+              }
+            }
+            //Scroll intoview 
+            row.scrollIntoView({behavior: "instant", block: "start"});
+          });
+        }
+      }
+    }
 
-  	sidebarBookmarks.addEventListener("click", autoclose )
+    sidebarBookmarks.addEventListener("click", autoclose )
   }
 
   acBookmarksSidebar();
