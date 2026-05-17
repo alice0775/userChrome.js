@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/05/17 wip do nothing if click on Twisty mark (new bookmarks sidebar)
 // @version       2025/05/17 wip new bookmarks sidebar
 // @version       2025/03/11 fix style
 // @version       2025/03/11 fix makeURI
@@ -46,7 +47,7 @@
 *
 * ***** END LICENSE BLOCK ***** */
 
-if (!Services.prefs.getBoolPref("sidebar.updatedBookmarks.enabled", true)) {
+if (!Services.prefs.getBoolPref("sidebar.updatedBookmarks.enabled", false)) {
 
 // for old bookmarks sidebar
 var acBookMarkTreeFolder = {
@@ -289,6 +290,12 @@ acBookMarkTreeFolder.init();
       */
 
   	  let row = e.originalTarget;
+      
+      let rect = row.getBoundingClientRect();
+  	  if (Math.abs(e.clientX - rect.left) < 16) {
+        // > マーク付近をクリックしたときは何もしない
+        return;
+      }
   	  if (row.localName == "summary") {
   	    //Services.console.logStringMessage(row.parentNode.guid)
   	    if (row.parentNode.open) {
