@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/05/17 wip restoreScrollPosition (new bookmarks sidebar)
 // @version       2025/05/17 wip closeAll/openAll (new bookmarks sidebar)
 // @version       2025/05/17 wip do nothing if click on Twisty mark (new bookmarks sidebar)
 // @version       2025/05/17 wip new bookmarks sidebar
@@ -282,7 +283,7 @@ acBookMarkTreeFolder.init();
     }
 
     function addToolbar() {
-      const header = sidebarBookmarks.shadowRoot.querySelector("sidebar-panel-header");
+      const header = sidebarBookmarks.panelHeader;
       toolbar = document.createXULElement("toolbar");
       toolbar.setAttribute("id", "acBookMarkTreeFolder-toolbar");
       const closeAllButton = document.createXULElement("toolbarbutton");
@@ -361,6 +362,34 @@ acBookMarkTreeFolder.init();
     }
 
     sidebarBookmarks.addEventListener("click", autoclose )
+
+    function saveScrollPosition() {
+      if (!sidebarBookmarks.searchInput.value) {
+        const scrollTop = sidebarBookmarks.shadowRoot.querySelector(".sidebar-panel-scrollable-content").scrollTop;
+        Services.prefs.setIntPref("userCrome.acBookmarksSidebar.scrollTop", scrollTop);
+      }
+    }
+
+    function restoreScrollPosition() {
+      if (!sidebarBookmarks.searchInput.value) {
+        const scrollTop = Services.prefs.getIntPref("userCrome.acBookmarksSidebar.scrollTop", 0);
+        sidebarBookmarks.shadowRoot.querySelector(".sidebar-panel-scrollable-content").scrollTop = scrollTop;
+      }
+    }
+
+    let scrollBox = sidebarBookmarks.shadowRoot.querySelector(".sidebar-panel-scrollable-content");
+    let timer;
+    scrollBox.addEventListener("scroll", () => {
+      timer = setTimeout(() => {
+        if (timer) clearTimeout(timer);
+        saveScrollPosition();
+      }, 10)
+    });
+    
+    setTimeout(() => {
+      restoreScrollPosition();
+    }, 100);
+    
   }
 
   acBookmarksSidebar();
