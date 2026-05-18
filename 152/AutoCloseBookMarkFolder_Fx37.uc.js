@@ -8,6 +8,7 @@
 // @author        original Ronny Perinke
 // @version       original Autoclose Bookmark History Folders 0.5.5
 // @modiffied     Alice0775
+// @version       2025/05/17 wip Suppress unnecessary saves (new bookmarks sidebar)
 // @version       2025/05/17 wip Compare based on document location rather than preference (new bookmarks sidebar)
 // @version       2025/05/17 wip restoreScrollPosition (new bookmarks sidebar)
 // @version       2025/05/17 wip closeAll/openAll (new bookmarks sidebar)
@@ -379,18 +380,30 @@ acBookMarkTreeFolder.init();
       }
     }
 
-    let scrollBox = sidebarBookmarks.shadowRoot.querySelector(".sidebar-panel-scrollable-content");
-    let timer;
-    scrollBox.addEventListener("scroll", () => {
-      timer = setTimeout(() => {
-        if (timer) clearTimeout(timer);
-        saveScrollPosition();
-      }, 10)
-    });
-    
+    const scrollBox = sidebarBookmarks.shadowRoot.querySelector(".sidebar-panel-scrollable-content");
+    //xx なんか新しい疑似ツリーの構成が遅いので 50ms、400ms、1s後にrestoreScrollPositionしてみる
+    //   MutationObserverを使うまでもないやろう
     setTimeout(() => {
       restoreScrollPosition();
-    }, 100);
+    }, 50);
+    setTimeout(() => {
+      restoreScrollPosition();
+    }, 400);
+
+    setTimeout(() => {
+      restoreScrollPosition();
+
+      // 変に上書きを避けるため、スクロール位置復元してから スクロールイベントを拾うようにする
+      let timer;
+      scrollBox.addEventListener("scroll", () => {
+        if (timer) clearTimeout(timer);
+        timer = setTimeout(() => {
+          saveScrollPosition();
+        }, 10)
+      });
+
+    }, 800);
+    
     
   }
 
