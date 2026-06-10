@@ -1,0 +1,80 @@
+// ==UserScript==
+// @name           clearSeachBar.uc.js
+// @namespace      http://amb.vis.ne.jp/mozilla/
+// @description    Right click on magnify glass to clear SeachBar
+// @include        main
+// @async          true
+// @compatibility  Firefox 151
+// @author         Alice0775
+// @version        2026/06/10 new Searchbar
+// @version        2025/02/04 23:00 Bug 1880913 - Move BrowserSearch out of browser.js
+// @version        2021/10/16 20:00 update go button after change value of searchbar
+// @version        2011/03/11 10:00 ellips and update in fullscreen and fix Bug641090 by alice0775
+// ==/UserScript==
+
+var clearSeachBar = {
+  get searchbar(){
+    return Services.prefs.getBoolPref("browser.search.widget.new", false) ?
+           document.getElementById('searchbar-new') :
+           document.getElementById('searchbar');
+  },
+  
+  init: function() {
+    this.initSearchbar();
+    window.addEventListener('aftercustomization', this, false);
+    Services.prefs.addObserver('browser.search.widget.inNavBar', this, false);
+    window.addEventListener('unload', this, false);
+  },
+
+  uninit: function(){
+    window.removeEventListener('aftercustomization', this, false);
+    Services.prefs.removeObserver('browser.search.widget.inNavBar', this);
+    window.removeEventListener('unload', this, false);
+  },
+
+  initSearchbar: function() {
+      if (!this.searchbar)
+        return;
+      if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
+        document.getElementById("navigator-toolbox").addEventListener('click', this, true);
+      } else {
+        this.searchbar.addEventListener('click', this, true);
+      }
+  },
+
+  handleEvent: function(event){
+    switch (event.type) {
+      case "aftercustomization":
+        this.initSearchbar();
+        break;
+      case 'click':
+        this.click(event);
+        break;
+      case 'unload':
+        this.uninit();
+        break;
+    }
+  },
+
+  observe(aSubject, aTopic, aPrefstring) {
+    if (aTopic == 'nsPref:changed') {
+      // 設定が変更された時の処理
+      setTimeout(function(){this.initSearchbar();}.bind(this), 0);
+    }
+  },
+
+  click: function(event) {
+    let target = event.target ;
+    if (event.button == 2 && (target.classList.contains("searchmode-switcher") || target.className == "searchbar-search-button")) {
+      if (this.searchbar.value != "") {
+        event.preventDefault();
+        target.setAttribute('contextmenu', '');
+        this.searchbar.value = "";
+        this.searchbar.removeAttribute("usertyping");
+        try {this.searchbar.updateGoButtonVisibility();} catch(e) {}
+        setTimeout(() => {target.removeAttribute('contextmenu');}, 0);
+      }
+    }
+  }
+}
+clearSeachBar.init();
