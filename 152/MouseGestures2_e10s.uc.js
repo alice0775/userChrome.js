@@ -6,6 +6,7 @@
 // @charset       UTF-8
 // @author        Gomita, Alice0775 since 2018/09/26
 // @compatibility  Firefox 152
+// @version        2026/05/25 fix bug
 // @version        2026/05/16 Due to the fix for bug 2034851, 05/06 is no longer needed, so reverted it.
 // @version        2026/05/06 To prevent the loss of selection caused by bug 2032191, skip the following two lines if a selection exists
 // @version        2026/03/02 fix bug
@@ -711,8 +712,13 @@ var ucjsMouseGestures = {
           document.addEventListener("mouseup", this, false);
           this.mousedownHandler = true;
         }
-
         if (event.button == 2) {
+          try {
+            gBrowser.selectedBrowser.finder.getInitialSelection().then((r)=> {
+               this._selectedTXT = r.selectedText;
+            })
+          } catch(ex) {}
+
           gBrowser.tabpanels.addEventListener("mousemove", this, false);
           if (this.enableWheelGestures)
             window.addEventListener('wheel', this, {capture:true, passive: false});
