@@ -16,9 +16,13 @@ try {
       utils: Cu
     } = Components;
 
-    //let { Services } = Cu.import('resource://gre/modules/Services.jsm');
-    //Cu.import('resource://gre/modules/osfile.jsm');
-
+    try {
+      const cmanifest = Services.dirsvc.get('UChrm', Ci.nsIFile);
+      cmanifest.append('chrome.manifest');
+      Components.manager.QueryInterface(Ci.nsIComponentRegistrar).autoRegister(cmanifest);
+    } catch (ex) {
+      /* empty */
+    }
     function UserChrome_js() {
       Services.obs.addObserver(this, 'domwindowopened', false);
     };
@@ -31,18 +35,11 @@ try {
       handleEvent: function (aEvent) {
         let document = aEvent.originalTarget;
         if (document.location && document.location.protocol == 'chrome:') {
-        const ios = Cc["@mozilla.org/network/io-service;1"].getService(Ci.nsIIOService);
-        const fph = ios.getProtocolHandler("file").QueryInterface(Ci.nsIFileProtocolHandler);
-        const ds = Cc["@mozilla.org/file/directory_service;1"].getService(Ci.nsIProperties);
 
-          let file = ds.get("UChrm", Ci.nsIFile);
-          file.append('userChrome.js');
-          let fileURL = fph
-                        .getURLSpecFromActualFile(file) + "?" + file.lastModifiedTime;
-          Services.scriptloader.loadSubScriptWithOptions(fileURL, {
-                       target: document.defaultView,
-                       allowUnsafeURL: true,
-                });
+        let file = Services.dirsvc.get('UChrm', Ci.nsIFile);
+        file.append('userChrome.js');
+        Services.scriptloader.loadSubScript('chrome://userchromejs/content/userChrome.js?' +
+                              file.lastModifiedTime, document.defaultView);
         }
       },
     };
@@ -55,4 +52,3 @@ try {
 try {
     pref("toolkit.legacyUserProfileCustomizations.stylesheets", true);
 } catch(e) {}
-
