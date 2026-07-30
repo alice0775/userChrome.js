@@ -1,4 +1,4 @@
-/* :::::::: Sub-Script/Overlay Loader v3.0.86mod no bind version ::::::::::::::: */
+/* :::::::: Sub-Script/Overlay Loader v3.0.86mod1 no bind version ::::::::::::::: */
 
 // automatically includes all files ending in .uc.xul and .uc.js from the profile's chrome folder
 
@@ -13,7 +13,7 @@
 // 3.Cached script data (path, leafname, regex)
 // 4.Support window.userChrome_js.loadOverlay(overlay [,observer]) <--- not work in recent Firefox
 // Modified by Alice0775
-//
+// @version       2026/07/30 note: due to Bug 2058812, Services.scriptloader.loadSubScript() fails to load with Error if the file name begins with a non-Latin character.
 // @version       2026/07/28 loadSubScript chrome:// instead of file:// (Bug 1974213 Don't allow file: and jar: schemes in Services.scriptloader.loadSubScript)
 // @version       2026/03/01 Bug 2017957 - Add freezeBuiltins option to Cu.Sandbox
 // @version       2025/06/16 Bug 1968479 - Only allow eval (with system principal / in the parent) when an explicit pref is set
@@ -214,10 +214,6 @@ var Start = new Date().getTime();
       var findNextRe = /^\/\/ @(include|exclude)[ \t]+(\S+)/gm;
       this.directory = {name:[], UCJS:[], enable:[]};
       var chromeDirPath = ds.get("UChrm", Ci.nsIFile).path;
-      if (navigator.platform.indexOf("Win") == 0)
-        chromeDirPath = chromeDirPath + "\\";
-      else
-        chromeDirPath = chromeDirPath + "/";
       for(var i=0, len=this.arrSubdir.length; i<len; i++){
         var s = [], o = [];
         try{
@@ -235,7 +231,7 @@ var Start = new Date().getTime();
                || /\.xul$/i.test(file.leafName) && /\xul$/i.test(this.arrSubdir[i])) {
               var script = getScriptData(readFile(file, true) ,file);
               script.dir = dir;
-              script.chromedir = file.path.replace(chromeDirPath, "chrome://userchromejs/content/").replace(/\\/g,"/");
+              script.chromedir = Services.io.newURI(file.path.replace(chromeDirPath, "chrome://userchromejs/content").replace(/\\/g,"/"), "UTF-8").spec;
 //Services.console.logStringMessage(script.chromedir);
               if(/\.uc\.js$/i.test(script.filename)){
                 script.ucjs = checkUCJS(script.file.path);
