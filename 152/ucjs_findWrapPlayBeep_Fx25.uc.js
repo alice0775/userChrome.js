@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 152+
 // @author         Alice0775
+// @version        2026/08/18 fix undefined
 // @version        2026/07/15 replace removed(Bug 2033673) nsISound.play() with HTMLAudioElement
 // @version        2026/03/18 fix argument list
 // @version        2025/01/10 remove @async
@@ -29,7 +30,7 @@ var findWrapPlayBeep = {
   },
 
   patch: function(aFindBar) {
-    if (/updateStatusUI_org/.test(aFindBar._updateStatusUI.toString()))
+    if (/updateStatusUI_org/.test(aFindBar?._updateStatusUI.toString()))
       return;
     aFindBar._updateStatusUI_org =  aFindBar._updateStatusUI;
     aFindBar._updateStatusUI = function(res, findPrevious) {
