@@ -8,7 +8,7 @@
 // @Note           タブのデタッチ非対応
 // @Note           タスクバーからprivate browsingモードに入るとtabの状態と復帰後のtabのセッション保存おかしくなる
 // @compatibility  Firefox 156
-// @version        2026/08/21 00:00 Due to the change in Bug 2064159, the protected state is no longer maintained after a tab is detached.
+// @version        2026/08/21 00:00 Due to the change in Bug 2049770, the protected state is no longer maintained after a tab is detached.
 // @version        2026/05/04 00:00 Bug 2033243 - Rename ownerGlobal to relevantGlobal (documentGlobal)
 // @version        2026/03/01 Bug 2017957 - Add freezeBuiltins option to Cu.Sandbox
 // @version        2026/01/13 00:00 compatibility 149 from 148

@@ -7,7 +7,7 @@
 // @exclude        chrome://mozapps/content/downloads/unknownContentType.xul
 // @sandbox        true
 // @compatibility  Firefox 156
-// @version        2026/08/21 00:00 Due to the change in Bug 2064159, the protected state is no longer maintained after a tab is detached.
+// @version        2026/08/21 00:00 Due to the change in Bug 2049770, the protected state is no longer maintained after a tab is detached.
 // @version        2026/05/04 00:00 Bug 2033243 - Rename ownerGlobal to relevantGlobal (documentGlobal)
 // @version        2026/03/22 working with add-on "Drag-Select Link Text"
 // @version        2026/03/01 Bug 2017957 - Add freezeBuiltins option to Cu.Sandbox
