@@ -5,6 +5,7 @@
 // @include       main
 // @async          true
 // @compatibility Firefox 154
+// @version        2026/09/07 xxx workaround selectTabAtIndex does not work
 // @version        2026/09/07 xxx workaround advanceSelectedTab does not work take 2
 // @version        2026/09/07 xxx workaround advanceSelectedTab does not work
 // @version        2026/08/18 Change due to Bug 2039847: Add events for tab interactions
@@ -43,26 +44,52 @@ let do_not_select_tab_when_mousedown = {
     //xxx workaround advanceSelectedTab does not work
     gBrowser.tabContainer.advanceSelectedTab_org = gBrowser.tabContainer.advanceSelectedTab;
     gBrowser.tabContainer.advanceSelectedTab = function(dir, wrap, event) {
-      if (gBrowser.visibleTabs.length == 1) return;
+      let tabs = gBrowser.visibleTabs;
+      if (tabs.length == 1) return;
       let prev = gBrowser.selectedTab;
       if (wrap) {
-        gBrowser.tabContainer.advanceSelectedTab_org(dir, wrap, event);
+        this.advanceSelectedTab_org.apply(this, arguments);
         if (prev == gBrowser.selectedTab) {
           gBrowser.tabContainer.advanceSelectedTab_org(-dir, wrap);
           gBrowser.tabContainer.advanceSelectedTab_org(dir, wrap);
         }
       } else {
-        gBrowser.tabContainer.advanceSelectedTab_org(dir, wrap, event);
+        this.advanceSelectedTab_org.apply(this, arguments);
         if (dir == 1) {
-          if (gBrowser.selectedTab == gBrowser.visibleTabs[gBrowser.visibleTabs.length -1]) return;
+          if (gBrowser.selectedTab == tabs[tabs.length -1]) return;
         } else {  
-          if (gBrowser.selectedTab == gBrowser.visibleTabs[0]) return;
-        }
-        if (prev == gBrowser.selectedTab) {
-          gBrowser.tabContainer.advanceSelectedTab_org(-dir, wrap);
-          gBrowser.tabContainer.advanceSelectedTab_org(dir, wrap);
+          if (gBrowser.selectedTab == tabs[0]) return;
         }
       }
+    }
+    //xxx workaround selectTabAtIndex does not work
+    gBrowser.selectTabAtIndex_org = gBrowser.selectTabAtIndex;
+    gBrowser.selectTabAtIndex = function(aIndex, { event, metricsContext } = {}) {
+      try {
+        let tab = this.visibleTabs[aIndex];
+        if (!tab.hasAttribute("pending")) {
+          this.selectTabAtIndex_org.apply(this, arguments);
+        } else if (aIndex != this.visibleTabs.indexOf(this.selectedTab)) {
+          //面倒だからクリックでええやン
+          if (tab) {
+            let e = new MouseEvent("mousedown", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              button: 0
+            });
+            tab.dispatchEvent(e);
+
+            e = new MouseEvent("mouseup", {
+              bubbles: true,
+              cancelable: true,
+              view: window,
+              button: 0
+            });
+            tab.dispatchEvent(e);    
+          }
+        }
+      } catch(ex) {}
     }
   },
 
