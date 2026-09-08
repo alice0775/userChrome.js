@@ -5,6 +5,7 @@
 // @include       main
 // @async          true
 // @compatibility Firefox 154
+// @version        2026/09/09 do nothing if firefox view is open
 // @version        2026/09/09 xxx workaround switch tabs in allTabsMenu does not work
 // @version        2026/09/07 xxx workaround selectTabAtIndex does not work
 // @version        2026/09/07 xxx workaround advanceSelectedTab does not work take 2
@@ -162,6 +163,8 @@ let do_not_select_tab_when_mousedown = {
         break;
       case "mousedown":
         if (event.button != 0)
+          return;
+        if (gBrowser.selectedTab.hidden)
           return;
         tab = event.originalTarget;
         if (tab.classList.contains("tab-icon-sound")) {
