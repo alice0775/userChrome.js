@@ -5,6 +5,7 @@
 // @include       main
 // @async          true
 // @compatibility Firefox 154
+// @version        2026/09/09 xxx workaround switch tabs in allTabsMenu does not work
 // @version        2026/09/07 xxx workaround selectTabAtIndex does not work
 // @version        2026/09/07 xxx workaround advanceSelectedTab does not work take 2
 // @version        2026/09/07 xxx workaround advanceSelectedTab does not work
@@ -91,6 +92,39 @@ let do_not_select_tab_when_mousedown = {
         }
       } catch(ex) {}
     }
+    //xxx workaround switch tabs in allTabsMenu does not work
+    window.addEventListener("popupshowing", (event) => {
+      if (event.target.id == "customizationui-widget-panel" &&
+          event.target.getAttribute("viewId") == "allTabsMenu-allTabsView") {
+    		if ("do_not_select_tab_when_mousedown" in gTabsPanel.allTabsPanel) {
+    			return;
+    		}
+    		gTabsPanel.allTabsPanel.do_not_select_tab_when_mousedown = true;
+    		gTabsPanel.allTabsPanel._selectTab_org = gTabsPanel.allTabsPanel._selectTab;
+    	  gTabsPanel.allTabsPanel._selectTab = function _selectTab(tab) {
+          if (!tab?.hasAttribute("pending")) {
+            gTabsPanel.allTabsPanel._selectTab_org(tab);
+          } else {
+			      let e = new MouseEvent("mousedown", {
+			        bubbles: true,
+			        cancelable: true,
+			        view: window,
+			        button: 0
+			      });
+			      tab.dispatchEvent(e);
+
+			      e = new MouseEvent("mouseup", {
+			        bubbles: true,
+			        cancelable: true,
+			        view: window,
+			        button: 0
+			      });
+			      tab.dispatchEvent(e);    
+   	        lazy.PanelMultiView.hidePopup(this.view.closest("panel"));
+			    }
+    	  }
+    	}
+    });
   },
 
   uninit() {
