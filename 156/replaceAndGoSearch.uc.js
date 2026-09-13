@@ -6,7 +6,8 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 156
-// @version        2026/09/14 00:00 remove moz-input-box  take2, Bug 2064369 take2
+// @version        2026/09/14 01:00 remove moz-input-box  take3, Bug 2064369
+// @version        2026/09/14 00:00 remove moz-input-box  take2, Bug 2064369
 // @version        2026/09/14 00:00 remove moz-input-box, Bug 2064369
 // @version        2026/04/15 00:00 remove async functiom
 // @version        2026/04/15 00:00 remove SearchService.isInitialized check
@@ -114,11 +115,15 @@ var replaceAndGoSearch = {
         "cmd_paste"
       );
       let enabled = controller.isCommandEnabled("cmd_paste");
-      if (document.commandDispatcher.focusedElement.closest('[id="searchbar-new"]')) {
-        replaceAndSearch.toggleAttribute("disabled", !enabled);
-        replaceAndSearch.toggleAttribute("hidden", false);
-        contextMenu.querySelector("#replace-and-go").toggleAttribute("hidden", true);
-      }
+      if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
+        if (document.commandDispatcher.focusedElement.closest('[id="searchbar-new"]')) {
+          replaceAndSearch.toggleAttribute("disabled", !enabled);
+          replaceAndSearch.toggleAttribute("hidden", false);
+          contextMenu.querySelector("#replace-and-go").toggleAttribute("hidden", true);
+        }
+      } else {
+          replaceAndSearch.toggleAttribute("disabled", !enabled);
+      } 
     });
   },
 
