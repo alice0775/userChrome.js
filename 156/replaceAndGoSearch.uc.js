@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 156
+// @version        2026/09/14 01:00 remove moz-input-box  take4, Bug 2064369
 // @version        2026/09/14 01:00 remove moz-input-box  take3, Bug 2064369
 // @version        2026/09/14 00:00 remove moz-input-box  take2, Bug 2064369
 // @version        2026/09/14 00:00 remove moz-input-box, Bug 2064369
@@ -73,9 +74,13 @@ var replaceAndGoSearch = {
         "cmd_paste"
       );
       let enabled = controller.isCommandEnabled("cmd_paste");
-      replaceAndGo.toggleAttribute("disabled", !enabled);
-      replaceAndGo.toggleAttribute("hidden", false);
-      contextMenu.querySelector("#replace-and-search")?.toggleAttribute("hidden", true);
+      if (document.commandDispatcher.focusedElement.closest('[id="urlbar"]')) {
+        replaceAndGo.toggleAttribute("disabled", !enabled);
+        replaceAndGo.toggleAttribute("hidden", false);
+        contextMenu.querySelector("#replace-and-search")?.toggleAttribute("hidden", true);
+      } else {
+        replaceAndGo.toggleAttribute("hidden", true);
+      }
     });
   },
 
