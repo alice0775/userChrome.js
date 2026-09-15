@@ -5,6 +5,7 @@
 // @include        main
 // @author         Alice0775
 // @compatibility  Firefox 153
+// @version        2026/09/16 01:00 hide menu if about:～
 // @version        2026/09/16 00:00 remove unused markupDocumentViewer
 // @version        2026/01/18 00:00 remove unnesessary radio button attribute
 // @version        2026/01/13 00:00 compatibility 149 from 148
@@ -412,7 +413,11 @@ var textZoomPerDomain_menu = {
         ];
     let contentAreaContextMenu = document.getElementById("contentAreaContextMenu");
     contentAreaContextMenu.appendChild(this.jsonToDOM(template, document, {}));
-    contentAreaContextMenu.addEventListener("popupshowing", (event) => {document.getElementById("textZoomPerDomain").hidden = !ZoomManager.useFullZoom;document.getElementById("textZoomPerDomainMenuseparator2").hidden=false}, true);
+    contentAreaContextMenu.addEventListener("popupshowing", (event) => {
+      document.getElementById("textZoomPerDomain").hidden = !ZoomManager.useFullZoom || gBrowser.currentURI.spec.includes("about:"); 
+;
+      document.getElementById("textZoomPerDomainMenuseparator2").hidden=false
+    }, true);
     
     document.getElementById("textZoomPerDomainMenupopup").addEventListener("popupshowing", (event) => {textZoomPerDomain_menu.onpopupshowing()});
     document.getElementById("textZoomPerDomainnDefault").addEventListener("command", (event) => {textZoomPerDomain_menu.setTextZoom(textZoomPerDomain.defaultTextZoom)});
