@@ -154,7 +154,10 @@ ucjsMouseGestures_menues = {
             ucjsMouseGestures_helper.dispatchEvent(
             { target: "document", type: "AutoPagerizeToggleRequest" } );
           } ],
-
+	    
+        ['', 'Open from Clipboard in Tab (foreground new tab)', function(){ ucjsMouseGestures_helper.openLinkFromClipboard(true); } ],
+		
+        ['', 'Open from Clipboard in Tab (in active tab)', function(){ ucjsMouseGestures_helper.openLinkFromClipboard(false); } ],
 
      ];
 
