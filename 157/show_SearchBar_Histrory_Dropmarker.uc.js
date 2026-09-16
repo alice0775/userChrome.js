@@ -4,6 +4,7 @@
 // @description    Show Searchbar Histrory Dropmarker
 // @include        main
 // @compatibility  Firefox 157
+// @version        2026/09/17 00:00 tweek css
 // @version        2026/09/05 00:00 Bug 2068166
 // @version        2026/05/05 00:00 Bug 2008598 - Convert urlbar variables to design tokens
 // @version        2026/05/05 00:00 Bug 2034495 - rename toolbar tokens
@@ -171,9 +172,12 @@ var showSearchBarHistroryDropmarker = {
         padding-inline: 1px !important;
       }
 
-      .urlbarView-body-outer {
+      #searchbar-new .urlbarView-body-outer {
         overflow-y: auto !important;
         max-height: 40ch !important;
+      }
+      #searchbar-new .urlbarView {
+        padding-bottom: 1px !important;
       }
 
       `.replace(/\s+/g, " ");
