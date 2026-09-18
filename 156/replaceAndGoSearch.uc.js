@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 156
+// @version        2026/09/19 01:00 remove duplication
 // @version        2026/09/14 01:00 remove moz-input-box  take4, Bug 2064369
 // @version        2026/09/14 01:00 remove moz-input-box  take3, Bug 2064369
 // @version        2026/09/14 00:00 remove moz-input-box  take2, Bug 2064369
@@ -26,7 +27,6 @@
 var replaceAndGoSearch = {
 
   init: function() {
-    this.urlBarMenu();
     this.urlBarMenu();
     this.searchBarMenu();
     window.addEventListener('aftercustomization', this, false);
@@ -91,8 +91,8 @@ var replaceAndGoSearch = {
     replaceAndSearch.setAttribute("label", "Replace & Search");
     replaceAndSearch.setAttribute("anonid", "replace-and-search");
     replaceAndSearch.setAttribute("accesskey", "r");
+    replaceAndSearch.toggleAttribute("hidden", true);
     replaceAndSearch.addEventListener("command", (event) => {
-
       goDoCommand("cmd_paste");
       if (Services.prefs.getBoolPref("browser.search.widget.new", false)) {
         document.getElementById('searchbar-new').handleCommand(event);
