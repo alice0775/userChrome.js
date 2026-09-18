@@ -6,6 +6,7 @@
 // @async          true
 // @author         Alice0775
 // @compatibility  Firefox 156
+// @version        2026/09/19 02:00 fix old search bar
 // @version        2026/09/19 01:00 remove duplication
 // @version        2026/09/14 01:00 remove moz-input-box  take4, Bug 2064369
 // @version        2026/09/14 01:00 remove moz-input-box  take3, Bug 2064369
@@ -128,6 +129,7 @@ var replaceAndGoSearch = {
         }
       } else {
           replaceAndSearch.toggleAttribute("disabled", !enabled);
+          replaceAndSearch.toggleAttribute("hidden", false);
       } 
     });
   },
