@@ -5,6 +5,7 @@
 // @include        main
 // @compatibility  Firefox 159+
 // @author         Alice0775
+// @version        2026/10/01 re-enabled try cache
 // @version        2026/10/01 fix nsIIOService and Bug 2075016
 // @version        2026/08/18 fix undefined
 // @version        2026/07/15 replace removed(Bug 2033673) nsISound.play() with HTMLAudioElement
@@ -45,7 +46,7 @@ var findWrapPlayBeep = {
   },
 
   playBeep: function() {
-    //try {
+    try {
       aFilePath = "file:///C:/WINDOWS/Media/Windows Ding.wav";
                    //"file:///C:/WINDOWS/Media/chimes.wav";
       if (!aFilePath)
@@ -72,11 +73,11 @@ var findWrapPlayBeep = {
                 .createInstance(Components.interfaces["nsISound"])
                 .play(uri);
        */
-    //} catch(x) {
-    //  Components.classes["@mozilla.org/sound;1"]
-    //        .createInstance(Components.interfaces.nsISound)
-    //        .beep();
-    //}
+    } catch(x) {
+      Components.classes["@mozilla.org/sound;1"]
+            .createInstance(Components.interfaces.nsISound)
+            .beep();
+    }
   },
 
   playCustomSound: function playCustomSound(url) {
