@@ -336,7 +336,7 @@
     if( prefWHERE != "FARRIGHT") {
       debug("*LINKONLYNEXT/NEXT asLlink=" + asLinkPosition() +" || "+ (prefWHERE != "LINKONLYNEXT") );
       if( (prefWHERE != "LINKONLYNEXT" || asLinkPosition()) ){
-        var pTab = this.mCurrentTab;
+        var pTab = gBrowser.mCurrentTab;
         aTabpos = ((getPref("userChrome.openTabsWhere.INCREMENT", "int", INCREMENT)==1)?getMostRightChildTab(pTab):pTab)._tPos + 1;
 
         if (aTabpos != aTab._tPos) {
@@ -541,7 +541,7 @@
             var pTab = mTabChilds[i];
             if(pTab.hasAttribute("Olinkedpanel")
                && pTab.getAttribute("Olinkedpanel").indexOf(Plinkedpanel) > -1){
-              gBrowser.mCurrentTab = pTab;
+              gBrowser.selectedTab = pTab;
               return;
             }
           }
